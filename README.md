@@ -42,15 +42,15 @@ pip install -r requirements.txt
 POSTGRES_CONNECTION_STRING=postgres://...
 
 # Pinecone
-PINECONE_API_KEY=pcsk_52gxSM_MPppEGNGoeER4uJ5EqfQr3ErfNnTbWHd63nmVy8pYiGyEWzDRB3Jtc8GC2vJFq4
-PINECONE_HOST=https://hyeaero-ai-iibvc99.svc.aped-4627-b74a.pinecone.io
-PINECONE_INDEX_NAME=hyeaero-ai
-PINECONE_DIMENSION=1024
-PINECONE_METRIC=cosine
+PINECONE_API_KEY=
+PINECONE_HOST=
+PINECONE_INDEX_NAME=
+PINECONE_DIMENSION=124
+PINECONE_METRIC=
 
 # OpenAI (for embeddings)
 OPENAI_API_KEY=your-openai-api-key
-OPENAI_EMBEDDING_MODEL=text-embedding-3-large
+OPENAI_EMBEDDING_MODEL=
 ```
 
 3. Run RAG pipeline:
