@@ -1,0 +1,22 @@
+# Copy this file to the ROOT of your BACKEND repository as render.yaml
+# Then in Render: New → Blueprint → connect backend repo → apply. Set env vars in the dashboard.
+# Root Directory is left blank (repo root = backend app).
+
+services:
+  - type: web
+    name: hyeaero-api
+    runtime: python
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: POSTGRES_CONNECTION_STRING
+        sync: false
+      - key: CORS_ORIGINS
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: PINECONE_INDEX_NAME
+        sync: false
+      - key: PINECONE_HOST
+        sync: false
