@@ -1,4 +1,8 @@
-# HyeAero Backend - RAG Pipeline Dependencies
+# HyeAero Backend - RAG Pipeline + API
+
+# API
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
 
 # Vector Database
 pinecone>=3.0.0

@@ -1,84 +1,79 @@
-# HyeAero Backend - RAG Pipeline
+# HyeAero.AI Backend — Aircraft Research & Valuation Consultant
 
-RAG (Retrieval-Augmented Generation) system that syncs data from PostgreSQL to Pinecone vector database.
+Real-time AI assistant backend: RAG chat over Hye Aero data, **dynamic market comparison**, **predictive pricing**, and **resale advisory**. Data sources: Controller, AircraftExchange, FAA, Internal DB.
 
 ## Architecture
 
 ```
-PostgreSQL ──► RAG Pipeline ──► Pinecone
-   ▲                              │
-   └──────── embeddings_metadata ─┘
+PostgreSQL (listings, sales, aircraft, FAA) ──┬──► RAG Pipeline ──► Pinecone
+                                              └──► API (comparison, price, resale)
+                                                          │
+                                                    FastAPI ──► /api/rag/answer
+                                                              /api/market-comparison
+                                                              /api/price-estimate
+                                                              /api/resale-advisory
 ```
 
 ## Components
 
-- **Vector Store**: Pinecone client wrapper
-- **Embedding Service**: OpenAI text-embedding-3-large integration
-- **RAG Pipeline**: Incremental sync from PostgreSQL to Pinecone
-- **Chunking Service**: Text chunking for long documents
-- **Database Client**: PostgreSQL connection for reading data
-
-## Features
-
-- ✅ Incremental updates (no duplicates, no missing data)
-- ✅ Tracks embedding status in `embeddings_metadata` table
-- ✅ Supports multiple entity types (listings, documents, aircraft, sales)
-- ✅ Automatic chunking for long texts
-- ✅ Idempotent operations (safe to run multiple times)
-- ✅ Comprehensive logging to `logs/` folder
+- **API** (FastAPI): Chat (RAG), market comparison, price estimate, resale advisory
+- **RAG**: Sync Postgres → Pinecone; query service (retrieve + LLM answer)
+- **Market comparison**: Query listings by model, age, hours, region
+- **Price estimate**: Heuristic from historical sales (extensible to ML)
+- **Resale advisory**: Plain-English guidance via RAG/LLM
 
 ## Setup
 
 1. Install dependencies:
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
-2. Configure environment variables:
-   - Copy `.env.example` to `.env`
-   - Fill in your actual values:
-```env
-# PostgreSQL (from ETL pipeline)
-POSTGRES_CONNECTION_STRING=postgres://...
+2. Configure `.env` (see `.env.example` or docs):
+   - `POSTGRES_CONNECTION_STRING` — required for all endpoints
+   - `PINECONE_*`, `OPENAI_*` — required for RAG chat and resale advisory
+   - `OPENAI_CHAT_MODEL` — optional (default `gpt-4o-mini`)
 
-# Pinecone
-PINECONE_API_KEY=
-PINECONE_HOST=
-PINECONE_INDEX_NAME=
-PINECONE_DIMENSION=124
-PINECONE_METRIC=
-
-# OpenAI (for embeddings)
-OPENAI_API_KEY=your-openai-api-key
-OPENAI_EMBEDDING_MODEL=
-```
-
-3. Run RAG pipeline:
-```bash
-python runners/run_rag_pipeline.py
-```
-
-## Usage
-
-### Full Sync
-```bash
-python runners/run_rag_pipeline.py
-```
-
-### Sync Specific Entity Types
-```bash
-python runners/run_rag_pipeline.py --entities listings documents
-```
-
-### Limit Records (for testing)
+3. (Optional) Sync data to Pinecone for RAG:
 ```bash
 python runners/run_rag_pipeline.py --limit 100
 ```
 
-## Data Sources
+## Run API
 
-The RAG pipeline processes:
-1. **Aircraft Listings** - Descriptions, features, specifications
-2. **Documents** - PDF/TXT extracted text
-3. **Aircraft Master Data** - Manufacturer, model, specifications
-4. **Sales Data** - Historical sales information
+```bash
+cd backend
+python runners/run_api.py
+```
+
+Or with uvicorn directly:
+```bash
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+- API: http://localhost:8000  
+- Docs: http://localhost:8000/docs  
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/rag/answer` | Ask the Consultant (RAG over Hye Aero data) |
+| POST | `/api/market-comparison` | Compare aircraft by model, region, hours, year |
+| POST | `/api/price-estimate` | Predictive valuation from sale history |
+| POST | `/api/resale-advisory` | Plain-English resale guidance (RAG) |
+| GET | `/health` | Health check |
+
+## Frontend integration
+
+Set in frontend `.env.local`:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+Chat uses the Next.js proxy (`/api/chat` → backend `/api/rag/answer`). Market Comparison, Price Estimator, and Resale Advisory call the backend from the browser (CORS is enabled for `http://localhost:3000`).
+
+## Data sources (ETL)
+
+Data is loaded by the **etl-pipeline** (Controller, AircraftExchange, FAA, Internal DB) into PostgreSQL. This backend reads from the same database for comparison and pricing, and from Pinecone (after RAG sync) for natural-language chat.

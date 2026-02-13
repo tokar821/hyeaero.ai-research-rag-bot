@@ -151,6 +151,36 @@ python runners/run_rag_pipeline.py --limit 10
 python runners/run_rag_pipeline.py --entities aircraft_listing document
 ```
 
+## How Vector Search Relates to PostgreSQL
+
+**Yes — to enhance vector search, you need to embed the data you want searchable.**
+
+- **Pinecone** is the vector search index: only vectors that have been embedded and upserted there can be found by similarity search.
+- **PostgreSQL** is the source of truth: it holds full records. The RAG pipeline reads from Postgres, turns records into text (via entity extractors), chunks and embeds that text, then upserts to Pinecone.
+- **At query time**: the query is embedded → Pinecone returns similar vectors → we fetch full (and synced) details from Postgres for the LLM.
+
+So **more/better data in the vector index** means:
+1. Run the RAG pipeline on **all** entity types you care about (listings, sales, aircraft, FAA, documents).
+2. Run it with **no limit** so every relevant row in Postgres gets embedded (or run it regularly so new/updated rows are added).
+3. Optionally **add new entity types** (e.g. engines, APUs, reference tables) and extractors if you have more tables in Postgres you want searchable.
+
+**Full sync (embed “all” data from Postgres):**
+```bash
+cd backend
+# All 5 entity types, no limit
+python runners/run_rag_pipeline.py
+
+# Force re-embed everything (e.g. after changing extractors)
+python runners/run_rag_pipeline.py --force-reembed
+```
+
+**Targeted sync (e.g. only listings and aircraft):**
+```bash
+python runners/run_rag_pipeline.py --entities aircraft_listing aircraft
+```
+
+Improving the **text you embed** (in `entity_extractors.py`) also enhances search: richer, more consistent text per record leads to better matches for user queries.
+
 ## Data Flow
 
 1. **Read**: Fetch records from PostgreSQL

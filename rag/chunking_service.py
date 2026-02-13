@@ -58,17 +58,16 @@ class ChunkingService:
         chunk_index = 0
         
         while start < len(text):
-            end = start + self.chunk_size
-            
+            end = min(start + self.chunk_size, len(text))
+
             # Try to break at sentence boundary (prefer period, then newline, then space)
             if end < len(text):
-                # Look for sentence boundary near the end
                 for boundary in ['. ', '.\n', '\n\n', '\n', ' ']:
                     boundary_pos = text.rfind(boundary, start, end)
                     if boundary_pos != -1:
                         end = boundary_pos + len(boundary)
                         break
-            
+
             chunk_text = text[start:end].strip()
             
             if chunk_text:
@@ -85,8 +84,9 @@ class ChunkingService:
                 })
                 chunk_index += 1
             
-            # Move start position with overlap
-            start = end - self.chunk_overlap
+            # Move start position with overlap (ensure we always advance to avoid infinite loop)
+            next_start = end - self.chunk_overlap
+            start = max(next_start, start + 1) if next_start <= start else next_start
             if start >= len(text):
                 break
         

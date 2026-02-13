@@ -45,6 +45,8 @@ class RAGPipeline:
         self.embedding_model = embedding_model
         self.embedding_dimension = embedding_dimension
         self.batch_size = batch_size
+        # Upsert to Pinecone every N records to avoid holding all vectors in memory
+        self.upsert_record_batch = 100
     
     def get_embedded_entities(
         self,
@@ -136,12 +138,21 @@ class RAGPipeline:
         
         # Fetch records from database
         records = self._fetch_entity_records(entity_type, limit, embedded_ids)
-        logger.info(f"Fetched {len(records)} {entity_type} records to process")
-        
+        total = len(records)
+        logger.info(f"Fetched {total} {entity_type} records to process")
+        _progress_interval = max(1, min(100, total // 20))  # log every ~5% or every 100, at least 1
+
         # Process each record
         vectors_to_upsert = []
         metadata_to_insert = []
-        
+
+        def _log_progress():
+            for h in logging.root.handlers:
+                try:
+                    h.flush()
+                except Exception:
+                    pass
+
         for record in records:
             try:
                 stats['processed'] += 1
@@ -218,24 +229,47 @@ class RAGPipeline:
                 })
                 
                 stats['embedded'] += 1
-                
+
+                # Progress log: e.g. 1/6171, 100/6171, 200/6171 ...
+                if stats['processed'] == 1 or stats['processed'] % _progress_interval == 0 or stats['processed'] == total:
+                    logger.info(
+                        f"Progress {entity_type}: {stats['processed']}/{total} processed, "
+                        f"{stats['embedded']} embedded, {stats['chunks_created']} chunks"
+                    )
+                    _log_progress()
+
+                # Upsert in batches to avoid holding all vectors in memory (prevents MemoryError)
+                if len(metadata_to_insert) >= self.upsert_record_batch:
+                    try:
+                        upserted = self.pinecone.upsert_vectors(
+                            vectors_to_upsert,
+                            batch_size=self.batch_size
+                        )
+                        stats['vectors_upserted'] += upserted
+                        self._insert_embedding_metadata(metadata_to_insert)
+                    except Exception as e:
+                        logger.error(f"Batch upsert failed: {e}", exc_info=True)
+                        stats['errors'] += len(metadata_to_insert)
+                    vectors_to_upsert = []
+                    metadata_to_insert = []
+
             except Exception as e:
                 logger.error(f"Error processing {entity_type} record {record.get('id')}: {e}", exc_info=True)
                 stats['errors'] += 1
         
-        # Upsert vectors to Pinecone in batches
+        # Upsert any remaining vectors to Pinecone
         if vectors_to_upsert:
             try:
                 upserted = self.pinecone.upsert_vectors(
                     vectors_to_upsert,
                     batch_size=self.batch_size
                 )
-                stats['vectors_upserted'] = upserted
+                stats['vectors_upserted'] = stats.get('vectors_upserted', 0) + upserted
             except Exception as e:
                 logger.error(f"Failed to upsert vectors to Pinecone: {e}", exc_info=True)
                 stats['errors'] += len(vectors_to_upsert)
-        
-        # Insert metadata into database
+
+        # Insert any remaining metadata into database
         if metadata_to_insert:
             self._insert_embedding_metadata(metadata_to_insert)
         
