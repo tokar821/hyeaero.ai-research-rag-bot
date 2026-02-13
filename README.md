@@ -55,6 +55,15 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 - API: http://localhost:8000  
 - Docs: http://localhost:8000/docs  
 
+**Allow access from other PCs:** The app binds to `0.0.0.0:8000`, but the server firewall must allow inbound TCP on port 8000. Otherwise you get "i/o timeout" from other machines.
+
+- **Windows (on the server):** Run in **Administrator** PowerShell:
+  ```powershell
+  New-NetFirewallRule -DisplayName "HyeAero API 8000" -Direction Inbound -Protocol TCP -LocalPort 8000 -Action Allow
+  ```
+- **Linux (on the server):** `sudo ufw allow 8000` then `sudo ufw reload` (or add an iptables rule for port 8000).
+- **Cloud (AWS/DigitalOcean/etc.):** In the instance **Security Group** or **Firewall**, add an inbound rule: TCP port 8000 from `0.0.0.0/0` (or your frontend’s IP) if you want the API reachable from the internet.  
+
 ## Endpoints
 
 | Method | Path | Description |
