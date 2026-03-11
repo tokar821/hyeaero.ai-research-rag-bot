@@ -24,6 +24,7 @@ from rag.query_service import RAGQueryService
 from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
+from services.zoominfo_client import search_companies as zoominfo_search_companies
 
 # --- Pydantic models ---
 class ChatMessage(BaseModel):
@@ -319,6 +320,164 @@ def resale_advisory(req: ResaleAdvisoryRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+_REGISTRATION_NOT_EMPTY = "registration_number IS NOT NULL AND TRIM(registration_number) <> ''"
+
+
+@app.get("/api/phlydata/aircraft")
+def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str] = None):
+    """List aircraft from the aircraft table only where registration_number is not empty. Pagination and optional search q."""
+    page = max(1, page)
+    page_size = min(500, max(1, page_size))
+    offset = (page - 1) * page_size
+    search = (q or "").strip()
+    try:
+        db = get_db()
+        if search:
+            like = f"%{search}%"
+            count_rows = db.execute_query(
+                f"""
+                SELECT COUNT(*) AS total FROM aircraft
+                WHERE ({_REGISTRATION_NOT_EMPTY})
+                  AND (serial_number ILIKE %s OR registration_number ILIKE %s
+                   OR manufacturer ILIKE %s OR model ILIKE %s OR category ILIKE %s
+                   OR CAST(manufacturer_year AS TEXT) LIKE %s OR CAST(delivery_year AS TEXT) LIKE %s)
+                """,
+                (like, like, like, like, like, like, like),
+            )
+            total = int(count_rows[0]["total"]) if count_rows else 0
+            rows = db.execute_query(
+                f"""
+                SELECT id, serial_number, registration_number, manufacturer, model,
+                       manufacturer_year, delivery_year, category
+                FROM aircraft
+                WHERE ({_REGISTRATION_NOT_EMPTY})
+                  AND (serial_number ILIKE %s OR registration_number ILIKE %s
+                   OR manufacturer ILIKE %s OR model ILIKE %s OR category ILIKE %s
+                   OR CAST(manufacturer_year AS TEXT) LIKE %s OR CAST(delivery_year AS TEXT) LIKE %s)
+                ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
+                LIMIT %s OFFSET %s
+                """,
+                (like, like, like, like, like, like, like, page_size, offset),
+            )
+        else:
+            count_rows = db.execute_query(f"SELECT COUNT(*) AS total FROM aircraft WHERE {_REGISTRATION_NOT_EMPTY}")
+            total = int(count_rows[0]["total"]) if count_rows else 0
+            rows = db.execute_query(
+                f"""
+                SELECT id, serial_number, registration_number, manufacturer, model,
+                       manufacturer_year, delivery_year, category
+                FROM aircraft
+                WHERE {_REGISTRATION_NOT_EMPTY}
+                ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
+                LIMIT %s OFFSET %s
+                """,
+                (page_size, offset),
+            )
+        return {"aircraft": [dict(r) for r in rows], "total": total, "page": page, "page_size": page_size}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/phlydata/owners")
+def phlydata_owners(serial: str):
+    """Get owner detail for a PhlyData aircraft by serial number.
+    Aggregates owner/seller info from aircraft_listings (Controller, AircraftExchange) and faa_registrations (FAA).
+    Use this when user clicks a row to see full owner details."""
+    if not serial or not serial.strip():
+        raise HTTPException(status_code=400, detail="serial is required")
+    serial = serial.strip()
+    try:
+        db = get_db()
+        # Resolve aircraft by serial
+        aircraft_rows = db.execute_query(
+            "SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category FROM aircraft WHERE serial_number = %s LIMIT 1",
+            (serial,),
+        )
+        if not aircraft_rows:
+            return {"aircraft": None, "owners_from_listings": [], "owners_from_faa": [], "message": "Aircraft not found for this serial."}
+        aircraft = dict(aircraft_rows[0])
+        aircraft_id = aircraft["id"]
+
+        # Owners from listings (Controller, AircraftExchange): seller / contact
+        listing_rows = db.execute_query(
+            """
+            SELECT source_platform, seller, seller_contact_name, seller_phone, seller_email, seller_location,
+                   seller_broker, listing_status, ask_price, sold_price, date_listed, date_sold
+            FROM aircraft_listings
+            WHERE aircraft_id = %s
+            ORDER BY ingestion_date DESC
+            """,
+            (aircraft_id,),
+        )
+        owners_from_listings = []
+        for r in listing_rows:
+            row = dict(r)
+            if any(row.get(k) for k in ("seller", "seller_contact_name", "seller_phone", "seller_email")):
+                owners_from_listings.append(row)
+
+        # Owners from FAA registry (registrant)
+        faa_rows = db.execute_query(
+            """
+            SELECT registrant_name, street, street2, city, state, zip_code, region, county, country
+            FROM faa_registrations
+            WHERE aircraft_id = %s
+            ORDER BY ingestion_date DESC
+            LIMIT 10
+            """,
+            (aircraft_id,),
+        )
+        owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
+
+        # Collect owner names for ZoomInfo by source (one field per source per user request):
+        # - Controller: Seller Name → DB column seller
+        # - AircraftExchange: dealer_name → DB column seller
+        # - FAA: registrant_name
+        seen = set()
+        names_to_lookup = []  # list of {"query_name", "source_platform", "field_name"}
+        for row in owners_from_listings:
+            platform = (row.get("source_platform") or "").strip().lower()
+            val = (row.get("seller") or "").strip()  # Seller Name (Controller) or dealer_name (AircraftExchange)
+            if not val or val.lower() in seen:
+                continue
+            seen.add(val.lower())
+            if platform == "controller":
+                names_to_lookup.append({"query_name": val, "source_platform": "controller", "field_name": "seller"})
+            elif platform == "aircraftexchange":
+                names_to_lookup.append({"query_name": val, "source_platform": "aircraftexchange", "field_name": "dealer_name"})
+            else:
+                names_to_lookup.append({"query_name": val, "source_platform": platform or "listing", "field_name": "seller"})
+        for row in owners_from_faa:
+            val = (row.get("registrant_name") or "").strip()
+            if val and val.lower() not in seen:
+                seen.add(val.lower())
+                names_to_lookup.append({"query_name": val, "source_platform": "faa", "field_name": "registrant_name"})
+        names_to_lookup = names_to_lookup[:5]  # limit ZoomInfo calls
+
+        zoominfo_enrichment = []
+        for item in names_to_lookup:
+            query_name = item["query_name"]
+            companies = zoominfo_search_companies(query_name, page_size=10)
+            zoominfo_enrichment.append({
+                "query_name": query_name,
+                "source_platform": item["source_platform"],
+                "field_name": item["field_name"],
+                "companies": companies,
+            })
+
+        return {
+            "aircraft": aircraft,
+            "owners_from_listings": owners_from_listings,
+            "owners_from_faa": owners_from_faa,
+            "zoominfo_enrichment": zoominfo_enrichment,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/export/pdf")
 def export_pdf():

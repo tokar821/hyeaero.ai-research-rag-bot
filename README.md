@@ -86,3 +86,7 @@ Chat uses the Next.js proxy (`/api/chat` → backend `/api/rag/answer`). Market 
 ## Data sources (ETL)
 
 Data is loaded by the **etl-pipeline** (Controller, AircraftExchange, FAA, Internal DB) into PostgreSQL. This backend reads from the same database for comparison and pricing, and from Pinecone (after RAG sync) for natural-language chat.
+
+## Future integrations
+
+- **ZoomInfo API**: Integrating ZoomInfo could enrich lead/contact data (company and contact info). To add: obtain ZoomInfo API credentials, add a service layer that calls ZoomInfo endpoints, and optionally store or display enriched data in the dashboard or RAG context. All leads from the app can be referred to Hye Aero for follow-up.
