@@ -34,12 +34,25 @@ pip install -r requirements.txt
    - `POSTGRES_CONNECTION_STRING` — required for all endpoints
    - `PINECONE_*`, `OPENAI_*` — required for RAG chat and resale advisory
    - `OPENAI_CHAT_MODEL` — optional (default `gpt-4o-mini`)
-   - `ZOOMINFO_ACCESS_TOKEN` — required for **Owner details** (ZoomInfo company/contact enrichment). Get a token from `phlydata-zoominfo` (run `python get_zoominfo_token.py` there) and copy the value into `backend/.env`. Without it, Owner details will show listings/FAA but no ZoomInfo company data.
+   - **ZoomInfo (Owner details):** Set `ZOOMINFO_CLIENT_ID`, `ZOOMINFO_CLIENT_SECRET`, `ZOOMINFO_REFRESH_TOKEN`. Do **not** put `ZOOMINFO_ACCESS_TOKEN` in `.env` (it changes when refreshed). Optionally set `ZOOMINFO_TOKEN_FILE` to a writable path (e.g. `/data/zoominfo_token`) so the refreshed token is persisted across restarts. See *Deployment (ZoomInfo)* below.
 
 3. (Optional) Sync data to Pinecone for RAG:
 ```bash
 python runners/run_rag_pipeline.py --limit 100
 ```
+
+## Deployment (ZoomInfo)
+
+For production, **do not store the ZoomInfo access token in `.env`** — it expires and is refreshed automatically. Use only long-lived credentials:
+
+1. In `.env` (or your platform’s env config), set:
+   - `ZOOMINFO_CLIENT_ID`
+   - `ZOOMINFO_CLIENT_SECRET`
+   - `ZOOMINFO_REFRESH_TOKEN`
+2. Leave `ZOOMINFO_ACCESS_TOKEN` unset. On first use (or after 401), the backend will refresh and get a new token.
+3. **Optional:** Set `ZOOMINFO_TOKEN_FILE` to a writable path (e.g. `/data/zoominfo_token` or `./zoominfo_token`). The backend will read the token from this file on startup and write the new token there after each refresh, so restarts reuse it without calling ZoomInfo again. If you don’t set this, the token lives only in memory and a refresh runs after each deploy/restart.
+
+No code changes and no database are required; the token is either in memory or in the optional file.
 
 ## Run API
 
@@ -88,6 +101,18 @@ Chat uses the Next.js proxy (`/api/chat` → backend `/api/rag/answer`). Market 
 
 Data is loaded by the **etl-pipeline** (Controller, AircraftExchange, FAA, Internal DB) into PostgreSQL. This backend reads from the same database for comparison and pricing, and from Pinecone (after RAG sync) for natural-language chat.
 
-## Future integrations
+## Owner details (ZoomInfo)
 
-- **ZoomInfo API**: Integrating ZoomInfo could enrich lead/contact data (company and contact info). To add: obtain ZoomInfo API credentials, add a service layer that calls ZoomInfo endpoints, and optionally store or display enriched data in the dashboard or RAG context. All leads from the app can be referred to Hye Aero for follow-up.
+The `/api/phlydata/owners/{serial}` endpoint combines:
+
+- **Listings** (Controller, AircraftExchange): seller/dealer names and phones
+- **FAA registry**: registrant/owner names and addresses
+- **ZoomInfo** company data: company name, website, phones, full address, revenue, employees (count + range), founded, status, industries, social URLs, and related metadata (certified, continent, location count, contact count, parent)
+
+Matching is conservative:
+
+- Phone-first: if any ZoomInfo candidate matches the listing/FAA phone, that result is preferred.
+- Content scoring: company/person name, location, and website are scored; weak name-only matches are rejected.
+- Optional LLM fallback: when scores are ambiguous, vector search + LLM decide whether there is a safe match.
+
+If no safe match is found, the endpoint still returns aircraft + listing/FAA owners, but with an empty `zoominfo_enrichment` array so the frontend shows “No ZoomInfo data found for this aircraft.”

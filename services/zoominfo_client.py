@@ -3,7 +3,10 @@ ZoomInfo company and contact search for PhlyData owner enrichment.
 
 - Company Search: companyName only; disambiguation by location/phone/name is done in the owners endpoint.
 - Contact Search: fullName; used for person names (seller_contact_name, broker, registrant when person-like).
-- On 401 Unauthorized, the client can refresh the access token using ZOOMINFO_REFRESH_TOKEN and retry once.
+- On 401 Unauthorized, the client refreshes the access token using ZOOMINFO_REFRESH_TOKEN and retries.
+- For deployment: do NOT put ZOOMINFO_ACCESS_TOKEN in .env (it changes on refresh). Set only
+  ZOOMINFO_CLIENT_ID, ZOOMINFO_CLIENT_SECRET, ZOOMINFO_REFRESH_TOKEN. Optionally set ZOOMINFO_TOKEN_FILE
+  to a writable path (e.g. /data/zoominfo_token) so the refreshed token is persisted across restarts.
 """
 
 import base64
@@ -19,9 +22,66 @@ JSON_API = "application/vnd.api+json"
 ZOOMINFO_TOKEN_URL = "https://okta-login.zoominfo.com/oauth2/default/v1/token"
 
 
+def _token_file_path() -> Optional[Path]:
+    p = (os.getenv("ZOOMINFO_TOKEN_FILE") or "").strip()
+    return Path(p).resolve() if p else None
+
+
+def _read_token_from_file() -> bool:
+    """Load ZOOMINFO_ACCESS_TOKEN (and optionally REFRESH_TOKEN) from ZOOMINFO_TOKEN_FILE. Sets os.environ. Returns True if access token was set."""
+    path = _token_file_path()
+    if not path or not path.is_file():
+        return False
+    try:
+        text = path.read_text(encoding="utf-8")
+        for line in text.splitlines():
+            line = line.strip()
+            if line.startswith("ZOOMINFO_ACCESS_TOKEN="):
+                val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    os.environ["ZOOMINFO_ACCESS_TOKEN"] = val
+            elif line.startswith("ZOOMINFO_REFRESH_TOKEN="):
+                val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if val:
+                    os.environ["ZOOMINFO_REFRESH_TOKEN"] = val
+        return bool((os.getenv("ZOOMINFO_ACCESS_TOKEN") or "").strip())
+    except Exception as e:
+        logger.debug("ZoomInfo token file read failed: %s", e)
+        return False
+
+
+def _write_token_to_file(access_token: str, refresh_token: Optional[str] = None) -> bool:
+    """Persist access token (and optional refresh token) to ZOOMINFO_TOKEN_FILE. Returns True if written."""
+    path = _token_file_path()
+    if not path:
+        return False
+    try:
+        lines = [f"ZOOMINFO_ACCESS_TOKEN={access_token}\n"]
+        if refresh_token:
+            lines.append(f"ZOOMINFO_REFRESH_TOKEN={refresh_token}\n")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(lines), encoding="utf-8")
+        logger.debug("ZoomInfo token written to %s", path)
+        return True
+    except Exception as e:
+        logger.warning("ZoomInfo token file write failed: %s", e)
+        return False
+
+
 def _get_config() -> Tuple[str, str]:
     token = (os.getenv("ZOOMINFO_ACCESS_TOKEN") or "").strip()
     base = (os.getenv("ZOOMINFO_BASE_URL") or "https://api.zoominfo.com/gtm").rstrip("/")
+    # If no token in env, try token file (deployment: token not in .env)
+    if not token and _token_file_path():
+        _read_token_from_file()
+        token = (os.getenv("ZOOMINFO_ACCESS_TOKEN") or "").strip()
+    # If still no token, try refresh once (lazy refresh on first use)
+    if not token and all(
+        (os.getenv(k) or "").strip()
+        for k in ("ZOOMINFO_CLIENT_ID", "ZOOMINFO_CLIENT_SECRET", "ZOOMINFO_REFRESH_TOKEN")
+    ):
+        if _refresh_access_token():
+            token = (os.getenv("ZOOMINFO_ACCESS_TOKEN") or "").strip()
     return token, base
 
 
@@ -61,22 +121,25 @@ def _refresh_access_token() -> bool:
         if new_refresh:
             os.environ["ZOOMINFO_REFRESH_TOKEN"] = new_refresh
         logger.info("ZoomInfo access token refreshed successfully (expires_in=%s)", body.get("expires_in"))
-        # Optionally persist to backend/.env so next restart has the new token
-        env_path = Path(__file__).resolve().parent.parent / ".env"
-        if env_path.exists():
-            try:
-                lines = []
-                for line in open(env_path, "r", encoding="utf-8"):
-                    if line.strip().startswith("ZOOMINFO_ACCESS_TOKEN="):
-                        lines.append(f"ZOOMINFO_ACCESS_TOKEN={access_token}\n")
-                    elif line.strip().startswith("ZOOMINFO_REFRESH_TOKEN=") and new_refresh:
-                        lines.append(f"ZOOMINFO_REFRESH_TOKEN={new_refresh}\n")
-                    else:
-                        lines.append(line if line.endswith("\n") else line + "\n")
-                with open(env_path, "w", encoding="utf-8") as f:
-                    f.writelines(lines)
-            except Exception as e:
-                logger.debug("Could not write refreshed token to .env: %s", e)
+        # Persist: prefer ZOOMINFO_TOKEN_FILE (deployment); else backend/.env (local dev)
+        if _write_token_to_file(access_token, new_refresh):
+            pass  # token file used
+        else:
+            env_path = Path(__file__).resolve().parent.parent / ".env"
+            if env_path.exists():
+                try:
+                    lines = []
+                    for line in open(env_path, "r", encoding="utf-8"):
+                        if line.strip().startswith("ZOOMINFO_ACCESS_TOKEN="):
+                            lines.append(f"ZOOMINFO_ACCESS_TOKEN={access_token}\n")
+                        elif line.strip().startswith("ZOOMINFO_REFRESH_TOKEN=") and new_refresh:
+                            lines.append(f"ZOOMINFO_REFRESH_TOKEN={new_refresh}\n")
+                        else:
+                            lines.append(line if line.endswith("\n") else line + "\n")
+                    with open(env_path, "w", encoding="utf-8") as f:
+                        f.writelines(lines)
+                except Exception as e:
+                    logger.debug("Could not write refreshed token to .env: %s", e)
         return True
     except Exception as e:
         logger.warning("ZoomInfo token refresh failed: %s", e)
