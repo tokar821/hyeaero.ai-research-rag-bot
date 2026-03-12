@@ -34,6 +34,7 @@ pip install -r requirements.txt
    - `POSTGRES_CONNECTION_STRING` — required for all endpoints
    - `PINECONE_*`, `OPENAI_*` — required for RAG chat and resale advisory
    - `OPENAI_CHAT_MODEL` — optional (default `gpt-4o-mini`)
+   - `ZOOMINFO_ACCESS_TOKEN` — required for **Owner details** (ZoomInfo company/contact enrichment). Get a token from `phlydata-zoominfo` (run `python get_zoominfo_token.py` there) and copy the value into `backend/.env`. Without it, Owner details will show listings/FAA but no ZoomInfo company data.
 
 3. (Optional) Sync data to Pinecone for RAG:
 ```bash
