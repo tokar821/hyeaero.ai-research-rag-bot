@@ -24,6 +24,7 @@ from rag.query_service import RAGQueryService
 from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
+from services.aviacost_lookup import lookup_aviacost
 from services.zoominfo_client import (
     search_companies as zoominfo_search_companies,
     enrich_company as zoominfo_enrich_company,
@@ -864,6 +865,9 @@ def price_estimate(req: PriceEstimateRequest):
             flight_cycles=req.flight_cycles,
             region=req.region,
         )
+        aviacost_ref = lookup_aviacost(db, manufacturer=req.manufacturer, model=req.model)
+        if aviacost_ref:
+            result["aviacost_reference"] = aviacost_ref
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

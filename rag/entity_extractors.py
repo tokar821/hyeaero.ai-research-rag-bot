@@ -319,11 +319,68 @@ class FAARegistrationExtractor(EntityExtractor):
         }
 
 
+class AviacostAircraftDetailExtractor(EntityExtractor):
+    """Extractor for aviacost_aircraft_details table (operating cost & specs by aircraft type)."""
+
+    @staticmethod
+    def extract_text(record: Dict[str, Any]) -> Optional[str]:
+        """Extract text from Aviacost aircraft detail for RAG."""
+        parts = []
+
+        if record.get("name"):
+            parts.append(f"Aircraft type: {record['name']}")
+        if record.get("manufacturer_name"):
+            parts.append(f"Manufacturer: {record['manufacturer_name']}")
+        if record.get("category_name"):
+            parts.append(f"Category: {record['category_name']}")
+        if record.get("description"):
+            parts.append(record["description"])
+        if record.get("avionics"):
+            parts.append(f"Avionics: {record['avionics']}")
+        if record.get("years_in_production"):
+            parts.append(f"Years in production: {record['years_in_production']}")
+        if record.get("average_pre_owned_price") is not None:
+            parts.append(f"Average pre-owned price: ${float(record['average_pre_owned_price']):,.0f}")
+        if record.get("variable_cost_per_hour") is not None:
+            parts.append(f"Variable cost per hour: ${float(record['variable_cost_per_hour']):,.2f}")
+        if record.get("fuel_gallons_per_hour") is not None:
+            parts.append(f"Fuel: {record['fuel_gallons_per_hour']} gal/hr")
+        if record.get("normal_cruise_speed_kts") is not None:
+            parts.append(f"Normal cruise: {record['normal_cruise_speed_kts']} kts")
+        if record.get("seats_full_range_nm") is not None:
+            parts.append(f"Range: {record['seats_full_range_nm']} nm (seats full)")
+        if record.get("typical_passenger_capacity_max") is not None:
+            parts.append(f"Max passengers: {record['typical_passenger_capacity_max']}")
+        if record.get("powerplant"):
+            parts.append(f"Powerplant: {record['powerplant']}")
+        if record.get("engine_model"):
+            parts.append(f"Engine model: {record['engine_model']}")
+
+        if not parts:
+            return None
+        return "\n".join(parts)
+
+    @staticmethod
+    def get_metadata(record: Dict[str, Any]) -> Dict[str, Any]:
+        """Get metadata for Aviacost aircraft detail."""
+        return {
+            "entity_type": "aviacost_aircraft_detail",
+            "entity_id": str(record.get("id")),
+            "source_platform": "aviacost",
+            "name": record.get("name"),
+            "manufacturer_name": record.get("manufacturer_name"),
+            "category_name": record.get("category_name"),
+            "aircraft_detail_id": record.get("aircraft_detail_id"),
+            "ingestion_date": str(record.get("ingestion_date")) if record.get("ingestion_date") else None,
+        }
+
+
 # Registry of extractors
 EXTRACTORS = {
-    'aircraft_listing': AircraftListingExtractor,
-    'document': DocumentExtractor,
-    'aircraft': AircraftExtractor,
-    'aircraft_sale': AircraftSaleExtractor,
-    'faa_registration': FAARegistrationExtractor,
+    "aircraft_listing": AircraftListingExtractor,
+    "document": DocumentExtractor,
+    "aircraft": AircraftExtractor,
+    "aircraft_sale": AircraftSaleExtractor,
+    "faa_registration": FAARegistrationExtractor,
+    "aviacost_aircraft_detail": AviacostAircraftDetailExtractor,
 }
