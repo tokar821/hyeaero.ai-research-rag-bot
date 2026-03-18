@@ -45,6 +45,8 @@ ENTITY_TABLE = {
     "aircraft": ("aircraft", "id"),
     "aircraft_sale": ("aircraft_sales", "id"),
     "faa_registration": ("faa_registrations", "id"),
+    "aviacost_aircraft_detail": ("aviacost_aircraft_details", "id"),
+    "aircraftpost_fleet_aircraft": ("aircraftpost_fleet_aircraft", "id"),
 }
 
 # Tables that may reference aircraft(id) for synced model details

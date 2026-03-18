@@ -25,6 +25,7 @@ from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
 from services.aviacost_lookup import lookup_aviacost
+from services.aircraftpost_lookup import lookup_aircraftpost_fleet
 from services.zoominfo_client import (
     search_companies as zoominfo_search_companies,
     enrich_company as zoominfo_enrich_company,
@@ -868,6 +869,14 @@ def price_estimate(req: PriceEstimateRequest):
         aviacost_ref = lookup_aviacost(db, manufacturer=req.manufacturer, model=req.model)
         if aviacost_ref:
             result["aviacost_reference"] = aviacost_ref
+        ap_ref = lookup_aircraftpost_fleet(
+            db,
+            manufacturer=req.manufacturer,
+            model=req.model,
+            serial=None,
+        )
+        if ap_ref:
+            result["aircraftpost_fleet_reference"] = ap_ref
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -966,26 +975,41 @@ def phlydata_zoominfo_company(company_name: Optional[str] = None, company_id: Op
 
 
 @app.get("/api/phlydata/owners")
-def phlydata_owners(serial: str):
-    """Get owner detail for a PhlyData aircraft by serial number.
+def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Optional[str] = None):
+    """Get owner detail for a PhlyData aircraft by serial number (and optionally manufacturer + model to disambiguate).
     Aggregates owner/seller info from aircraft_listings (Controller, AircraftExchange) and faa_registrations (FAA).
     Use this when user clicks a row to see full owner details."""
     if not serial or not serial.strip():
         raise HTTPException(status_code=400, detail="serial is required")
     serial = serial.strip()
+    mfr = (manufacturer or "").strip() or None
+    mdl = (model or "").strip() or None
     try:
         db = get_db()
-        # Resolve aircraft by serial
-        aircraft_rows = db.execute_query(
-            "SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category FROM aircraft WHERE serial_number = %s LIMIT 1",
-            (serial,),
-        )
+        # Resolve aircraft by serial_number + manufacturer + model (disambiguates when serial repeats across models)
+        if mfr and mdl:
+            aircraft_rows = db.execute_query(
+                """
+                SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category
+                FROM aircraft
+                WHERE serial_number = %s
+                  AND (manufacturer IS NULL OR manufacturer ILIKE %s)
+                  AND (model IS NULL OR model ILIKE %s)
+                LIMIT 1
+                """,
+                (serial, f"%{mfr}%", f"%{mdl}%"),
+            )
+        else:
+            aircraft_rows = db.execute_query(
+                "SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category FROM aircraft WHERE serial_number = %s LIMIT 1",
+                (serial,),
+            )
         if not aircraft_rows:
-            logger.info("phlydata/owners: serial=%r -> aircraft not found", serial)
+            logger.info("phlydata/owners: serial=%r manufacturer=%r model=%r -> aircraft not found", serial, mfr, mdl)
             return {"aircraft": None, "owners_from_listings": [], "owners_from_faa": [], "message": "Aircraft not found for this serial."}
         aircraft = dict(aircraft_rows[0])
         aircraft_id = aircraft["id"]
-        logger.info("phlydata/owners: serial=%r -> aircraft_id=%s", serial, aircraft_id)
+        logger.info("phlydata/owners: serial=%r manufacturer=%r model=%r -> aircraft_id=%s", serial, mfr, mdl, aircraft_id)
 
         # Owners from listings (Controller, AircraftExchange): seller / contact / broker / phone
         listing_rows = db.execute_query(
@@ -1016,6 +1040,42 @@ def phlydata_owners(serial: str):
             (aircraft_id,),
         )
         owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
+
+        # AircraftPost fleet (enrichment): match by serial + make/model name when available.
+        # NOTE: aircraftpost_fleet_aircraft doesn't have separate manufacturer/model columns; match against make_model_name.
+        if mfr and mdl:
+            ap_rows = db.execute_query(
+                """
+                SELECT id, aircraft_entity_id, make_model_id, make_model_name,
+                       serial_number, registration_number,
+                       mfr_year, eis_date, country_code, base_code, owner_url,
+                       airframe_hours, total_landings, prior_owners, for_sale, passengers,
+                       engine_program_type, apu_program, ingestion_date
+                FROM aircraftpost_fleet_aircraft
+                WHERE serial_number = %s
+                  AND make_model_name ILIKE %s
+                  AND make_model_name ILIKE %s
+                ORDER BY ingestion_date DESC, updated_at DESC
+                LIMIT 10
+                """,
+                (serial, f"%{mfr}%", f"%{mdl}%"),
+            )
+        else:
+            ap_rows = db.execute_query(
+                """
+                SELECT id, aircraft_entity_id, make_model_id, make_model_name,
+                       serial_number, registration_number,
+                       mfr_year, eis_date, country_code, base_code, owner_url,
+                       airframe_hours, total_landings, prior_owners, for_sale, passengers,
+                       engine_program_type, apu_program, ingestion_date
+                FROM aircraftpost_fleet_aircraft
+                WHERE serial_number = %s
+                ORDER BY ingestion_date DESC, updated_at DESC
+                LIMIT 10
+                """,
+                (serial,),
+            )
+        aircraftpost_fleet = [dict(r) for r in (ap_rows or [])]
 
         # Build ZoomInfo search payloads. Ensure at least one item per platform (controller, faa, aircraftexchange).
         def _listing_item(row: dict, platform: str, field: str) -> dict:
@@ -1255,6 +1315,7 @@ def phlydata_owners(serial: str):
             "owners_from_listings": owners_from_listings,
             "owners_from_faa": owners_from_faa,
             "zoominfo_enrichment": zoominfo_enrichment,
+            "aircraftpost_fleet": aircraftpost_fleet,
         }
     except HTTPException:
         raise

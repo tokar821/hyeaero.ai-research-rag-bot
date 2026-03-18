@@ -375,6 +375,79 @@ class AviacostAircraftDetailExtractor(EntityExtractor):
         }
 
 
+class AircraftPostFleetAircraftExtractor(EntityExtractor):
+    """Extractor for aircraftpost_fleet_aircraft table (fleet stats by serial)."""
+
+    @staticmethod
+    def extract_text(record: Dict[str, Any]) -> Optional[str]:
+        parts: List[str] = []
+
+        if record.get("make_model_name"):
+            parts.append(f"Make/Model: {record.get('make_model_name')}")
+        if record.get("serial_number"):
+            parts.append(f"Serial Number: {record.get('serial_number')}")
+        if record.get("registration_number"):
+            parts.append(f"Registration: {record.get('registration_number')}")
+
+        if record.get("mfr_year") is not None:
+            parts.append(f"MFR Year: {record.get('mfr_year')}")
+        if record.get("eis_date"):
+            parts.append(f"EIS Date: {record.get('eis_date')}")
+        if record.get("country_code"):
+            parts.append(f"Country: {record.get('country_code')}")
+        if record.get("base_code"):
+            parts.append(f"Base: {record.get('base_code')}")
+
+        if record.get("airframe_hours") is not None:
+            parts.append(f"Airframe Hours: {record.get('airframe_hours')}")
+        if record.get("total_landings") is not None:
+            parts.append(f"Total Landings: {record.get('total_landings')}")
+        if record.get("prior_owners") is not None:
+            parts.append(f"Prior Owners: {record.get('prior_owners')}")
+        if record.get("for_sale") is True:
+            parts.append("For Sale: Yes")
+        elif record.get("for_sale") is False:
+            parts.append("For Sale: No")
+        if record.get("passengers") is not None:
+            parts.append(f"Passengers: {record.get('passengers')}")
+
+        if record.get("engine_program_type"):
+            parts.append(f"Engine Program Type: {record.get('engine_program_type')}")
+        if record.get("apu_program"):
+            parts.append(f"APU Program: {record.get('apu_program')}")
+        if record.get("owner_url"):
+            parts.append(f"Owner URL: {record.get('owner_url')}")
+
+        # Include a compact list of equipment section names for retrieval (avoid huge text)
+        sections = record.get("sections")
+        if isinstance(sections, str):
+            try:
+                sections = json.loads(sections)
+            except Exception:
+                sections = None
+        if isinstance(sections, dict) and sections:
+            section_names = [str(k) for k in sections.keys()][:12]
+            parts.append(f"Equipment sections: {', '.join(section_names)}")
+
+        if not parts:
+            return None
+        return "\n".join(parts)
+
+    @staticmethod
+    def get_metadata(record: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "entity_type": "aircraftpost_fleet_aircraft",
+            "entity_id": str(record.get("id")),
+            "source_platform": "aircraftpost",
+            "make_model_id": record.get("make_model_id"),
+            "make_model_name": record.get("make_model_name"),
+            "aircraft_entity_id": record.get("aircraft_entity_id"),
+            "serial_number": record.get("serial_number"),
+            "registration_number": record.get("registration_number"),
+            "ingestion_date": str(record.get("ingestion_date")) if record.get("ingestion_date") else None,
+        }
+
+
 # Registry of extractors
 EXTRACTORS = {
     "aircraft_listing": AircraftListingExtractor,
@@ -383,4 +456,5 @@ EXTRACTORS = {
     "aircraft_sale": AircraftSaleExtractor,
     "faa_registration": FAARegistrationExtractor,
     "aviacost_aircraft_detail": AviacostAircraftDetailExtractor,
+    "aircraftpost_fleet_aircraft": AircraftPostFleetAircraftExtractor,
 }

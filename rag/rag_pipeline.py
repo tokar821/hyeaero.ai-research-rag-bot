@@ -348,6 +348,15 @@ class RAGPipeline:
                 query += f" LIMIT {limit}"
             return self.db.execute_query(query)
 
+        elif entity_type == 'aircraftpost_fleet_aircraft':
+            query = """
+                SELECT * FROM aircraftpost_fleet_aircraft
+                ORDER BY updated_at DESC, created_at DESC
+            """
+            if limit:
+                query += f" LIMIT {limit}"
+            return self.db.execute_query(query)
+
         else:
             logger.warning(f"No query defined for entity type: {entity_type}")
             return []
