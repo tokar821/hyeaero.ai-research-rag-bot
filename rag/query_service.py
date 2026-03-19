@@ -2,12 +2,14 @@
 
 import logging
 import time
+import re
 from typing import List, Dict, Any, Optional
 
 from rag.embedding_service import EmbeddingService
 from rag.entity_extractors import EXTRACTORS
 from vector_store.pinecone_client import PineconeClient
 from database.postgres_client import PostgresClient
+from services.aviacost_lookup import lookup_aviacost
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +238,14 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         (e.g. flight concepts, theory, types of flight models—user wants full answers on flight-related topics).
         Returns dict with: answer, sources (list of retrieved items), data_used (summary), error (if any).
         """
+        # For aggregate/list style questions we need exact numbers.
+        # LLM answers from small Pinecone snippets are error-prone, so we route to
+        # deterministic SQL first when intent is clearly “needs exact values”.
+        prof_answer = self._professional_search_answer(query)
+        if prof_answer:
+            logger.info("Professional search triggered (deterministic SQL) for query=%r", query)
+            return prof_answer
+
         start = time.perf_counter()
         try:
             results = self.retrieve(
@@ -311,3 +321,284 @@ Provide a professional, well-structured answer. Use plain text and bullet points
                 "data_used": {},
                 "error": str(e),
             }
+
+    def _professional_search_answer(self, query: str) -> Optional[Dict[str, Any]]:
+        """
+        Deterministic answers for “aggregate/list” style questions.
+        This avoids LLM guessing from limited Pinecone snippets.
+        """
+        q = (query or "").strip()
+        if not q:
+            return None
+
+        q_l = q.lower()
+
+        # Intent detection (AircraftPost / Aviacost / FAA / listings / internal DB)
+        wants_aircraftpost = ("aircraftpost" in q_l) or ("fleet" in q_l and "aircraftpost" in q_l)
+        # Use regex so punctuation like "models." still matches.
+        wants_models = bool(re.search(r"\bmodels?\b", q_l)) or ("model list" in q_l) or ("models of" in q_l)
+        wants_serials = bool(re.search(r"\bserials?\b", q_l)) or ("serial number" in q_l) or ("serial numbers" in q_l)
+        wants_for_sale_rate = ("for-sale rate" in q_l) or ("for sale rate" in q_l) or ("forsale rate" in q_l)
+        wants_fleet_count = any(k in q_l for k in ["how many", "number of", "records included", "fleet records", "count"])
+        wants_for_sale_only = ("for sale=true" in q_l) or ("forsale=true" in q_l) or ("for sale models" in q_l)
+        wants_for_sale_data = ("for sales data" in q_l) or ("for sale data" in q_l) or ("available for sale" in q_l) or ("for sale" in q_l and wants_serials)
+
+        wants_aviacost = "aviacost" in q_l
+        wants_faa = ("faa" in q_l) or ("registrant" in q_l) or ("faa registry" in q_l)
+        wants_listings = ("listing" in q_l) or ("dealer" in q_l) or ("seller" in q_l) or ("craftexchange" in q_l) or ("controller" in q_l)
+        wants_internal_sales = ("sale" in q_l) or ("sold_price" in q_l) or ("sold price" in q_l)
+
+        # Extract make/model from phrases like: "For Embraer Phenom 100, ..."
+        make_model = self._extract_make_model_from_query(q)
+
+        # AircraftPost: models list (distinct make_model_name)
+        if wants_aircraftpost and ("models" in q_l or "model list" in q_l or "models of" in q_l) and not make_model:
+            for_sale_filter = wants_for_sale_only or ("for sale" in q_l and "models" in q_l)
+            rows = self.db.execute_query(
+                """
+                SELECT DISTINCT make_model_name
+                FROM aircraftpost_fleet_aircraft
+                WHERE make_model_name IS NOT NULL AND TRIM(make_model_name) <> ''
+                {for_sale_clause}
+                ORDER BY make_model_name
+                LIMIT 60
+                """.format(for_sale_clause="AND for_sale IS TRUE" if for_sale_filter else ""),
+            )
+            models = [r.get("make_model_name") for r in rows if r.get("make_model_name")]
+            ans_lines = ["AircraftPost models (distinct make_model_name):"]
+            ans_lines.extend([f"- {m}" for m in models])
+            return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"aircraftpost_models": len(models)}, "error": None}
+
+        # AircraftPost: exact aggregates by make/model (and optional for_sale filter)
+        if wants_aircraftpost and make_model and (wants_for_sale_rate or wants_fleet_count or wants_serials or wants_models or wants_for_sale_data):
+            mfr, mdl = make_model
+            if not mfr or not mdl:
+                return None
+
+            for_sale_clause = "AND for_sale IS TRUE" if (wants_for_sale_only or wants_for_sale_data) else ""
+            # Total record count and for-sale count
+            if wants_for_sale_rate or wants_fleet_count:
+                count_rows = self.db.execute_query(
+                    f"""
+                    SELECT
+                      COUNT(*) AS total_records,
+                      SUM(CASE WHEN for_sale IS TRUE THEN 1 ELSE 0 END) AS for_sale_count
+                    FROM aircraftpost_fleet_aircraft
+                    WHERE make_model_name ILIKE %s AND make_model_name ILIKE %s
+                    {for_sale_clause}
+                    """,
+                    (f"%{mfr}%", f"%{mdl}%"),
+                )
+                r = count_rows[0] if count_rows else {}
+                total_records = int(r.get("total_records") or 0)
+                # If we filtered by for_sale=true in query, for_sale_count==total_records
+                for_sale_count = int(r.get("for_sale_count") or 0)
+                for_sale_rate = (for_sale_count / total_records) if total_records else None
+
+                ans_lines = [f"AircraftPost fleet summary for {mfr} {mdl}:"]
+                ans_lines.append(f"- Fleet records: {total_records}")
+                ans_lines.append(f"- For-sale records: {for_sale_count}")
+                if for_sale_rate is not None:
+                    ans_lines.append(f"- For-sale rate: {for_sale_rate * 100:.2f}%")
+                return {
+                    "answer": "\n".join(ans_lines),
+                    "sources": [],
+                    "data_used": {"aircraftpost_fleet_total": total_records, "aircraftpost_fleet_for_sale": for_sale_count},
+                    "error": None,
+                }
+
+            # Models list for a specific make/model (optionally for sale)
+            if wants_models:
+                rows = self.db.execute_query(
+                    f"""
+                    SELECT DISTINCT make_model_name, COUNT(*) AS n
+                    FROM aircraftpost_fleet_aircraft
+                    WHERE make_model_name ILIKE %s AND make_model_name ILIKE %s
+                    {for_sale_clause}
+                    GROUP BY make_model_name
+                    ORDER BY n DESC
+                    LIMIT 30
+                    """,
+                    (f"%{mfr}%", f"%{mdl}%"),
+                )
+                ans_lines = [f"AircraftPost models matched for {mfr} {mdl}:"]
+                ans_lines.extend([f"- {r.get('make_model_name')}" for r in rows if r.get("make_model_name")])
+                return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"models_count": len(rows)}, "error": None}
+
+            # Serial numbers list (optionally for sale)
+            if wants_serials or wants_for_sale_data:
+                # Return all distinct serial_numbers for the make/model (and optional for_sale filter).
+                rows = self.db.execute_query(
+                    f"""
+                    SELECT DISTINCT TRIM(serial_number) AS serial_number
+                    FROM aircraftpost_fleet_aircraft
+                    WHERE make_model_name ILIKE %s AND make_model_name ILIKE %s
+                    {for_sale_clause}
+                      AND serial_number IS NOT NULL AND TRIM(serial_number) <> ''
+                    ORDER BY serial_number
+                    LIMIT 500
+                    """,
+                    (f"%{mfr}%", f"%{mdl}%"),
+                )
+                serials = [r.get("serial_number") for r in rows if r.get("serial_number") is not None]
+                ans_lines = [f"AircraftPost serial numbers for {mfr} {mdl}:"]
+                if not serials:
+                    ans_lines.append("- No matching records found.")
+                else:
+                    ans_lines.extend([f"- {s}" for s in serials])
+                return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"serials_returned": len(serials)}, "error": None}
+
+        # Internal DB / synced master: serial numbers for a specific make/model (non-AircraftPost)
+        if (not wants_aircraftpost) and make_model and wants_serials:
+            mfr, mdl = make_model
+            rows = self.db.execute_query(
+                """
+                SELECT serial_number, registration_number, manufacturer_year, based_at, based_country
+                FROM aircraft
+                WHERE manufacturer ILIKE %s
+                  AND model ILIKE %s
+                  AND serial_number IS NOT NULL AND TRIM(serial_number) <> ''
+                ORDER BY updated_at DESC, created_at DESC
+                LIMIT 30
+                """,
+                (f"%{mfr}%", f"%{mdl}%"),
+            )
+            ans_lines = [f"Serial numbers for {mfr} {mdl} (latest up to 30):"]
+            if not rows:
+                ans_lines.append("- No matching records found.")
+            else:
+                for r in rows:
+                    sn = r.get("serial_number")
+                    reg = r.get("registration_number")
+                    year = r.get("manufacturer_year")
+                    base = r.get("based_at")
+                    ans_lines.append(
+                        f"- {sn} (Reg: {reg or '—'}{f', Year: {year}' if year else ''}{f', Base: {base}' if base else ''})"
+                    )
+            return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"serials_returned": len(rows or [])}, "error": None}
+
+        # Listings: count for_sale listings for a make/model
+        # Accept "for sale", "for-sale", and "for_sale" spellings.
+        wants_for_sale_any = bool(re.search(r"\bfor[- ]?sale\b", q_l))
+        if make_model and wants_listings and wants_fleet_count and wants_for_sale_any:
+            mfr, mdl = make_model
+            rows = self.db.execute_query(
+                """
+                SELECT COUNT(*) AS listings_count
+                FROM aircraft_listings l
+                JOIN aircraft a ON a.id = l.aircraft_id
+                WHERE l.listing_status = 'for_sale'
+                  AND a.manufacturer ILIKE %s
+                  AND a.model ILIKE %s
+                """,
+                (f"%{mfr}%", f"%{mdl}%"),
+            )
+            n = int(rows[0].get("listings_count") or 0) if rows else 0
+            return {
+                "answer": f"Number of for-sale listings for {mfr} {mdl}: {n}.",
+                "sources": [],
+                "data_used": {"for_sale_listings": n},
+                "error": None,
+            }
+
+        # Models list for non-AircraftPost queries: provide internal sales models (sold_price > 0)
+        if (not wants_aircraftpost) and ("models" in q_l or "model list" in q_l or "models of" in q_l) and not make_model:
+            rows = self.db.execute_query(
+                """
+                SELECT DISTINCT manufacturer, model
+                FROM aircraft_sales
+                WHERE sold_price IS NOT NULL AND sold_price > 0
+                  AND (COALESCE(manufacturer,'') <> '' OR COALESCE(model,'') <> '')
+                ORDER BY manufacturer, model
+                LIMIT 60
+                """
+            )
+            models = []
+            for r in rows:
+                man = (r.get("manufacturer") or "").strip()
+                mod = (r.get("model") or "").strip()
+                if man or mod:
+                    label = f"{man} {mod}".strip()
+                    if label:
+                        models.append(label)
+            ans_lines = ["Models (from internal aircraft_sales with sold_price > 0):"]
+            ans_lines.extend([f"- {m}" for m in models])
+            return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"models_returned": len(models)}, "error": None}
+
+        # Aviacost exact lookup: ask for operating cost reference fields
+        if wants_aviacost and make_model:
+            mfr, mdl = make_model
+            av = lookup_aviacost(self.db, manufacturer=mfr, model=mdl)
+            if av:
+                ans_lines = [f"Aviacost operating cost reference for {av.get('name') or (mfr + ' ' + mdl)}:"]
+                if av.get("variable_cost_per_hour") is not None:
+                    ans_lines.append(f"- Variable cost/hr: ${av['variable_cost_per_hour']:,.2f}")
+                if av.get("average_pre_owned_price") is not None:
+                    ans_lines.append(f"- Avg pre-owned price: ${(av['average_pre_owned_price'] / 1_000_000):.2f}M")
+                if av.get("fuel_gallons_per_hour") is not None:
+                    ans_lines.append(f"- Fuel: {av['fuel_gallons_per_hour']} gal/hr")
+                if av.get("normal_cruise_speed_kts") is not None:
+                    ans_lines.append(f"- Cruise: {av['normal_cruise_speed_kts']} kts")
+                return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"aviacost_lookup": True}, "error": None}
+
+        # FAA exact lookup by model (if question mentions registrant)
+        if wants_faa and make_model:
+            mfr, mdl = make_model
+            rows = self.db.execute_query(
+                """
+                SELECT f.registrant_name,
+                       f.city, f.state, f.country,
+                       f.street, f.zip_code
+                FROM faa_registrations f
+                JOIN aircraft a ON a.id = f.aircraft_id
+                WHERE a.manufacturer ILIKE %s AND a.model ILIKE %s
+                  AND f.registrant_name IS NOT NULL AND TRIM(f.registrant_name) <> ''
+                ORDER BY f.ingestion_date DESC
+                LIMIT 10
+                """,
+                (f"%{mfr}%", f"%{mdl}%"),
+            )
+            if rows:
+                ans_lines = [f"FAA registrant(s) for {mfr} {mdl}: (latest up to 10)"]
+                for r in rows:
+                    reg = r.get("registrant_name")
+                    city = r.get("city")
+                    state = r.get("state")
+                    country = r.get("country")
+                    loc = ", ".join([x for x in [city, state, country] if x])
+                    ans_lines.append(f"- {reg}" + (f" ({loc})" if loc else ""))
+                return {"answer": "\n".join(ans_lines), "sources": [], "data_used": {"faa_registrants_found": len(rows)}, "error": None}
+
+        return None
+
+    @staticmethod
+    def _extract_make_model_from_query(query: str) -> Optional[tuple]:
+        """
+        Extract (manufacturer, model) from strings like:
+          "For Embraer Phenom 100, ..."
+          "For Pilatus PC-24, ..."
+        Returns None if it can't find a usable phrase.
+        """
+        q = (query or "").strip()
+        if not q:
+            return None
+
+        # Prefer patterns that include "For <make> <model>"
+        m = re.search(r"\bfor\s+([^,?\n]+)", q, flags=re.IGNORECASE)
+        if not m:
+            return None
+        phrase = m.group(1).strip()
+
+        # Clean common separators
+        phrase = re.sub(r"\b(aircraftpost|aviacost|faa)\b", "", phrase, flags=re.IGNORECASE).strip()
+        phrase = phrase.strip(" -–—\t")
+
+        # Split manufacturer (first word) and model (rest)
+        parts = phrase.split(None, 1)
+        if len(parts) < 2:
+            return None
+        mfr = parts[0].strip()
+        mdl = parts[1].strip()
+        if not mfr or not mdl:
+            return None
+        return (mfr, mdl)
