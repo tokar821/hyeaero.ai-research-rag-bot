@@ -1189,40 +1189,7 @@ def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str]
     except HTTPException:
         raise
     except Exception as e:
-        # Production safety: if deployed DB doesn't have `phlydata_aircraft` (or any DB error),
-        # fall back to internal CSV so the UI still renders.
-        logger.exception("phlydata/aircraft: DB query failed, falling back to internal CSV: %s", e)
-        all_rows = _load_internaldb_aircraft_rows()
-
-        if search:
-            s = search.lower()
-
-            def row_matches(r: dict[str, object]) -> bool:
-                parts = [
-                    str(r.get("serial_number") or "").lower(),
-                    str(r.get("registration_number") or "").lower(),
-                    str(r.get("manufacturer") or "").lower(),
-                    str(r.get("model") or "").lower(),
-                    str(r.get("category") or "").lower(),
-                    "" if r.get("manufacturer_year") is None else str(r.get("manufacturer_year")).lower(),
-                    "" if r.get("delivery_year") is None else str(r.get("delivery_year")).lower(),
-                ]
-                return any(p and s in p for p in parts)
-
-            filtered = [r for r in all_rows if row_matches(r)]
-        else:
-            filtered = all_rows
-
-        def sort_key(r: dict[str, object]) -> tuple:
-            return (
-                str(r.get("serial_number") or "").lower(),
-                str(r.get("registration_number") or "").lower(),
-            )
-
-        filtered.sort(key=sort_key)
-        total = len(filtered)
-        page_rows = filtered[offset : offset + page_size]
-        return {"aircraft": page_rows, "total": total, "page": page, "page_size": page_size}
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/phlydata/zoominfo/company")
