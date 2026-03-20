@@ -338,7 +338,160 @@ def enrich_company(
 
 def search_contacts(full_name: Optional[str], page_size: int = 25) -> Tuple[List[Any], Optional[str]]:
     """
-    Contact Search disabled: ZoomInfo plan returns 403 for contacts/search.
-    Returns empty list so matching uses company data only.
+    Search ZoomInfo for contacts (people) by full name.
+
+    Note:
+    - ZoomInfo's contacts search endpoint does not directly return emails/phone numbers.
+      It returns contact ids and hints; use `enrich_contact()` to fetch email/phone/address.
+    - If your ZoomInfo plan does not include contacts/search, ZoomInfo returns 403 and we
+      return ([], <error>).
     """
-    return [], None
+    full_name = _strip(full_name)
+    if not full_name:
+        return [], None
+    token, base = _get_config()
+    if not token:
+        logger.warning("ZOOMINFO_ACCESS_TOKEN not set in backend .env; skipping ZoomInfo contacts search.")
+        return [], "ZoomInfo token not configured."
+
+    import requests
+
+    url = f"{base}/data/v1/contacts/search"
+    params = {"page[number]": 1, "page[size]": min(100, max(1, page_size))}
+    body = {"data": {"type": "ContactSearch", "attributes": {"fullName": full_name}}}
+
+    for attempt in range(2):
+        token, base = _get_config()
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": JSON_API, "Accept": JSON_API}
+        try:
+            r = requests.post(url, json=body, params=params, headers=headers, timeout=15)
+            if r.status_code == 401 and attempt == 0 and _refresh_access_token():
+                logger.info("ZoomInfo contacts search 401 -> token refreshed, retrying")
+                continue
+            if r.status_code == 403:
+                try:
+                    err = r.json()
+                except Exception:
+                    err = r.text
+                return [], f"ZoomInfo contacts search forbidden (plan/access missing): {err}"
+            r.raise_for_status()
+            data = r.json()
+            return (data.get("data") or []), None
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401 and attempt == 0 and _refresh_access_token():
+                logger.info("ZoomInfo contacts search 401 -> token refreshed, retrying")
+                continue
+            logger.warning("ZoomInfo contacts search failed for %r: %s", full_name, e)
+            return [], f"ZoomInfo error: {str(e)}"
+        except Exception as e:
+            logger.warning("ZoomInfo contacts search failed for %r: %s", full_name, e)
+            return [], f"ZoomInfo error: {str(e)}"
+    return [], "ZoomInfo error: retry after refresh failed"
+
+
+def enrich_contact(person_id: Optional[int] = None, full_name: Optional[str] = None) -> Tuple[Optional[Any], Optional[str]]:
+    """
+    Enrich one ZoomInfo contact (person) to fetch details like email.
+
+    Uses `/data/v1/contacts/enrich`.
+
+    Provide either `person_id` (preferred) or `full_name` (fallback matching input).
+    """
+    if person_id is None and not _strip(full_name):
+        return None, "Provide person_id or full_name."
+
+    token, base = _get_config()
+    if not token:
+        return None, "ZoomInfo token not configured."
+
+    import requests
+
+    # Select fields that the frontend can render (email + basic identity/location).
+    output_fields = [
+        "id",
+        "fullName",
+        "firstName",
+        "lastName",
+        "email",
+        "companyName",
+        "phone",
+        "directPhone",
+        "mobilePhone",
+        "workPhone",
+        "street",
+        "city",
+        "state",
+        "zipCode",
+        "country",
+    ]
+    required_fields = ["id", "companyName"]
+
+    match_input: dict = {}
+    if person_id is not None:
+        match_input["personId"] = int(person_id)
+    else:
+        # Best-effort: split full name into first/last when possible.
+        parts = str(full_name).strip().split()
+        if len(parts) >= 2:
+            match_input["firstName"] = parts[0]
+            match_input["lastName"] = " ".join(parts[1:])
+        else:
+            # If only one token, use it as firstName and leave lastName empty.
+            match_input["firstName"] = parts[0]
+
+    url = f"{base}/data/v1/contacts/enrich"
+    body = {
+        "data": {
+            "type": "ContactEnrich",
+            "attributes": {
+                "matchPersonInput": [match_input],
+                "outputFields": output_fields,
+                "requiredFields": required_fields,
+            },
+        }
+    }
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": JSON_API, "Accept": JSON_API}
+
+    for attempt in range(2):
+        token, base = _get_config()
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": JSON_API, "Accept": JSON_API}
+        try:
+            r = requests.post(url, json=body, headers=headers, timeout=15)
+            if r.status_code == 401 and attempt == 0 and _refresh_access_token():
+                logger.info("ZoomInfo contacts enrich 401 -> token refreshed, retrying")
+                continue
+            if r.status_code == 403:
+                try:
+                    err = r.json()
+                except Exception:
+                    err = r.text
+                return None, f"ZoomInfo contacts enrich forbidden (plan/access missing): {err}"
+            if r.status_code == 400:
+                try:
+                    err = r.json()
+                except Exception:
+                    err = r.text
+                return None, f"ZoomInfo contacts enrich 400 Bad Request: {err}"
+            r.raise_for_status()
+            data = r.json()
+            records = data.get("data") or []
+            if not records:
+                return None, None
+            first = records[0]
+            meta = first.get("meta") or {}
+            if meta.get("matchStatus") == "NO_MATCH":
+                return None, None
+            attrs = first.get("attributes") or {}
+            # Normalize street field into `address` so frontend can display it consistently.
+            if not attrs.get("address") and attrs.get("street"):
+                attrs["address"] = attrs.get("street")
+            return first, None
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 401 and attempt == 0 and _refresh_access_token():
+                logger.info("ZoomInfo contacts enrich 401 -> token refreshed, retrying")
+                continue
+            return None, f"ZoomInfo error: {str(e)}"
+        except Exception as e:
+            return None, f"ZoomInfo error: {str(e)}"
+    return None, "ZoomInfo error: retry after refresh failed"

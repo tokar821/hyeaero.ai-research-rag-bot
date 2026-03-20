@@ -8,6 +8,8 @@ and resale advisory using Hye Aero's proprietary data (Controller, AircraftExcha
 import os
 import sys
 from pathlib import Path
+import csv
+from functools import lru_cache
 
 # Backend root on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -28,7 +30,9 @@ from services.aviacost_lookup import lookup_aviacost
 from services.aircraftpost_lookup import lookup_aircraftpost_fleet
 from services.zoominfo_client import (
     search_companies as zoominfo_search_companies,
+    search_contacts as zoominfo_search_contacts,
     enrich_company as zoominfo_enrich_company,
+    enrich_contact as zoominfo_enrich_contact,
     normalize_phone as zoominfo_normalize_phone,
     phones_match as zoominfo_phones_match,
 )
@@ -45,6 +49,11 @@ logger = logging.getLogger(__name__)
 
 # When content/word scoring is below this, try vector + LLM fallback to pick best match from ZoomInfo candidates.
 ZOOMINFO_SCORE_THRESHOLD_FOR_LLM_FALLBACK = 1.0
+
+# US state abbreviations (FAA state field) — used to infer US registrant vs foreign homonym companies in ZoomInfo.
+_US_STATE_CODES = frozenset(
+    "AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC AS GU MP PR VI".split()
+)
 
 # Legal/status suffixes and numbers to strip when ZoomInfo returns 0 (e.g. "JET ALLIANCE 84 LLC" -> "JET ALLIANCE")
 _LEGAL_SUFFIXES = frozenset(
@@ -127,6 +136,82 @@ def _normalize_website(url: Optional[str]) -> str:
     return s.rstrip("/") or ""
 
 
+def _faa_item_geo_bucket(item: dict) -> str:
+    """Infer registrant geography from FAA-derived owner item: 'us' | 'intl' | 'unk'."""
+    if (item.get("source_platform") or "").strip().lower() != "faa":
+        return "unk"
+    c = (item.get("country") or "").strip().upper().replace(".", "")
+    st = (item.get("state") or "").strip().upper()
+    if c in ("US", "USA", "UNITED STATES", "UNITED STATES OF AMERICA"):
+        return "us"
+    if len(st) == 2 and st in _US_STATE_CODES:
+        return "us"
+    if c in ("GB", "UK", "CANADA", "CA", "AUSTRALIA", "AU", "MEXICO", "MX", "FRANCE", "FR", "GERMANY", "DE"):
+        return "intl"
+    if c and c not in ("US", "USA"):
+        # Any other explicit non-empty country → treat as non-US
+        return "intl"
+    return "unk"
+
+
+def _zoominfo_company_geo_bucket(attrs: dict) -> str:
+    """Infer ZoomInfo company geography: 'us' | 'intl' | 'unk'."""
+    c_raw = str(attrs.get("country") or "").strip().lower()
+    st = str(attrs.get("state") or "").strip().upper()
+    st_lower = str(attrs.get("state") or "").strip().lower()
+    city_lower = str(attrs.get("city") or "").strip().lower()
+    if any(
+        x in c_raw
+        for x in (
+            "united kingdom",
+            "england",
+            "scotland",
+            "wales",
+            "northern ireland",
+            "great britain",
+        )
+    ):
+        return "intl"
+    if c_raw in ("gb", "uk"):
+        return "intl"
+    if "united states" in c_raw or c_raw in ("us", "usa"):
+        return "us"
+    if len(st) == 2 and st in _US_STATE_CODES:
+        return "us"
+    if "greater london" in st_lower or (city_lower == "london" and "united states" not in c_raw and c_raw not in ("us", "usa")):
+        return "intl"
+    return "unk"
+
+
+def _zoominfo_foreign_signals_penalty(item: dict, attrs: dict) -> float:
+    """
+    When FAA context is US, penalize obvious non-US company signals (same-name homonyms).
+    Returns negative delta to add to score (e.g. -3.0).
+    """
+    if _faa_item_geo_bucket(item) != "us":
+        return 0.0
+    penalty = 0.0
+    tw = _normalize_website(attrs.get("website"))
+    if tw.endswith(".co.uk") or tw.endswith(".uk"):
+        penalty -= 3.0
+    for p in (
+        attrs.get("phone"),
+        attrs.get("directPhone"),
+        attrs.get("mainPhone"),
+        attrs.get("mobilePhone"),
+    ):
+        ps = str(p or "").strip().replace(" ", "")
+        if ps.startswith("+44") or ps.startswith("0044"):
+            penalty -= 2.5
+            break
+    zb = _zoominfo_company_geo_bucket(attrs)
+    if zb == "intl":
+        penalty -= 4.0
+    elif zb == "us":
+        penalty += 1.0  # small bonus when both look US
+    return penalty
+
+
 def _location_match_score(our_tokens: List[str], their_str: str) -> float:
     """Score 0..1: fraction of our tokens that appear in their string."""
     if not our_tokens:
@@ -145,6 +230,8 @@ def _pick_best_zoominfo_company(
     seller_location: Optional[str] = None,
     city: Optional[str] = None,
     street: Optional[str] = None,
+    state: Optional[str] = None,
+    country: Optional[str] = None,
 ) -> List[Any]:
     """
     When ZoomInfo returns multiple companies, pick the best match by location.
@@ -167,6 +254,10 @@ def _pick_best_zoominfo_company(
             our_tokens.extend(_tokenize(city))
         if street:
             our_tokens.extend(_tokenize(street))
+        if state:
+            our_tokens.extend(_tokenize(state))
+        if country:
+            our_tokens.extend(_tokenize(country))
     if not our_tokens:
         return [companies[0]]
     best_idx = 0
@@ -178,6 +269,7 @@ def _pick_best_zoominfo_company(
             attrs.get("addressLine1") or "",
             attrs.get("city") or "",
             attrs.get("state") or "",
+            attrs.get("country") or "",
         ]
         their_str = " ".join(their_parts)
         score = _location_match_score(our_tokens, their_str)
@@ -231,12 +323,19 @@ def _score_zoominfo_company(co: Any, item: dict) -> tuple:
             our_tokens.extend(_tokenize(item["city"]))
         if item.get("street"):
             our_tokens.extend(_tokenize(item["street"]))
+        if item.get("state"):
+            our_tokens.extend(_tokenize(item["state"]))
+        if item.get("country"):
+            our_tokens.extend(_tokenize(item["country"]))
     if our_tokens:
-        their_str = " ".join([str(attrs.get(k) or "") for k in ("address", "addressLine1", "city", "state")])
+        their_str = " ".join(
+            [str(attrs.get(k) or "") for k in ("address", "addressLine1", "city", "state", "country", "zipCode")]
+        )
         loc_score = _location_match_score(our_tokens, their_str)
         if loc_score > 0:
             matched["location"] = loc_score >= 0.5
             score += loc_score * 1.5
+    score += _zoominfo_foreign_signals_penalty(item, attrs)
     return (score, matched)
 
 
@@ -293,8 +392,12 @@ def _score_zoominfo_contact(contact: Any, item: dict) -> tuple:
             our_tokens.extend(_tokenize(item["city"]))
         if item.get("street"):
             our_tokens.extend(_tokenize(item["street"]))
+        if item.get("state"):
+            our_tokens.extend(_tokenize(item["state"]))
+        if item.get("country"):
+            our_tokens.extend(_tokenize(item["country"]))
     if our_tokens:
-        their_str = " ".join([str(attrs.get(k) or "") for k in ("city", "state", "address")])
+        their_str = " ".join([str(attrs.get(k) or "") for k in ("city", "state", "address", "country")])
         loc_score = _location_match_score(our_tokens, their_str)
         if loc_score > 0:
             matched["location"] = loc_score >= 0.5
@@ -534,6 +637,10 @@ def _pick_best_zoominfo_by_vector_and_llm(
         for i, (rtype, record, _) in enumerate(candidates):
             if i < len(cand_embeddings) and cand_embeddings[i]:
                 sim = _cosine_sim(query_vec, cand_embeddings[i])
+                attrs = record.get("attributes") or {}
+                if (item.get("source_platform") or "").strip().lower() == "faa":
+                    # Down-rank same-name foreign companies (e.g. Valiair UK vs US registrant).
+                    sim = sim + _zoominfo_foreign_signals_penalty(item, attrs) * 0.22
                 scored.append((sim, rtype, record))
         if not scored:
             return (None, None, {})
@@ -542,8 +649,27 @@ def _pick_best_zoominfo_by_vector_and_llm(
         if len(top_k) == 1:
             _, rtype, record = top_k[0]
             return (record, rtype, {"company": False, "person": False, "phone": False, "location": False, "website": False, "llm_fallback": True})
+        faa_geo_rule = ""
+        if (item.get("source_platform") or "").strip().lower() == "faa":
+            loc_hint = ", ".join(
+                filter(
+                    None,
+                    [
+                        item.get("city"),
+                        item.get("state"),
+                        item.get("country"),
+                    ],
+                )
+            )
+            faa_geo_rule = (
+                "\nCRITICAL: Our registrant is from FAA records"
+                + (f" (mailing / location hint: {loc_hint})." if loc_hint else ".")
+                + " If several companies share the same name, choose the one in the SAME country/region as this registrant "
+                "(typically United States for US city/state). Reject homonymous companies in other countries (e.g. UK .co.uk, +44 phone) "
+                "unless you are certain it is the same entity.\n"
+            )
         prompt = f"""We have owner/seller data from our database and {len(top_k)} candidate records from ZoomInfo. Pick the single best matching ZoomInfo candidate.
-
+{faa_geo_rule}
 Our data:
 {item_text}
 
@@ -902,58 +1028,163 @@ def resale_advisory(req: ResaleAdvisoryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 _REGISTRATION_NOT_EMPTY = "registration_number IS NOT NULL AND TRIM(registration_number) <> ''"
+_IDENTIFIERS_NOT_EMPTY = "(serial_number IS NOT NULL AND TRIM(serial_number) <> '') OR (registration_number IS NOT NULL AND TRIM(registration_number) <> '')"
+
+
+@lru_cache(maxsize=1)
+def _load_internaldb_aircraft_keys() -> tuple[list[str], list[str]]:
+    """
+    Load keys from the PhlyData (Internal DB) CSV:
+      etl-pipeline/store/raw/internaldb/aircraft.csv
+
+    Returns (serial_numbers, registration_numbers) as lists of trimmed strings.
+    Used to filter the PhlyData aircraft list so the frontend shows only internal DB aircraft.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    internal_csv = repo_root / "etl-pipeline" / "store" / "raw" / "internaldb" / "aircraft.csv"
+    if not internal_csv.exists():
+        logger.warning("Phlydata filter: internal CSV not found at %s", internal_csv)
+        return ([], [])
+
+    serials: set[str] = set()
+    regs: set[str] = set()
+    with open(internal_csv, "r", encoding="utf-8-sig", errors="ignore", newline="") as f:
+        reader = csv.DictReader(f)
+        if not reader.fieldnames:
+            return ([], [])
+        for row in reader:
+            s = (row.get("Serial Number") or "").strip()
+            r = (row.get("Registration Number") or "").strip()
+            if s:
+                serials.add(s)
+            if r:
+                regs.add(r)
+    return (list(serials), list(regs))
+
+
+@lru_cache(maxsize=1)
+def _load_internaldb_aircraft_rows() -> list[dict[str, object]]:
+    """
+    Load rows from the PhlyData (Internal DB) CSV:
+      etl-pipeline/store/raw/internaldb/aircraft.csv
+
+    Returns a list of objects with the exact fields the frontend needs.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    internal_csv = repo_root / "etl-pipeline" / "store" / "raw" / "internaldb" / "aircraft.csv"
+    if not internal_csv.exists():
+        logger.warning("Phlydata aircraft rows: internal CSV not found at %s", internal_csv)
+        return []
+
+    def parse_int_or_none(v: object) -> Optional[int]:
+        s = "" if v is None else str(v).strip()
+        if not s:
+            return None
+        try:
+            return int(float(s))
+        except Exception:
+            return None
+
+    import hashlib
+
+    def stable_id(serial: str, reg: str, make: str, model: str, manufacturer_year: object, delivery_year: object, category: str) -> str:
+        # Deterministic id from row content, so pagination/sorting is stable.
+        key = "|".join(
+            [
+                serial.strip(),
+                reg.strip(),
+                make.strip(),
+                model.strip(),
+                str(manufacturer_year or "").strip(),
+                str(delivery_year or "").strip(),
+                category.strip(),
+            ]
+        )
+        return hashlib.md5(key.encode("utf-8", errors="ignore")).hexdigest()
+
+    rows_out: list[dict[str, object]] = []
+    with open(internal_csv, "r", encoding="utf-8-sig", errors="ignore", newline="") as f:
+        reader = csv.DictReader(f)
+        if not reader.fieldnames:
+            return []
+        for row in reader:
+            serial = (row.get("Serial Number") or "").strip()
+            reg = (row.get("Registration Number") or "").strip()
+            make = (row.get("Make") or "").strip()
+            model = (row.get("Model") or "").strip()
+            category = (row.get("Category") or "").strip()
+
+            manufacturer_year = parse_int_or_none(row.get("Manufacturer Year"))
+            delivery_year = parse_int_or_none(row.get("Delivery Year"))
+
+            if not serial and not reg:
+                continue
+
+            rows_out.append(
+                {
+                    "id": stable_id(serial, reg, make, model, manufacturer_year, delivery_year, category),
+                    "serial_number": serial or None,
+                    "registration_number": reg or None,
+                    "manufacturer": make or None,
+                    "model": model or None,
+                    "manufacturer_year": manufacturer_year,
+                    "delivery_year": delivery_year,
+                    "category": category or None,
+                }
+            )
+
+    return rows_out
 
 
 @app.get("/api/phlydata/aircraft")
 def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str] = None):
-    """List aircraft from the aircraft table only where registration_number is not empty. Pagination and optional search q."""
+    """List aircraft from the PhlyData Internal DB table (`phlydata_aircraft`)."""
     page = max(1, page)
-    page_size = min(500, max(1, page_size))
+    # Allow the frontend to fetch the entire Internal DB dataset once.
+    page_size = min(100000, max(1, page_size))
     offset = (page - 1) * page_size
     search = (q or "").strip()
     try:
         db = get_db()
+        params: list[Any] = []
+        where_sql = ""
         if search:
             like = f"%{search}%"
-            count_rows = db.execute_query(
-                f"""
-                SELECT COUNT(*) AS total FROM aircraft
-                WHERE ({_REGISTRATION_NOT_EMPTY})
-                  AND (serial_number ILIKE %s OR registration_number ILIKE %s
-                   OR manufacturer ILIKE %s OR model ILIKE %s OR category ILIKE %s
-                   OR CAST(manufacturer_year AS TEXT) LIKE %s OR CAST(delivery_year AS TEXT) LIKE %s)
-                """,
-                (like, like, like, like, like, like, like),
-            )
-            total = int(count_rows[0]["total"]) if count_rows else 0
-            rows = db.execute_query(
-                f"""
-                SELECT id, serial_number, registration_number, manufacturer, model,
-                       manufacturer_year, delivery_year, category
-                FROM aircraft
-                WHERE ({_REGISTRATION_NOT_EMPTY})
-                  AND (serial_number ILIKE %s OR registration_number ILIKE %s
-                   OR manufacturer ILIKE %s OR model ILIKE %s OR category ILIKE %s
-                   OR CAST(manufacturer_year AS TEXT) LIKE %s OR CAST(delivery_year AS TEXT) LIKE %s)
-                ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
-                LIMIT %s OFFSET %s
-                """,
-                (like, like, like, like, like, like, like, page_size, offset),
-            )
-        else:
-            count_rows = db.execute_query(f"SELECT COUNT(*) AS total FROM aircraft WHERE {_REGISTRATION_NOT_EMPTY}")
-            total = int(count_rows[0]["total"]) if count_rows else 0
-            rows = db.execute_query(
-                f"""
-                SELECT id, serial_number, registration_number, manufacturer, model,
-                       manufacturer_year, delivery_year, category
-                FROM aircraft
-                WHERE {_REGISTRATION_NOT_EMPTY}
-                ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
-                LIMIT %s OFFSET %s
-                """,
-                (page_size, offset),
-            )
+            where_sql = """
+              WHERE (
+                serial_number ILIKE %s OR registration_number ILIKE %s
+                OR manufacturer ILIKE %s OR model ILIKE %s
+                OR category ILIKE %s
+                OR CAST(manufacturer_year AS TEXT) ILIKE %s
+                OR CAST(delivery_year AS TEXT) ILIKE %s
+              )
+            """
+            params = [like, like, like, like, like, like, like]
+
+        total_sql = f"""
+          SELECT COUNT(*) AS total
+          FROM phlydata_aircraft
+          {where_sql}
+        """
+        total_rows = db.execute_query(total_sql, tuple(params))
+        total = int(total_rows[0]["total"]) if total_rows else 0
+
+        rows_sql = f"""
+          SELECT
+            CAST(aircraft_id AS TEXT) AS id,
+            serial_number,
+            registration_number,
+            manufacturer,
+            model,
+            manufacturer_year,
+            delivery_year,
+            category
+          FROM phlydata_aircraft
+          {where_sql}
+          ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
+          LIMIT %s OFFSET %s
+        """
+        rows = db.execute_query(rows_sql, tuple(params + [page_size, offset]))
         return {"aircraft": [dict(r) for r in rows], "total": total, "page": page, "page_size": page_size}
     except HTTPException:
         raise
@@ -975,10 +1206,16 @@ def phlydata_zoominfo_company(company_name: Optional[str] = None, company_id: Op
 
 
 @app.get("/api/phlydata/owners")
-def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Optional[str] = None):
-    """Get owner detail for a PhlyData aircraft by serial number (and optionally manufacturer + model to disambiguate).
-    Aggregates owner/seller info from aircraft_listings (Controller, AircraftExchange) and faa_registrations (FAA).
-    Use this when user clicks a row to see full owner details."""
+def phlydata_owners(
+    serial: str,
+    manufacturer: Optional[str] = None,
+    model: Optional[str] = None,
+):
+    """Get owner detail for a PhlyData aircraft.
+
+    FAA lookup is driven by `serial_number + model` (and optionally manufacturer),
+    without depending on the main `aircraft` table / `aircraft_id` mapping.
+    """
     if not serial or not serial.strip():
         raise HTTPException(status_code=400, detail="serial is required")
     serial = serial.strip()
@@ -986,12 +1223,16 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
     mdl = (model or "").strip() or None
     try:
         db = get_db()
-        # Resolve aircraft by serial_number + manufacturer + model (disambiguates when serial repeats across models)
+        # Optional: use `phlydata_aircraft` for display fields (registration, years, category).
+        aircraft_rows: list = []
         if mfr and mdl:
             aircraft_rows = db.execute_query(
                 """
-                SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category
-                FROM aircraft
+                SELECT
+                  CAST(aircraft_id AS TEXT) AS id,
+                  serial_number, registration_number, manufacturer, model,
+                  manufacturer_year, delivery_year, category
+                FROM phlydata_aircraft
                 WHERE serial_number = %s
                   AND (manufacturer IS NULL OR manufacturer ILIKE %s)
                   AND (model IS NULL OR model ILIKE %s)
@@ -999,83 +1240,97 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                 """,
                 (serial, f"%{mfr}%", f"%{mdl}%"),
             )
-        else:
+        if not aircraft_rows and mdl:
             aircraft_rows = db.execute_query(
-                "SELECT id, serial_number, registration_number, manufacturer, model, manufacturer_year, delivery_year, category FROM aircraft WHERE serial_number = %s LIMIT 1",
-                (serial,),
+                """
+                SELECT
+                  CAST(aircraft_id AS TEXT) AS id,
+                  serial_number, registration_number, manufacturer, model,
+                  manufacturer_year, delivery_year, category
+                FROM phlydata_aircraft
+                WHERE serial_number = %s
+                  AND (model IS NULL OR model ILIKE %s)
+                LIMIT 1
+                """,
+                (serial, f"%{mdl}%"),
             )
         if not aircraft_rows:
-            logger.info("phlydata/owners: serial=%r manufacturer=%r model=%r -> aircraft not found", serial, mfr, mdl)
-            return {"aircraft": None, "owners_from_listings": [], "owners_from_faa": [], "message": "Aircraft not found for this serial."}
-        aircraft = dict(aircraft_rows[0])
-        aircraft_id = aircraft["id"]
-        logger.info("phlydata/owners: serial=%r manufacturer=%r model=%r -> aircraft_id=%s", serial, mfr, mdl, aircraft_id)
-
-        # Owners from listings (Controller, AircraftExchange): seller / contact / broker / phone
-        listing_rows = db.execute_query(
-            """
-            SELECT source_platform, seller, seller_contact_name, seller_phone, seller_email, seller_location,
-                   seller_broker, listing_status, ask_price, sold_price, date_listed, date_sold
-            FROM aircraft_listings
-            WHERE aircraft_id = %s
-            ORDER BY ingestion_date DESC
-            """,
-            (aircraft_id,),
-        )
-        owners_from_listings = []
-        for r in listing_rows:
-            row = dict(r)
-            if any(row.get(k) for k in ("seller", "seller_contact_name", "seller_phone", "seller_email")):
-                owners_from_listings.append(row)
-
-        # Owners from FAA registry (registrant + address)
-        faa_rows = db.execute_query(
-            """
-            SELECT registrant_name, street, street2, city, state, zip_code, region, county, country
-            FROM faa_registrations
-            WHERE aircraft_id = %s
-            ORDER BY ingestion_date DESC
-            LIMIT 10
-            """,
-            (aircraft_id,),
-        )
-        owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
-
-        # AircraftPost fleet (enrichment): match by serial + make/model name when available.
-        # NOTE: aircraftpost_fleet_aircraft doesn't have separate manufacturer/model columns; match against make_model_name.
-        if mfr and mdl:
-            ap_rows = db.execute_query(
+            aircraft_rows = db.execute_query(
                 """
-                SELECT id, aircraft_entity_id, make_model_id, make_model_name,
-                       serial_number, registration_number,
-                       mfr_year, eis_date, country_code, base_code, owner_url,
-                       airframe_hours, total_landings, prior_owners, for_sale, passengers,
-                       engine_program_type, apu_program, ingestion_date
-                FROM aircraftpost_fleet_aircraft
+                SELECT
+                  CAST(aircraft_id AS TEXT) AS id,
+                  serial_number, registration_number, manufacturer, model,
+                  manufacturer_year, delivery_year, category
+                FROM phlydata_aircraft
                 WHERE serial_number = %s
-                  AND make_model_name ILIKE %s
-                  AND make_model_name ILIKE %s
-                ORDER BY ingestion_date DESC, updated_at DESC
+                LIMIT 1
+                """,
+                (serial,),
+            )
+
+        aircraft = dict(aircraft_rows[0]) if aircraft_rows else {
+            "id": None,
+            "serial_number": serial,
+            "registration_number": None,
+            "manufacturer": mfr,
+            "model": mdl,
+            "manufacturer_year": None,
+            "delivery_year": None,
+            "category": None,
+        }
+
+        # Aircraft tab policy: FAA-only owner source.
+        owners_from_listings = []
+
+        # Owners from FAA: prefer serial + manufacturer/model (via ACFTREF code),
+        # then serial + model, then serial-only.
+        faa_rows: list = []
+        if mfr and mdl:
+            faa_rows = db.execute_query(
+                """
+                SELECT fr.registrant_name, fr.street, fr.street2, fr.city, fr.state, fr.zip_code,
+                       fr.region, fr.county, fr.country
+                FROM faa_registrations fr
+                WHERE fr.serial_number = %s
+                  AND fr.mfr_mdl_code IN (
+                    SELECT far.code FROM faa_aircraft_reference far
+                    WHERE far.manufacturer ILIKE %s AND far.model ILIKE %s
+                  )
+                ORDER BY fr.ingestion_date DESC
                 LIMIT 10
                 """,
                 (serial, f"%{mfr}%", f"%{mdl}%"),
             )
-        else:
-            ap_rows = db.execute_query(
+        if not faa_rows and mdl:
+            faa_rows = db.execute_query(
                 """
-                SELECT id, aircraft_entity_id, make_model_id, make_model_name,
-                       serial_number, registration_number,
-                       mfr_year, eis_date, country_code, base_code, owner_url,
-                       airframe_hours, total_landings, prior_owners, for_sale, passengers,
-                       engine_program_type, apu_program, ingestion_date
-                FROM aircraftpost_fleet_aircraft
-                WHERE serial_number = %s
-                ORDER BY ingestion_date DESC, updated_at DESC
+                SELECT fr.registrant_name, fr.street, fr.street2, fr.city, fr.state, fr.zip_code,
+                       fr.region, fr.county, fr.country
+                FROM faa_registrations fr
+                WHERE fr.serial_number = %s
+                  AND fr.mfr_mdl_code IN (
+                    SELECT far.code FROM faa_aircraft_reference far
+                    WHERE far.model ILIKE %s
+                  )
+                ORDER BY fr.ingestion_date DESC
                 LIMIT 10
+                """,
+                (serial, f"%{mdl}%"),
+            )
+        if not faa_rows:
+            logger.warning("phlydata/owners: FAA lookup falling back to serial-only (ambiguous): serial=%r", serial)
+            faa_rows = db.execute_query(
+                """
+                SELECT registrant_name, street, street2, city, state, zip_code, region, county, country
+                FROM faa_registrations
+                WHERE serial_number = %s
+                ORDER BY ingestion_date DESC
+                LIMIT 3
                 """,
                 (serial,),
             )
-        aircraftpost_fleet = [dict(r) for r in (ap_rows or [])]
+        owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
+        aircraftpost_fleet = []
 
         # Build ZoomInfo search payloads. Ensure at least one item per platform (controller, faa, aircraftexchange).
         def _listing_item(row: dict, platform: str, field: str) -> dict:
@@ -1098,18 +1353,6 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
             }
         by_platform = {"controller": [], "aircraftexchange": [], "faa": []}
         seen_company = set()
-        for row in owners_from_listings:
-            platform = (row.get("source_platform") or "").strip().lower()
-            company_name = (row.get("seller") or "").strip()
-            if not company_name or company_name.lower() in seen_company:
-                continue
-            seen_company.add(company_name.lower())
-            if platform == "controller":
-                by_platform["controller"].append(_listing_item(row, "controller", "seller"))
-            elif platform == "aircraftexchange":
-                by_platform["aircraftexchange"].append(_listing_item(row, "aircraftexchange", "dealer_name"))
-            else:
-                by_platform["controller"].append(_listing_item(row, platform or "listing", "seller"))
         for row in owners_from_faa:
             company_name = (row.get("registrant_name") or "").strip()
             if not company_name or company_name.lower() in seen_company:
@@ -1123,34 +1366,38 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                 "source_platform": "faa",
                 "field_name": "registrant_name",
                 "company_name": company_name,
+                # Used by contact scoring when ZoomInfo returns person records.
+                "contact_name": company_name,
                 "address": None,
                 "street": street or None,
                 "city": (row.get("city") or "").strip() or None,
                 "state": (row.get("state") or "").strip() or None,
                 "zip_code": (row.get("zip_code") or "").strip() or None,
                 "country": (row.get("country") or "").strip() or None,
-                "contact_name": None,
                 "broker_name": None,
                 "phone": None,
                 "website": None,
+                # Will be computed per-item in the ZoomInfo loop (company vs person).
+                "registrant_type": None,
             })
-        # At least one per platform, then fill up to 6
+        # FAA-only lookup items, up to 6 candidates.
         items_to_lookup = []
-        for platform in ("controller", "aircraftexchange", "faa"):
-            if by_platform[platform]:
-                items_to_lookup.append(by_platform[platform][0])
-        for platform in ("controller", "aircraftexchange", "faa"):
-            for idx in range(1, len(by_platform[platform])):
-                if len(items_to_lookup) >= 6:
-                    break
-                items_to_lookup.append(by_platform[platform][idx])
+        if by_platform["faa"]:
+            items_to_lookup.append(by_platform["faa"][0])
+        for idx in range(1, len(by_platform["faa"])):
             if len(items_to_lookup) >= 6:
                 break
+            items_to_lookup.append(by_platform["faa"][idx])
         items_to_lookup = items_to_lookup[:6]
-        logger.info("phlydata/owners: items_to_lookup count=%s (by platform: controller=%s, aircraftexchange=%s, faa=%s)",
-                    len(items_to_lookup), len(by_platform["controller"]), len(by_platform["aircraftexchange"]), len(by_platform["faa"]))
+        logger.info(
+            "phlydata/owners: FAA-only items_to_lookup count=%s (faa=%s)",
+            len(items_to_lookup),
+            len(by_platform["faa"]),
+        )
 
         zoominfo_enrichment = []
+        zoominfo_contacts_access_denied = False
+        zoominfo_registrant_type_hint: Optional[str] = None
         for idx, item in enumerate(items_to_lookup):
             all_companies = []
             all_contacts = []
@@ -1160,8 +1407,50 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                         bool((item.get("phone") or "").strip()),
                         bool((item.get("address") or item.get("city") or item.get("street"))))
 
-            # Company search (progressive fallback)
-            original = item["company_name"]
+            # Decide whether registrant is likely a company vs a person.
+            registrant_name = (item.get("company_name") or "").strip()
+            registrant_type = (item.get("registrant_type") or "").strip().lower() or None
+
+            legal_markers = any(tok in registrant_name.lower() for tok in list(_LEGAL_SUFFIXES) + [" inc", " llc", " ltd", " corp", " co."])
+            has_middle_initial = bool(re.search(r"\b[A-Z]\.\b", registrant_name))
+            has_comma = "," in registrant_name
+            has_person_hint = has_comma or has_middle_initial
+
+            if registrant_type not in {"company", "person"}:
+                if legal_markers:
+                    registrant_type = "company"
+                elif has_person_hint:
+                    registrant_type = "person"
+                else:
+                    # Use LLM only when ambiguous.
+                    llm_type = "company"
+                    emb_svc, openai_key = get_embedding_service_only()
+                    if openai_key:
+                        try:
+                            import openai
+
+                            client = openai.OpenAI(api_key=openai_key, timeout=30.0)
+                            prompt = (
+                                "Classify the FAA registrant name as either an individual person or an organization/company. "
+                                "Return only one word: person OR company.\n\n"
+                                f"FAA registrant name: {registrant_name}\n"
+                                f"FAA location hint (optional): state={item.get('state')}, country={item.get('country')}\n"
+                            )
+                            resp = client.chat.completions.create(
+                                model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+                                messages=[{"role": "user", "content": prompt}],
+                                max_tokens=5,
+                                temperature=0,
+                            )
+                            llm_type = (resp.choices[0].message.content or "").strip().lower()
+                        except Exception:
+                            llm_type = "company"
+                    registrant_type = "person" if llm_type == "person" else "company"
+
+            item["registrant_type"] = registrant_type
+
+            # Build search variants from the registrant name.
+            original = registrant_name
             queries = [original]
             cleaned = _clean_company_name(original)
             if cleaned and cleaned.lower() != original.lower():
@@ -1172,19 +1461,64 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
             first_word = _first_word_company_name(original)
             if first_word and first_word.lower() not in {q.lower() for q in queries}:
                 queries.append(first_word)
-            for q in queries:
-                companies, zoominfo_error = zoominfo_search_companies(q, page_size=25)
-                if zoominfo_error:
-                    logger.info("phlydata/owners: item[%s] company_search query=%r -> error=%s", idx, q, zoominfo_error)
-                    break
-                all_companies.extend(companies)
-                if companies:
-                    logger.info("phlydata/owners: item[%s] company_search query=%r -> %s companies", idx, q, len(companies))
-                    break
-            if zoominfo_error and not all_companies:
-                logger.info("phlydata/owners: item[%s] company_search all queries failed, total companies=0", idx)
-            # Contact search disabled: ZoomInfo plan returns 403 for contacts/search; matching uses companies only.
-            all_contacts = []
+
+            if registrant_type == "person":
+                # Contact search + later contact enrich (email).
+                all_companies = []
+                all_contacts = []
+                for q in queries:
+                    contacts, zoominfo_error = zoominfo_search_contacts(q, page_size=25)
+                    if zoominfo_error:
+                        logger.info(
+                            "phlydata/owners: item[%s] contact_search query=%r -> error=%s",
+                            idx,
+                            q,
+                            zoominfo_error,
+                        )
+                        break
+                    if contacts:
+                        logger.info("phlydata/owners: item[%s] contact_search query=%r -> %s contacts", idx, q, len(contacts))
+                        all_contacts.extend(contacts)
+                        break
+                if zoominfo_error and not all_contacts:
+                    logger.info("phlydata/owners: item[%s] contact_search all queries failed, total contacts=0", idx)
+
+                if registrant_type == "person" and zoominfo_error:
+                    zerr = str(zoominfo_error).lower()
+                    # ZoomInfo admin permission is missing (scope) for /contacts/search.
+                    if "contacts/search" in zerr or "gtm/data/v1/contacts/search" in zerr or "scope" in zerr or "access denied" in zerr:
+                        zoominfo_contacts_access_denied = True
+                        zoominfo_registrant_type_hint = "person"
+            else:
+                # Company search (progressive fallback)
+                for q in queries:
+                    companies, zoominfo_error = zoominfo_search_companies(q, page_size=25)
+                    if zoominfo_error:
+                        logger.info("phlydata/owners: item[%s] company_search query=%r -> error=%s", idx, q, zoominfo_error)
+                        break
+                    if companies:
+                        # When FAA registrant is US, drop obvious non-US same-name hits (e.g. Valiair UK vs Carlsbad US).
+                        if (item.get("source_platform") or "").strip().lower() == "faa" and _faa_item_geo_bucket(item) == "us":
+                            us_only = [
+                                c
+                                for c in companies
+                                if _zoominfo_company_geo_bucket(c.get("attributes") or {}) == "us"
+                            ]
+                            if us_only:
+                                logger.info(
+                                    "phlydata/owners: item[%s] ZoomInfo query=%r: narrowed %s -> %s US-region companies",
+                                    idx,
+                                    q,
+                                    len(companies),
+                                    len(us_only),
+                                )
+                                companies = us_only
+                        logger.info("phlydata/owners: item[%s] company_search query=%r -> %s companies", idx, q, len(companies))
+                        all_companies.extend(companies)
+                        break
+                    all_companies.extend(companies)
+                if zoominfo_error and not all_companies:
+                    logger.info("phlydata/owners: item[%s] company_search all queries failed, total companies=0", idx)
 
             # Phone-first: if we have phone and any result matches it, return that immediately; else best by company/location/name
             best_record, result_type, matched, content_score = _pick_best_by_phone_first(all_companies, all_contacts, item)
@@ -1244,7 +1578,7 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                     result_type = None
                     logger.info("phlydata/owners: item[%s] name_only -> no LLM available, returning no ZoomInfo result (avoid wrong match)", idx)
 
-            # Enrich: fetch full company detail when best match is a company (by company ID, then fallback by name)
+            # Enrich: fetch full company/contact detail after we picked the best match.
             if best_record and result_type == "company" and best_record.get("id"):
                 enriched_company = None
                 try:
@@ -1276,6 +1610,26 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                         logger.info("phlydata/owners: item[%s] company_enrich company_id=%s -> no_detail (using search result)", idx, cid)
                 except Exception as e:
                     logger.warning("phlydata/owners: item[%s] company_enrich failed: %s", idx, e)
+            elif best_record and result_type == "contact":
+                try:
+                    pid = best_record.get("id")
+                    person_id_int = None
+                    if pid is not None:
+                        try:
+                            person_id_int = int(pid)
+                        except (TypeError, ValueError):
+                            person_id_int = None
+                    enriched_contact, enrich_err = zoominfo_enrich_contact(
+                        person_id=person_id_int,
+                        full_name=item.get("company_name") if not person_id_int else None,
+                    )
+                    if enriched_contact:
+                        best_record = enriched_contact
+                        logger.info("phlydata/owners: item[%s] contact_enrich -> success (email)", idx)
+                    else:
+                        logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, enrich_err or "no match")
+                except Exception as e:
+                    logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, e)
 
             companies_out = [best_record] if (best_record and result_type == "company") else []
             contacts_out = [best_record] if (best_record and result_type == "contact") else []
@@ -1288,6 +1642,7 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
                 "best_result_type": result_type,
                 "match_method": match_method,
                 "matched": matched,
+                "registrant_type": registrant_type,
                 "context_sent": {
                     "company_name": item["company_name"],
                     "street": item.get("street"),
@@ -1304,8 +1659,19 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
             }
             if zoominfo_error:
                 payload["zoominfo_error"] = zoominfo_error
-            # Only include in response when we have a match (don't send no-match items to frontend)
-            if companies_out or contacts_out:
+            # Include when we have a match, or when we have an error that needs to be shown.
+            if zoominfo_error or companies_out or contacts_out:
+                payload["needs_contacts_admin_permission"] = bool(
+                    registrant_type == "person"
+                    and zoominfo_error
+                    and (
+                        "contacts/search" in str(zoominfo_error).lower()
+                        or "contact" in str(zoominfo_error).lower()
+                        or "scope" in str(zoominfo_error).lower()
+                        or "forbidden" in str(zoominfo_error).lower()
+                        or "zi0002" in str(zoominfo_error).lower()
+                    )
+                )
                 zoominfo_enrichment.append(payload)
             logger.info("phlydata/owners: item[%s] done -> match_method=%s best_result_type=%s companies=%s contacts=%s",
                         idx, match_method, result_type, len(companies_out), len(contacts_out))
@@ -1316,6 +1682,8 @@ def phlydata_owners(serial: str, manufacturer: Optional[str] = None, model: Opti
             "owners_from_faa": owners_from_faa,
             "zoominfo_enrichment": zoominfo_enrichment,
             "aircraftpost_fleet": aircraftpost_fleet,
+            "zoominfo_contacts_access_denied": zoominfo_contacts_access_denied,
+            "zoominfo_registrant_type_hint": zoominfo_registrant_type_hint,
         }
     except HTTPException:
         raise
