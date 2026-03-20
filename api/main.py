@@ -1282,26 +1282,12 @@ def phlydata_owners(
         # Aircraft tab policy: FAA-only owner source.
         owners_from_listings = []
 
-        # Owners from FAA: prefer serial + manufacturer/model (via ACFTREF code),
-        # then serial + model, then serial-only.
+        # Owners from FAA:
+        # 1) find rows by serial
+        # 2) if model is provided, compare FAA model (via mfr_mdl_code -> FAA reference model)
+        # 3) DO NOT fallback to serial-only when model was provided (avoid ambiguous owner display).
         faa_rows: list = []
-        if mfr and mdl:
-            faa_rows = db.execute_query(
-                """
-                SELECT fr.registrant_name, fr.street, fr.street2, fr.city, fr.state, fr.zip_code,
-                       fr.region, fr.county, fr.country
-                FROM faa_registrations fr
-                WHERE fr.serial_number = %s
-                  AND fr.mfr_mdl_code IN (
-                    SELECT far.code FROM faa_aircraft_reference far
-                    WHERE far.manufacturer ILIKE %s AND far.model ILIKE %s
-                  )
-                ORDER BY fr.ingestion_date DESC
-                LIMIT 10
-                """,
-                (serial, f"%{mfr}%", f"%{mdl}%"),
-            )
-        if not faa_rows and mdl:
+        if mdl:
             faa_rows = db.execute_query(
                 """
                 SELECT fr.registrant_name, fr.street, fr.street2, fr.city, fr.state, fr.zip_code,
@@ -1317,8 +1303,8 @@ def phlydata_owners(
                 """,
                 (serial, f"%{mdl}%"),
             )
-        if not faa_rows:
-            logger.warning("phlydata/owners: FAA lookup falling back to serial-only (ambiguous): serial=%r", serial)
+        elif not faa_rows:
+            # No model supplied -> serial-only lookup is allowed.
             faa_rows = db.execute_query(
                 """
                 SELECT registrant_name, street, street2, city, state, zip_code, region, county, country
