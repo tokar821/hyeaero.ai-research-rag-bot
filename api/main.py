@@ -1163,7 +1163,7 @@ def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str]
 
         total_sql = f"""
           SELECT COUNT(*) AS total
-          FROM phlydata_aircraft
+          FROM public.phlydata_aircraft
           {where_sql}
         """
         total_rows = db.execute_query(total_sql, tuple(params))
@@ -1179,7 +1179,7 @@ def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str]
             manufacturer_year,
             delivery_year,
             category
-          FROM phlydata_aircraft
+          FROM public.phlydata_aircraft
           {where_sql}
           ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
           LIMIT %s OFFSET %s
@@ -1232,7 +1232,7 @@ def phlydata_owners(
                   CAST(aircraft_id AS TEXT) AS id,
                   serial_number, registration_number, manufacturer, model,
                   manufacturer_year, delivery_year, category
-                FROM phlydata_aircraft
+                FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                   AND (manufacturer IS NULL OR manufacturer ILIKE %s)
                   AND (model IS NULL OR model ILIKE %s)
@@ -1247,7 +1247,7 @@ def phlydata_owners(
                   CAST(aircraft_id AS TEXT) AS id,
                   serial_number, registration_number, manufacturer, model,
                   manufacturer_year, delivery_year, category
-                FROM phlydata_aircraft
+                FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                   AND (model IS NULL OR model ILIKE %s)
                 LIMIT 1
@@ -1261,7 +1261,7 @@ def phlydata_owners(
                   CAST(aircraft_id AS TEXT) AS id,
                   serial_number, registration_number, manufacturer, model,
                   manufacturer_year, delivery_year, category
-                FROM phlydata_aircraft
+                FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                 LIMIT 1
                 """,
