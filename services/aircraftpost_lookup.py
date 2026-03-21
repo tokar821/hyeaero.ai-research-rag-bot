@@ -13,6 +13,194 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def serial_variants_for_lookup(serial: str) -> List[str]:
+    """
+    FAA / fleet tables may store serials with or without leading zeros (e.g. ``0175`` vs ``175``, ``0106`` vs ``106``).
+    Return a small ordered list of unique strings to try when matching ``aircraftpost_fleet_aircraft.serial_number``.
+    """
+    s = (serial or "").strip()
+    if not s:
+        return []
+    out: List[str] = []
+    seen: set[str] = set()
+
+    def add(x: str) -> None:
+        if not x or x in seen:
+            return
+        seen.add(x)
+        out.append(x)
+
+    add(s)
+    if s.isdigit():
+        stripped = s.lstrip("0") or "0"
+        add(stripped)
+        for width in (3, 4, 5, 6):
+            add(s.zfill(width))
+            add(stripped.zfill(width))
+    return out
+
+
+def _normalize_registration_for_match(reg: str) -> str:
+    """Uppercase, strip, remove spaces and hyphens for tail comparison."""
+    s = (reg or "").strip().upper()
+    return s.replace(" ", "").replace("-", "")
+
+
+def lookup_aircraftpost_owner_rows_by_registration(
+    db: "PostgresClient",
+    registration_number: str,
+    limit: int = 15,
+) -> List[Dict[str, Any]]:
+    """
+    PhlyData owner lookup on AircraftPost: **registration (tail) only** — no serial or model filters.
+
+    Matches ``aircraftpost_fleet_aircraft`` rows where the registration normalizes to the same string
+    (case-insensitive, spaces/hyphens ignored). No alternate queries or fallbacks.
+    """
+    reg_norm = _normalize_registration_for_match(registration_number)
+    if not reg_norm:
+        return []
+    lim = max(1, min(100, int(limit)))
+    try:
+        rows = db.execute_query(
+            """
+            SELECT id, aircraft_entity_id, make_model_id, make_model_name,
+                   serial_number, registration_number,
+                   mfr_year, eis_date, country_code, base_code, owner_url,
+                   airframe_hours, total_landings, prior_owners, for_sale, passengers,
+                   engine_program_type, apu_program, fields, ingestion_date
+            FROM aircraftpost_fleet_aircraft
+            WHERE REPLACE(REPLACE(UPPER(TRIM(registration_number)), ' ', ''), '-', '') = %s
+            ORDER BY ingestion_date DESC, updated_at DESC
+            LIMIT %s
+            """,
+            (reg_norm, lim),
+        )
+        return [dict(r) for r in (rows or [])]
+    except Exception as e:
+        logger.warning("aircraftpost owner rows by registration lookup failed: %s", e)
+        return []
+
+
+def owner_display_from_aircraftpost_fields(fields: Any) -> Optional[str]:
+    """Best-effort owner label from AircraftPost `fields` JSON (Owner row is often {text, href})."""
+    if not fields or not isinstance(fields, dict):
+        return None
+    o = fields.get("Owner")
+    if isinstance(o, dict):
+        t = (o.get("text") or "").strip()
+        return t or None
+    if isinstance(o, str) and o.strip():
+        return o.strip()
+    return None
+
+
+def lookup_aircraftpost_owner_rows(
+    db: "PostgresClient",
+    serial: str,
+    manufacturer: Optional[str] = None,
+    model: Optional[str] = None,
+    registration_number: Optional[str] = None,
+    limit: int = 15,
+) -> List[Dict[str, Any]]:
+    """
+    Rows from `aircraftpost_fleet_aircraft` for PhlyData owner lookup.
+
+    Primary PhlyData path: **serial + registration_number** → row(s) with ``owner_url``.
+
+    Matching (all optional filters are ANDed when provided):
+    - ``serial`` (required): ``serial_number = serial`` (exact string as stored).
+    - ``registration_number``: tail / registration (``ILIKE``), when provided.
+    - ``manufacturer`` / ``model``: ``make_model_name ILIKE`` — fallback when tail is missing or for disambiguation.
+
+    Returns newest-ingestion rows first, including ``fields`` JSONB for owner display text.
+    """
+    ser = (serial or "").strip()
+    if not ser:
+        return []
+
+    mfr = (manufacturer or "").strip()
+    mdl = (model or "").strip()
+    reg = (registration_number or "").strip()
+
+    if not mfr and mdl:
+        parts = mdl.split(None, 1)
+        if len(parts) >= 2:
+            mfr, mdl = parts[0].strip(), parts[1].strip()
+
+    conditions: List[str] = ["serial_number = %s"]
+    params: List[Any] = [ser]
+
+    if reg:
+        conditions.append("registration_number ILIKE %s")
+        params.append(f"%{reg}%")
+
+    if mfr:
+        conditions.append("make_model_name ILIKE %s")
+        params.append(f"%{mfr}%")
+    if mdl:
+        conditions.append("make_model_name ILIKE %s")
+        params.append(f"%{mdl}%")
+
+    where_sql = " AND ".join(conditions)
+    lim = max(1, min(100, int(limit)))
+
+    try:
+        rows = db.execute_query(
+            f"""
+            SELECT id, aircraft_entity_id, make_model_id, make_model_name,
+                   serial_number, registration_number,
+                   mfr_year, eis_date, country_code, base_code, owner_url,
+                   airframe_hours, total_landings, prior_owners, for_sale, passengers,
+                   engine_program_type, apu_program, fields, ingestion_date
+            FROM aircraftpost_fleet_aircraft
+            WHERE {where_sql}
+            ORDER BY ingestion_date DESC, updated_at DESC
+            LIMIT %s
+            """,
+            tuple(params + [lim]),
+        )
+        return [dict(r) for r in (rows or [])]
+    except Exception as e:
+        logger.warning("aircraftpost owner rows lookup failed: %s", e)
+        return []
+
+
+def narrow_aircraftpost_rows_by_make_model(
+    rows: List[Dict[str, Any]],
+    manufacturer: Optional[str],
+    model: Optional[str],
+) -> List[Dict[str, Any]]:
+    """
+    When multiple ``aircraftpost_fleet_aircraft`` rows match serial/registration, prefer rows whose
+    ``make_model_name`` contains the requested manufacturer and/or model (PhlyData / FAA model context).
+    If no row passes, returns the original list (do not drop all matches).
+    """
+    if not rows:
+        return rows
+    mfr = (manufacturer or "").strip()
+    mdl = (model or "").strip()
+    if not mfr and not mdl:
+        return rows
+    if not mfr and mdl:
+        parts = mdl.split(None, 1)
+        if len(parts) >= 2:
+            mfr, mdl = parts[0].strip(), parts[1].strip()
+
+    def row_matches(r: Dict[str, Any]) -> bool:
+        mm = (r.get("make_model_name") or "").lower()
+        if not mm:
+            return False
+        if mfr and mfr.lower() not in mm:
+            return False
+        if mdl and mdl.lower() not in mm:
+            return False
+        return True
+
+    filtered = [r for r in rows if row_matches(r)]
+    return filtered if filtered else rows
+
+
 def lookup_aircraftpost_fleet(
     db: "PostgresClient",
     manufacturer: Optional[str] = None,

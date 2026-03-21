@@ -27,10 +27,13 @@ from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
 from services.aviacost_lookup import lookup_aviacost
-from services.aircraftpost_lookup import lookup_aircraftpost_fleet
+from services.aircraftpost_lookup import (
+    lookup_aircraftpost_fleet,
+    lookup_aircraftpost_owner_rows_by_registration,
+    owner_display_from_aircraftpost_fields,
+)
 from services.zoominfo_client import (
     search_companies as zoominfo_search_companies,
-    search_contacts as zoominfo_search_contacts,
     enrich_company as zoominfo_enrich_company,
     enrich_contact as zoominfo_enrich_contact,
     normalize_phone as zoominfo_normalize_phone,
@@ -44,6 +47,7 @@ MATCH_METHOD_LLM_FALLBACK = "llm_fallback"
 
 import re
 import logging
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +101,90 @@ def _first_word_company_name(name: str) -> str:
     return tokens[0].strip() if tokens else ""
 
 
+def _person_name_search_variants(name: str) -> List[str]:
+    """
+    Ordered, deduplicated query strings for person-led ZoomInfo *company* search (contact_full_name).
+
+    Unlike company search variants, this permutes personal-name tokens: full string, without trailing
+    initial, first+second in both orders, optional first+last when 3+ tokens, then single tokens (len>=2).
+
+    Examples:
+      - "Sarah Jason P" -> full, "Sarah Jason", "Jason Sarah", "Sarah", "Jason" (not lone "P")
+      - "SMITH, JOHN A" -> structured LAST/FIRST variants plus "JOHN SMITH", etc.
+    """
+    if not name or not isinstance(name, str):
+        return []
+    raw = " ".join(name.split()).strip()
+    if not raw:
+        return []
+
+    def _tok(w: str) -> str:
+        return re.sub(r"[^\w]", "", w or "")
+
+    variants: List[str] = []
+    seen: set[str] = set()
+
+    def add(s: str) -> None:
+        s = " ".join(s.split()).strip()
+        if len(s) < 2:
+            return
+        k = s.lower()
+        if k in seen:
+            return
+        seen.add(k)
+        variants.append(s)
+
+    add(raw)
+
+    # FAA-style: LAST, FIRST [MIDDLE / INITIAL ...]
+    if "," in raw:
+        left, right = [p.strip() for p in raw.split(",", 1)]
+        last = _tok(left)
+        rtoks = [_tok(t) for t in right.split() if _tok(t)]
+        if last and rtoks:
+            given = " ".join(rtoks)
+            add(f"{given} {last}")
+            add(f"{last} {given}")
+            if len(rtoks) >= 2 and len(rtoks[-1]) == 1:
+                add(f"{rtoks[0]} {last}")
+                add(f"{last} {rtoks[0]}")
+            elif len(rtoks) >= 2:
+                add(f"{rtoks[0]} {rtoks[-1]}")
+                add(f"{rtoks[-1]} {rtoks[0]}")
+            for t in rtoks:
+                if len(t) >= 2:
+                    add(t)
+            if len(last) >= 2:
+                add(last)
+        return variants
+
+    # Space-separated personal name
+    toks = [_tok(t) for t in raw.split() if _tok(t)]
+    if not toks:
+        return variants
+
+    significant = [t for t in toks if len(t) >= 2]
+
+    if len(toks) >= 2 and len(toks[-1]) == 1:
+        add(" ".join(toks[:-1]))
+
+    if len(toks) >= 2:
+        a, b = toks[0], toks[1]
+        add(f"{a} {b}")
+        if a.lower() != b.lower():
+            add(f"{b} {a}")
+
+    if len(toks) >= 3 and len(toks[-1]) >= 2:
+        add(f"{toks[0]} {toks[-1]}")
+        if toks[0].lower() != toks[-1].lower():
+            add(f"{toks[-1]} {toks[0]}")
+
+    for t in significant:
+        add(t)
+
+    return variants
+
+
 def _normalize_name_tokens(s: str) -> set:
     """Order-independent name comparison: 'John Smith' and 'Smith John' -> same token set."""
     return set(_tokenize(s))
@@ -136,6 +224,290 @@ def _normalize_website(url: Optional[str]) -> str:
     return s.rstrip("/") or ""
 
 
+# Host substrings → treat as marketplace/listing; company site is not the registrant domain.
+_OWNER_URL_LISTING_HOST_MARKERS = (
+    "aircraftpost",
+    "controller",
+    "jetnet",
+    "aminusa",
+    "avbuyer",
+    "aso.com",
+    "globalair.com",
+    "trade-a-plane",
+    "controller.com",
+)
+
+
+def _owner_url_host_looks_like_listing_portal(host: str) -> bool:
+    h = (host or "").lower()
+    if h.startswith("www."):
+        h = h[4:]
+    return any(m in h for m in _OWNER_URL_LISTING_HOST_MARKERS)
+
+
+# AircraftPost `fields.Owner.text` is sometimes a link label ("URL", "Website") — not a company name.
+_AIRCRAFTPOST_OWNER_PLACEHOLDER_LABELS = frozenset(
+    {
+        "url",
+        "link",
+        "links",
+        "website",
+        "web",
+        "site",
+        "here",
+        "click",
+        "click here",
+        "more",
+        "profile",
+        "details",
+        "info",
+        "n/a",
+        "na",
+        "none",
+        "unknown",
+        "tbd",
+        "—",
+        "-",
+        "--",
+        "…",
+    }
+)
+
+
+def _usable_aircraftpost_owner_label(text: Optional[str]) -> Optional[str]:
+    """
+    Return stripped owner label from AircraftPost, or None if it is a generic placeholder.
+    ZoomInfo / owner_url fallbacks (slug, domain, LLM) run when this returns None.
+    """
+    if not text or not isinstance(text, str):
+        return None
+    t = text.strip()
+    if not t:
+        return None
+    if t.lower() in _AIRCRAFTPOST_OWNER_PLACEHOLDER_LABELS:
+        return None
+    return t
+
+
+def _company_website_domain_from_owner_url(url: Optional[str]) -> Optional[str]:
+    """
+    When owner_url points at the company's own site (not a listing portal), return normalized
+    registrant domain for ZoomInfo website matching.
+    """
+    if not url or not isinstance(url, str):
+        return None
+    try:
+        p = urlparse(url.strip())
+        host = (p.netloc or "").lower()
+        if not host and "://" not in url:
+            p = urlparse("https://" + url.strip())
+            host = (p.netloc or "").lower()
+        if not host:
+            return None
+        if _owner_url_host_looks_like_listing_portal(host):
+            return None
+        return _normalize_website(url)
+    except Exception:
+        return None
+
+
+def _zoominfo_domain_in_owner_url(their_domain: str, owner_url: str) -> bool:
+    """True if normalized ZoomInfo company domain appears in owner_url (path, query, or host)."""
+    if not their_domain or not owner_url:
+        return False
+    ou = owner_url.strip().lower()
+    bare = ou.replace("https://", "").replace("http://", "")
+    host_part = bare.split("/")[0].split("?")[0]
+    if their_domain in host_part or their_domain in bare:
+        return True
+    return False
+
+
+def _split_domain_label_to_company_words(label: str) -> str:
+    """
+    Turn a registrable domain label (e.g. ``fremontgroup``, ``acme-corp``) into a spaced company-style
+    string for ZoomInfo company search (``Fremont Group``, ``Acme Corp``).
+    """
+    if not label or not isinstance(label, str):
+        return ""
+    raw = label.strip().replace("-", " ").replace("_", " ")
+    low = raw.lower().replace(" ", "")
+    if not low:
+        return ""
+    suffixes = (
+        "international",
+        "associates",
+        "solutions",
+        "services",
+        "holdings",
+        "ventures",
+        "partners",
+        "capital",
+        "global",
+        "systems",
+        "group",
+        "corp",
+        "inc",
+    )
+    for suf in suffixes:
+        if low.endswith(suf) and len(low) > len(suf) + 1:
+            stem = low[: -len(suf)].rstrip("-")
+            if stem:
+                return f"{stem.title()} {suf.title()}"
+    return raw.title()
+
+
+def _company_name_from_owner_url_domain(owner_url: str) -> Optional[str]:
+    """
+    Guess company display name from ``owner_url`` host for ZoomInfo **before** slug/LLM.
+    Skips listing-portal hosts.
+    """
+    if not owner_url or not isinstance(owner_url, str):
+        return None
+    try:
+        pu = urlparse(owner_url.strip())
+        host = (pu.netloc or "").lower()
+        if not host and "://" not in owner_url:
+            pu = urlparse("https://" + owner_url.strip())
+            host = (pu.netloc or "").lower()
+    except Exception:
+        return None
+    if not host or _owner_url_host_looks_like_listing_portal(host):
+        return None
+    if host.startswith("www."):
+        host = host[4:]
+    host = host.split(":")[0].split("/")[0]
+    if not host or "." not in host:
+        return None
+    label = host.split(".")[0]
+    if len(label) < 2:
+        return None
+    name = _split_domain_label_to_company_words(label)
+    return name if name else None
+
+
+# Last path segment is often a page name, not a company (e.g. /leadership, /about-us).
+_URL_PATH_SLUG_NOT_COMPANY = frozenset(
+    {
+        "leadership",
+        "management",
+        "executives",
+        "executive",
+        "team",
+        "about",
+        "about-us",
+        "contact",
+        "home",
+        "index",
+        "profile",
+        "board",
+        "directors",
+        "groupexecutivecommittee",
+        "our-leadership",
+    }
+)
+
+
+def _slug_guess_company_from_url(url: str) -> Optional[str]:
+    """Heuristic: last path segment with hyphens → title-ish name (before LLM)."""
+    if not url or not isinstance(url, str):
+        return None
+    try:
+        p = urlparse(url.strip())
+        path = (p.path or "").strip("/")
+        if not path:
+            return None
+        seg = path.split("/")[-1].split("?")[0]
+        seg = re.sub(r"\.[a-z]{2,4}$", "", seg, flags=re.I)
+        seg = seg.replace("-", " ").replace("_", " ").strip()
+        if len(seg) < 3 or seg.isdigit():
+            return None
+        seg_key = seg.lower().replace(" ", "")
+        if seg.lower() in _URL_PATH_SLUG_NOT_COMPANY or seg_key in _URL_PATH_SLUG_NOT_COMPANY:
+            return None
+        return seg[:120]
+    except Exception:
+        return None
+
+
+def _llm_owner_url_aligns_with_zoominfo_company(
+    owner_url: str,
+    zoominfo_company_name: str,
+    zoominfo_website: Optional[str],
+    openai_key: str,
+) -> str:
+    """
+    After matching AircraftPost → ZoomInfo by name, verify the owner listing URL plausibly refers to the same entity.
+    Returns: 'yes' | 'no' | 'unknown'
+    """
+    if not owner_url or not openai_key:
+        return "unknown"
+    try:
+        import openai
+
+        client = openai.OpenAI(api_key=openai_key, timeout=25.0)
+        resp = client.chat.completions.create(
+            model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "Does this aircraft owner/operator profile URL most likely refer to the SAME business entity as "
+                        "the ZoomInfo company below (same operator or parent), not merely a similar name?\n"
+                        "Reply with exactly one word: YES, NO, or UNKNOWN\n\n"
+                        f"URL: {owner_url[:900]}\n"
+                        f"ZoomInfo company name: {zoominfo_company_name[:300]}\n"
+                        f"ZoomInfo website (may be empty): {zoominfo_website or '—'}"
+                    ),
+                }
+            ],
+            max_tokens=5,
+            temperature=0,
+        )
+        text = (resp.choices[0].message.content or "").strip().upper()
+        if text.startswith("Y"):
+            return "yes"
+        if text.startswith("N"):
+            return "no"
+        return "unknown"
+    except Exception as e:
+        logger.debug("llm_owner_url_aligns_with_zoominfo_company failed: %s", e)
+        return "unknown"
+
+
+def _infer_company_name_from_owner_url_llm(url: str, openai_key: str) -> Optional[str]:
+    """Ask LLM for likely legal/display business name when owner label is missing (listing URLs)."""
+    if not url or not openai_key:
+        return None
+    try:
+        import openai
+
+        client = openai.OpenAI(api_key=openai_key, timeout=25.0)
+        resp = client.chat.completions.create(
+            model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+            messages=[
+                {
+                    "role": "user",
+                    "content": (
+                        "From this URL (aircraft owner / operator / company profile page), respond with ONLY the single "
+                        "most likely business or operating entity name (as used on FAA registration or corporate filings). "
+                        "If you cannot infer a specific entity, reply exactly: UNKNOWN\n\n"
+                        f"URL: {url[:800]}"
+                    ),
+                }
+            ],
+            max_tokens=50,
+            temperature=0,
+        )
+        text = (resp.choices[0].message.content or "").strip().strip('"').strip("'")
+        if not text or text.upper() in ("UNKNOWN", "N/A", "NONE"):
+            return None
+        return text[:200]
+    except Exception as e:
+        logger.debug("infer_company_name_from_owner_url_llm failed: %s", e)
+        return None
+
+
 def _faa_item_geo_bucket(item: dict) -> str:
     """Infer registrant geography from FAA-derived owner item: 'us' | 'intl' | 'unk'."""
     if (item.get("source_platform") or "").strip().lower() != "faa":
@@ -152,6 +524,17 @@ def _faa_item_geo_bucket(item: dict) -> str:
         # Any other explicit non-empty country → treat as non-US
         return "intl"
     return "unk"
+
+
+def _owner_source_is_us_for_zoominfo(item: dict) -> bool:
+    """True when owner context suggests US — narrow ZoomInfo company hits for FAA and AircraftPost."""
+    sp = (item.get("source_platform") or "").strip().lower()
+    if sp == "faa":
+        return _faa_item_geo_bucket(item) == "us"
+    if sp == "aircraftpost":
+        cc = (item.get("country_code") or "").strip().upper()
+        return cc in ("US", "USA")
+    return False
 
 
 def _zoominfo_company_geo_bucket(attrs: dict) -> str:
@@ -186,9 +569,18 @@ def _zoominfo_company_geo_bucket(attrs: dict) -> str:
 def _zoominfo_foreign_signals_penalty(item: dict, attrs: dict) -> float:
     """
     When FAA context is US, penalize obvious non-US company signals (same-name homonyms).
+    Same when AircraftPost row has US country_code.
     Returns negative delta to add to score (e.g. -3.0).
     """
-    if _faa_item_geo_bucket(item) != "us":
+    sp = (item.get("source_platform") or "").strip().lower()
+    if sp == "faa":
+        if _faa_item_geo_bucket(item) != "us":
+            return 0.0
+    elif sp == "aircraftpost":
+        cc = (item.get("country_code") or "").strip().upper()
+        if cc not in ("US", "USA"):
+            return 0.0
+    else:
         return 0.0
     penalty = 0.0
     tw = _normalize_website(attrs.get("website"))
@@ -291,16 +683,37 @@ def _score_zoominfo_company(co: Any, item: dict) -> tuple:
     our_company = (item.get("company_name") or "").strip()
     their_name = (attrs.get("name") or attrs.get("companyName") or "").strip()
     if our_company and their_name:
-        co_score = _company_token_overlap(our_company, their_name)
-        if co_score > 0:
-            matched["company"] = co_score >= 0.5
-            score += co_score * 2.0
+        # FAA registrant as person: name is not a legal entity; don't score vs company name (false overlaps).
+        if (item.get("registrant_type") or "").lower() != "person":
+            co_score = _company_token_overlap(our_company, their_name)
+            if co_score > 0:
+                matched["company"] = co_score >= 0.5
+                score += co_score * 2.0
     # Website (strong signal when both sides have it)
     our_website = _normalize_website(item.get("website"))
     their_website = _normalize_website(attrs.get("website"))
     if our_website and their_website and our_website == their_website:
         matched["website"] = True
         score += 2.0
+    elif their_website and item.get("owner_url"):
+        # AircraftPost: listing URL may embed the ZoomInfo company's domain, or we matched via inferred name.
+        if _zoominfo_domain_in_owner_url(their_website, str(item["owner_url"])):
+            matched["website"] = True
+            score += 2.0
+    elif (
+        (item.get("source_platform") or "").lower() == "aircraftpost"
+        and item.get("owner_url")
+        and their_name
+        and not matched["website"]
+    ):
+        # Company **search** hits often omit ``website``; compare domain label to returned company name.
+        dom = _normalize_website(str(item["owner_url"]))
+        if dom and "." in dom:
+            dlabel = dom.split(".")[0]
+            guess = _split_domain_label_to_company_words(dlabel)
+            if guess and _company_token_overlap(guess, their_name) >= 0.45:
+                matched["website"] = True
+                score += 1.75
     # Phone (company may have main phone)
     our_phone = zoominfo_normalize_phone(item.get("phone"))
     their_phones = [
@@ -335,6 +748,15 @@ def _score_zoominfo_company(co: Any, item: dict) -> tuple:
         if loc_score > 0:
             matched["location"] = loc_score >= 0.5
             score += loc_score * 1.5
+    elif (item.get("source_platform") or "").lower() == "aircraftpost":
+        cc = (item.get("country_code") or "").strip().upper()
+        zb = _zoominfo_company_geo_bucket(attrs)
+        if cc in ("US", "USA") and zb == "us":
+            matched["location"] = True
+            score += 0.85
+        elif len(cc) == 2 and cc not in ("US", "USA", "") and zb == "intl":
+            matched["location"] = True
+            score += 0.85
     score += _zoominfo_foreign_signals_penalty(item, attrs)
     return (score, matched)
 
@@ -550,6 +972,8 @@ def _item_to_text(item: dict) -> str:
         parts.append(f"Street: {item['street']}")
     if item.get("website"):
         parts.append(f"Website: {item['website']}")
+    if item.get("owner_url"):
+        parts.append(f"Owner URL: {item['owner_url']}")
     return " | ".join(parts) if parts else ""
 
 
@@ -1210,11 +1634,23 @@ def phlydata_owners(
     serial: str,
     manufacturer: Optional[str] = None,
     model: Optional[str] = None,
+    registration: Optional[str] = None,
 ):
     """Get owner detail for a PhlyData aircraft.
 
-    FAA lookup is driven by `serial_number + model` (and optionally manufacturer),
-    without depending on the main `aircraft` table / `aircraft_id` mapping.
+    **Frontend should send** ``serial``, ``registration`` (tail), and ``model`` (plus optional ``manufacturer``).
+
+    - **FAA registry**: ``serial_number`` + ``model`` (optional ``manufacturer``) to match the right
+      ``faa_registrations`` row via ``faa_aircraft_reference`` (serial-only allowed only when ``model`` is omitted).
+
+    - **AircraftPost** (``aircraftpost_fleet_aircraft``): **``registration_number`` only** (tail / N-number).
+      Normalized match (case, spaces, hyphens ignored). **No** serial-based or model-based lookup or fallbacks.
+
+    - **ZoomInfo**: there is **no** company lookup-by-URL API. Flow: owner text from AircraftPost, else
+      **guess company name from ``owner_url``** (URL slug, then LLM), then **company search + enrich** using
+      that name; finally **compare** enriched company website / name to ``owner_url`` (domain match or LLM).
+
+    FAA and AircraftPost drive separate ZoomInfo candidates (deduped), up to 6 items.
     """
     if not serial or not serial.strip():
         raise HTTPException(status_code=400, detail="serial is required")
@@ -1278,8 +1714,11 @@ def phlydata_owners(
             "delivery_year": None,
             "category": None,
         }
+        # Reflect explicit tail from the client (used for AircraftPost registration-only lookup).
+        if (registration or "").strip():
+            aircraft["registration_number"] = (registration or "").strip()
 
-        # Aircraft tab policy: FAA-only owner source.
+        # Listings (Controller / etc.) — optional; PhlyData aircraft tab uses FAA + AircraftPost + ZoomInfo.
         owners_from_listings = []
 
         # Owners from FAA:
@@ -1316,9 +1755,107 @@ def phlydata_owners(
                 (serial,),
             )
         owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
-        aircraftpost_fleet = []
 
-        # Build ZoomInfo search payloads. Ensure at least one item per platform (controller, faa, aircraftexchange).
+        # AircraftPost: registration (tail) only — no serial/model fallbacks.
+        reg_for_ap = (registration or "").strip() or (aircraft.get("registration_number") or "").strip() or None
+        ap_rows: list = (
+            lookup_aircraftpost_owner_rows_by_registration(db, reg_for_ap, limit=15)
+            if reg_for_ap
+            else []
+        )
+
+        _, openai_key_ap = get_embedding_service_only()
+        aircraftpost_fleet: list = []
+        owners_from_aircraftpost: list = []
+        aircraftpost_zoom_items: list = []
+        seen_ap_zoom: set = set()
+        for r in ap_rows:
+            owner_nm = _usable_aircraftpost_owner_label(owner_display_from_aircraftpost_fields(r.get("fields")))
+            owner_url = (r.get("owner_url") or "").strip() or None
+            website_from_url = _company_website_domain_from_owner_url(owner_url)
+            # Domain-first company name for ZoomInfo (e.g. fremontgroup.com → "Fremont Group").
+            domain_company: Optional[str] = None
+            if owner_url:
+                domain_company = _company_name_from_owner_url_domain(owner_url)
+            inferred_name: Optional[str] = None
+            if (not owner_nm or not str(owner_nm).strip()) and owner_url:
+                inferred_name = _slug_guess_company_from_url(owner_url)
+                if not inferred_name and openai_key_ap:
+                    inferred_name = _infer_company_name_from_owner_url_llm(owner_url, openai_key_ap)
+
+            fleet_row = {k: v for k, v in r.items() if k != "fields"}
+            rid = fleet_row.get("id")
+            if rid is not None:
+                fleet_row["id"] = str(rid)
+            aircraftpost_fleet.append(fleet_row)
+            owners_from_aircraftpost.append(
+                {
+                    "serial_number": r.get("serial_number"),
+                    "registration_number": r.get("registration_number"),
+                    "owner_name": owner_nm,
+                    "owner_name_inferred": inferred_name,
+                    "owner_name_from_domain": domain_company,
+                    "owner_url": owner_url,
+                    "make_model_name": r.get("make_model_name"),
+                    "country_code": r.get("country_code"),
+                    "base_code": r.get("base_code"),
+                    "source_platform": "aircraftpost",
+                }
+            )
+
+            # Prefer real owner label, then domain-derived name, then slug/LLM, then raw domain brand.
+            zoom_company = (owner_nm or domain_company or inferred_name or "").strip() or None
+            if not zoom_company and owner_url:
+                try:
+                    pu = urlparse(owner_url.strip())
+                    host_chk = (pu.netloc or "").lower()
+                    if not host_chk and "://" not in owner_url:
+                        pu = urlparse("https://" + owner_url.strip())
+                        host_chk = (pu.netloc or "").lower()
+                except Exception:
+                    host_chk = ""
+                dom = _normalize_website(owner_url)
+                if dom and not _owner_url_host_looks_like_listing_portal(host_chk):
+                    brand = dom.split(".")[0]
+                    if brand and len(brand) >= 2:
+                        zoom_company = _split_domain_label_to_company_words(brand) or brand.replace("-", " ").title()
+            if not zoom_company and not owner_url:
+                continue
+            if not zoom_company:
+                continue
+            dedupe_key = (
+                (zoom_company or "").strip().lower(),
+                (owner_url or "")[:500],
+            )
+            if dedupe_key in seen_ap_zoom:
+                continue
+            seen_ap_zoom.add(dedupe_key)
+
+            aircraftpost_zoom_items.append(
+                {
+                    "query_name": zoom_company,
+                    "source_platform": "aircraftpost",
+                    "field_name": "owner",
+                    "company_name": zoom_company,
+                    "contact_name": zoom_company,
+                    "address": None,
+                    "street": None,
+                    "city": None,
+                    "state": None,
+                    "zip_code": None,
+                    "country": None,
+                    "country_code": (r.get("country_code") or "").strip() or None,
+                    "broker_name": None,
+                    "phone": None,
+                    "website": website_from_url,
+                    "owner_url": owner_url,
+                    # Direct company URLs / domain or LLM-inferred names → company; else classify from owner text.
+                    "registrant_type": "company" if (inferred_name or website_from_url or domain_company) else None,
+                    "inferred_company_from_url": bool(inferred_name or domain_company),
+                }
+            )
+
+        # Build ZoomInfo search payloads (FAA + AircraftPost owner labels, deduped, max 6).
         def _listing_item(row: dict, platform: str, field: str) -> dict:
             company_name = (row.get("seller") or "").strip()
             return {
@@ -1366,25 +1903,42 @@ def phlydata_owners(
                 # Will be computed per-item in the ZoomInfo loop (company vs person).
                 "registrant_type": None,
             })
-        # FAA-only lookup items, up to 6 candidates.
-        items_to_lookup = []
-        if by_platform["faa"]:
-            items_to_lookup.append(by_platform["faa"][0])
-        for idx in range(1, len(by_platform["faa"])):
+        items_to_lookup: list = []
+        seen_lookup_key: set = set()
+
+        def _append_lookup_item(it: dict) -> None:
+            cn = (it.get("company_name") or "").strip().lower()
+            ou = (it.get("owner_url") or "").strip()[:400]
+            if not cn and not ou:
+                return
+            key: Any = (cn, ou) if (it.get("source_platform") or "").lower() == "aircraftpost" and ou else cn
+            if not key or key in seen_lookup_key or len(items_to_lookup) >= 6:
+                return
+            seen_lookup_key.add(key)
+            items_to_lookup.append(it)
+
+        for it in by_platform["faa"]:
+            _append_lookup_item(it)
             if len(items_to_lookup) >= 6:
                 break
-            items_to_lookup.append(by_platform["faa"][idx])
-        items_to_lookup = items_to_lookup[:6]
+        for it in aircraftpost_zoom_items:
+            _append_lookup_item(it)
+            if len(items_to_lookup) >= 6:
+                break
+
         logger.info(
-            "phlydata/owners: FAA-only items_to_lookup count=%s (faa=%s)",
+            "phlydata/owners: items_to_lookup count=%s (faa=%s aircraftpost=%s)",
             len(items_to_lookup),
             len(by_platform["faa"]),
+            len(aircraftpost_zoom_items),
         )
 
         zoominfo_enrichment = []
         zoominfo_contacts_access_denied = False
         zoominfo_registrant_type_hint: Optional[str] = None
         for idx, item in enumerate(items_to_lookup):
+            url_alignment_source = None
+            owner_url_llm_alignment = None
             all_companies = []
             all_contacts = []
             zoominfo_error = None
@@ -1417,10 +1971,11 @@ def phlydata_owners(
 
                             client = openai.OpenAI(api_key=openai_key, timeout=30.0)
                             prompt = (
-                                "Classify the FAA registrant name as either an individual person or an organization/company. "
+                                "Classify this aircraft owner/registrant name as either an individual person or an organization/company. "
                                 "Return only one word: person OR company.\n\n"
-                                f"FAA registrant name: {registrant_name}\n"
-                                f"FAA location hint (optional): state={item.get('state')}, country={item.get('country')}\n"
+                                f"Name: {registrant_name}\n"
+                                f"Source: {item.get('source_platform') or 'unknown'}\n"
+                                f"Location hint (optional): state={item.get('state')}, country={item.get('country')}, country_code={item.get('country_code')}\n"
                             )
                             resp = client.chat.completions.create(
                                 model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
@@ -1435,46 +1990,79 @@ def phlydata_owners(
 
             item["registrant_type"] = registrant_type
 
-            # Build search variants from the registrant name.
+            # Build search variants: company names use cleanup/core/first-word; persons use name permutations.
             original = registrant_name
-            queries = [original]
-            cleaned = _clean_company_name(original)
-            if cleaned and cleaned.lower() != original.lower():
-                queries.append(cleaned)
-            core = _core_company_name(original)
-            if core and core.lower() not in {q.lower() for q in queries}:
-                queries.append(core)
-            first_word = _first_word_company_name(original)
-            if first_word and first_word.lower() not in {q.lower() for q in queries}:
-                queries.append(first_word)
+            if registrant_type == "person":
+                queries = _person_name_search_variants(original)
+                if not queries:
+                    queries = [original]
+            else:
+                queries = [original]
+                cleaned = _clean_company_name(original)
+                if cleaned and cleaned.lower() != original.lower():
+                    queries.append(cleaned)
+                core = _core_company_name(original)
+                if core and core.lower() not in {q.lower() for q in queries}:
+                    queries.append(core)
+                first_word = _first_word_company_name(original)
+                if first_word and first_word.lower() not in {q.lower() for q in queries}:
+                    queries.append(first_word)
 
             if registrant_type == "person":
-                # Contact search + later contact enrich (email).
+                # Company search by person name (fullName / firstName+lastName + geo). Avoids Contact Search API
+                # which often returns 403 without api:data:contact scope.
                 all_companies = []
                 all_contacts = []
+                st = (item.get("state") or "").strip() or None
+                ctry = (item.get("country") or "").strip() or None
+                z = (item.get("zip_code") or "").strip() or None
                 for q in queries:
-                    contacts, zoominfo_error = zoominfo_search_contacts(q, page_size=25)
+                    companies, zoominfo_error = zoominfo_search_companies(
+                        None,
+                        page_size=25,
+                        contact_full_name=q,
+                        state=st,
+                        country=ctry,
+                        zip_code=z,
+                    )
                     if zoominfo_error:
                         logger.info(
-                            "phlydata/owners: item[%s] contact_search query=%r -> error=%s",
+                            "phlydata/owners: item[%s] company_search_by_person query=%r -> error=%s",
                             idx,
                             q,
                             zoominfo_error,
                         )
                         break
-                    if contacts:
-                        logger.info("phlydata/owners: item[%s] contact_search query=%r -> %s contacts", idx, q, len(contacts))
-                        all_contacts.extend(contacts)
+                    if companies:
+                        if _owner_source_is_us_for_zoominfo(item):
+                            us_only = [
+                                c
+                                for c in companies
+                                if _zoominfo_company_geo_bucket(c.get("attributes") or {}) == "us"
+                            ]
+                            if us_only:
+                                logger.info(
+                                    "phlydata/owners: item[%s] ZoomInfo person-led query=%r: narrowed %s -> %s US-region companies",
+                                    idx,
+                                    q,
+                                    len(companies),
+                                    len(us_only),
+                                )
+                                companies = us_only
+                        logger.info(
+                            "phlydata/owners: item[%s] company_search_by_person query=%r -> %s companies",
+                            idx,
+                            q,
+                            len(companies),
+                        )
+                        all_companies.extend(companies)
                         break
-                if zoominfo_error and not all_contacts:
-                    logger.info("phlydata/owners: item[%s] contact_search all queries failed, total contacts=0", idx)
-
-                if registrant_type == "person" and zoominfo_error:
-                    zerr = str(zoominfo_error).lower()
-                    # ZoomInfo admin permission is missing (scope) for /contacts/search.
-                    if "contacts/search" in zerr or "gtm/data/v1/contacts/search" in zerr or "scope" in zerr or "access denied" in zerr:
-                        zoominfo_contacts_access_denied = True
-                        zoominfo_registrant_type_hint = "person"
+                    all_companies.extend(companies)
+                if zoominfo_error and not all_companies:
+                    logger.info(
+                        "phlydata/owners: item[%s] company_search_by_person all queries failed, total companies=0",
+                        idx,
+                    )
             else:
                 # Company search (progressive fallback)
                 for q in queries:
@@ -1484,7 +2072,7 @@ def phlydata_owners(
                         break
                     if companies:
                         # When FAA registrant is US, drop obvious non-US same-name hits (e.g. Valiair UK vs Carlsbad US).
-                        if (item.get("source_platform") or "").strip().lower() == "faa" and _faa_item_geo_bucket(item) == "us":
+                        if _owner_source_is_us_for_zoominfo(item):
                             us_only = [
                                 c
                                 for c in companies
@@ -1546,23 +2134,30 @@ def phlydata_owners(
                 and not matched.get("website")
             )
             if name_only and (all_companies or all_contacts):
-                emb_svc, openai_key = get_embedding_service_only()
-                if emb_svc and openai_key:
-                    llm_best, llm_type, llm_matched = _pick_best_zoominfo_by_vector_and_llm(
-                        all_companies, all_contacts, item, emb_svc, openai_key
+                # AircraftPost + owner_url: keep the pick; we validate URL ↔ company after enrich (domain / LLM).
+                if (item.get("source_platform") or "").lower() == "aircraftpost" and (item.get("owner_url") or "").strip():
+                    logger.info(
+                        "phlydata/owners: item[%s] name_only bypass (AircraftPost + owner_url; post-enrich URL check)",
+                        idx,
                     )
-                    if llm_best is not None:
-                        best_record, result_type, matched = llm_best, llm_type, llm_matched
-                        match_method = MATCH_METHOD_LLM_FALLBACK
-                        logger.info("phlydata/owners: item[%s] name_only -> llm_fallback confirmed result_type=%s", idx, result_type)
+                else:
+                    emb_svc, openai_key = get_embedding_service_only()
+                    if emb_svc and openai_key:
+                        llm_best, llm_type, llm_matched = _pick_best_zoominfo_by_vector_and_llm(
+                            all_companies, all_contacts, item, emb_svc, openai_key
+                        )
+                        if llm_best is not None:
+                            best_record, result_type, matched = llm_best, llm_type, llm_matched
+                            match_method = MATCH_METHOD_LLM_FALLBACK
+                            logger.info("phlydata/owners: item[%s] name_only -> llm_fallback confirmed result_type=%s", idx, result_type)
+                        else:
+                            best_record = None
+                            result_type = None
+                            logger.info("phlydata/owners: item[%s] name_only -> llm said no match, returning no ZoomInfo result", idx)
                     else:
                         best_record = None
                         result_type = None
-                        logger.info("phlydata/owners: item[%s] name_only -> llm said no match, returning no ZoomInfo result", idx)
-                else:
-                    best_record = None
-                    result_type = None
-                    logger.info("phlydata/owners: item[%s] name_only -> no LLM available, returning no ZoomInfo result (avoid wrong match)", idx)
+                        logger.info("phlydata/owners: item[%s] name_only -> no LLM available, returning no ZoomInfo result (avoid wrong match)", idx)
 
             # Enrich: fetch full company/contact detail after we picked the best match.
             if best_record and result_type == "company" and best_record.get("id"):
@@ -1617,6 +2212,40 @@ def phlydata_owners(
                 except Exception as e:
                     logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, e)
 
+            # AircraftPost: ZoomInfo has no direct URL search. After company enrich, align owner_url ↔ website or LLM-check.
+            if (
+                best_record
+                and result_type == "company"
+                and (item.get("source_platform") or "").lower() == "aircraftpost"
+            ):
+                ou = (item.get("owner_url") or "").strip()
+                if ou:
+                    attrs_final = best_record.get("attributes") or {}
+                    zi_nm = (attrs_final.get("name") or attrs_final.get("companyName") or "").strip()
+                    zi_web_raw = (attrs_final.get("website") or "").strip() or None
+                    their_domain = _normalize_website(zi_web_raw)
+                    if their_domain and _zoominfo_domain_in_owner_url(their_domain, ou):
+                        url_alignment_source = "domain"
+                        matched["website"] = True
+                    else:
+                        _, okey_align = get_embedding_service_only()
+                        if okey_align:
+                            owner_url_llm_alignment = _llm_owner_url_aligns_with_zoominfo_company(
+                                ou,
+                                zi_nm or (item.get("company_name") or ""),
+                                zi_web_raw,
+                                okey_align,
+                            )
+                            if owner_url_llm_alignment == "yes":
+                                url_alignment_source = "llm_yes"
+                                matched["website"] = True
+                            elif owner_url_llm_alignment == "no":
+                                url_alignment_source = "llm_no"
+                                logger.info(
+                                    "phlydata/owners: item[%s] AircraftPost owner_url LLM alignment=NO (keep result; check context)",
+                                    idx,
+                                )
+
             companies_out = [best_record] if (best_record and result_type == "company") else []
             contacts_out = [best_record] if (best_record and result_type == "contact") else []
             payload = {
@@ -1641,31 +2270,41 @@ def phlydata_owners(
                     "broker_name": item.get("broker_name"),
                     "phone": item.get("phone"),
                     "website": item.get("website"),
+                    "owner_url": item.get("owner_url"),
+                    "inferred_company_from_url": item.get("inferred_company_from_url"),
+                    "owner_url_alignment_source": url_alignment_source,
+                    "owner_url_llm_alignment": owner_url_llm_alignment,
                 },
             }
             if zoominfo_error:
                 payload["zoominfo_error"] = zoominfo_error
             # Include when we have a match, or when we have an error that needs to be shown.
             if zoominfo_error or companies_out or contacts_out:
+                zel = str(zoominfo_error or "").lower()
+                # Only when the failure is clearly the Contacts Search endpoint (we use company search for persons now).
                 payload["needs_contacts_admin_permission"] = bool(
-                    registrant_type == "person"
-                    and zoominfo_error
+                    zoominfo_error
                     and (
-                        "contacts/search" in str(zoominfo_error).lower()
-                        or "contact" in str(zoominfo_error).lower()
-                        or "scope" in str(zoominfo_error).lower()
-                        or "forbidden" in str(zoominfo_error).lower()
-                        or "zi0002" in str(zoominfo_error).lower()
+                        "contacts/search" in zel
+                        or "gtm/data/v1/contacts/search" in zel
                     )
                 )
                 zoominfo_enrichment.append(payload)
             logger.info("phlydata/owners: item[%s] done -> match_method=%s best_result_type=%s companies=%s contacts=%s",
                         idx, match_method, result_type, len(companies_out), len(contacts_out))
 
+        owner_lookup_sources: List[str] = []
+        if owners_from_faa:
+            owner_lookup_sources.append("faa")
+        if ap_rows:
+            owner_lookup_sources.append("aircraftpost")
+
         return {
             "aircraft": aircraft,
             "owners_from_listings": owners_from_listings,
             "owners_from_faa": owners_from_faa,
+            "owners_from_aircraftpost": owners_from_aircraftpost,
+            "owner_lookup_sources": owner_lookup_sources,
             "zoominfo_enrichment": zoominfo_enrichment,
             "aircraftpost_fleet": aircraftpost_fleet,
             "zoominfo_contacts_access_denied": zoominfo_contacts_access_denied,

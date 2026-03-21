@@ -1,8 +1,10 @@
 """
 ZoomInfo company and contact search for PhlyData owner enrichment.
 
-- Company Search: companyName only; disambiguation by location/phone/name is done in the owners endpoint.
-- Contact Search: fullName; used for person names (seller_contact_name, broker, registrant when person-like).
+- Company Search: companyName and/or person-style filters (fullName, firstName/lastName) plus optional geo.
+  ZoomInfo's published schema emphasizes companyName; person fields are used for "companies tied to this person"
+  when contact search is unavailable (403). Disambiguation is done in the owners endpoint.
+- Contact Search: fullName; optional when api:data:contact scope is enabled.
 - On 401 Unauthorized, the client refreshes the access token using ZOOMINFO_REFRESH_TOKEN and retries.
 - For deployment: do NOT put ZOOMINFO_ACCESS_TOKEN in .env (it changes on refresh). Set only
   ZOOMINFO_CLIENT_ID, ZOOMINFO_CLIENT_SECRET, ZOOMINFO_REFRESH_TOKEN. Optionally set ZOOMINFO_TOKEN_FILE
@@ -14,7 +16,7 @@ import os
 import re
 import logging
 from pathlib import Path
-from typing import List, Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -211,43 +213,157 @@ def phones_match(our_phone: Optional[str], their_phone: Optional[str]) -> bool:
     return False
 
 
-def search_companies(company_name: Optional[str], page_size: int = 10) -> Tuple[List[Any], Optional[str]]:
+def _parse_person_name_for_company_search(full_name: str) -> Dict[str, str]:
     """
-    Search ZoomInfo for companies. Payload contains only companyName.
-    Returns (companies, error_reason). On 401, refreshes token and retries once.
+    Build person-name fragments for CompanySearch (same camelCase as ContactSearch: fullName, firstName, lastName).
+    Handles FAA-style 'LAST, FIRST M' and space-separated names.
+    """
+    full_name = _strip(full_name)
+    out: Dict[str, str] = {}
+    if not full_name:
+        return out
+    out["fullName"] = full_name
+    if "," in full_name:
+        left, right = [p.strip() for p in full_name.split(",", 1)]
+        if left and right:
+            out["lastName"] = left
+            out["firstName"] = right
+    else:
+        parts = full_name.split()
+        if len(parts) >= 2:
+            out["firstName"] = parts[0]
+            out["lastName"] = parts[-1]
+    return out
+
+
+def _merge_company_search_geo(
+    attrs: Dict[str, Any],
+    *,
+    state: Optional[str],
+    country: Optional[str],
+    zip_code: Optional[str],
+    person_led: bool,
+) -> Dict[str, Any]:
+    merged = dict(attrs)
+    st = _strip(state)
+    ctry = _strip(country)
+    z = _strip(zip_code)
+    if st:
+        merged["state"] = st
+    if ctry:
+        merged["country"] = ctry
+    if z:
+        merged["zipCode"] = z
+    # Prefer person-or-HQ location when we have a person-led query and any geo (ZoomInfo CompanySearch).
+    if person_led and (st or ctry or z):
+        merged["locationSearchType"] = "PersonOrHQ"
+    return merged
+
+
+def search_companies(
+    company_name: Optional[str] = None,
+    page_size: int = 10,
+    *,
+    contact_full_name: Optional[str] = None,
+    state: Optional[str] = None,
+    country: Optional[str] = None,
+    zip_code: Optional[str] = None,
+) -> Tuple[List[Any], Optional[str]]:
+    """
+    Search ZoomInfo for companies (CompanySearch).
+
+    - Legacy: pass ``company_name`` only (uses attributes.companyName).
+    - Person-led (no contact API): pass ``contact_full_name`` with optional ``state``/``country``/``zip_code``.
+      Sends fullName and/or firstName+lastName parsed from the registrant string, plus geo and
+      locationSearchType=PersonOrHQ when geo is present.
+
+    Tries attribute variants in order until results are non-empty or a non-retryable error occurs.
+    On 401, refreshes token and retries once per request.
     """
     company_name = _strip(company_name)
-    if not company_name:
+    contact_full_name = _strip(contact_full_name)
+
+    if not company_name and not contact_full_name:
         return [], None
+
     token, base = _get_config()
     if not token:
         logger.warning("ZOOMINFO_ACCESS_TOKEN not set in backend .env; skipping ZoomInfo.")
         return [], "ZoomInfo token not configured. Set ZOOMINFO_ACCESS_TOKEN in backend/.env (same as phlydata-zoominfo/.env)."
+
     import requests
+
+    # Ordered attribute bases: try structured name first, then fullName only, then companyName-as-string fallback.
+    attr_variants: List[Dict[str, Any]] = []
+    person_led = bool(contact_full_name)
+    if contact_full_name:
+        parsed = _parse_person_name_for_company_search(contact_full_name)
+        fn = parsed.get("fullName")
+        fn_part = parsed.get("firstName")
+        ln_part = parsed.get("lastName")
+        if fn_part and ln_part:
+            attr_variants.append({"firstName": fn_part, "lastName": ln_part})
+        if fn:
+            attr_variants.append({"fullName": fn})
+        # Last resort: some datasets match better as a free-text companyName query.
+        attr_variants.append({"companyName": contact_full_name})
+    elif company_name:
+        attr_variants.append({"companyName": company_name})
+
     url = f"{base}/data/v1/companies/search"
     params = {"page[number]": 1, "page[size]": min(100, max(1, page_size))}
-    body = {"data": {"type": "CompanySearch", "attributes": {"companyName": company_name}}}
-    for attempt in range(2):
-        try:
-            token, base = _get_config()
-            headers = {"Authorization": f"Bearer {token}", "Content-Type": JSON_API, "Accept": JSON_API}
-            r = requests.post(url, json=body, params=params, headers=headers, timeout=15)
-            if r.status_code == 401 and attempt == 0 and _refresh_access_token():
-                logger.info("ZoomInfo company search 401 -> token refreshed, retrying")
-                continue
-            r.raise_for_status()
-            data = r.json()
-            return (data.get("data") or []), None
-        except requests.exceptions.HTTPError as e:
-            if e.response is not None and e.response.status_code == 401 and attempt == 0 and _refresh_access_token():
-                logger.info("ZoomInfo company search 401 -> token refreshed, retrying")
-                continue
-            logger.warning("ZoomInfo company search failed for %r: %s", company_name, e)
-            return [], f"ZoomInfo error: {str(e)}"
-        except Exception as e:
-            logger.warning("ZoomInfo company search failed for %r: %s", company_name, e)
-            return [], f"ZoomInfo error: {str(e)}"
-    return [], "ZoomInfo error: retry after refresh failed"
+
+    last_error: Optional[str] = None
+    for base_attrs in attr_variants:
+        attributes = _merge_company_search_geo(
+            base_attrs,
+            state=state,
+            country=country,
+            zip_code=zip_code,
+            person_led=person_led,
+        )
+        body = {"data": {"type": "CompanySearch", "attributes": attributes}}
+        for attempt in range(2):
+            try:
+                token, base = _get_config()
+                headers = {"Authorization": f"Bearer {token}", "Content-Type": JSON_API, "Accept": JSON_API}
+                r = requests.post(url, json=body, params=params, headers=headers, timeout=15)
+                if r.status_code == 401 and attempt == 0 and _refresh_access_token():
+                    logger.info("ZoomInfo company search 401 -> token refreshed, retrying")
+                    continue
+                if r.status_code == 400:
+                    try:
+                        err_body = r.json()
+                    except Exception:
+                        err_body = r.text
+                    logger.info(
+                        "ZoomInfo company search 400 for attributes keys=%s -> trying next variant: %s",
+                        list(attributes.keys()),
+                        err_body,
+                    )
+                    last_error = f"ZoomInfo error: 400 Client Error {err_body}"
+                    break  # next variant
+                r.raise_for_status()
+                data = r.json()
+                rows = data.get("data") or []
+                if rows:
+                    return rows, None
+                # Empty OK: try next variant for person-led search
+                last_error = None
+                break
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code == 401 and attempt == 0 and _refresh_access_token():
+                    logger.info("ZoomInfo company search 401 -> token refreshed, retrying")
+                    continue
+                logger.warning("ZoomInfo company search failed attributes=%s: %s", list(attributes.keys()), e)
+                return [], f"ZoomInfo error: {str(e)}"
+            except Exception as e:
+                logger.warning("ZoomInfo company search failed attributes=%s: %s", list(attributes.keys()), e)
+                return [], f"ZoomInfo error: {str(e)}"
+
+    if last_error:
+        return [], last_error
+    return [], None
 
 
 # Output fields for company enrich. Only request fields allowed by your ZoomInfo plan.
