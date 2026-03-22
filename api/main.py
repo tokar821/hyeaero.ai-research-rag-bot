@@ -335,9 +335,15 @@ def _llm_owner_url_aligns_with_zoominfo_company(
         return "unknown"
 
 
+def _is_faa_derived_phlydata_zoominfo_item(item: dict) -> bool:
+    """ZoomInfo payloads sourced from FAA MASTER row or Tavily/LLM hints tied to that row."""
+    sp = (item.get("source_platform") or "").strip().lower()
+    return sp in ("faa", "faa_tavily_llm_hint", "faa_trustee_hint")
+
+
 def _faa_item_geo_bucket(item: dict) -> str:
     """Infer registrant geography from FAA-derived owner item: 'us' | 'intl' | 'unk'."""
-    if (item.get("source_platform") or "").strip().lower() != "faa":
+    if not _is_faa_derived_phlydata_zoominfo_item(item):
         return "unk"
     c = (item.get("country") or "").strip().upper().replace(".", "")
     st = (item.get("state") or "").strip().upper()
@@ -356,7 +362,7 @@ def _faa_item_geo_bucket(item: dict) -> str:
 def _owner_source_is_us_for_zoominfo(item: dict) -> bool:
     """True when owner context suggests US — narrow ZoomInfo company hits for FAA and AircraftPost."""
     sp = (item.get("source_platform") or "").strip().lower()
-    if sp == "faa":
+    if _is_faa_derived_phlydata_zoominfo_item(item):
         return _faa_item_geo_bucket(item) == "us"
     if sp == "aircraftpost":
         cc = (item.get("country_code") or "").strip().upper()
@@ -400,7 +406,7 @@ def _zoominfo_foreign_signals_penalty(item: dict, attrs: dict) -> float:
     Returns negative delta to add to score (e.g. -3.0).
     """
     sp = (item.get("source_platform") or "").strip().lower()
-    if sp == "faa":
+    if _is_faa_derived_phlydata_zoominfo_item(item):
         if _faa_item_geo_bucket(item) != "us":
             return 0.0
     elif sp == "aircraftpost":
@@ -429,6 +435,63 @@ def _zoominfo_foreign_signals_penalty(item: dict, attrs: dict) -> float:
     elif zb == "us":
         penalty += 1.0  # small bonus when both look US
     return penalty
+
+
+def _filter_zoominfo_companies_for_us_faa(item: dict, companies: List[Any]) -> List[Any]:
+    """
+    PhlyData / US FAA registrant: keep ZoomInfo rows tagged US; if none, drop **intl** bucket hits
+    so same-name UK/EU homonyms (e.g. Valiair UK) are not passed to scoring / LLM fallback.
+    """
+    if not companies or not _owner_source_is_us_for_zoominfo(item):
+        return companies
+    us_only = [
+        c
+        for c in companies
+        if _zoominfo_company_geo_bucket((c.get("attributes") or {})) == "us"
+    ]
+    if us_only:
+        if len(us_only) < len(companies):
+            logger.info(
+                "ZoomInfo US FAA filter: kept %s US-tagged of %s companies",
+                len(us_only),
+                len(companies),
+            )
+        return us_only
+    filtered = [
+        c
+        for c in companies
+        if _zoominfo_company_geo_bucket((c.get("attributes") or {})) != "intl"
+    ]
+    if len(filtered) < len(companies):
+        logger.info(
+            "ZoomInfo US FAA filter: dropped %s intl-only homonyms (%s candidates remain)",
+            len(companies) - len(filtered),
+            len(filtered),
+        )
+    return filtered
+
+
+def _reject_us_faa_foreign_zoominfo_match(item: dict, record: Any) -> bool:
+    """
+    True if this ZoomInfo company should be discarded for a **US** FAA-derived registrant
+    (foreign homonym after search enrich).
+    """
+    if not record or not _owner_source_is_us_for_zoominfo(item):
+        return False
+    attrs = record.get("attributes") or {}
+    zb = _zoominfo_company_geo_bucket(attrs)
+    if zb == "intl":
+        return True
+    if zb == "us":
+        return False
+    tw = _normalize_website(attrs.get("website"))
+    if tw.endswith(".co.uk") or tw.endswith(".uk"):
+        return True
+    for p in (attrs.get("phone"), attrs.get("directPhone"), attrs.get("mainPhone"), attrs.get("mobilePhone")):
+        ps = str(p or "").strip().replace(" ", "").replace("-", "")
+        if ps.startswith("+44") or ps.startswith("0044"):
+            return True
+    return False
 
 
 def _location_match_score(our_tokens: List[str], their_str: str) -> float:
@@ -889,7 +952,7 @@ def _pick_best_zoominfo_by_vector_and_llm(
             if i < len(cand_embeddings) and cand_embeddings[i]:
                 sim = _cosine_sim(query_vec, cand_embeddings[i])
                 attrs = record.get("attributes") or {}
-                if (item.get("source_platform") or "").strip().lower() == "faa":
+                if _is_faa_derived_phlydata_zoominfo_item(item):
                     # Down-rank same-name foreign companies (e.g. Valiair UK vs US registrant).
                     sim = sim + _zoominfo_foreign_signals_penalty(item, attrs) * 0.22
                 scored.append((sim, rtype, record))
@@ -901,7 +964,7 @@ def _pick_best_zoominfo_by_vector_and_llm(
             _, rtype, record = top_k[0]
             return (record, rtype, {"company": False, "person": False, "phone": False, "location": False, "website": False, "llm_fallback": True})
         faa_geo_rule = ""
-        if (item.get("source_platform") or "").strip().lower() == "faa":
+        if _is_faa_derived_phlydata_zoominfo_item(item):
             loc_hint = ", ".join(
                 filter(
                     None,
@@ -1781,28 +1844,16 @@ def phlydata_owners(
                         break
                     if companies:
                         if _owner_source_is_us_for_zoominfo(item):
-                            us_only = [
-                                c
-                                for c in companies
-                                if _zoominfo_company_geo_bucket(c.get("attributes") or {}) == "us"
-                            ]
-                            if us_only:
-                                logger.info(
-                                    "phlydata/owners: item[%s] ZoomInfo person-led query=%r: narrowed %s -> %s US-region companies",
-                                    idx,
-                                    q,
-                                    len(companies),
-                                    len(us_only),
-                                )
-                                companies = us_only
-                        logger.info(
-                            "phlydata/owners: item[%s] company_search_by_person query=%r -> %s companies",
-                            idx,
-                            q,
-                            len(companies),
-                        )
-                        all_companies.extend(companies)
-                        break
+                            companies = _filter_zoominfo_companies_for_us_faa(item, companies)
+                        if companies:
+                            logger.info(
+                                "phlydata/owners: item[%s] company_search_by_person query=%r -> %s companies",
+                                idx,
+                                q,
+                                len(companies),
+                            )
+                            all_companies.extend(companies)
+                            break
                     all_companies.extend(companies)
                 if zoominfo_error and not all_companies:
                     logger.info(
@@ -1817,25 +1868,17 @@ def phlydata_owners(
                         logger.info("phlydata/owners: item[%s] company_search query=%r -> error=%s", idx, q, zoominfo_error)
                         break
                     if companies:
-                        # When FAA registrant is US, drop obvious non-US same-name hits (e.g. Valiair UK vs Carlsbad US).
                         if _owner_source_is_us_for_zoominfo(item):
-                            us_only = [
-                                c
-                                for c in companies
-                                if _zoominfo_company_geo_bucket(c.get("attributes") or {}) == "us"
-                            ]
-                            if us_only:
-                                logger.info(
-                                    "phlydata/owners: item[%s] ZoomInfo query=%r: narrowed %s -> %s US-region companies",
-                                    idx,
-                                    q,
-                                    len(companies),
-                                    len(us_only),
-                                )
-                                companies = us_only
-                        logger.info("phlydata/owners: item[%s] company_search query=%r -> %s companies", idx, q, len(companies))
-                        all_companies.extend(companies)
-                        break
+                            companies = _filter_zoominfo_companies_for_us_faa(item, companies)
+                        if companies:
+                            logger.info(
+                                "phlydata/owners: item[%s] company_search query=%r -> %s companies",
+                                idx,
+                                q,
+                                len(companies),
+                            )
+                            all_companies.extend(companies)
+                            break
                     all_companies.extend(companies)
                 if zoominfo_error and not all_companies:
                     logger.info("phlydata/owners: item[%s] company_search all queries failed, total companies=0", idx)
@@ -1950,6 +1993,18 @@ def phlydata_owners(
                         logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, enrich_err or "no match")
                 except Exception as e:
                     logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, e)
+
+            if (
+                best_record
+                and result_type == "company"
+                and _reject_us_faa_foreign_zoominfo_match(item, best_record)
+            ):
+                logger.info(
+                    "phlydata/owners: item[%s] discarding ZoomInfo company (US FAA registrant vs foreign homonym)",
+                    idx,
+                )
+                best_record = None
+                result_type = None
 
             companies_out = [best_record] if (best_record and result_type == "company") else []
             contacts_out = [best_record] if (best_record and result_type == "contact") else []
