@@ -16,6 +16,9 @@ psycopg2-binary>=2.9.0
 # ZoomInfo (owner enrichment for PhlyData)
 requests>=2.28.0
 
+# Optional: FAA trustee web hints (PhlyData owners). REST works with requests alone; SDK optional.
+tavily-python>=0.5.0
+
 # Environment & Config
 python-dotenv>=1.0.0
 

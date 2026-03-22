@@ -46,6 +46,56 @@ def _normalize_registration_for_match(reg: str) -> str:
     return s.replace(" ", "").replace("-", "")
 
 
+def lookup_aircraftpost_owner_rows_by_serial_and_registration(
+    db: "PostgresClient",
+    serial: str,
+    registration_number: str,
+    limit: int = 15,
+) -> List[Dict[str, Any]]:
+    """
+    PhlyData / owner lookup: **serial + tail** on ``aircraftpost_fleet_aircraft``.
+
+    Registration is normalized like ``lookup_aircraftpost_owner_rows_by_registration``.
+    Serial tries ``serial_variants_for_lookup`` (leading zeros / width) with case-insensitive trim match.
+    """
+    reg_norm = _normalize_registration_for_match(registration_number)
+    ser = (serial or "").strip()
+    if not reg_norm or not ser:
+        return []
+    variants = serial_variants_for_lookup(ser)
+    var_upper = []
+    seen: set[str] = set()
+    for v in variants:
+        u = (v or "").strip().upper()
+        if u and u not in seen:
+            seen.add(u)
+            var_upper.append(u)
+    if not var_upper:
+        return []
+    lim = max(1, min(100, int(limit)))
+    placeholders = ", ".join(["%s"] * len(var_upper))
+    try:
+        rows = db.execute_query(
+            f"""
+            SELECT id, aircraft_entity_id, make_model_id, make_model_name,
+                   serial_number, registration_number,
+                   mfr_year, eis_date, country_code, base_code, owner_url,
+                   airframe_hours, total_landings, prior_owners, for_sale, passengers,
+                   engine_program_type, apu_program, fields, ingestion_date
+            FROM aircraftpost_fleet_aircraft
+            WHERE REPLACE(REPLACE(UPPER(TRIM(registration_number)), ' ', ''), '-', '') = %s
+              AND TRIM(UPPER(COALESCE(serial_number, ''))) IN ({placeholders})
+            ORDER BY ingestion_date DESC, updated_at DESC
+            LIMIT %s
+            """,
+            tuple([reg_norm] + var_upper + [lim]),
+        )
+        return [dict(r) for r in (rows or [])]
+    except Exception as e:
+        logger.warning("aircraftpost owner rows by serial+registration lookup failed: %s", e)
+        return []
+
+
 def lookup_aircraftpost_owner_rows_by_registration(
     db: "PostgresClient",
     registration_number: str,

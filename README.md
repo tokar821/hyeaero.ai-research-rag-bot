@@ -54,6 +54,23 @@ For production, **do not store the ZoomInfo access token in `.env`** — it expi
 
 No code changes and no database are required; the token is either in memory or in the optional file.
 
+### Tavily (optional — PhlyData FAA trustee web hints)
+
+When `GET /api/phlydata/owners` returns FAA rows whose registrant looks like a **trustee / shell** (e.g. contains `TRUSTEE`) and a **mailing address** is present, the API may attach `tavily_web_hints` via the [Tavily](https://tavily.com) search API (no curated JSON file).
+
+- `TAVILY_API_KEY` — required for hints (get a key from Tavily).
+- `TAVILY_DISABLED=1` — turn off all Tavily calls.
+- `TAVILY_MAX_RESULTS` — optional (default `5`, max `10`).
+- `TAVILY_WHEN_CORP_AND_ADDRESS=1` — optional: also run Tavily for **corporate** registrants (name contains tokens like INC, LLC, CORP, LP, …) with a mailing address, even if the word TRUSTEE does not appear. **Increases API usage**; use when many shells omit “trustee” in the string.
+
+**Tavily → LLM → ZoomInfo (PhlyData owners):**
+
+- After Tavily returns snippets, if **`OPENAI_API_KEY`** is set, the backend runs a small JSON extraction (`tavily_llm_synthesis` on each FAA row).
+- **`TAVILY_LLM_SYNTHESIS_DISABLED=1`** — skip the LLM step (Tavily hints only).
+- **`TAVILY_LLM_ZOOMINFO_ON_LOW=1`** — also enqueue ZoomInfo for LLM confidence `low` (default: only `medium` / `high`).
+
+Install includes `tavily-python`; the service falls back to a plain `requests` POST to `https://api.tavily.com/search` if the SDK is unavailable.
+
 ## Run API
 
 ```bash

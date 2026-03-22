@@ -6,6 +6,11 @@ ZoomInfo company and contact search for PhlyData owner enrichment.
   when contact search is unavailable (403). Disambiguation is done in the owners endpoint.
 - Contact Search: fullName; optional when api:data:contact scope is enabled.
 - On 401 Unauthorized, the client refreshes the access token using ZOOMINFO_REFRESH_TOKEN and retries.
+- **Allowed output fields**: ZoomInfo **Lookup Enrich** lists fields your account may use on
+  enrich: ``GET {base}/data/v1/lookup/enrich?filter[entity]=contact|company&filter[fieldType]=output``
+  (OpenAPI). Some docs also mention POST with the same query params—if GET fails, try the script’s
+  ``--method post`` flag. Use :func:`lookup_enrich_output_fields` or
+  ``phlydata-zoominfo/list_lookup_enrich_fields.py`` before changing ``outputFields``.
 - For deployment: do NOT put ZOOMINFO_ACCESS_TOKEN in .env (it changes on refresh). Set only
   ZOOMINFO_CLIENT_ID, ZOOMINFO_CLIENT_SECRET, ZOOMINFO_REFRESH_TOKEN. Optionally set ZOOMINFO_TOKEN_FILE
   to a writable path (e.g. /data/zoominfo_token) so the refreshed token is persisted across restarts.
@@ -366,9 +371,77 @@ def search_companies(
     return [], None
 
 
+def lookup_enrich_output_fields(
+    entity: str = "contact",
+    field_type: str = "output",
+    *,
+    http_method: str = "get",
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Call ZoomInfo **Lookup Enrich** to list available enrich fields for your account.
+
+    Official OpenAPI: ``GET`` ``{base}/data/v1/lookup/enrich`` with query params::
+
+        filter[entity]=contact&filter[fieldType]=output
+
+    Use ``entity='company'`` for company enrich ``outputFields``. Other entity values
+    (e.g. ``scoop``, ``news``) are passed through to the API.
+
+    Some integration notes refer to ``POST`` with the same query string; pass
+    ``http_method='post'`` to use POST instead of GET.
+
+    Returns (parsed_json, error_message). On success error_message is None.
+    """
+    entity = (entity or "").strip()
+    field_type = (field_type or "output").strip().lower()
+    if not entity:
+        return None, "entity is required (e.g. contact, company)."
+    if field_type not in ("output", "input"):
+        return None, "field_type must be 'output' or 'input'."
+
+    method = (http_method or "get").strip().lower()
+    if method not in ("get", "post"):
+        return None, "http_method must be 'get' or 'post'."
+
+    token, base = _get_config()
+    if not token:
+        return None, "ZoomInfo token not configured. Set ZOOMINFO_ACCESS_TOKEN in backend/.env."
+
+    import requests
+
+    url = f"{base}/data/v1/lookup/enrich"
+    params = {"filter[entity]": entity, "filter[fieldType]": field_type}
+    headers = {"Authorization": f"Bearer {token}", "Accept": JSON_API}
+
+    for attempt in range(2):
+        try:
+            token, base = _get_config()
+            headers = {"Authorization": f"Bearer {token}", "Accept": JSON_API}
+            if method == "get":
+                r = requests.get(url, params=params, headers=headers, timeout=30)
+            else:
+                # Same query filters as GET; some guides say POST — no body required per Lookup schema.
+                r = requests.post(url, params=params, headers=headers, timeout=30)
+            if r.status_code == 401 and attempt == 0 and _refresh_access_token():
+                logger.info("ZoomInfo lookup/enrich 401 -> token refreshed, retrying")
+                continue
+            if r.status_code >= 400:
+                try:
+                    err = r.json()
+                except Exception:
+                    err = r.text
+                return None, f"ZoomInfo lookup/enrich HTTP {r.status_code}: {err}"
+            return r.json(), None
+        except Exception as e:
+            logger.warning("ZoomInfo lookup/enrich failed: %s", e)
+            return None, f"ZoomInfo error: {str(e)}"
+    return None, "ZoomInfo error: retry after refresh failed"
+
+
 # Output fields for company enrich. Only request fields allowed by your ZoomInfo plan.
 # Do NOT include addressLine1 - many plans return 400 "Invalid field 'addressline1'". Use "street" instead.
 # Align with phlydata-zoominfo/zoominfo_enrich_company.py DEFAULT_OUTPUT_FIELDS (which works).
+# To refresh this list against your contract: POST .../lookup/enrich?filter[entity]=company&filter[fieldType]=output
 DEFAULT_COMPANY_ENRICH_FIELDS = [
     "id", "ticker", "name", "website", "socialMediaUrls",
     "phone", "street", "city", "state", "zipCode", "country",

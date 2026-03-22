@@ -27,11 +27,10 @@ from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
 from services.aviacost_lookup import lookup_aviacost
-from services.aircraftpost_lookup import (
-    lookup_aircraftpost_fleet,
-    lookup_aircraftpost_owner_rows_by_registration,
-    owner_display_from_aircraftpost_fields,
-)
+from services.aircraftpost_lookup import lookup_aircraftpost_fleet
+from services.faa_master_lookup import fetch_faa_master_owner_rows
+from services.tavily_owner_hint import enrich_faa_owners_with_tavily_hints
+from services.tavily_llm_synthesis import enrich_faa_owners_with_tavily_llm_synthesis
 from services.zoominfo_client import (
     search_companies as zoominfo_search_companies,
     enrich_company as zoominfo_enrich_company,
@@ -245,72 +244,6 @@ def _owner_url_host_looks_like_listing_portal(host: str) -> bool:
     return any(m in h for m in _OWNER_URL_LISTING_HOST_MARKERS)
 
 
-# AircraftPost `fields.Owner.text` is sometimes a link label ("URL", "Website") — not a company name.
-_AIRCRAFTPOST_OWNER_PLACEHOLDER_LABELS = frozenset(
-    {
-        "url",
-        "link",
-        "links",
-        "website",
-        "web",
-        "site",
-        "here",
-        "click",
-        "click here",
-        "more",
-        "profile",
-        "details",
-        "info",
-        "n/a",
-        "na",
-        "none",
-        "unknown",
-        "tbd",
-        "—",
-        "-",
-        "--",
-        "…",
-    }
-)
-
-
-def _usable_aircraftpost_owner_label(text: Optional[str]) -> Optional[str]:
-    """
-    Return stripped owner label from AircraftPost, or None if it is a generic placeholder.
-    ZoomInfo / owner_url fallbacks (slug, domain, LLM) run when this returns None.
-    """
-    if not text or not isinstance(text, str):
-        return None
-    t = text.strip()
-    if not t:
-        return None
-    if t.lower() in _AIRCRAFTPOST_OWNER_PLACEHOLDER_LABELS:
-        return None
-    return t
-
-
-def _company_website_domain_from_owner_url(url: Optional[str]) -> Optional[str]:
-    """
-    When owner_url points at the company's own site (not a listing portal), return normalized
-    registrant domain for ZoomInfo website matching.
-    """
-    if not url or not isinstance(url, str):
-        return None
-    try:
-        p = urlparse(url.strip())
-        host = (p.netloc or "").lower()
-        if not host and "://" not in url:
-            p = urlparse("https://" + url.strip())
-            host = (p.netloc or "").lower()
-        if not host:
-            return None
-        if _owner_url_host_looks_like_listing_portal(host):
-            return None
-        return _normalize_website(url)
-    except Exception:
-        return None
-
-
 def _zoominfo_domain_in_owner_url(their_domain: str, owner_url: str) -> bool:
     """True if normalized ZoomInfo company domain appears in owner_url (path, query, or host)."""
     if not their_domain or not owner_url:
@@ -357,79 +290,6 @@ def _split_domain_label_to_company_words(label: str) -> str:
     return raw.title()
 
 
-def _company_name_from_owner_url_domain(owner_url: str) -> Optional[str]:
-    """
-    Guess company display name from ``owner_url`` host for ZoomInfo **before** slug/LLM.
-    Skips listing-portal hosts.
-    """
-    if not owner_url or not isinstance(owner_url, str):
-        return None
-    try:
-        pu = urlparse(owner_url.strip())
-        host = (pu.netloc or "").lower()
-        if not host and "://" not in owner_url:
-            pu = urlparse("https://" + owner_url.strip())
-            host = (pu.netloc or "").lower()
-    except Exception:
-        return None
-    if not host or _owner_url_host_looks_like_listing_portal(host):
-        return None
-    if host.startswith("www."):
-        host = host[4:]
-    host = host.split(":")[0].split("/")[0]
-    if not host or "." not in host:
-        return None
-    label = host.split(".")[0]
-    if len(label) < 2:
-        return None
-    name = _split_domain_label_to_company_words(label)
-    return name if name else None
-
-
-# Last path segment is often a page name, not a company (e.g. /leadership, /about-us).
-_URL_PATH_SLUG_NOT_COMPANY = frozenset(
-    {
-        "leadership",
-        "management",
-        "executives",
-        "executive",
-        "team",
-        "about",
-        "about-us",
-        "contact",
-        "home",
-        "index",
-        "profile",
-        "board",
-        "directors",
-        "groupexecutivecommittee",
-        "our-leadership",
-    }
-)
-
-
-def _slug_guess_company_from_url(url: str) -> Optional[str]:
-    """Heuristic: last path segment with hyphens → title-ish name (before LLM)."""
-    if not url or not isinstance(url, str):
-        return None
-    try:
-        p = urlparse(url.strip())
-        path = (p.path or "").strip("/")
-        if not path:
-            return None
-        seg = path.split("/")[-1].split("?")[0]
-        seg = re.sub(r"\.[a-z]{2,4}$", "", seg, flags=re.I)
-        seg = seg.replace("-", " ").replace("_", " ").strip()
-        if len(seg) < 3 or seg.isdigit():
-            return None
-        seg_key = seg.lower().replace(" ", "")
-        if seg.lower() in _URL_PATH_SLUG_NOT_COMPANY or seg_key in _URL_PATH_SLUG_NOT_COMPANY:
-            return None
-        return seg[:120]
-    except Exception:
-        return None
-
-
 def _llm_owner_url_aligns_with_zoominfo_company(
     owner_url: str,
     zoominfo_company_name: str,
@@ -473,39 +333,6 @@ def _llm_owner_url_aligns_with_zoominfo_company(
     except Exception as e:
         logger.debug("llm_owner_url_aligns_with_zoominfo_company failed: %s", e)
         return "unknown"
-
-
-def _infer_company_name_from_owner_url_llm(url: str, openai_key: str) -> Optional[str]:
-    """Ask LLM for likely legal/display business name when owner label is missing (listing URLs)."""
-    if not url or not openai_key:
-        return None
-    try:
-        import openai
-
-        client = openai.OpenAI(api_key=openai_key, timeout=25.0)
-        resp = client.chat.completions.create(
-            model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        "From this URL (aircraft owner / operator / company profile page), respond with ONLY the single "
-                        "most likely business or operating entity name (as used on FAA registration or corporate filings). "
-                        "If you cannot infer a specific entity, reply exactly: UNKNOWN\n\n"
-                        f"URL: {url[:800]}"
-                    ),
-                }
-            ],
-            max_tokens=50,
-            temperature=0,
-        )
-        text = (resp.choices[0].message.content or "").strip().strip('"').strip("'")
-        if not text or text.upper() in ("UNKNOWN", "N/A", "NONE"):
-            return None
-        return text[:200]
-    except Exception as e:
-        logger.debug("infer_company_name_from_owner_url_llm failed: %s", e)
-        return None
 
 
 def _faa_item_geo_bucket(item: dict) -> str:
@@ -1562,7 +1389,11 @@ def _load_internaldb_aircraft_rows() -> list[dict[str, object]]:
 
 @app.get("/api/phlydata/aircraft")
 def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str] = None):
-    """List aircraft from the PhlyData Internal DB table (`phlydata_aircraft`)."""
+    """List aircraft from the PhlyData Internal DB table (`phlydata_aircraft`).
+
+    Search query ``q`` matches **only** ``serial_number`` and ``registration_number`` (ILIKE substring),
+    aligned with owner lookup fields (serial + tail / N-number).
+    """
     page = max(1, page)
     # Allow the frontend to fetch the entire Internal DB dataset once.
     page_size = min(100000, max(1, page_size))
@@ -1577,13 +1408,9 @@ def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str]
             where_sql = """
               WHERE (
                 serial_number ILIKE %s OR registration_number ILIKE %s
-                OR manufacturer ILIKE %s OR model ILIKE %s
-                OR category ILIKE %s
-                OR CAST(manufacturer_year AS TEXT) ILIKE %s
-                OR CAST(delivery_year AS TEXT) ILIKE %s
               )
             """
-            params = [like, like, like, like, like, like, like]
+            params = [like, like]
 
         total_sql = f"""
           SELECT COUNT(*) AS total
@@ -1640,17 +1467,20 @@ def phlydata_owners(
 
     **Frontend should send** ``serial``, ``registration`` (tail), and ``model`` (plus optional ``manufacturer``).
 
-    - **FAA registry**: ``serial_number`` + ``model`` (optional ``manufacturer``) to match the right
-      ``faa_registrations`` row via ``faa_aircraft_reference`` (serial-only allowed only when ``model`` is omitted).
+    - **FAA MASTER** (``faa_master`` table): registrant/address from ingested FAA MASTER CSV. Match
+      **N-number + serial** when ``registration`` is sent; else **serial + model** via ``mfr_mdl_code`` /
+      ``faa_aircraft_reference``; else **serial-only** when ``model`` is omitted (same ambiguity rules as before).
 
-    - **AircraftPost** (``aircraftpost_fleet_aircraft``): **``registration_number`` only** (tail / N-number).
-      Normalized match (case, spaces, hyphens ignored). **No** serial-based or model-based lookup or fallbacks.
+    - **ZoomInfo** (PhlyData tab): driven from **FAA MASTER** registrant name + address only (up to 6 deduped
+      company/person lookups). AircraftPost is **not** used for this tab.
 
-    - **ZoomInfo**: there is **no** company lookup-by-URL API. Flow: owner text from AircraftPost, else
-      **guess company name from ``owner_url``** (URL slug, then LLM), then **company search + enrich** using
-      that name; finally **compare** enriched company website / name to ``owner_url`` (domain match or LLM).
+    - **Tavily** (optional): if ``TAVILY_API_KEY`` is set and the registrant looks trustee-like (or corporate + address
+      when ``TAVILY_WHEN_CORP_AND_ADDRESS=1``), ``tavily_web_hints`` lists web search results from registrant name +
+      mailing address. Disable with ``TAVILY_DISABLED=1``.
 
-    FAA and AircraftPost drive separate ZoomInfo candidates (deduped), up to 6 items.
+    - **Tavily + LLM** (optional): when Tavily returns snippets and ``OPENAI_API_KEY`` is set, ``tavily_llm_synthesis``
+      infers a likely operating company from snippets; **medium/high** confidence adds ZoomInfo lookup
+      ``faa_tavily_llm_hint``. Disable with ``TAVILY_LLM_SYNTHESIS_DISABLED=1``.
     """
     if not serial or not serial.strip():
         raise HTTPException(status_code=400, detail="serial is required")
@@ -1714,148 +1544,31 @@ def phlydata_owners(
             "delivery_year": None,
             "category": None,
         }
-        # Reflect explicit tail from the client (used for AircraftPost registration-only lookup).
+        # Reflect explicit tail from the client (FAA MASTER / canonical N-number lookup).
         if (registration or "").strip():
             aircraft["registration_number"] = (registration or "").strip()
 
-        # Listings (Controller / etc.) — optional; PhlyData aircraft tab uses FAA + AircraftPost + ZoomInfo.
+        # Listings (Controller / etc.) — optional; PhlyData aircraft tab uses FAA MASTER + ZoomInfo only.
         owners_from_listings = []
 
-        # Owners from FAA:
-        # 1) find rows by serial
-        # 2) if model is provided, compare FAA model (via mfr_mdl_code -> FAA reference model)
-        # 3) DO NOT fallback to serial-only when model was provided (avoid ambiguous owner display).
-        faa_rows: list = []
-        if mdl:
-            faa_rows = db.execute_query(
-                """
-                SELECT fr.registrant_name, fr.street, fr.street2, fr.city, fr.state, fr.zip_code,
-                       fr.region, fr.county, fr.country
-                FROM faa_registrations fr
-                WHERE fr.serial_number = %s
-                  AND fr.mfr_mdl_code IN (
-                    SELECT far.code FROM faa_aircraft_reference far
-                    WHERE far.model ILIKE %s
-                  )
-                ORDER BY fr.ingestion_date DESC
-                LIMIT 10
-                """,
-                (serial, f"%{mdl}%"),
-            )
-        elif not faa_rows:
-            # No model supplied -> serial-only lookup is allowed.
-            faa_rows = db.execute_query(
-                """
-                SELECT registrant_name, street, street2, city, state, zip_code, region, county, country
-                FROM faa_registrations
-                WHERE serial_number = %s
-                ORDER BY ingestion_date DESC
-                LIMIT 3
-                """,
-                (serial,),
-            )
-        owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
-
-        # AircraftPost: registration (tail) only — no serial/model fallbacks.
-        reg_for_ap = (registration or "").strip() or (aircraft.get("registration_number") or "").strip() or None
-        ap_rows: list = (
-            lookup_aircraftpost_owner_rows_by_registration(db, reg_for_ap, limit=15)
-            if reg_for_ap
-            else []
+        # Owners from FAA MASTER table (ingested CSV): N-number + serial when tail known, else
+        # serial+model via faa_aircraft_reference, else serial-only if model omitted.
+        reg_for_faa = (registration or "").strip() or (aircraft.get("registration_number") or "").strip() or None
+        faa_rows, faa_master_match_kind = fetch_faa_master_owner_rows(
+            db,
+            serial=serial,
+            model=mdl,
+            registration=reg_for_faa,
         )
+        owners_from_faa = [dict(r) for r in faa_rows if r.get("registrant_name")]
+        owners_from_faa = enrich_faa_owners_with_tavily_hints(owners_from_faa)
+        owners_from_faa = enrich_faa_owners_with_tavily_llm_synthesis(owners_from_faa)
 
-        _, openai_key_ap = get_embedding_service_only()
+        # PhlyData tab: no AircraftPost owner / fleet / ZoomInfo-from-AircraftPost.
         aircraftpost_fleet: list = []
         owners_from_aircraftpost: list = []
-        aircraftpost_zoom_items: list = []
-        seen_ap_zoom: set = set()
-        for r in ap_rows:
-            owner_nm = _usable_aircraftpost_owner_label(owner_display_from_aircraftpost_fields(r.get("fields")))
-            owner_url = (r.get("owner_url") or "").strip() or None
-            website_from_url = _company_website_domain_from_owner_url(owner_url)
-            # Domain-first company name for ZoomInfo (e.g. fremontgroup.com → "Fremont Group").
-            domain_company: Optional[str] = None
-            if owner_url:
-                domain_company = _company_name_from_owner_url_domain(owner_url)
-            inferred_name: Optional[str] = None
-            if (not owner_nm or not str(owner_nm).strip()) and owner_url:
-                inferred_name = _slug_guess_company_from_url(owner_url)
-                if not inferred_name and openai_key_ap:
-                    inferred_name = _infer_company_name_from_owner_url_llm(owner_url, openai_key_ap)
 
-            fleet_row = {k: v for k, v in r.items() if k != "fields"}
-            rid = fleet_row.get("id")
-            if rid is not None:
-                fleet_row["id"] = str(rid)
-            aircraftpost_fleet.append(fleet_row)
-            owners_from_aircraftpost.append(
-                {
-                    "serial_number": r.get("serial_number"),
-                    "registration_number": r.get("registration_number"),
-                    "owner_name": owner_nm,
-                    "owner_name_inferred": inferred_name,
-                    "owner_name_from_domain": domain_company,
-                    "owner_url": owner_url,
-                    "make_model_name": r.get("make_model_name"),
-                    "country_code": r.get("country_code"),
-                    "base_code": r.get("base_code"),
-                    "source_platform": "aircraftpost",
-                }
-            )
-
-            # Prefer real owner label, then domain-derived name, then slug/LLM, then raw domain brand.
-            zoom_company = (owner_nm or domain_company or inferred_name or "").strip() or None
-            if not zoom_company and owner_url:
-                try:
-                    pu = urlparse(owner_url.strip())
-                    host_chk = (pu.netloc or "").lower()
-                    if not host_chk and "://" not in owner_url:
-                        pu = urlparse("https://" + owner_url.strip())
-                        host_chk = (pu.netloc or "").lower()
-                except Exception:
-                    host_chk = ""
-                dom = _normalize_website(owner_url)
-                if dom and not _owner_url_host_looks_like_listing_portal(host_chk):
-                    brand = dom.split(".")[0]
-                    if brand and len(brand) >= 2:
-                        zoom_company = _split_domain_label_to_company_words(brand) or brand.replace("-", " ").title()
-            if not zoom_company and not owner_url:
-                continue
-            if not zoom_company:
-                continue
-            dedupe_key = (
-                (zoom_company or "").strip().lower(),
-                (owner_url or "")[:500],
-            )
-            if dedupe_key in seen_ap_zoom:
-                continue
-            seen_ap_zoom.add(dedupe_key)
-
-            aircraftpost_zoom_items.append(
-                {
-                    "query_name": zoom_company,
-                    "source_platform": "aircraftpost",
-                    "field_name": "owner",
-                    "company_name": zoom_company,
-                    "contact_name": zoom_company,
-                    "address": None,
-                    "street": None,
-                    "city": None,
-                    "state": None,
-                    "zip_code": None,
-                    "country": None,
-                    "country_code": (r.get("country_code") or "").strip() or None,
-                    "broker_name": None,
-                    "phone": None,
-                    "website": website_from_url,
-                    "owner_url": owner_url,
-                    # Direct company URLs / domain or LLM-inferred names → company; else classify from owner text.
-                    "registrant_type": "company" if (inferred_name or website_from_url or domain_company) else None,
-                    "inferred_company_from_url": bool(inferred_name or domain_company),
-                }
-            )
-
-        # Build ZoomInfo search payloads (FAA + AircraftPost owner labels, deduped, max 6).
+        # Build ZoomInfo search payloads (FAA MASTER registrants only, deduped, max 6).
         def _listing_item(row: dict, platform: str, field: str) -> dict:
             company_name = (row.get("seller") or "").strip()
             return {
@@ -1903,34 +1616,67 @@ def phlydata_owners(
                 # Will be computed per-item in the ZoomInfo loop (company vs person).
                 "registrant_type": None,
             })
+        # Tavily snippets + LLM → operating company guess → extra ZoomInfo query (deduped).
+        allow_low_zi = (os.getenv("TAVILY_LLM_ZOOMINFO_ON_LOW") or "").strip().lower() in ("1", "true", "yes")
+        for row in owners_from_faa:
+            syn = row.get("tavily_llm_synthesis") or {}
+            if not isinstance(syn, dict) or syn.get("error"):
+                continue
+            conf = (syn.get("confidence") or "").lower()
+            if conf not in ("high", "medium") and not (allow_low_zi and conf == "low"):
+                continue
+            qn = (syn.get("suggested_zoominfo_query") or syn.get("operating_company_name") or "").strip()
+            if not qn:
+                continue
+            reg_nm = (row.get("registrant_name") or "").strip()
+            if qn.lower() == reg_nm.lower():
+                continue
+            if qn.lower() in seen_company:
+                continue
+            seen_company.add(qn.lower())
+            street = (row.get("street") or "").strip()
+            if (row.get("street2") or "").strip():
+                street = f"{street} {(row.get('street2') or '').strip()}".strip() or street
+            w = (syn.get("website") or "").strip() or None
+            ph = (syn.get("phone") or "").strip() or None
+            by_platform["faa"].append(
+                {
+                    "query_name": qn,
+                    "source_platform": "faa_tavily_llm_hint",
+                    "field_name": "tavily_llm_synthesis",
+                    "company_name": qn,
+                    "contact_name": qn,
+                    "address": None,
+                    "street": street or None,
+                    "city": (row.get("city") or "").strip() or None,
+                    "state": (row.get("state") or "").strip() or None,
+                    "zip_code": (row.get("zip_code") or "").strip() or None,
+                    "country": (row.get("country") or "").strip() or None,
+                    "broker_name": None,
+                    "phone": ph,
+                    "website": w,
+                    "registrant_type": "company",
+                }
+            )
         items_to_lookup: list = []
         seen_lookup_key: set = set()
 
         def _append_lookup_item(it: dict) -> None:
             cn = (it.get("company_name") or "").strip().lower()
-            ou = (it.get("owner_url") or "").strip()[:400]
-            if not cn and not ou:
+            if not cn or cn in seen_lookup_key or len(items_to_lookup) >= 6:
                 return
-            key: Any = (cn, ou) if (it.get("source_platform") or "").lower() == "aircraftpost" and ou else cn
-            if not key or key in seen_lookup_key or len(items_to_lookup) >= 6:
-                return
-            seen_lookup_key.add(key)
+            seen_lookup_key.add(cn)
             items_to_lookup.append(it)
 
         for it in by_platform["faa"]:
             _append_lookup_item(it)
             if len(items_to_lookup) >= 6:
                 break
-        for it in aircraftpost_zoom_items:
-            _append_lookup_item(it)
-            if len(items_to_lookup) >= 6:
-                break
 
         logger.info(
-            "phlydata/owners: items_to_lookup count=%s (faa=%s aircraftpost=%s)",
+            "phlydata/owners: items_to_lookup count=%s (faa=%s)",
             len(items_to_lookup),
             len(by_platform["faa"]),
-            len(aircraftpost_zoom_items),
         )
 
         zoominfo_enrichment = []
@@ -2134,30 +1880,23 @@ def phlydata_owners(
                 and not matched.get("website")
             )
             if name_only and (all_companies or all_contacts):
-                # AircraftPost + owner_url: keep the pick; we validate URL ↔ company after enrich (domain / LLM).
-                if (item.get("source_platform") or "").lower() == "aircraftpost" and (item.get("owner_url") or "").strip():
-                    logger.info(
-                        "phlydata/owners: item[%s] name_only bypass (AircraftPost + owner_url; post-enrich URL check)",
-                        idx,
+                emb_svc, openai_key = get_embedding_service_only()
+                if emb_svc and openai_key:
+                    llm_best, llm_type, llm_matched = _pick_best_zoominfo_by_vector_and_llm(
+                        all_companies, all_contacts, item, emb_svc, openai_key
                     )
-                else:
-                    emb_svc, openai_key = get_embedding_service_only()
-                    if emb_svc and openai_key:
-                        llm_best, llm_type, llm_matched = _pick_best_zoominfo_by_vector_and_llm(
-                            all_companies, all_contacts, item, emb_svc, openai_key
-                        )
-                        if llm_best is not None:
-                            best_record, result_type, matched = llm_best, llm_type, llm_matched
-                            match_method = MATCH_METHOD_LLM_FALLBACK
-                            logger.info("phlydata/owners: item[%s] name_only -> llm_fallback confirmed result_type=%s", idx, result_type)
-                        else:
-                            best_record = None
-                            result_type = None
-                            logger.info("phlydata/owners: item[%s] name_only -> llm said no match, returning no ZoomInfo result", idx)
+                    if llm_best is not None:
+                        best_record, result_type, matched = llm_best, llm_type, llm_matched
+                        match_method = MATCH_METHOD_LLM_FALLBACK
+                        logger.info("phlydata/owners: item[%s] name_only -> llm_fallback confirmed result_type=%s", idx, result_type)
                     else:
                         best_record = None
                         result_type = None
-                        logger.info("phlydata/owners: item[%s] name_only -> no LLM available, returning no ZoomInfo result (avoid wrong match)", idx)
+                        logger.info("phlydata/owners: item[%s] name_only -> llm said no match, returning no ZoomInfo result", idx)
+                else:
+                    best_record = None
+                    result_type = None
+                    logger.info("phlydata/owners: item[%s] name_only -> no LLM available, returning no ZoomInfo result (avoid wrong match)", idx)
 
             # Enrich: fetch full company/contact detail after we picked the best match.
             if best_record and result_type == "company" and best_record.get("id"):
@@ -2212,40 +1951,6 @@ def phlydata_owners(
                 except Exception as e:
                     logger.warning("phlydata/owners: item[%s] contact_enrich failed: %s", idx, e)
 
-            # AircraftPost: ZoomInfo has no direct URL search. After company enrich, align owner_url ↔ website or LLM-check.
-            if (
-                best_record
-                and result_type == "company"
-                and (item.get("source_platform") or "").lower() == "aircraftpost"
-            ):
-                ou = (item.get("owner_url") or "").strip()
-                if ou:
-                    attrs_final = best_record.get("attributes") or {}
-                    zi_nm = (attrs_final.get("name") or attrs_final.get("companyName") or "").strip()
-                    zi_web_raw = (attrs_final.get("website") or "").strip() or None
-                    their_domain = _normalize_website(zi_web_raw)
-                    if their_domain and _zoominfo_domain_in_owner_url(their_domain, ou):
-                        url_alignment_source = "domain"
-                        matched["website"] = True
-                    else:
-                        _, okey_align = get_embedding_service_only()
-                        if okey_align:
-                            owner_url_llm_alignment = _llm_owner_url_aligns_with_zoominfo_company(
-                                ou,
-                                zi_nm or (item.get("company_name") or ""),
-                                zi_web_raw,
-                                okey_align,
-                            )
-                            if owner_url_llm_alignment == "yes":
-                                url_alignment_source = "llm_yes"
-                                matched["website"] = True
-                            elif owner_url_llm_alignment == "no":
-                                url_alignment_source = "llm_no"
-                                logger.info(
-                                    "phlydata/owners: item[%s] AircraftPost owner_url LLM alignment=NO (keep result; check context)",
-                                    idx,
-                                )
-
             companies_out = [best_record] if (best_record and result_type == "company") else []
             contacts_out = [best_record] if (best_record and result_type == "contact") else []
             payload = {
@@ -2296,8 +2001,6 @@ def phlydata_owners(
         owner_lookup_sources: List[str] = []
         if owners_from_faa:
             owner_lookup_sources.append("faa")
-        if ap_rows:
-            owner_lookup_sources.append("aircraftpost")
 
         return {
             "aircraft": aircraft,
@@ -2305,6 +2008,8 @@ def phlydata_owners(
             "owners_from_faa": owners_from_faa,
             "owners_from_aircraftpost": owners_from_aircraftpost,
             "owner_lookup_sources": owner_lookup_sources,
+            # How ``faa_master`` was matched: n_number_serial (tail+serial), serial_model, serial_only, or null.
+            "faa_master_match_kind": faa_master_match_kind,
             "zoominfo_enrichment": zoominfo_enrichment,
             "aircraftpost_fleet": aircraftpost_fleet,
             "zoominfo_contacts_access_denied": zoominfo_contacts_access_denied,
