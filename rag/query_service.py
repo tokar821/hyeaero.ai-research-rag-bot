@@ -34,10 +34,11 @@ Rules:
 - Aircraft identity (serial, tail/registration as shown, make/model, year): treat the PhlyData + FAA block as authoritative when it lists those fields. Do not contradict them with web or vector text.
 - **Ownership-only** (who owns / registrant / operator — user did **not** ask price, buy, listing, or for sale): Lead with **FAA/PhlyData registrant** and any Tavily-backed operator facts. **Do not** open with "active listing" or asking price. If INTERNAL market or Tavily also shows a listing for the same serial/tail, add a **short closing section** after ownership, e.g. "Market note (separate from legal registrant):" with ask price + source/URL — clearly secondary.
 - Ownership / operator / "who owns" questions:
-  - If the block includes an FAA MASTER registrant name, report it as the U.S. FAA registrant record and still add web/listing context if it adds operator or fleet detail.
+  - **FAA legal registrant (U.S.):** If the context includes **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** or a line **FAA MASTER registrant (faa_master):** with a name, that name and mailing address are the **only** authoritative U.S. legal registrant. State them **verbatim**. Never replace them with a different LLC or company from Tavily, vector listings, or a guess (e.g. do not invent "{tail} LLC" from the N-number). Web and vector may **not** override this line.
+  - If the block includes an FAA MASTER registrant name, report it first as the U.S. FAA registrant record. You may add **operator / management / charter** color **only** from Tavily (or vector) below, clearly labeled as operational — not as a substitute for the FAA registrant name.
   - If the block states there is NO FAA registrant row (typical for non-U.S. primary registry, e.g. tails not starting with N-), FAA is not the state of registry. You MUST lean heavily on Tavily web results (and vector snippets) to name who **operates** or **commercially manages** the aircraft today — same quality bar as ChatGPT: fleet pages, AOC holders, charter operators, and registry excerpts that mention this exact tail/serial.
   - Legal registered owner vs operator: European and charter jets often show one company on a national register and another on the operator’s fleet or charter website. If Tavily ties this registration to a charter/airline/management brand (e.g. fleet list showing this tail), say that clearly as the operating party and mention the registry/legal line only if snippets support it.
-  - **Every company name you state as current owner or operator must appear verbatim (or as an obvious substring) in a Tavily snippet title or body.** Cite which result number (1., 2., …) or the domain/URL you used. If snippets disagree, give both names and say what each source claims. If no snippet names a company, say web results did not clearly identify an owner/operator — do not guess.
+  - **Operator / management / charter (not the FAA legal line):** Every **additional** company you name as operator, manager, or fleet user must appear verbatim (or as an obvious substring) in a Tavily snippet title or body (or authoritative FAA line when used only for registrant). Cite result # or domain. If snippets do not support an operator, say web results did not clearly identify one — do not guess.
   - Never invent registry or database names (do not say "Danish Aircraft Database" unless that exact phrase appears in a snippet).
 - Valuations and comparisons: cite specific numbers from context. If something is unknown, say so.
 - Purchase / availability / "can I buy" / pricing / "how much" / "is it for sale":
@@ -70,8 +71,8 @@ Your job: produce the FINAL answer shown to the client. It should read like a pr
 
 Rules:
 - Identity: serial, tail/registration, make/model, and year MUST match the PhlyData + FAA block when those fields appear there. Fix any draft that contradicts them.
-- FAA registrant: only treat the FAA MASTER registrant line as mandatory when it actually appears in the block. If the block says there is no FAA row for a non-U.S. tail, lead with the strongest Tavily-backed operator/owner (fleet pages, AOC/charter brands) — not a hedge that hides good web hits.
-- Web vs internal: company names must be traceable to Tavily snippet text; cite result # or domain. Prefer the operator/fleet narrative when the user asks "who owns" and snippets tie this tail to a charter or management company.
+- FAA registrant: When **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** or **FAA MASTER registrant (faa_master):** is present, the final answer **must** state that exact registrant name and mailing lines — remove any draft that names a different legal owner from web/vector (including "{tail} LLC" style names not in the block). If the block says there is no FAA row for a non-U.S. tail, lead with the strongest Tavily-backed operator/owner — not a hedge that hides good web hits.
+- Web vs internal: FAA legal registrant does not need to appear in Tavily. For **operator/fleet/management** claims only, names must be traceable to Tavily snippet text; cite result # or domain. Do not let operator narrative replace the FAA registrant line.
 - Remove invented database or portal names. No guessing: if snippets do not name a party, say so.
 - Use INTERNAL market block for prices/URLs when present; require draft to mention ask/sold figures if the block contains them. If you see **[FOR USER REPLY — Market / pricing]**, those lines are mandatory to reflect near the top (exact $ and URLs).
 - Purchase / price questions: final answer MUST include a **Market / listing** style block with **asking price (or clear "not stated")** and **source** (internal vs web + URL hint). If draft omitted a price that appears in INTERNAL, Tavily bodies, or the **Dollar amounts spotted** appendix, add it with snippet # / domain.
@@ -909,6 +910,12 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 "For that aircraft's identity and legal registrant, treat that block as correct even if web or vector snippets disagree "
                 "(e.g. wrong model year from a different embedded record)."
             )
+            if "FOR USER REPLY — U.S. legal registrant (FAA MASTER)" in phly_authority:
+                system_prompt += (
+                    "\n\nA **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** block is present: "
+                    "you MUST repeat that registrant name and mailing address verbatim as the FAA legal registrant. "
+                    "Tavily or vector text must not replace or contradict them."
+                )
         if market_block:
             system_prompt += (
                 "\n\nAn INTERNAL market block may list real asking/sold prices and listing URLs from Hye Aero's database. "

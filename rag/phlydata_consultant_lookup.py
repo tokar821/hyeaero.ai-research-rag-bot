@@ -307,6 +307,11 @@ def format_phlydata_consultant_answer(
             rn = (fr.get("registrant_name") or "").strip()
             if rn:
                 lines.append(f"  - FAA MASTER registrant (faa_master): {rn}")
+            st1 = (fr.get("street") or "").strip()
+            st2 = (fr.get("street2") or "").strip()
+            street_combined = " ".join(x for x in (st1, st2) if x).strip()
+            if street_combined:
+                lines.append(f"  - FAA mailing street: {street_combined}")
             city = (fr.get("city") or "").strip()
             st = (fr.get("state") or "").strip()
             z = (fr.get("zip_code") or "").strip()
@@ -314,6 +319,22 @@ def format_phlydata_consultant_answer(
             loc = ", ".join(x for x in (city, st, z, ctry) if x)
             if loc:
                 lines.append(f"  - FAA mailing location: {loc}")
+            # Loud anchor so the answer LLM cannot substitute a different "registrant" from Tavily/RAG.
+            if rn:
+                lines.append("")
+                lines.append(
+                    "[FOR USER REPLY — U.S. legal registrant (FAA MASTER) — MANDATORY VERBATIM]"
+                )
+                lines.append(
+                    "  The FAA-recorded legal registrant for this aircraft is exactly the following. "
+                    "You MUST state this name and mailing address as written here. "
+                    "Do NOT replace it with a company name from web search, vector DB, or a name formed from the tail number (e.g. N123AB LLC) unless that exact phrase appears in this block."
+                )
+                lines.append(f"  Registrant name: {rn}")
+                if street_combined:
+                    lines.append(f"  Mailing street: {street_combined}")
+                if loc:
+                    lines.append(f"  Mailing city/state/ZIP/country: {loc}")
         else:
             reg_u = (reg_s or "").strip().upper()
             non_us_hint = ""
