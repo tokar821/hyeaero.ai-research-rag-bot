@@ -573,20 +573,28 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         from rag.consultant_market_lookup import (
             build_consultant_market_authority_block,
             build_purchase_listing_tavily_query,
+            consultant_wants_internal_market_sql,
             enrich_rag_queries_for_purchase,
             filter_tavily_results_for_phly_identity,
             strip_market_meta_zeros,
             tavily_price_highlights_block,
-            wants_consultant_purchase_market_context,
+        )
+        from rag.consultant_tavily_gate import (
+            empty_consultant_tavily_payload,
+            should_run_consultant_tavily,
         )
         from services.tavily_owner_hint import fetch_tavily_hints_for_query
 
         hs = self._consultant_history_snippet(history)
         hs_opt = hs.strip() or None
 
-        fast_retrieval = _env_truthy("CONSULTANT_FAST_RETRIEVAL")
-        skip_expand = _env_truthy("CONSULTANT_SKIP_QUERY_EXPAND")
-        single_tavily_pass = _env_truthy("CONSULTANT_TAVILY_SINGLE_PASS") or fast_retrieval
+        low_latency = _env_truthy("CONSULTANT_LOW_LATENCY")
+        fast_retrieval = _env_truthy("CONSULTANT_FAST_RETRIEVAL") or low_latency
+        skip_expand = _env_truthy("CONSULTANT_SKIP_QUERY_EXPAND") or low_latency
+        single_tavily_pass = (
+            _env_truthy("CONSULTANT_TAVILY_SINGLE_PASS") or fast_retrieval
+        )
+        strict_market_sql = _env_truthy("CONSULTANT_MARKET_SQL_STRICT")
 
         try:
             tavily_per_pass = int((os.getenv("CONSULTANT_TAVILY_RESULTS_PER_PASS") or "8").strip())
@@ -625,6 +633,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             tavily_timeout = max(8.0, min(60.0, tavily_timeout))
         except ValueError:
             tavily_timeout = 28.0
+        if low_latency:
+            # Fail faster on slow Tavily; REST fallback honors this; SDK may still block longer.
+            tavily_timeout = min(tavily_timeout, 20.0)
 
         if skip_expand:
             phly_authority, phly_meta, phly_rows = self._phlydata_authority_block(query, history)
@@ -652,7 +663,11 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 expanded = f_exp.result()
 
         market_block, market_meta = build_consultant_market_authority_block(
-            self.db, query, history, phly_rows
+            self.db,
+            query,
+            history,
+            phly_rows,
+            strict_market_sql=strict_market_sql,
         )
         rag_qs = enrich_rag_queries_for_purchase(
             list(expanded.get("rag_queries") or [query]),
@@ -660,6 +675,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             history,
             phly_rows,
             max_total=enrich_rag_max,
+            strict_market_sql=strict_market_sql,
         )
         tq = enrich_tavily_query_for_consultant(
             query,
@@ -676,14 +692,39 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         sq_c = " ".join(sq.split()).lower() if sq else ""
         tq_c = " ".join(tq.split()).lower()
         run_secondary = bool(sq and sq_c != tq_c)
-        pq = build_purchase_listing_tavily_query(query, history, phly_rows)
+        pq = build_purchase_listing_tavily_query(
+            query, history, phly_rows, strict_market_sql=strict_market_sql
+        )
         pq_c = " ".join(pq.split()).lower() if pq else ""
         merge_purchase = bool(pq and pq_c and pq_c not in {tq_c, sq_c})
         if single_tavily_pass:
             run_secondary = False
             merge_purchase = False
-        tavily_passes = 1 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
-        purchase_ctx = wants_consultant_purchase_market_context(query, history)
+        tavily_when_needed = _env_truthy("CONSULTANT_TAVILY_WHEN_NEEDED")
+        run_tavily, tavily_gate_reason = should_run_consultant_tavily(
+            when_needed_enabled=tavily_when_needed,
+            query=query,
+            history=history,
+            phly_authority=phly_authority,
+            phly_rows=phly_rows,
+            phly_meta=phly_meta,
+            strict_market_sql=strict_market_sql,
+        )
+        if not run_tavily:
+            tavily_passes = 0
+            run_secondary = False
+            merge_purchase = False
+            logger.info(
+                "Consultant: Tavily skipped (CONSULTANT_TAVILY_WHEN_NEEDED=1, reason=%s)",
+                tavily_gate_reason,
+            )
+        else:
+            tavily_passes = 1 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
+            if tavily_when_needed:
+                logger.debug("Consultant: Tavily run (when-needed mode, reason=%s)", tavily_gate_reason)
+        purchase_ctx = consultant_wants_internal_market_sql(
+            query, history, strict=strict_market_sql
+        )
         tavily_max_items = 18 if purchase_ctx else 14
         tavily_body_chars = 2200 if purchase_ctx else 1400
 
@@ -728,19 +769,29 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         secondary: Optional[Dict[str, Any]] = None
         tertiary: Optional[Dict[str, Any]] = None
         results: List[Dict[str, Any]] = []
-        max_workers = 2 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
-        max_workers = max(2, min(4, max_workers))
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            f_pri = pool.submit(_fetch_pri)
-            f_rag = pool.submit(_fetch_rag)
-            f_sec = pool.submit(_fetch_sec) if run_secondary else None
-            f_pur = pool.submit(_fetch_pur) if merge_purchase else None
-            primary = f_pri.result()
-            results = f_rag.result()
-            if f_sec is not None:
-                secondary = f_sec.result()
-            if f_pur is not None:
-                tertiary = f_pur.result()
+        if run_tavily:
+            max_workers = 2 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
+            max_workers = max(2, min(4, max_workers))
+            with ThreadPoolExecutor(max_workers=max_workers) as pool:
+                f_pri = pool.submit(_fetch_pri)
+                f_rag = pool.submit(_fetch_rag)
+                f_sec = pool.submit(_fetch_sec) if run_secondary else None
+                f_pur = pool.submit(_fetch_pur) if merge_purchase else None
+                primary = f_pri.result()
+                results = f_rag.result()
+                if f_sec is not None:
+                    secondary = f_sec.result()
+                if f_pur is not None:
+                    tertiary = f_pur.result()
+        else:
+            results = self._retrieve_multi(
+                rag_qs,
+                top_k=top_k,
+                score_threshold=score_threshold,
+                max_results_total=rag_max_chunks,
+                max_query_variants=max_rag_variants,
+            )
+            primary = empty_consultant_tavily_payload()
         results = self._filter_rag_results_for_phly_aircraft(results, phly_rows)
         tavily_payload = primary
         if run_secondary and secondary is not None:
@@ -753,7 +804,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             )
         tavily_payload = filter_tavily_results_for_phly_identity(tavily_payload, phly_rows)
 
-        purchase_tavily_merged = bool(merge_purchase and tertiary is not None)
+        purchase_tavily_merged = bool(
+            run_tavily and merge_purchase and tertiary is not None
+        )
 
         tavily_block = format_tavily_payload_for_consultant(
             tavily_payload, max_items=tavily_max_items, max_body_chars=tavily_body_chars
@@ -818,12 +871,16 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         data_used: Dict[str, Any] = dict(phly_meta)
         for k, v in strip_market_meta_zeros(market_meta).items():
             data_used[k] = v
+        if low_latency:
+            data_used["consultant_low_latency"] = 1
         if fast_retrieval:
             data_used["consultant_fast_retrieval"] = 1
         if skip_expand:
             data_used["consultant_skip_query_expand"] = 1
         if single_tavily_pass:
             data_used["consultant_tavily_single_pass"] = 1
+        if strict_market_sql:
+            data_used["consultant_market_sql_strict"] = 1
         data_used["consultant_pipeline"] = "phly_market_sql_tavily_expand_rag_parallel_v1"
         data_used["consultant_fast_mode"] = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
             "1",
@@ -832,6 +889,11 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         )
         data_used["tavily_results"] = tavily_hits
         data_used["tavily_web_query_passes"] = tavily_passes
+        if tavily_when_needed:
+            data_used["consultant_tavily_when_needed"] = 1
+            data_used["tavily_gate_reason"] = tavily_gate_reason
+        if not run_tavily:
+            data_used["tavily_skipped"] = 1
         if purchase_tavily_merged:
             data_used["tavily_purchase_focus"] = 1
         data_used["tavily_error"] = tavily_payload.get("error")
@@ -1001,14 +1063,12 @@ Current question: {b["query"]}
 Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
 
-            review_disabled = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
-                "1",
-                "true",
-                "yes",
-            ) or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
-                "1",
-                "true",
-                "yes",
+            review_disabled = (
+                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
+                in ("1", "true", "yes")
+                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
+                in ("1", "true", "yes")
+                or _env_truthy("CONSULTANT_LOW_LATENCY")
             )
 
             import openai
@@ -1133,14 +1193,12 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
             )
             draft = (response.choices[0].message.content or "").strip()
 
-            review_disabled = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
-                "1",
-                "true",
-                "yes",
-            ) or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
-                "1",
-                "true",
-                "yes",
+            review_disabled = (
+                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
+                in ("1", "true", "yes")
+                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
+                in ("1", "true", "yes")
+                or _env_truthy("CONSULTANT_LOW_LATENCY")
             )
             answer = draft
             if draft and not review_disabled:

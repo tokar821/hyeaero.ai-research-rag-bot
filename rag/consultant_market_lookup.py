@@ -85,6 +85,78 @@ def wants_consultant_purchase_market_context(
     return any(k in blob for k in keywords)
 
 
+def wants_consultant_strict_internal_market_sql(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> bool:
+    """Stricter than :func:`wants_consultant_purchase_market_context` for Postgres market SQL.
+
+    Avoids firing on vague substrings like bare ``available`` or ``listed`` (e.g. unrelated wording).
+    Use with ``CONSULTANT_MARKET_SQL_STRICT=1``.
+    """
+    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
+    if not blob.strip():
+        return False
+    phrases = (
+        "for sale",
+        "on sale",
+        "on the market",
+        "listing",
+        "listings",
+        "still for sale",
+        "is it available",
+        "still available",
+        "can i buy",
+        "could i buy",
+        "i can buy",
+        "buy it",
+        "buy now",
+        "purchase",
+        "acquire",
+        "how much",
+        "asking price",
+        "ask price",
+        "market value",
+        "valuation",
+        "appraisal",
+        "comparable sale",
+        "comparable sales",
+        "recent sale",
+        "recent sales",
+        "make an offer",
+        "negotiate",
+        "get a deal",
+        "seller",
+        "broker",
+        "budget",
+        "afford",
+    )
+    if any(p in blob for p in phrases):
+        return True
+    if re.search(
+        r"\b(buy|purchase|pricing|sold|asking|listing|listings|offer|cost|pay|worth)\b",
+        blob,
+    ):
+        return True
+    if re.search(r"\bprice\b", blob):
+        return True
+    if re.search(r"\bcomps?\b", blob):
+        return True
+    return False
+
+
+def consultant_wants_internal_market_sql(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    *,
+    strict: bool = False,
+) -> bool:
+    """Whether to run internal listings/comps SQL and related purchase-biased retrieval."""
+    if strict:
+        return wants_consultant_strict_internal_market_sql(user_query, history)
+    return wants_consultant_purchase_market_context(user_query, history)
+
+
 def _collect_ilike_patterns(
     query: str,
     history: Optional[List[Dict[str, str]]],
@@ -128,13 +200,18 @@ def build_consultant_market_authority_block(
     query: str,
     history: Optional[List[Dict[str, str]]],
     phly_rows: List[Dict[str, Any]],
+    *,
+    strict_market_sql: bool = False,
 ) -> Tuple[str, Dict[str, Any]]:
     """
     Returns ``(text_block, meta)`` for prepending to consultant context.
     ``meta`` counts rows used (for ``data_used``).
+
+    Skips all market SQL unless the user message(s) look market-related; set
+    ``strict_market_sql=True`` (``CONSULTANT_MARKET_SQL_STRICT=1``) for a narrower trigger list.
     """
     meta: Dict[str, Any] = {"consultant_internal_listings": 0, "consultant_internal_sales_comps": 0}
-    if not wants_consultant_purchase_market_context(query, history):
+    if not consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
         return "", meta
 
     pats = _collect_ilike_patterns(query, history, phly_rows)
@@ -537,9 +614,10 @@ def enrich_rag_queries_for_purchase(
     phly_rows: List[Dict[str, Any]],
     *,
     max_total: int = 8,
+    strict_market_sql: bool = False,
 ) -> List[str]:
     """Add embedding-search phrases biased toward listings and prices for this aircraft."""
-    if not wants_consultant_purchase_market_context(query, history):
+    if not consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
         return base_queries
     out: List[str] = []
     for q in base_queries or []:
@@ -572,12 +650,14 @@ def build_purchase_listing_tavily_query(
     query: str,
     history: Optional[List[Dict[str, str]]],
     phly_rows: List[Dict[str, Any]],
+    *,
+    strict_market_sql: bool = False,
 ) -> Optional[str]:
     """
     Extra web search string biased toward **asking price** and **for-sale listings** for this tail/serial.
     Merged with primary/owner Tavily so AvPay / Controller / etc. snippets surface when Postgres has no row.
     """
-    if not wants_consultant_purchase_market_context(query, history):
+    if not consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
         return None
     reg = ""
     serial = ""

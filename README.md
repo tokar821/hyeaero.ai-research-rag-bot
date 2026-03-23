@@ -78,8 +78,12 @@ The consultant endpoint uses **PhlyData + FAA** (when serial/tail tokens match),
 - Uses the same **`TAVILY_API_KEY`** / **`TAVILY_DISABLED`** as above when Tavily is enabled.
 - **`CONSULTANT_TAVILY_ADVANCED=1`** — use Tavily `search_depth=advanced` for consultant web calls (slower, richer snippets; optional).
 - **`TAVILY_SEARCH_DEPTH`** — `basic` (default) or `advanced` for all Tavily calls that don’t override depth.
+- **`CONSULTANT_TAVILY_WHEN_NEEDED=1`** — skip Tavily when the gate decides internal context is enough: you have a PhlyData authority block, FAA MASTER registrant lines for every aircraft in that block, the user is **not** in purchase/price/listing mode (user messages only), and they are not asking for operator/charter/fleet/management or news/website-style answers. Otherwise Tavily still runs (default **off** — unchanged behavior if unset).
+- **Internal market SQL** (`aircraft_listings` / `aircraft_sales` comps) is **not** run on every question: it only runs when recent **user** messages look purchase/price/listing-related (`wants_consultant_purchase_market_context`). Pure ownership/registry/spec questions skip those queries. **`CONSULTANT_MARKET_SQL_STRICT=1`** narrows that trigger (e.g. avoids firing on vague words like bare “available” / “listed”) and aligns the purchase-focused Tavily merge + RAG listing boosts with the same stricter test.
+- **`CONSULTANT_LOW_LATENCY=1`** — **recommended** when responses are too slow: enables lean retrieval (skips the query-expand OpenAI call, **one** Tavily pass instead of up to three, fewer Pinecone variants/chunks), caps Tavily wait (~20s on REST fallback), and **skips the review LLM** so you get one streamed draft instead of blocking on a full draft then streaming polish. Trade-off: slightly rougher wording and fewer web/RAG angles.
 - **`CONSULTANT_REVIEW_DISABLED=1`** — skip the second LLM “editor” pass (faster, slightly less polished).
 - **`CONSULTANT_FAST_MODE=1`** — skips the review pass (same as review disabled) for lower latency; retrieval still runs (PhlyData + Tavily + RAG in parallel where possible).
+- Fine-grained knobs (see `.env.example`): **`CONSULTANT_SKIP_QUERY_EXPAND`**, **`CONSULTANT_FAST_RETRIEVAL`**, **`CONSULTANT_TAVILY_SINGLE_PASS`**, **`CONSULTANT_TAVILY_TIMEOUT_SEC`**, **`CONSULTANT_EXPAND_TIMEOUT_SEC`**, etc.
 
 ### PhlyData Owner Details / ZoomInfo
 
