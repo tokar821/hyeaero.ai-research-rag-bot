@@ -7,6 +7,7 @@ and resale advisory using Hye Aero's proprietary data (Controller, AircraftExcha
 
 import os
 import sys
+import json
 from pathlib import Path
 import csv
 from functools import lru_cache
@@ -16,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Optional, Any
 
@@ -1265,6 +1267,48 @@ def rag_answer(req: ChatRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _rag_sse_event(obj: dict) -> str:
+    return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
+
+
+@app.post("/api/rag/answer/stream")
+def rag_answer_stream(req: ChatRequest):
+    """
+    Same consultant pipeline as POST /api/rag/answer, but streams the assistant text with SSE
+    (ChatGPT-style). Events: {type: status|delta|done|error, ...}.
+    """
+    try:
+        rag = get_rag()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+    history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+
+    def event_iter():
+        try:
+            for ev in rag.answer_stream_events(
+                query=req.query.strip(),
+                top_k=20,
+                history=history_dicts if history_dicts else None,
+            ):
+                yield _rag_sse_event(ev)
+        except Exception as e:
+            yield _rag_sse_event({"type": "error", "message": str(e)})
+            yield _rag_sse_event({"type": "done", "sources": [], "data_used": {}, "error": str(e)})
+
+    return StreamingResponse(
+        event_iter(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 @app.post("/api/market-comparison")
 def market_comparison(req: MarketComparisonRequest):

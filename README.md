@@ -71,6 +71,17 @@ When `GET /api/phlydata/owners` returns FAA rows whose registrant looks like a *
 
 Install includes `tavily-python`; the service falls back to a plain `requests` POST to `https://api.tavily.com/search` if the SDK is unavailable.
 
+### Ask Consultant (RAG) pipeline
+
+The consultant endpoint uses **PhlyData + FAA** (when serial/tail tokens match), then **LLM query expansion**, **Tavily** (using the expanded web string), **multi-query Pinecone retrieval**, a **draft** OpenAI answer, and an optional **final review** pass for tone and consistency with authoritative internal data.
+
+- Uses the same **`TAVILY_API_KEY`** / **`TAVILY_DISABLED`** as above when Tavily is enabled.
+- **`CONSULTANT_TAVILY_ADVANCED=1`** — use Tavily `search_depth=advanced` for consultant web calls (slower, richer snippets; optional).
+- **`TAVILY_SEARCH_DEPTH`** — `basic` (default) or `advanced` for all Tavily calls that don’t override depth.
+- **`CONSULTANT_REVIEW_DISABLED=1`** — skip the second LLM “editor” pass (faster, slightly less polished).
+
+If there is **no** PhlyData match, **no** vector hits, and **no** Tavily results, the service falls back to **general knowledge** (same as before).
+
 ## Run API
 
 ```bash
@@ -112,7 +123,7 @@ Set in frontend `.env.local`:
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Chat uses the Next.js proxy (`/api/chat` → backend `/api/rag/answer`). Market Comparison, Price Estimator, and Resale Advisory call the backend from the browser (CORS is enabled for `http://localhost:3000`).
+Ask Consultant uses **`POST /api/rag/answer/stream`** (SSE, streamed tokens) from the browser; **`POST /api/rag/answer`** remains for non-streaming clients. Both use `NEXT_PUBLIC_API_URL` / CORS (`http://localhost:3000` by default; set `CORS_ORIGINS` in production).
 
 ## Data sources (ETL)
 

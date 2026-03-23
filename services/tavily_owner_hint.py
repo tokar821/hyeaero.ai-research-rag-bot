@@ -127,35 +127,52 @@ def build_owner_search_query(row: Dict[str, Any]) -> str:
     return q
 
 
-def _tavily_search_rest(api_key: str, query: str, max_results: int) -> Dict[str, Any]:
+def _normalize_search_depth(raw: Optional[str]) -> str:
+    d = (raw or "basic").strip().lower()
+    return d if d in ("basic", "advanced") else "basic"
+
+
+def _tavily_search_rest(
+    api_key: str, query: str, max_results: int, search_depth: str = "basic"
+) -> Dict[str, Any]:
     import requests
 
     body = {
         "api_key": api_key,
         "query": query,
         "max_results": max(1, min(10, max_results)),
-        "search_depth": "basic",
+        "search_depth": _normalize_search_depth(search_depth),
     }
-    r = requests.post(TAVILY_SEARCH_URL, json=body, timeout=20)
+    r = requests.post(TAVILY_SEARCH_URL, json=body, timeout=45)
     r.raise_for_status()
     return r.json()
 
 
-def _tavily_search_sdk(api_key: str, query: str, max_results: int) -> Dict[str, Any]:
+def _tavily_search_sdk(
+    api_key: str, query: str, max_results: int, search_depth: str = "basic"
+) -> Dict[str, Any]:
     from tavily import TavilyClient  # type: ignore
 
     client = TavilyClient(api_key=api_key)
     n = max(1, min(10, max_results))
+    sd = _normalize_search_depth(search_depth)
     try:
-        return client.search(query, max_results=n, search_depth="basic")
+        return client.search(query, max_results=n, search_depth=sd)
     except TypeError:
         # Older tavily-python may not accept search_depth
         return client.search(query, max_results=n)
 
 
-def fetch_tavily_hints_for_query(query: str) -> Dict[str, Any]:
+def fetch_tavily_hints_for_query(
+    query: str,
+    result_limit: Optional[int] = None,
+    search_depth: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     Call Tavily once. Returns a dict safe to JSON-serialize to the frontend.
+
+    ``result_limit`` overrides ``TAVILY_MAX_RESULTS`` (capped 1–10) when set (e.g. Ask Consultant uses 8).
+    ``search_depth`` may be ``basic`` or ``advanced`` (Tavily); if omitted, uses env ``TAVILY_SEARCH_DEPTH`` or ``basic``.
 
     On failure, returns ``{"query", "disclaimer", "results": [], "error": "..."}``.
     """
@@ -184,18 +201,28 @@ def fetch_tavily_hints_for_query(query: str) -> Dict[str, Any]:
             "error": "tavily_api_key_missing",
         }
 
-    max_results = 5
+    env_n = 5
     try:
-        mr = int((os.getenv("TAVILY_MAX_RESULTS") or "5").strip())
-        max_results = max(1, min(10, mr))
+        env_n = max(1, min(10, int((os.getenv("TAVILY_MAX_RESULTS") or "5").strip())))
     except ValueError:
-        pass
+        env_n = 5
+    if result_limit is not None:
+        try:
+            max_results = max(1, min(10, int(result_limit)))
+        except (TypeError, ValueError):
+            max_results = env_n
+    else:
+        max_results = env_n
+
+    depth = _normalize_search_depth(
+        search_depth if search_depth is not None else (os.getenv("TAVILY_SEARCH_DEPTH") or "basic")
+    )
 
     try:
         try:
-            data = _tavily_search_sdk(api_key, query, max_results)
+            data = _tavily_search_sdk(api_key, query, max_results, depth)
         except ImportError:
-            data = _tavily_search_rest(api_key, query, max_results)
+            data = _tavily_search_rest(api_key, query, max_results, depth)
     except Exception as e:
         logger.warning("Tavily search failed: %s", e)
         return {
