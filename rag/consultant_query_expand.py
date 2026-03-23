@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from typing import Any, Dict, List, Optional
 
@@ -41,12 +42,19 @@ def expand_consultant_research_queries(
     try:
         import openai
 
-        client = openai.OpenAI(api_key=openai_api_key, timeout=35.0)
+        try:
+            expand_timeout = float((os.getenv("CONSULTANT_EXPAND_TIMEOUT_SEC") or "18").strip())
+            expand_timeout = max(5.0, min(45.0, expand_timeout))
+        except ValueError:
+            expand_timeout = 18.0
+        expand_model = (os.getenv("CONSULTANT_EXPAND_MODEL") or "").strip() or chat_model
+
+        client = openai.OpenAI(api_key=openai_api_key, timeout=expand_timeout)
         instruction = """You help an aviation research assistant run (1) a public web search (Tavily) and (2) semantic search over a private database of aircraft listings, sales, and registry-related records.
 
 Given the user's question, respond with ONLY a JSON object (no markdown fences) with exactly these keys:
-- "tavily_query": one concise English string optimized for web search. Always include any serial, tail/registration, and make/model if inferable (including from recent conversation if provided). For ownership / "who owns" / operator questions, add terms like: owner, operator, registered owner, registrant, AOC, air operator certificate, charter, aircraft management, fleet — so results hit operator fleet pages and registry excerpts, not only Wikipedia. Put the tail/registration in quotes when it is alphanumeric (e.g. "OY-JSW"). For European tails (OY-, SE-, LN-, G-), add the country civil aviation authority / register name when known from context.
-- "rag_queries": an array of 2 to 4 short alternative search phrases for embedding search (synonyms, model variants, registration format, "Citation", "Gulfstream", etc. as relevant).
+- "tavily_query": one concise English string optimized for web search. Always include any serial, tail/registration, and make/model if inferable (including from recent conversation if provided). For ownership / "who owns" / operator questions, add terms like: owner, operator, registered owner, registrant, AOC, air operator certificate, charter, aircraft management, fleet — so results hit operator fleet pages and registry excerpts, not only Wikipedia. Put the tail/registration in quotes when it is alphanumeric (e.g. "OY-JSW"). For European tails (OY-, SE-, LN-, G-), add the country civil aviation authority / register name when known from context. For purchase / "can I buy" / price / for-sale / listing questions, add: asking price, for sale, aircraft listing, USD (and broker or marketplace names if natural) so snippets include **live listing pages with prices** (AvPay, Controller, JetNet, etc.), not only registry data.
+- "rag_queries": an array of 2 to 4 short alternative search phrases for embedding search (synonyms, model variants, registration format, "Citation", "Gulfstream", etc. as relevant). If the user asks about buying, price, or availability, include at least one phrase with **asking price** or **for sale** plus serial or tail when known from the message or conversation.
 
 Keep strings under 200 characters each where possible."""
 
@@ -59,12 +67,12 @@ Keep strings under 200 characters each where possible."""
             )
 
         resp = client.chat.completions.create(
-            model=chat_model,
+            model=expand_model,
             messages=[
                 {"role": "system", "content": instruction},
                 {"role": "user", "content": user_block},
             ],
-            max_tokens=350,
+            max_tokens=300,
             temperature=0.25,
         )
         text = (resp.choices[0].message.content or "").strip()
@@ -100,8 +108,8 @@ def format_tavily_payload_for_consultant(
         return "[WEB — Tavily: no payload]"
     err = payload.get("error")
     results = payload.get("results") or []
-    cap = max(4, min(15, int(max_items)))
-    body_cap = max(400, min(2000, int(max_body_chars)))
+    cap = max(4, min(20, int(max_items)))
+    body_cap = max(400, min(2600, int(max_body_chars)))
     disclaimer = (payload.get("disclaimer") or "").strip()
     lines = [
         "[WEB SEARCH — Tavily (third-party sources; unverified; may be incomplete or wrong)]",
@@ -109,6 +117,7 @@ def format_tavily_payload_for_consultant(
         "When the user asks who owns or operates this aircraft: prefer snippets that explicitly tie THIS tail/serial to a company (registry excerpt, AOC holder, fleet page, operator press release). "
         "If a charter/airline/management company is named on a fleet or operator page for this exact registration, treat that as strong evidence for who operates or commercially manages the aircraft (often different wording from a bare legal registrant). "
         "If one company appears on fleet/operator pages and another only on generic registry aggregators, weight the fleet/operator evidence more heavily for 'who operates' questions. Name companies exactly as written in snippets.",
+        "For purchase / pricing questions: pull explicit **dollar amounts** and **listing URLs** from snippets when present; the assistant must repeat them in the answer with source (result # / domain).",
     ]
     if disclaimer:
         lines.append(disclaimer)

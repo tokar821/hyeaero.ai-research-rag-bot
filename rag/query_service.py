@@ -4,6 +4,7 @@ import logging
 import os
 import time
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any, Optional, Iterator, Tuple
 
 from rag.embedding_service import EmbeddingService
@@ -13,6 +14,11 @@ from database.postgres_client import PostgresClient
 from services.aviacost_lookup import lookup_aviacost
 
 logger = logging.getLogger(__name__)
+
+
+def _env_truthy(key: str) -> bool:
+    return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
+
 
 # Minimum similarity score to include a Pinecone match (cosine: higher = more similar)
 DEFAULT_SCORE_THRESHOLD = 0.5
@@ -26,6 +32,7 @@ Your process:
 
 Rules:
 - Aircraft identity (serial, tail/registration as shown, make/model, year): treat the PhlyData + FAA block as authoritative when it lists those fields. Do not contradict them with web or vector text.
+- **Ownership-only** (who owns / registrant / operator — user did **not** ask price, buy, listing, or for sale): Lead with **FAA/PhlyData registrant** and any Tavily-backed operator facts. **Do not** open with "active listing" or asking price. If INTERNAL market or Tavily also shows a listing for the same serial/tail, add a **short closing section** after ownership, e.g. "Market note (separate from legal registrant):" with ask price + source/URL — clearly secondary.
 - Ownership / operator / "who owns" questions:
   - If the block includes an FAA MASTER registrant name, report it as the U.S. FAA registrant record and still add web/listing context if it adds operator or fleet detail.
   - If the block states there is NO FAA registrant row (typical for non-U.S. primary registry, e.g. tails not starting with N-), FAA is not the state of registry. You MUST lean heavily on Tavily web results (and vector snippets) to name who **operates** or **commercially manages** the aircraft today — same quality bar as ChatGPT: fleet pages, AOC holders, charter operators, and registry excerpts that mention this exact tail/serial.
@@ -33,13 +40,26 @@ Rules:
   - **Every company name you state as current owner or operator must appear verbatim (or as an obvious substring) in a Tavily snippet title or body.** Cite which result number (1., 2., …) or the domain/URL you used. If snippets disagree, give both names and say what each source claims. If no snippet names a company, say web results did not clearly identify an owner/operator — do not guess.
   - Never invent registry or database names (do not say "Danish Aircraft Database" unless that exact phrase appears in a snippet).
 - Valuations and comparisons: cite specific numbers from context. If something is unknown, say so.
-- Use clear bullets (-). Neutral, professional tone for brokers and clients. You may use tasteful emoji (e.g. ✈ 🧾) like ChatGPT when it improves scanability.
+- Purchase / availability / "can I buy" / pricing / "how much" / "is it for sale":
+  - **Do not omit price when the context contains one.** Structure the answer like a deal brief: after identity, include a **Market / listing** subsection with:
+    (1) **Asking price** (or **Sold price** if only a past sale is shown) with currency (assume USD if unstated in our DB);
+    (2) **Source** — e.g. "Internal listing (Hye Aero DB): {platform}" or "Web: {site name} — URL from Tavily result #N";
+    (3) **Availability** — listed for sale / status line / "no current listing found in provided sources".
+  - INTERNAL market block: copy **Ask:** and **Listing URL:** lines literally when present; they override vague web blurbs.
+  - Tavily / web: read snippet bodies for **$ amounts** and **for sale** language; quote the price and cite the snippet index + domain. If the user asks whether they can buy **now**, a current listing URL + ask in context means "yes, subject to verifying with seller" — still state the price and source.
+  - Comparable sales section: if no current ask but comps exist, give **low / high / avg** from the internal comp summary and label as **recent sale comps (not a live listing)**.
+  - If a **[WEB — Dollar amounts spotted in Tavily snippet text]** section appears after the Tavily list, treat every line as a mandatory price hint: repeat each amount in your **Market / listing** bullets and tie it to the matching snippet # and URL/domain.
+  - If truly no price anywhere in context, say explicitly **"No asking price in the provided internal data or web snippets"** — do not invent numbers.
+- Voice: Answer like a senior broker or research lead talking to a client — direct, conversational sentences. Avoid robotic closings ("feel free to ask", "let me know if you need anything else"), stacked machine-style sections, or repeating the same disclaimer. Use bullets only when they genuinely help scanning; short paragraphs are fine.
+- **Listing URLs (critical):** Never cite a listing URL from Tavily or the vector DB unless that same snippet/chunk explicitly ties the URL to the **same** serial number and/or tail as the authoritative PhlyData + FAA block. If the only URLs in context are for a different aircraft (e.g. another Citation), say clearly that no matching listing link for **this** serial/tail appeared — do not paste unrelated listings.
+- Use clear bullets (-) when useful. Neutral, professional tone for brokers and clients. You may use tasteful emoji (e.g. ✈ 🧾) when it improves scanability.
 - Format: no markdown # headers or ** bold.
 
 Context layers (in order):
 1) AUTHORITATIVE PhlyData + FAA MASTER — source of truth for identity; FAA registrant line only when present in the block.
-2) Web search (Tavily) — essential for international tails and current operator/owner when FAA has no row; attribute each major claim to a source hint (title/URL).
-3) Vector database — listings, sales, registry-related chunks; use for market color and corroboration."""
+2) INTERNAL market (Postgres listings + comparable sales) — authoritative for **prices and listing URLs** in our database when this block appears.
+3) Web search (Tavily) — current off-platform listings and operator/owner color; attribute each major claim (title/URL).
+4) Vector database — extra listings/sales/registry chunks; corroboration."""
 
 CONSULTANT_REVIEW_SYSTEM_PROMPT = """You are a senior aviation research editor for Hye Aero. You receive:
 - The user's question
@@ -53,10 +73,28 @@ Rules:
 - FAA registrant: only treat the FAA MASTER registrant line as mandatory when it actually appears in the block. If the block says there is no FAA row for a non-U.S. tail, lead with the strongest Tavily-backed operator/owner (fleet pages, AOC/charter brands) — not a hedge that hides good web hits.
 - Web vs internal: company names must be traceable to Tavily snippet text; cite result # or domain. Prefer the operator/fleet narrative when the user asks "who owns" and snippets tie this tail to a charter or management company.
 - Remove invented database or portal names. No guessing: if snippets do not name a party, say so.
+- Use INTERNAL market block for prices/URLs when present; require draft to mention ask/sold figures if the block contains them. If you see **[FOR USER REPLY — Market / pricing]**, those lines are mandatory to reflect near the top (exact $ and URLs).
+- Purchase / price questions: final answer MUST include a **Market / listing** style block with **asking price (or clear "not stated")** and **source** (internal vs web + URL hint). If draft omitted a price that appears in INTERNAL, Tavily bodies, or the **Dollar amounts spotted** appendix, add it with snippet # / domain.
 - Use vector DB for listings/sales corroboration when helpful.
-- Improve structure (short lead, bullets, optional emoji for scanability). End with a one-line Sources note (internal vs web vs listings).
-- No markdown # or ** bold. Plain bullets (-).
+- Improve structure: short lead, then facts in natural prose or light bullets. Optional one short attribution line if helpful — not a long "Sources:" footer.
+- **Listing URLs:** Never output a listing URL unless context proves it belongs to the **same** serial/tail as PhlyData/FAA. Strip wrong-jet URLs from the draft.
+- No markdown # or ** bold. Plain bullets (-) only when they add clarity.
 - Stay factual; do not fabricate URLs or companies not implied by context."""
+
+# Appended to user messages when the question is purchase / price / availability — forces deal-brief structure.
+CONSULTANT_PURCHASE_USER_DIRECTIVES = """
+PURCHASE / PRICE / AVAILABILITY: Answer in a natural consultant voice — short opening, then the deal facts. Do not sound like a checklist robot.
+
+- Lead with whether you see evidence of a **current listing for this exact aircraft** (same serial and/or tail as the PhlyData authority block). A random Citation listing for another serial does **not** count as "yes."
+- **Listing URLs:** Include a URL only if INTERNAL market lines or the same numbered Tavily/vector snippet clearly ties it to **this** serial/tail. Never paste a marketplace URL that refers to a different aircraft.
+- State asking price when it clearly applies to **this** aircraft (figure + where it came from). If none, say so plainly. You may use a short labeled line for price when it helps.
+- If only comps exist (no live ask), say that and give the comp range from internal summary.
+- Skip hollow closings ("feel free to ask", etc.)."""
+
+
+def _consultant_purchase_tail(bundle: Dict[str, Any]) -> str:
+    return CONSULTANT_PURCHASE_USER_DIRECTIVES if bundle.get("purchase_context") else ""
+
 
 CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are Hye Aero's Aircraft Research & Valuation Consultant. We always search our Pinecone database first; for this question, no matching listings, sales, or FAA data were found. So you are answering from your own general knowledge. Think like a human expert: consider the full conversation, remember what you already said, and answer the current question in context. If the user asks a follow-up (e.g. "Is this all?", "What about X?"), interpret it in light of your previous answer and respond like a human.
 
@@ -135,6 +173,122 @@ class RAGQueryService:
             logger.warning(f"Failed to fetch aircraft {aircraft_id}: {e}")
             return None
 
+    @staticmethod
+    def _identity_norm_alnum(value: Any) -> str:
+        s = (value if value is not None else "") or ""
+        return re.sub(r"[^a-z0-9]", "", str(s).lower())
+
+    def _phly_identity_sets(
+        self, phly_rows: List[Dict[str, Any]]
+    ) -> Tuple[set, set]:
+        """Normalized serials and tails from PhlyData authority rows (for strict RAG/Tavily matching)."""
+        serials: set = set()
+        tails: set = set()
+        for r in phly_rows or []:
+            sn = self._identity_norm_alnum(r.get("serial_number"))
+            if len(sn) >= 4:
+                serials.add(sn)
+            tg = self._identity_norm_alnum(r.get("registration_number"))
+            if len(tg) >= 2:
+                tails.add(tg)
+        return serials, tails
+
+    def _entity_serial_tail_for_filter(
+        self, entity_type: str, entity_id: str
+    ) -> Tuple[str, str]:
+        """Best-effort serial + registration for Pinecone-linked entities when PhlyData has a canonical aircraft."""
+        record = self._fetch_full_record(entity_type, entity_id)
+        if not record:
+            return "", ""
+        if entity_type == "aircraft":
+            return (
+                str(record.get("serial_number") or ""),
+                str(record.get("registration_number") or ""),
+            )
+        if entity_type in ENTITY_HAS_AIRCRAFT_ID:
+            aid = record.get("aircraft_id")
+            if aid:
+                ac = self._fetch_aircraft_by_id(str(aid))
+                if ac:
+                    return (
+                        str(ac.get("serial_number") or ""),
+                        str(ac.get("registration_number") or ""),
+                    )
+        if entity_type == "faa_registration":
+            return (
+                str(record.get("serial_number") or ""),
+                str(record.get("registration_number") or ""),
+            )
+        return (
+            str(record.get("serial_number") or ""),
+            str(record.get("registration_number") or ""),
+        )
+
+    def _rag_chunk_matches_phly_identity(
+        self,
+        entity_type: str,
+        entity_id: str,
+        serial_norms: set,
+        tail_norms: set,
+        cache: Dict[Tuple[str, str], Tuple[str, str]],
+    ) -> bool:
+        if not serial_norms and not tail_norms:
+            return True
+        et = (entity_type or "").strip()
+        if et not in (
+            "aircraft_listing",
+            "aircraft_sale",
+            "faa_registration",
+            "aircraft",
+        ):
+            return True
+        key = (et, str(entity_id))
+        if key not in cache:
+            cache[key] = self._entity_serial_tail_for_filter(et, str(entity_id))
+        sn_s, reg_s = cache[key]
+        ns = self._identity_norm_alnum(sn_s)
+        nr = self._identity_norm_alnum(reg_s)
+        if tail_norms and nr and nr in tail_norms:
+            return True
+        if serial_norms and ns and ns in serial_norms:
+            return True
+        return False
+
+    def _filter_rag_results_for_phly_aircraft(
+        self,
+        results: List[Dict[str, Any]],
+        phly_rows: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Drop vector hits for listings/sales/registrations/aircraft rows that do not match
+        PhlyData serial/tail — prevents surfacing another jet's listing URL (semantic near-miss).
+        """
+        serial_norms, tail_norms = self._phly_identity_sets(phly_rows)
+        if not phly_rows or (not serial_norms and not tail_norms):
+            return results
+        cache: Dict[Tuple[str, str], Tuple[str, str]] = {}
+        kept: List[Dict[str, Any]] = []
+        dropped = 0
+        for r in results or []:
+            et = (r.get("entity_type") or "").strip()
+            eid = r.get("entity_id")
+            if eid is None or str(eid).strip() == "":
+                kept.append(r)
+                continue
+            if self._rag_chunk_matches_phly_identity(
+                et, str(eid), serial_norms, tail_norms, cache
+            ):
+                kept.append(r)
+            else:
+                dropped += 1
+        if dropped:
+            logger.info(
+                "RAG: dropped %s chunks not matching PhlyData serial/tail (kept %s)",
+                dropped,
+                len(kept),
+            )
+        return kept
+
     def _record_to_context_text(self, entity_type: str, record: Dict[str, Any]) -> str:
         """Turn a full Postgres record into text for LLM context (reuse extractors)."""
         extractor = EXTRACTORS.get(entity_type)
@@ -212,6 +366,7 @@ class RAGQueryService:
         top_k: int = 14,
         score_threshold: Optional[float] = None,
         max_results_total: int = 18,
+        max_query_variants: int = 5,
     ) -> List[Dict[str, Any]]:
         """
         Run vector retrieval for several paraphrased queries; dedupe by (entity_type, entity_id),
@@ -226,7 +381,8 @@ class RAGQueryService:
                 uniq_q.append(s)
         if not uniq_q:
             return []
-        nq = min(len(uniq_q), 5)
+        cap = max(1, min(8, int(max_query_variants)))
+        nq = min(len(uniq_q), cap)
         per_query_cap = max(6, min(top_k, max_results_total // max(nq, 1) + 4))
         best: Dict[tuple, Dict[str, Any]] = {}
         for q in uniq_q[:nq]:
@@ -414,17 +570,96 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             enrich_tavily_query_for_consultant,
             build_owner_operator_focus_tavily_query,
         )
+        from rag.consultant_market_lookup import (
+            build_consultant_market_authority_block,
+            build_purchase_listing_tavily_query,
+            enrich_rag_queries_for_purchase,
+            filter_tavily_results_for_phly_identity,
+            strip_market_meta_zeros,
+            tavily_price_highlights_block,
+            wants_consultant_purchase_market_context,
+        )
         from services.tavily_owner_hint import fetch_tavily_hints_for_query
 
         hs = self._consultant_history_snippet(history)
         hs_opt = hs.strip() or None
 
-        phly_authority, phly_meta, phly_rows = self._phlydata_authority_block(query, history)
-        expanded = expand_consultant_research_queries(
+        fast_retrieval = _env_truthy("CONSULTANT_FAST_RETRIEVAL")
+        skip_expand = _env_truthy("CONSULTANT_SKIP_QUERY_EXPAND")
+        single_tavily_pass = _env_truthy("CONSULTANT_TAVILY_SINGLE_PASS") or fast_retrieval
+
+        try:
+            tavily_per_pass = int((os.getenv("CONSULTANT_TAVILY_RESULTS_PER_PASS") or "8").strip())
+            tavily_per_pass = max(4, min(10, tavily_per_pass))
+        except ValueError:
+            tavily_per_pass = 8
+        if fast_retrieval:
+            tavily_per_pass = min(tavily_per_pass, 6)
+
+        try:
+            max_rag_variants = int((os.getenv("CONSULTANT_RAG_QUERY_VARIANTS") or "5").strip())
+            max_rag_variants = max(1, min(8, max_rag_variants))
+        except ValueError:
+            max_rag_variants = 5
+        if fast_retrieval:
+            max_rag_variants = min(max_rag_variants, 3)
+
+        try:
+            enrich_rag_max = int((os.getenv("CONSULTANT_RAG_ENRICH_MAX") or "8").strip())
+            enrich_rag_max = max(3, min(12, enrich_rag_max))
+        except ValueError:
+            enrich_rag_max = 8
+        if fast_retrieval:
+            enrich_rag_max = min(enrich_rag_max, 5)
+
+        try:
+            rag_max_chunks = int((os.getenv("CONSULTANT_RAG_MAX_CHUNKS") or "18").strip())
+            rag_max_chunks = max(8, min(24, rag_max_chunks))
+        except ValueError:
+            rag_max_chunks = 18
+        if fast_retrieval:
+            rag_max_chunks = min(rag_max_chunks, 14)
+
+        try:
+            tavily_timeout = float((os.getenv("CONSULTANT_TAVILY_TIMEOUT_SEC") or "28").strip())
+            tavily_timeout = max(8.0, min(60.0, tavily_timeout))
+        except ValueError:
+            tavily_timeout = 28.0
+
+        if skip_expand:
+            phly_authority, phly_meta, phly_rows = self._phlydata_authority_block(query, history)
+            qstrip = (query or "").strip()
+            expanded = {
+                "tavily_query": qstrip[:400] if qstrip else "",
+                "rag_queries": [qstrip] if qstrip else [""],
+            }
+        else:
+            def _run_phly() -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+                return self._phlydata_authority_block(query, history)
+
+            def _run_expand() -> Dict[str, Any]:
+                return expand_consultant_research_queries(
+                    query,
+                    self.openai_api_key or "",
+                    self.chat_model,
+                    history_snippet=hs_opt,
+                )
+
+            with ThreadPoolExecutor(max_workers=2) as pre_pool:
+                f_phly = pre_pool.submit(_run_phly)
+                f_exp = pre_pool.submit(_run_expand)
+                phly_authority, phly_meta, phly_rows = f_phly.result()
+                expanded = f_exp.result()
+
+        market_block, market_meta = build_consultant_market_authority_block(
+            self.db, query, history, phly_rows
+        )
+        rag_qs = enrich_rag_queries_for_purchase(
+            list(expanded.get("rag_queries") or [query]),
             query,
-            self.openai_api_key or "",
-            self.chat_model,
-            history_snippet=hs_opt,
+            history,
+            phly_rows,
+            max_total=enrich_rag_max,
         )
         tq = enrich_tavily_query_for_consultant(
             query,
@@ -437,42 +672,105 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         if (os.getenv("CONSULTANT_TAVILY_ADVANCED") or "").strip().lower() in ("1", "true", "yes"):
             tdepth = "advanced"
 
-        primary = fetch_tavily_hints_for_query(tq, result_limit=8, search_depth=tdepth)
-        tavily_passes = 1
         sq = build_owner_operator_focus_tavily_query(query, phly_rows, history_snippet=hs_opt)
-        if sq:
-            sq_c = " ".join(sq.split()).lower()
-            tq_c = " ".join(tq.split()).lower()
-            if sq_c != tq_c:
-                secondary = fetch_tavily_hints_for_query(sq, result_limit=8, search_depth=tdepth)
-                tavily_payload = merge_tavily_consultant_payloads(
-                    primary, secondary, max_results=14
-                )
-                tavily_passes = 2
-            else:
-                tavily_payload = primary
-        else:
-            tavily_payload = primary
+        sq_c = " ".join(sq.split()).lower() if sq else ""
+        tq_c = " ".join(tq.split()).lower()
+        run_secondary = bool(sq and sq_c != tq_c)
+        pq = build_purchase_listing_tavily_query(query, history, phly_rows)
+        pq_c = " ".join(pq.split()).lower() if pq else ""
+        merge_purchase = bool(pq and pq_c and pq_c not in {tq_c, sq_c})
+        if single_tavily_pass:
+            run_secondary = False
+            merge_purchase = False
+        tavily_passes = 1 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
+        purchase_ctx = wants_consultant_purchase_market_context(query, history)
+        tavily_max_items = 18 if purchase_ctx else 14
+        tavily_body_chars = 2200 if purchase_ctx else 1400
+
+        def _fetch_pri() -> Dict[str, Any]:
+            return fetch_tavily_hints_for_query(
+                tq,
+                result_limit=tavily_per_pass,
+                search_depth=tdepth,
+                request_timeout=tavily_timeout,
+            )
+
+        def _fetch_sec() -> Optional[Dict[str, Any]]:
+            if not run_secondary or not sq:
+                return None
+            return fetch_tavily_hints_for_query(
+                sq,
+                result_limit=tavily_per_pass,
+                search_depth=tdepth,
+                request_timeout=tavily_timeout,
+            )
+
+        def _fetch_pur() -> Optional[Dict[str, Any]]:
+            if not merge_purchase or not pq:
+                return None
+            return fetch_tavily_hints_for_query(
+                pq,
+                result_limit=tavily_per_pass,
+                search_depth=tdepth,
+                request_timeout=tavily_timeout,
+            )
+
+        def _fetch_rag() -> List[Dict[str, Any]]:
+            return self._retrieve_multi(
+                rag_qs,
+                top_k=top_k,
+                score_threshold=score_threshold,
+                max_results_total=rag_max_chunks,
+                max_query_variants=max_rag_variants,
+            )
+
+        primary: Dict[str, Any] = {}
+        secondary: Optional[Dict[str, Any]] = None
+        tertiary: Optional[Dict[str, Any]] = None
+        results: List[Dict[str, Any]] = []
+        max_workers = 2 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
+        max_workers = max(2, min(4, max_workers))
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            f_pri = pool.submit(_fetch_pri)
+            f_rag = pool.submit(_fetch_rag)
+            f_sec = pool.submit(_fetch_sec) if run_secondary else None
+            f_pur = pool.submit(_fetch_pur) if merge_purchase else None
+            primary = f_pri.result()
+            results = f_rag.result()
+            if f_sec is not None:
+                secondary = f_sec.result()
+            if f_pur is not None:
+                tertiary = f_pur.result()
+        results = self._filter_rag_results_for_phly_aircraft(results, phly_rows)
+        tavily_payload = primary
+        if run_secondary and secondary is not None:
+            tavily_payload = merge_tavily_consultant_payloads(
+                tavily_payload, secondary, max_results=14
+            )
+        if merge_purchase and tertiary is not None:
+            tavily_payload = merge_tavily_consultant_payloads(
+                tavily_payload, tertiary, max_results=18
+            )
+        tavily_payload = filter_tavily_results_for_phly_identity(tavily_payload, phly_rows)
+
+        purchase_tavily_merged = bool(merge_purchase and tertiary is not None)
 
         tavily_block = format_tavily_payload_for_consultant(
-            tavily_payload, max_items=14, max_body_chars=1400
+            tavily_payload, max_items=tavily_max_items, max_body_chars=tavily_body_chars
         )
+        if purchase_ctx:
+            ph = tavily_price_highlights_block(tavily_payload)
+            if ph:
+                tavily_block = f"{tavily_block}\n\n{ph}"
         tavily_hits = len(tavily_payload.get("results") or [])
 
-        rag_qs = expanded.get("rag_queries") or [query]
-        results = self._retrieve_multi(
-            rag_qs,
-            top_k=top_k,
-            score_threshold=score_threshold,
-            max_results_total=18,
-        )
-
         has_phly = bool((phly_authority or "").strip())
+        has_market = bool((market_block or "").strip())
         has_rag = bool(results)
         has_tavily = tavily_hits > 0
-        if not (has_phly or has_rag or has_tavily):
+        if not (has_phly or has_market or has_rag or has_tavily):
             logger.info(
-                "Consultant: no PhlyData block, no vector hits, no Tavily results → general knowledge (len=%d)",
+                "Consultant: no PhlyData, no internal market block, no vector hits, no Tavily → general knowledge (len=%d)",
                 len(query),
             )
             return "gk", None
@@ -494,6 +792,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             total += len(chunk) + sep
 
         _append(phly_authority)
+        _append(market_block)
         _append(tavily_block)
 
         for r in results:
@@ -517,9 +816,24 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             return "gk", None
 
         data_used: Dict[str, Any] = dict(phly_meta)
-        data_used["consultant_pipeline"] = "phly_tavily_expand_rag_review_v1"
+        for k, v in strip_market_meta_zeros(market_meta).items():
+            data_used[k] = v
+        if fast_retrieval:
+            data_used["consultant_fast_retrieval"] = 1
+        if skip_expand:
+            data_used["consultant_skip_query_expand"] = 1
+        if single_tavily_pass:
+            data_used["consultant_tavily_single_pass"] = 1
+        data_used["consultant_pipeline"] = "phly_market_sql_tavily_expand_rag_parallel_v1"
+        data_used["consultant_fast_mode"] = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
+            "1",
+            "true",
+            "yes",
+        )
         data_used["tavily_results"] = tavily_hits
         data_used["tavily_web_query_passes"] = tavily_passes
+        if purchase_tavily_merged:
+            data_used["tavily_purchase_focus"] = 1
         data_used["tavily_error"] = tavily_payload.get("error")
         data_used["rag_query_variants"] = len(rag_qs)
         for r in results:
@@ -532,6 +846,16 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 "\n\nThe context may begin with an AUTHORITATIVE PhlyData + FAA MASTER block. "
                 "For that aircraft's identity and legal registrant, treat that block as correct even if web or vector snippets disagree "
                 "(e.g. wrong model year from a different embedded record)."
+            )
+        if market_block:
+            system_prompt += (
+                "\n\nAn INTERNAL market block may list real asking/sold prices and listing URLs from Hye Aero's database. "
+                "For purchase and pricing questions, prioritize those figures when answering and cite them as internal listings/sales."
+            )
+        if purchase_ctx:
+            system_prompt += (
+                "\n\nThis is a purchase/price/availability question: the user expects **asking price**, **source**, and **URL** "
+                "like a broker brief. Follow [FOR USER REPLY] lines in the internal market block first."
             )
 
         return "llm", {
@@ -546,6 +870,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             "system_prompt": system_prompt,
             "query": query,
             "history": history,
+            "purchase_context": purchase_ctx,
         }
 
     @staticmethod
@@ -672,11 +997,15 @@ Context:
 {context}
 
 Current question: {b["query"]}
-
+{_consultant_purchase_tail(b)}
 Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
 
-            review_disabled = (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
+            review_disabled = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+            ) or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
                 "1",
                 "true",
                 "yes",
@@ -700,7 +1029,7 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
                         "role": "user",
                         "content": f"""User question:
 {b["query"]}
-
+{_consultant_purchase_tail(b)}
 Draft answer from first pass:
 {draft}
 
@@ -794,7 +1123,7 @@ Context:
 {context}
 
 Current question: {b["query"]}
-
+{_consultant_purchase_tail(b)}
 Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
             response = client.chat.completions.create(
@@ -804,7 +1133,11 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
             )
             draft = (response.choices[0].message.content or "").strip()
 
-            review_disabled = (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
+            review_disabled = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
+                "1",
+                "true",
+                "yes",
+            ) or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower() in (
                 "1",
                 "true",
                 "yes",
@@ -818,7 +1151,7 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
                             "role": "user",
                             "content": f"""User question:
 {b["query"]}
-
+{_consultant_purchase_tail(b)}
 Draft answer from first pass:
 {draft}
 

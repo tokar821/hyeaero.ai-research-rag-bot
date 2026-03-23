@@ -79,6 +79,13 @@ The consultant endpoint uses **PhlyData + FAA** (when serial/tail tokens match),
 - **`CONSULTANT_TAVILY_ADVANCED=1`** — use Tavily `search_depth=advanced` for consultant web calls (slower, richer snippets; optional).
 - **`TAVILY_SEARCH_DEPTH`** — `basic` (default) or `advanced` for all Tavily calls that don’t override depth.
 - **`CONSULTANT_REVIEW_DISABLED=1`** — skip the second LLM “editor” pass (faster, slightly less polished).
+- **`CONSULTANT_FAST_MODE=1`** — skips the review pass (same as review disabled) for lower latency; retrieval still runs (PhlyData + Tavily + RAG in parallel where possible).
+
+### PhlyData Owner Details / ZoomInfo
+
+- After a ZoomInfo company is chosen for an **FAA MASTER** registrant, the API can run **Tavily + LLM verification** so similar names (e.g. “Clydesdale Capital” vs “Clydesdale Asset Management LLC”) are **rejected** unless the web + model confirm the same entity.
+- **`ZOOMINFO_TAVILY_VERIFY_DISABLED=1`** — skip verification (not recommended for production quality).
+- **`ZOOMINFO_VERIFY_TAVILY_ADVANCED=1`** — use Tavily `advanced` depth only for that verification step.
 
 If there is **no** PhlyData match, **no** vector hits, and **no** Tavily results, the service falls back to **general knowledge** (same as before).
 

@@ -40,11 +40,13 @@ from services.zoominfo_client import (
     normalize_phone as zoominfo_normalize_phone,
     phones_match as zoominfo_phones_match,
 )
+from services.zoominfo_match_verify import verify_faa_zoominfo_company_match
 
 # Match method returned to frontend and logged
 MATCH_METHOD_PHONE = "phone"
 MATCH_METHOD_CONTENT_SCORE = "content_score"
 MATCH_METHOD_LLM_FALLBACK = "llm_fallback"
+MATCH_METHOD_VERIFY_REJECTED = "verify_rejected"
 
 import re
 import logging
@@ -64,6 +66,34 @@ _US_STATE_CODES = frozenset(
 _LEGAL_SUFFIXES = frozenset(
     "llc inc corp ltd co lp l.l.c l.l.p llp plc sa gmbh ag na ag".split()
 )
+
+_NAME_VERIFY_STOPWORDS = frozenset(
+    "llc inc corp corporation ltd lp llp co company the and plc pc na dba trust trustee nominee custodian".split()
+)
+
+
+def _significant_company_tokens(name: str) -> List[str]:
+    """Tokens (>2 chars) from a legal company name, minus generic suffix words."""
+    raw = re.sub(r"[^a-z0-9\s]", " ", (name or "").lower())
+    out: List[str] = []
+    for t in raw.split():
+        if len(t) > 2 and t not in _NAME_VERIFY_STOPWORDS:
+            out.append(t)
+    return out
+
+
+def _faa_zoominfo_legal_name_compatible(faa_registrant: str, zi_company_name: str) -> bool:
+    """
+    True only if every significant token in the ZoomInfo company name appears inside the FAA
+    legal registrant string. Stops "Clydesdale Capital" matching "CLYDESDALE ASSET MANAGEMENT LLC".
+    """
+    f = (faa_registrant or "").lower()
+    if not f or not (zi_company_name or "").strip():
+        return False
+    for t in _significant_company_tokens(zi_company_name):
+        if t not in f:
+            return False
+    return True
 
 
 def _clean_company_name(name: str) -> str:
@@ -986,6 +1016,8 @@ def _pick_best_zoominfo_by_vector_and_llm(
             )
         prompt = f"""We have owner/seller data from our database and {len(top_k)} candidate records from ZoomInfo. Pick the single best matching ZoomInfo candidate.
 {faa_geo_rule}
+CRITICAL — different legal entities: If the FAA/legal registrant name contains words like "ASSET MANAGEMENT" but a candidate is "Capital" or a different second word (e.g. Clydesdale Capital vs Clydesdale Asset Management LLC), those are usually DIFFERENT companies. Answer 0 unless the candidate name is essentially the same entity (same distinctive words, minor LLC/Inc differences only).
+
 Our data:
 {item_text}
 
@@ -1792,6 +1824,7 @@ def phlydata_owners(
         for idx, item in enumerate(items_to_lookup):
             url_alignment_source = None
             owner_url_llm_alignment = None
+            verification_meta: Optional[dict] = None
             all_companies = []
             all_contacts = []
             zoominfo_error = None
@@ -2050,6 +2083,77 @@ def phlydata_owners(
                 best_record = None
                 result_type = None
 
+            # Tavily + LLM verification for FAA MASTER registrant vs ZoomInfo (avoids similar-name wrong matches).
+            if (
+                best_record
+                and result_type == "company"
+                and (item.get("source_platform") or "").strip().lower() == "faa"
+                and (item.get("field_name") or "").strip() == "registrant_name"
+            ):
+                attrs_z = best_record.get("attributes") or {}
+                zi_nm = (attrs_z.get("name") or attrs_z.get("companyName") or "").strip()
+                faa_nm = (item.get("company_name") or "").strip()
+                name_ok = _faa_zoominfo_legal_name_compatible(faa_nm, zi_nm)
+                needs_verify = match_method != MATCH_METHOD_PHONE and (
+                    match_method == MATCH_METHOD_LLM_FALLBACK
+                    or not name_ok
+                    or (
+                        match_method == MATCH_METHOD_CONTENT_SCORE
+                        and content_score is not None
+                        and float(content_score) < 2.5
+                    )
+                )
+                if name_ok and match_method == MATCH_METHOD_CONTENT_SCORE and content_score is not None and float(content_score) >= 4.0:
+                    needs_verify = False
+                if needs_verify:
+                    c_cfg = get_config()
+                    okey = (c_cfg.openai_api_key or "").strip()
+                    if okey:
+                        v_item = {
+                            "company_name": faa_nm,
+                            "street": item.get("street"),
+                            "city": item.get("city"),
+                            "state": item.get("state"),
+                            "zip_code": item.get("zip_code"),
+                        }
+                        accept, v_reason, v_hits = verify_faa_zoominfo_company_match(
+                            v_item,
+                            best_record,
+                            openai_api_key=okey,
+                            chat_model=os.getenv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+                            strict=True,
+                        )
+                        verification_meta = {
+                            "accepted": accept,
+                            "reason": v_reason,
+                            "tavily_hits": v_hits,
+                            "legal_name_compatible": name_ok,
+                        }
+                        if not accept:
+                            logger.info(
+                                "phlydata/owners: item[%s] ZoomInfo verify REJECTED reason=%r tavily_hits=%s",
+                                idx,
+                                v_reason,
+                                v_hits,
+                            )
+                            best_record = None
+                            result_type = None
+                            match_method = MATCH_METHOD_VERIFY_REJECTED
+                    elif not name_ok:
+                        logger.info(
+                            "phlydata/owners: item[%s] ZoomInfo skipped (no OpenAI key) — loose legal name vs ZI, hiding match",
+                            idx,
+                        )
+                        best_record = None
+                        result_type = None
+                        match_method = MATCH_METHOD_VERIFY_REJECTED
+                        verification_meta = {
+                            "accepted": False,
+                            "reason": "no_openai_key_strict_name_failed",
+                            "tavily_hits": 0,
+                            "legal_name_compatible": False,
+                        }
+
             companies_out = [best_record] if (best_record and result_type == "company") else []
             contacts_out = [best_record] if (best_record and result_type == "contact") else []
             payload = {
@@ -2080,6 +2184,8 @@ def phlydata_owners(
                     "owner_url_llm_alignment": owner_url_llm_alignment,
                 },
             }
+            if verification_meta is not None:
+                payload["zoominfo_verification"] = verification_meta
             if zoominfo_error:
                 payload["zoominfo_error"] = zoominfo_error
             # Include when we have a match, or when we have an error that needs to be shown.

@@ -133,7 +133,12 @@ def _normalize_search_depth(raw: Optional[str]) -> str:
 
 
 def _tavily_search_rest(
-    api_key: str, query: str, max_results: int, search_depth: str = "basic"
+    api_key: str,
+    query: str,
+    max_results: int,
+    search_depth: str = "basic",
+    *,
+    request_timeout: float = 45.0,
 ) -> Dict[str, Any]:
     import requests
 
@@ -143,7 +148,8 @@ def _tavily_search_rest(
         "max_results": max(1, min(10, max_results)),
         "search_depth": _normalize_search_depth(search_depth),
     }
-    r = requests.post(TAVILY_SEARCH_URL, json=body, timeout=45)
+    to = max(5.0, min(90.0, float(request_timeout)))
+    r = requests.post(TAVILY_SEARCH_URL, json=body, timeout=to)
     r.raise_for_status()
     return r.json()
 
@@ -167,12 +173,15 @@ def fetch_tavily_hints_for_query(
     query: str,
     result_limit: Optional[int] = None,
     search_depth: Optional[str] = None,
+    *,
+    request_timeout: Optional[float] = None,
 ) -> Dict[str, Any]:
     """
     Call Tavily once. Returns a dict safe to JSON-serialize to the frontend.
 
     ``result_limit`` overrides ``TAVILY_MAX_RESULTS`` (capped 1–10) when set (e.g. Ask Consultant uses 8).
     ``search_depth`` may be ``basic`` or ``advanced`` (Tavily); if omitted, uses env ``TAVILY_SEARCH_DEPTH`` or ``basic``.
+    ``request_timeout`` is seconds for the REST fallback (``requests``); SDK path ignores it.
 
     On failure, returns ``{"query", "disclaimer", "results": [], "error": "..."}``.
     """
@@ -218,11 +227,15 @@ def fetch_tavily_hints_for_query(
         search_depth if search_depth is not None else (os.getenv("TAVILY_SEARCH_DEPTH") or "basic")
     )
 
+    rest_timeout = float(request_timeout) if request_timeout is not None else 45.0
+
     try:
         try:
             data = _tavily_search_sdk(api_key, query, max_results, depth)
         except ImportError:
-            data = _tavily_search_rest(api_key, query, max_results, depth)
+            data = _tavily_search_rest(
+                api_key, query, max_results, depth, request_timeout=rest_timeout
+            )
     except Exception as e:
         logger.warning("Tavily search failed: %s", e)
         return {
