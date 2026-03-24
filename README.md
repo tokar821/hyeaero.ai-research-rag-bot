@@ -73,7 +73,7 @@ Install includes `tavily-python`; the service falls back to a plain `requests` P
 
 ### Ask Consultant (RAG) pipeline
 
-The consultant endpoint uses **PhlyData + FAA** (when serial/tail tokens match), then **LLM query expansion**, **Tavily** (using the expanded web string), **multi-query Pinecone retrieval**, a **draft** OpenAI answer, and an optional **final review** pass for tone and consistency with authoritative internal data.
+The consultant endpoint uses **PhlyData** (Hye Aero’s **canonical internal aircraft record**: `phlydata_aircraft` + **FAA MASTER** when serial/tail tokens match), optional **listing/sales SQL** (`aircraft_listings` / `aircraft_sales` — marketplace/comps **ingest**, **not** PhlyData), then **LLM query expansion**, **Tavily**, **multi-query Pinecone retrieval**, a **draft** OpenAI answer, and an optional **final review** pass. **Policy:** prompts instruct the model to **evaluate and lead with PhlyData** (identity and every internal snapshot field in that block, including ask/status-as-exported when present). Listing-ingest rows, web, and vector context are **supplemental** and must **not override** PhlyData internal fields; if sources disagree, the answer states PhlyData first, then **Separately, …** for listing or web. The model must never label listing rows as PhlyData. Availability language stays conservative (snapshots, verify with broker).
 
 - Uses the same **`TAVILY_API_KEY`** / **`TAVILY_DISABLED`** as above when Tavily is enabled.
 - **`CONSULTANT_TAVILY_ADVANCED=1`** — use Tavily `search_depth=advanced` for consultant web calls (slower, richer snippets; optional).

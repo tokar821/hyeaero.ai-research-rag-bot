@@ -12,8 +12,139 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
+from rag.phlydata_aircraft_schema import phlydata_aircraft_select_sql
 
 logger = logging.getLogger(__name__)
+
+
+def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) -> None:
+    """Emit CSV-backed fields from phlydata_aircraft when present (internal export, not aircraft_listings)."""
+
+    def _s(v: Any) -> str:
+        if v is None:
+            return ""
+        if hasattr(v, "isoformat"):
+            try:
+                return str(v.isoformat())[:10]
+            except Exception:
+                return str(v).strip()
+        return str(v).strip()
+
+    def _ask_placeholder(t: str) -> bool:
+        u = (t or "").strip().upper()
+        return not u or u in ("M/O", "N/A", "NA", "TBD", "—", "-")
+
+    pairs: List[tuple[str, str]] = [
+        ("Aircraft status (internal export)", "aircraft_status"),
+        ("Transaction status", "transaction_status"),
+        ("Ask price (as in export)", "ask_price"),
+        ("Take price", "take_price"),
+        ("Sold price", "sold_price"),
+        ("Airframe total time (hrs)", "airframe_total_time"),
+        ("APU total time (hrs)", "apu_total_time"),
+        ("Prop total time (hrs)", "prop_total_time"),
+        ("Engine program", "engine_program"),
+        ("Engine program deferment", "engine_program_deferment"),
+        ("Engine program deferment amount", "engine_program_deferment_amount"),
+        ("APU program", "apu_program"),
+        ("APU program deferment", "apu_program_deferment"),
+        ("APU program deferment amount", "apu_program_deferment_amount"),
+        ("Airframe program", "airframe_program"),
+        ("Maintenance tracking program", "maintenance_tracking_program"),
+        ("Date listed", "date_listed"),
+        ("Export / source updated at", "source_updated_at"),
+        ("Interior year", "interior_year"),
+        ("Exterior year", "exterior_year"),
+        ("Seller broker", "seller_broker"),
+        ("Seller", "seller"),
+        ("Buyer broker", "buyer_broker"),
+        ("Buyer", "buyer"),
+        ("Registration country", "registration_country"),
+        ("Based country", "based_country"),
+        ("Number of passengers", "number_of_passengers"),
+        ("Updated by", "updated_by"),
+        ("Has damage", "has_damage"),
+        ("Feature source", "feature_source"),
+        ("Features", "features"),
+        ("Next inspections", "next_inspections"),
+    ]
+    pair_db_keys = {dbk for _, dbk in pairs}
+    skip_top = {
+        "serial_number",
+        "registration_number",
+        "manufacturer",
+        "model",
+        "manufacturer_year",
+        "delivery_year",
+        "category",
+    }
+    any_line = False
+
+    # Extra export columns first — wide CSVs often put list/for-sale/ask in csv_* headers; show before typed fields.
+    skip = skip_top | pair_db_keys | {"aircraft_id", "id", "csv_extra"}
+    csv_keys = sorted(k for k in r.keys() if isinstance(k, str) and k.startswith("csv_") and k not in skip)
+    if csv_keys:
+        lines.append("  - Additional PhlyData export columns (csv_*):")
+        for k in csv_keys:
+            v = r.get(k)
+            if v is None:
+                continue
+            t = _s(v)
+            if t:
+                lines.append(f"    - {k} (from spreadsheet header slug): {t}")
+                any_line = True
+
+    for label, key in pairs:
+        v = r.get(key)
+        if v is None:
+            continue
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            lines.append(f"  - {label}: {v}")
+            any_line = True
+            continue
+        t = _s(v)
+        if t:
+            lines.append(f"  - {label}: {t}")
+            any_line = True
+
+    # If typed ask is M/O/empty but another PhlyData column holds a dollar figure, call it out for the LLM.
+    ap = _s(r.get("ask_price"))
+    if _ask_placeholder(ap):
+        price_hint_keys = re.compile(r"(ask|price|list|sale|offer|amount)", re.I)
+        for k in sorted(r.keys()):
+            if not isinstance(k, str) or k in skip | pair_db_keys:
+                continue
+            if not price_hint_keys.search(k):
+                continue
+            tv = _s(r.get(k))
+            if tv and not _ask_placeholder(tv) and re.search(r"[\d$]", tv):
+                lines.append(
+                    f"  - Note: canonical ask_price is placeholder ({ap or 'empty'}) but column "
+                    f"{k.replace('_', ' ')} contains: {tv} — still PhlyData; report both if relevant."
+                )
+                any_line = True
+                break
+
+    for k in sorted(r.keys()):
+        if k in skip or k.startswith("csv_") or k in pair_db_keys:
+            continue
+        v = r.get(k)
+        if v is None:
+            continue
+        if isinstance(v, (int, float)) and not isinstance(v, bool):
+            lines.append(f"  - {k.replace('_', ' ')}: {v}")
+            any_line = True
+            continue
+        t = _s(v)
+        if t:
+            lines.append(f"  - {k.replace('_', ' ')}: {t}")
+            any_line = True
+    if any_line:
+        lines.append(
+            "  [LLM: Hye Aero policy — every line above is PhlyData. If csv_* columns disagree with aircraft_status "
+            "or ask_price, quote ALL of them (export may use multiple columns). Do not invent values; do not replace "
+            "these with listing-ingest or web. For live deals, note snapshot timing and verify with broker/platform.]"
+        )
 
 
 def wants_consultant_owner_operator_context(user_query: str) -> bool:
@@ -195,6 +326,63 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
     return out
 
 
+_N_TAIL_TOKEN = re.compile(r"^N[A-Z0-9]{1,6}$", re.IGNORECASE)
+
+
+def _normalize_registration_compare(value: Any) -> str:
+    """Uppercase tail for equality checks (no spaces/hyphens)."""
+    s = (value if value is not None else "") or ""
+    return re.sub(r"[\s\-]+", "", str(s).strip().upper())
+
+
+def _normalize_serial_compare(value: Any) -> str:
+    """Alphanumeric only, uppercase — matches hyphenated serials to collapsed tokens."""
+    s = (value if value is not None else "") or ""
+    return re.sub(r"[^A-Z0-9]", "", str(s).strip().upper())
+
+
+def _phly_rows_match_tokens_exact_first(rows: List[Dict[str, Any]], tokens: List[str]) -> List[Dict[str, Any]]:
+    """
+    ILIKE '%N807JS%' can match the wrong aircraft (e.g. registration containing that substring).
+    When tokens include a clear U.S. tail or serial, keep only rows that match exactly; if none,
+    fall back to the original list (avoid empty PhlyData when data is messy).
+    """
+    if not rows or not tokens:
+        return rows
+
+    tail_norms: set[str] = set()
+    serial_norms: set[str] = set()
+    for raw in tokens:
+        t = (raw or "").strip()
+        if not t:
+            continue
+        tc = _normalize_registration_compare(t.replace("N-", "N"))
+        if _N_TAIL_TOKEN.fullmatch(tc):
+            tail_norms.add(tc)
+        # Citation-style serial 560-5354
+        if re.search(r"\d", t) and len(t) >= 4:
+            serial_norms.add(_normalize_serial_compare(t))
+
+    narrowed: List[Dict[str, Any]] = []
+    if tail_norms:
+        for r in rows:
+            reg = _normalize_registration_compare(r.get("registration_number"))
+            if reg and reg in tail_norms:
+                narrowed.append(r)
+        if narrowed:
+            return narrowed
+
+    if serial_norms:
+        for r in rows:
+            sn = _normalize_serial_compare(r.get("serial_number"))
+            if sn and sn in serial_norms:
+                narrowed.append(r)
+        if narrowed:
+            return narrowed
+
+    return rows
+
+
 def ilike_patterns_for_token(token: str) -> List[str]:
     """Build a small set of ILIKE patterns for hyphen / spacing variants."""
     u = token.strip()
@@ -231,9 +419,9 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
         return []
     try:
         rows = db.execute_query(
-            """
-            SELECT aircraft_id, serial_number, registration_number, manufacturer, model,
-                   manufacturer_year, delivery_year, category
+            f"""
+            SELECT aircraft_id,
+            {phlydata_aircraft_select_sql(include_cast_id=False, db=db)}
             FROM public.phlydata_aircraft
             WHERE serial_number ILIKE ANY(%s)
                OR registration_number ILIKE ANY(%s)
@@ -246,6 +434,23 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
         return []
     if not rows:
         return []
+    rows = _phly_rows_match_tokens_exact_first(rows, tokens)
+    # Prefer exact tail/serial matches first, then stable order
+    def _rank(r: Dict[str, Any]) -> tuple:
+        reg = _normalize_registration_compare(r.get("registration_number"))
+        sn = _normalize_serial_compare(r.get("serial_number"))
+        tail_hit = 0
+        serial_hit = 0
+        for raw in tokens:
+            tc = _normalize_registration_compare((raw or "").strip().replace("N-", "N"))
+            if _N_TAIL_TOKEN.fullmatch(tc) and reg == tc:
+                tail_hit = 1
+            snt = _normalize_serial_compare(raw or "")
+            if snt and sn == snt:
+                serial_hit = 1
+        return (-tail_hit, -serial_hit)
+
+    rows = sorted(rows, key=_rank)
     by_id: Dict[Any, Dict[str, Any]] = {}
     for r in rows:
         aid = r.get("aircraft_id")
@@ -264,11 +469,18 @@ def format_phlydata_consultant_answer(
     ``fetch_faa_master`` is ``services.faa_master_lookup.fetch_faa_master_owner_rows``.
     """
     lines: List[str] = []
-    lines.append("From Hye Aero PhlyData internal aircraft database (phlydata_aircraft):")
     lines.append(
-        "**Note:** phlydata_aircraft stores identity only (serial, tail, make/model, year, category). "
-        "It does NOT store registered owner or operator names — those appear only in the FAA MASTER line below when present, "
-        "otherwise you must take them from Tavily web snippets and vector context."
+        "PhlyData — Hye Aero's canonical internal aircraft record (table phlydata_aircraft). "
+        "This is what Hye Aero treats as source of truth for the product: identity and every field loaded from the internal export — "
+        "not the separate aircraft_listings marketplace-ingest table."
+    )
+    lines.append(
+        "Evaluation order: When answering, ground and lead on PhlyData (this block) for identity and all snapshot fields below. "
+        "Controller / exchanges / aircraft_listings / Tavily / vector DB are supplemental — never override PhlyData internal fields with them; "
+        "if they disagree, state PhlyData first, then Separately, … for the other source. "
+        "Snapshots can still be stale; for live availability and contracts, say verify with broker/platform. "
+        "Registered owner names are not in PhlyData — they appear only in the FAA MASTER line below when present; "
+        "otherwise use Tavily / vector context and label sources clearly."
     )
     faa_hits = 0
     for i, r in enumerate(rows, 1):
@@ -287,6 +499,7 @@ def format_phlydata_consultant_answer(
         lines.append(f"  - Make / model: {mm}")
         lines.append(f"  - Year: {y if y is not None else '—'}")
         lines.append(f"  - Category: {cat}")
+        _append_phly_internal_snapshot_lines(lines, r)
 
         serial = str(r.get("serial_number") or "").strip()
         reg_s = str(r.get("registration_number") or "").strip() or None
@@ -326,9 +539,9 @@ def format_phlydata_consultant_answer(
                     "[FOR USER REPLY — U.S. legal registrant (FAA MASTER) — MANDATORY VERBATIM]"
                 )
                 lines.append(
-                    "  The FAA-recorded legal registrant for this aircraft is exactly the following. "
-                    "You MUST state this name and mailing address as written here. "
-                    "Do NOT replace it with a company name from web search, vector DB, or a name formed from the tail number (e.g. N123AB LLC) unless that exact phrase appears in this block."
+                    "  Source: PhlyData (Hye Aero aircraft identity) + FAA MASTER (registrant/address). "
+                    "The FAA-recorded legal registrant is exactly the following — state name and mailing verbatim. "
+                    "Do NOT replace with web search, vector DB, or a tail-derived LLC unless that exact phrase appears here."
                 )
                 lines.append(f"  Registrant name: {rn}")
                 if street_combined:

@@ -25,6 +25,7 @@ from config.config_loader import Config  # Config.from_env() without validate fo
 from database.postgres_client import PostgresClient
 from rag.embedding_service import EmbeddingService
 from rag.query_service import RAGQueryService
+from rag.phlydata_aircraft_schema import phlydata_aircraft_api_null_payload, phlydata_aircraft_select_sql
 from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
@@ -1561,14 +1562,7 @@ def phlydata_aircraft_list(page: int = 1, page_size: int = 100, q: Optional[str]
 
         rows_sql = f"""
           SELECT
-            CAST(aircraft_id AS TEXT) AS id,
-            serial_number,
-            registration_number,
-            manufacturer,
-            model,
-            manufacturer_year,
-            delivery_year,
-            category
+            {phlydata_aircraft_select_sql(db=db)}
           FROM public.phlydata_aircraft
           {where_sql}
           ORDER BY serial_number NULLS LAST, registration_number NULLS LAST
@@ -1632,11 +1626,9 @@ def phlydata_owners(
         aircraft_rows: list = []
         if mfr and mdl:
             aircraft_rows = db.execute_query(
-                """
+                f"""
                 SELECT
-                  CAST(aircraft_id AS TEXT) AS id,
-                  serial_number, registration_number, manufacturer, model,
-                  manufacturer_year, delivery_year, category
+                  {phlydata_aircraft_select_sql(db=db)}
                 FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                   AND (manufacturer IS NULL OR manufacturer ILIKE %s)
@@ -1647,11 +1639,9 @@ def phlydata_owners(
             )
         if not aircraft_rows and mdl:
             aircraft_rows = db.execute_query(
-                """
+                f"""
                 SELECT
-                  CAST(aircraft_id AS TEXT) AS id,
-                  serial_number, registration_number, manufacturer, model,
-                  manufacturer_year, delivery_year, category
+                  {phlydata_aircraft_select_sql(db=db)}
                 FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                   AND (model IS NULL OR model ILIKE %s)
@@ -1661,11 +1651,9 @@ def phlydata_owners(
             )
         if not aircraft_rows:
             aircraft_rows = db.execute_query(
-                """
+                f"""
                 SELECT
-                  CAST(aircraft_id AS TEXT) AS id,
-                  serial_number, registration_number, manufacturer, model,
-                  manufacturer_year, delivery_year, category
+                  {phlydata_aircraft_select_sql(db=db)}
                 FROM public.phlydata_aircraft
                 WHERE serial_number = %s
                 LIMIT 1

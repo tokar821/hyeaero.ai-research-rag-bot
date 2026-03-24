@@ -103,6 +103,8 @@ def wants_consultant_strict_internal_market_sql(
         "on the market",
         "listing",
         "listings",
+        "publicly listed",
+        "public listing",
         "still for sale",
         "is it available",
         "still available",
@@ -134,7 +136,7 @@ def wants_consultant_strict_internal_market_sql(
     if any(p in blob for p in phrases):
         return True
     if re.search(
-        r"\b(buy|purchase|pricing|sold|asking|listing|listings|offer|cost|pay|worth)\b",
+        r"\b(buy|purchase|pricing|sold|asking|listed|listing|listings|offer|cost|pay|worth|ask)\b",
         blob,
     ):
         return True
@@ -155,6 +157,41 @@ def consultant_wants_internal_market_sql(
     if strict:
         return wants_consultant_strict_internal_market_sql(user_query, history)
     return wants_consultant_purchase_market_context(user_query, history)
+
+
+def _listing_where_from_phly_rows(
+    phly_rows: List[Dict[str, Any]],
+) -> Tuple[List[str], List[Any]]:
+    """Extra OR-clauses so listings match hyphenated serials and aligned aircraft UUIDs.
+
+    ILIKE ``%5605354%`` does not match ``aircraft.serial_number`` = ``560-5354``; normalize in SQL.
+    When ``phlydata_aircraft.aircraft_id`` equals ``aircraft.id``, match listings directly.
+    """
+    cond_parts: List[str] = []
+    params_l: List[Any] = []
+    seen_norm: set[str] = set()
+    for r in phly_rows[:10]:
+        sn = (r.get("serial_number") or "").strip()
+        if sn:
+            collapsed = re.sub(r"[^0-9A-Za-z]", "", sn).upper()
+            if len(collapsed) >= 4 and collapsed not in seen_norm:
+                seen_norm.add(collapsed)
+                cond_parts.append(
+                    "REGEXP_REPLACE(UPPER(COALESCE(a.serial_number,'')), '[^A-Z0-9]', '', 'g') LIKE %s"
+                )
+                params_l.append(f"%{collapsed}%")
+    uuids: List[str] = []
+    for r in phly_rows[:10]:
+        aid = r.get("aircraft_id")
+        if aid is None:
+            continue
+        s = str(aid).strip()
+        if s and s not in uuids:
+            uuids.append(s)
+    if uuids:
+        cond_parts.append("a.id = ANY(%s::uuid[])")
+        params_l.append(uuids)
+    return cond_parts, params_l
 
 
 def _collect_ilike_patterns(
@@ -181,6 +218,44 @@ def _collect_ilike_patterns(
                 for p in ilike_patterns_for_token(v)[:5]:
                     add_pat(p)
     return seen
+
+
+def _availability_guidance_for_listing_status(status: Optional[str]) -> str:
+    """
+    Short instruction for the LLM so it does not over-claim "available" or "for sale"
+    from internal Postgres rows alone.
+    """
+    s = (status or "").strip().lower().replace(" ", "_").replace("-", "_")
+    if not s or s in ("—", "unknown", "null"):
+        return (
+            "LLM: treat as Hye Aero listing snapshot only (not PhlyData) — do not say the aircraft is currently for sale; "
+            "say no clear active status in listing data or confirm with a broker."
+        )
+    if s in ("for_sale", "forsale", "active", "listed", "available", "on_market", "onmarket"):
+        return (
+            "LLM: Hye Aero listing record shows for-sale-style status — synced snapshot, not live proof (not PhlyData). "
+            "Say 'Per Hye Aero listing records…' and require confirmation on the platform or with the seller; never guarantee availability."
+        )
+    if s in (
+        "sold",
+        "closed",
+        "withdrawn",
+        "off_market",
+        "inactive",
+        "expired",
+        "removed",
+        "cancelled",
+        "canceled",
+        "completed",
+    ):
+        return (
+            "LLM: NOT an active public listing — historical or off-market per this Hye Aero listing row (not PhlyData). "
+            "Say clearly it is not currently offered for sale on this listing record."
+        )
+    return (
+        f"LLM: status is '{(status or '').strip()}' — listing snapshot only (not PhlyData); "
+        "do not present as confirmed active availability; use 'Per Hye Aero listing records…' and suggest verification."
+    )
 
 
 def _fmt_money(v: Any) -> str:
@@ -229,28 +304,38 @@ def build_consultant_market_authority_block(
             if ep not in pats and ep not in extra:
                 extra.append(ep)
     pats = list(dict.fromkeys(pats + extra))[:36]
-    if not pats:
+
+    cond_parts: List[str] = []
+    params_l: List[Any] = []
+    for p in pats:
+        cond_parts.append(
+            "(a.serial_number ILIKE %s OR a.registration_number ILIKE %s OR l.listing_url ILIKE %s)"
+        )
+        params_l.extend([p, p, p])
+    extra_parts, extra_params = _listing_where_from_phly_rows(phly_rows)
+    cond_parts.extend(extra_parts)
+    params_l.extend(extra_params)
+    if not cond_parts:
         return "", meta
 
     lines: List[str] = [
-        "[INTERNAL — Hye Aero market data (Postgres: aircraft_listings + aircraft_sales)]",
-        "Use this for **asking price**, **sold price**, platform/seller, and listing URLs when answering "
-        "purchase, availability, or pricing questions. Amounts are as stored (typically USD). "
-        "Reconcile with Tavily/web snippets when both exist; cite this block as Internal listings/sales.",
-        "If the user asks whether they can buy now or what it costs: quote the **Ask:** line (and Listing URL) "
-        "before paraphrasing web-only sources.",
+        "[Hye Aero listing & sales data — supplemental marketplace ingest (Postgres: aircraft_listings + aircraft_sales) — NOT PhlyData]",
+        "**Policy:** The **PhlyData** authority block (if present) is Hye Aero's **canonical internal record** — lead evaluation there for identity and internal snapshot fields. **This block is supplemental:** synced marketplace/sales ingests (Controller, exchanges, etc.) — not live, may be stale/sold/withdrawn, and **must not override** PhlyData internal ask/status/sold lines when both exist.",
+        "CRITICAL — never imply the aircraft is 'available', 'on the market', or 'you can buy it now' unless:",
+        "  (1) listing status + tail/serial alignment support it, AND",
+        "  (2) you frame it as **'Separately, per Hye Aero listing records (marketplace ingest; not PhlyData)…'** and tell the user to verify with the platform/broker.",
+        "Distinguish in your answer:",
+        "  - **PhlyData internal snapshot** (other block) vs **listing-ingest row** (this block) — never call listing rows PhlyData.",
+        "  - **Active public listing (unverified):** only when listing row supports it — still say confirm before acting.",
+        "  - **Off-market / historical listing record:** sold, withdrawn, or unclear — say not actively listed **in this listing-ingest data**.",
+        "  - **No matching listing row:** say no row for this tail/serial in **Hye Aero listing records** (and web if relevant).",
+        "Use this block for **asking price**, **sold price**, platform, seller, URLs, **listing_status** from ingest. Amounts as stored (typically USD).",
+        "If the user asks whether they can buy now: after PhlyData internal lines (if any), use listing-row interpretation (per-row LLM notes), then web; never overstate certainty.",
     ]
 
     listings_out: List[Dict[str, Any]] = []
     try:
-        cond_parts: List[str] = []
-        params_l: List[Any] = []
-        for p in pats:
-            cond_parts.append(
-                "(a.serial_number ILIKE %s OR a.registration_number ILIKE %s OR l.listing_url ILIKE %s)"
-            )
-            params_l.extend([p, p, p])
-        where_sql = " OR ".join(cond_parts) if cond_parts else "FALSE"
+        where_sql = " OR ".join(cond_parts)
         listings_out = db.execute_query(
             f"""
             SELECT
@@ -314,9 +399,12 @@ def build_consultant_market_authority_block(
                 parts.append(f"listing URL {url}")
             if sold_s and sold_s != "—":
                 parts.append(f"recorded sold field {sold_s} (may be historical)")
+            parts.append(_availability_guidance_for_listing_status(st))
             lines.append("  - " + " | ".join(parts))
         lines.append("")
-        lines.append("Active / recent internal listings tied to this serial or tail:")
+        lines.append(
+            "Internal listing rows tied to this serial or tail (read Status + notes — not all are active for sale):"
+        )
         for i, row in enumerate(listings_out, 1):
             sn = (row.get("serial_number") or "—").strip()
             reg = (row.get("registration_number") or "—").strip()
@@ -344,6 +432,7 @@ def build_consultant_market_authority_block(
             lines.append(f"      Location: {loc}")
             if url:
                 lines.append(f"      Listing URL: {url}")
+            lines.append(f"      {_availability_guidance_for_listing_status(st)}")
     else:
         lines.append("")
         lines.append("(No matching rows in aircraft_listings for this serial/tail in our database.)")
@@ -385,7 +474,9 @@ def build_consultant_market_authority_block(
     if sales_out:
         meta["consultant_internal_sales_comps"] = len(sales_out)
         lines.append("")
-        lines.append(f"Recent internal comparable sales (same make/model family: {mfr} {mdl}):")
+        lines.append(
+            f"Recent comparable sales from Hye Aero sales data (not PhlyData; same make/model family: {mfr} {mdl}):"
+        )
         prices = []
         for i, row in enumerate(sales_out[:10], 1):
             sp = row.get("sold_price")
