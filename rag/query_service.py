@@ -63,8 +63,9 @@ Rules:
   - **Listing truth (non-negotiable):** Do **not** say the aircraft is "available," "on the market," "actively listed," or "you can buy it" unless you can justify it from context. **Hye Aero listing records** are **synced marketplace snapshots — not PhlyData** — they may disagree with PhlyData or be sold/withdrawn/stale. Always separate: (A) **what PhlyData shows** (identity + internal snapshot fields), (B) **what Hye Aero listing records show** (per-row **LLM:** notes), (C) **what the web shows**, (D) **what is unknown**. If listing status is sold/closed/withdrawn or ambiguous, say clearly. If only listing data suggests for-sale, frame as **listing-ingest snapshot — confirm on platform/broker; not live availability.**
   - Use explicit labels when helpful: **Per PhlyData (internal)** · **Listing record (marketplace ingest / snapshot)** · **Web snippet** — never call listing tables PhlyData.
   - **Do not omit price when the context contains one** for a matching aircraft. In **Market**: (1) **PhlyData figures** if present; (2) **listing-ingest** ask/sold + URL if present; (3) **web** with snippet #; (4) **availability** wording never stronger than evidence; (5) **next step** (verify with broker/platform).
+  - **Asking price / how much / cost (narrow question):** When the PhlyData authority block already prints **Ask Price** (or take/sold) for **this** aircraft, state that figure **first** — it is Hye Aero's internal export snapshot. Listing-ingest may show "ask not stored on row": that means **only** the `aircraft_listings` row has NULL `ask_price`, **not** that we have no internal ask. Never suggest the price is missing or unknown when PhlyData printed it.
   - Listing/sales block: copy **Ask:**, **Status:**, **Listing URL:** faithfully; follow **LLM:** lines — as **supplemental** to PhlyData, not a replacement for PhlyData internal fields.
-  - Tavily / web: quote $ and cite snippet # + domain; must tie to **this** tail/serial. If "can I buy now?" lacks proof, say **no confirmed live listing** and summarize PhlyData vs listing vs web.
+  - Tavily / web: quote $ and cite snippet # + domain; must tie to **this** tail/serial. Reserve **no confirmed live listing** (or similar) for **live purchase / availability / "can I buy now"** when web truly lacks proof. **Do not** use that phrase as the main takeaway for a **price-only** question if PhlyData already gave an ask — weak or empty web snippets do not invalidate PhlyData's figure.
   - Comparable sales: label as **Hye Aero sales comps (not PhlyData aircraft record) — not a live ask on this tail**.
   - If a **[WEB — Dollar amounts spotted in Tavily snippet text]** section exists, tie amounts to snippet #; still do not over-claim availability.
   - If no price in PhlyData, listing, or web: say so clearly.
@@ -109,7 +110,7 @@ PURCHASE / PRICE / AVAILABILITY: Sound like a trusted advisor — tight opening,
 
 - **Order:** (1) **Per PhlyData** — identity + internal snapshot (ask/status/etc. if in block). (2) **Separately, listing-ingest** — Hye Aero listing records if present. (3) **Web** — snippet #. (4) **Availability** — honest snapshot / verify language.
 - Classify clearly: **PhlyData internal snapshot** · **Possible active listing (verify externally)** · **Listing-ingest only** · **No row in listing data** · **Comps only** — as fits.
-- Only use "available" / "for sale" / "on the market" if evidence supports it; otherwise **no confirmed live listing** and summarize what PhlyData vs listing vs web show.
+- Only use "available" / "for sale" / "on the market" if evidence supports it. For **live purchase / can-I-buy-now** without proof, **no confirmed live listing** is fine — but if the user asked **only** for **asking price** and PhlyData printed an ask, answer with that number first; do not use **no confirmed live listing** to sound like the price is unknown.
 - **Listing URLs:** only when tied to **this** serial/tail. Frame as supplemental listing-ingest or web — not a promise the jet is unsold.
 - Price: **PhlyData figures first** if present; then listing; then web. If none: say so.
 - Comps: label as supplemental market context, not PhlyData.
@@ -468,6 +469,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 "answer": answer,
                 "sources": [],
                 "data_used": {},
+                "aircraft_images": [],
                 "error": None,
             }
         except Exception as e:
@@ -477,6 +479,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 "answer": "I couldn't find that in Hye Aero's database, and I wasn't able to generate a general-knowledge answer. Try rephrasing or ask something more specific.",
                 "sources": [],
                 "data_used": {},
+                "aircraft_images": [],
                 "error": str(e),
             }
 
@@ -581,6 +584,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         - (\"gk\", None) — use general knowledge
         - (\"llm\", dict) — keys: context, phly_authority, phly_meta, results, tavily_hits,
           tavily_payload, rag_qs, data_used, system_prompt, query, history
+
+        ``CONSULTANT_*`` environment variables are **optional**; when unset, defaults apply
+        (full retrieval, semantic image-intent LLM unless ``CONSULTANT_LOW_LATENCY=1`` without
+        ``CONSULTANT_IMAGE_INTENT_LLM_WHEN_FAST``). You do not need any consultant vars in ``.env``.
         """
         prof = self._professional_search_answer(query)
         if prof:
@@ -596,7 +603,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             enrich_tavily_query_for_consultant,
             build_owner_operator_focus_tavily_query,
         )
+        from rag.consultant_intent import resolve_aircraft_image_gallery_intent
         from rag.consultant_market_lookup import (
+            build_aircraft_photo_focus_tavily_query,
             build_consultant_market_authority_block,
             build_purchase_listing_tavily_query,
             consultant_wants_internal_market_sql,
@@ -604,6 +613,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             filter_tavily_results_for_phly_identity,
             strip_market_meta_zeros,
             tavily_price_highlights_block,
+            wants_consultant_aircraft_detail_context,
+            wants_consultant_aircraft_images_in_answer,
+            wants_consultant_explicit_photo_web,
         )
         from rag.consultant_tavily_gate import (
             empty_consultant_tavily_payload,
@@ -663,8 +675,30 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             # Fail faster on slow Tavily; REST fallback honors this; SDK may still block longer.
             tavily_timeout = min(tavily_timeout, 20.0)
 
+        intent_model = (os.getenv("CONSULTANT_INTENT_MODEL") or self.chat_model or "").strip()
+
+        def _run_image_gallery_intent() -> Tuple[bool, str]:
+            kwords = _env_truthy("CONSULTANT_IMAGE_INTENT_KEYWORDS_ONLY") or (
+                low_latency and not _env_truthy("CONSULTANT_IMAGE_INTENT_LLM_WHEN_FAST")
+            )
+            return resolve_aircraft_image_gallery_intent(
+                query,
+                history,
+                api_key=self.openai_api_key or "",
+                model=intent_model or self.chat_model,
+                keyword_fallback=lambda: wants_consultant_aircraft_images_in_answer(query, history),
+                keywords_only=kwords,
+            )
+
         if skip_expand:
-            phly_authority, phly_meta, phly_rows = self._phlydata_authority_block(query, history)
+            def _run_phly() -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
+                return self._phlydata_authority_block(query, history)
+
+            with ThreadPoolExecutor(max_workers=2) as pre_pool:
+                f_phly = pre_pool.submit(_run_phly)
+                f_int = pre_pool.submit(_run_image_gallery_intent)
+                phly_authority, phly_meta, phly_rows = f_phly.result()
+                user_wants_gallery, consultant_image_intent_src = f_int.result()
             qstrip = (query or "").strip()
             expanded = {
                 "tavily_query": qstrip[:400] if qstrip else "",
@@ -682,11 +716,13 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     history_snippet=hs_opt,
                 )
 
-            with ThreadPoolExecutor(max_workers=2) as pre_pool:
+            with ThreadPoolExecutor(max_workers=3) as pre_pool:
                 f_phly = pre_pool.submit(_run_phly)
                 f_exp = pre_pool.submit(_run_expand)
+                f_int = pre_pool.submit(_run_image_gallery_intent)
                 phly_authority, phly_meta, phly_rows = f_phly.result()
                 expanded = f_exp.result()
+                user_wants_gallery, consultant_image_intent_src = f_int.result()
 
         market_block, market_meta = build_consultant_market_authority_block(
             self.db,
@@ -726,6 +762,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         if single_tavily_pass:
             run_secondary = False
             merge_purchase = False
+        img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
+        skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
         tavily_when_needed = _env_truthy("CONSULTANT_TAVILY_WHEN_NEEDED")
         run_tavily, tavily_gate_reason = should_run_consultant_tavily(
             when_needed_enabled=tavily_when_needed,
@@ -736,23 +774,39 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             phly_meta=phly_meta,
             strict_market_sql=strict_market_sql,
         )
+        run_image_pass = (
+            bool(run_tavily and img_q and not skip_img_pass and user_wants_gallery)
+            and (
+                not single_tavily_pass
+                or wants_consultant_explicit_photo_web(query, history)
+                or wants_consultant_aircraft_detail_context(query, history)
+            )
+        )
         if not run_tavily:
             tavily_passes = 0
             run_secondary = False
             merge_purchase = False
+            run_image_pass = False
             logger.info(
                 "Consultant: Tavily skipped (CONSULTANT_TAVILY_WHEN_NEEDED=1, reason=%s)",
                 tavily_gate_reason,
             )
         else:
-            tavily_passes = 1 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
+            tavily_passes = (
+                1
+                + (1 if run_secondary else 0)
+                + (1 if merge_purchase else 0)
+                + (1 if run_image_pass else 0)
+            )
             if tavily_when_needed:
                 logger.debug("Consultant: Tavily run (when-needed mode, reason=%s)", tavily_gate_reason)
         purchase_ctx = consultant_wants_internal_market_sql(
             query, history, strict=strict_market_sql
         )
-        tavily_max_items = 18 if purchase_ctx else 14
-        tavily_body_chars = 2200 if purchase_ctx else 1400
+        tavily_max_items = 20 if (purchase_ctx or run_image_pass) else 14
+        tavily_body_chars = 2200 if purchase_ctx else 1600
+
+        want_img_primary = user_wants_gallery
 
         def _fetch_pri() -> Dict[str, Any]:
             return fetch_tavily_hints_for_query(
@@ -760,6 +814,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 result_limit=tavily_per_pass,
                 search_depth=tdepth,
                 request_timeout=tavily_timeout,
+                include_images=want_img_primary,
             )
 
         def _fetch_sec() -> Optional[Dict[str, Any]]:
@@ -770,6 +825,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 result_limit=tavily_per_pass,
                 search_depth=tdepth,
                 request_timeout=tavily_timeout,
+                include_images=want_img_primary,
             )
 
         def _fetch_pur() -> Optional[Dict[str, Any]]:
@@ -780,6 +836,18 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 result_limit=tavily_per_pass,
                 search_depth=tdepth,
                 request_timeout=tavily_timeout,
+                include_images=want_img_primary,
+            )
+
+        def _fetch_img() -> Optional[Dict[str, Any]]:
+            if not run_image_pass or not img_q:
+                return None
+            return fetch_tavily_hints_for_query(
+                img_q,
+                result_limit=tavily_per_pass,
+                search_depth=tdepth,
+                request_timeout=tavily_timeout,
+                include_images=True,
             )
 
         def _fetch_rag() -> List[Dict[str, Any]]:
@@ -794,21 +862,30 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         primary: Dict[str, Any] = {}
         secondary: Optional[Dict[str, Any]] = None
         tertiary: Optional[Dict[str, Any]] = None
+        quaternary: Optional[Dict[str, Any]] = None
         results: List[Dict[str, Any]] = []
         if run_tavily:
-            max_workers = 2 + (1 if run_secondary else 0) + (1 if merge_purchase else 0)
-            max_workers = max(2, min(4, max_workers))
+            max_workers = (
+                2
+                + (1 if run_secondary else 0)
+                + (1 if merge_purchase else 0)
+                + (1 if run_image_pass else 0)
+            )
+            max_workers = max(2, min(5, max_workers))
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 f_pri = pool.submit(_fetch_pri)
                 f_rag = pool.submit(_fetch_rag)
                 f_sec = pool.submit(_fetch_sec) if run_secondary else None
                 f_pur = pool.submit(_fetch_pur) if merge_purchase else None
+                f_img = pool.submit(_fetch_img) if run_image_pass else None
                 primary = f_pri.result()
                 results = f_rag.result()
                 if f_sec is not None:
                     secondary = f_sec.result()
                 if f_pur is not None:
                     tertiary = f_pur.result()
+                if f_img is not None:
+                    quaternary = f_img.result()
         else:
             results = self._retrieve_multi(
                 rag_qs,
@@ -828,6 +905,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             tavily_payload = merge_tavily_consultant_payloads(
                 tavily_payload, tertiary, max_results=18
             )
+        if run_image_pass and quaternary is not None:
+            tavily_payload = merge_tavily_consultant_payloads(
+                tavily_payload, quaternary, max_results=20
+            )
         tavily_payload = filter_tavily_results_for_phly_identity(tavily_payload, phly_rows)
 
         purchase_tavily_merged = bool(
@@ -842,6 +923,67 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             if ph:
                 tavily_block = f"{tavily_block}\n\n{ph}"
         tavily_hits = len(tavily_payload.get("results") or [])
+
+        from services.consultant_aircraft_images import build_consultant_aircraft_images
+
+        lr_img = market_meta.get("consultant_listing_rows_for_images") or []
+        if not isinstance(lr_img, list):
+            lr_img = []
+        listing_urls_for_img = [
+            str(r.get("listing_url")).strip()
+            for r in lr_img
+            if isinstance(r, dict) and (r.get("listing_url") or "").strip()
+        ]
+        # Photo-focused Tavily query uses quoted tail/serial; CDN URLs often omit registration in path —
+        # relax URL-level identity filter when we ran that pass or the user explicitly asked for photos.
+        trust_tail_tavily_imgs = user_wants_gallery and (
+            bool(run_image_pass) or wants_consultant_explicit_photo_web(query, history)
+        )
+        aircraft_images: List[Dict[str, Any]] = []
+        image_boost_used = 0
+        if user_wants_gallery:
+            aircraft_images = build_consultant_aircraft_images(
+                tavily_payload,
+                phly_rows,
+                listing_urls=listing_urls_for_img or None,
+                listing_rows=lr_img or None,
+                trust_tail_biased_tavily_images=trust_tail_tavily_imgs,
+            )
+        # One extra Tavily call when the merged payload still yielded no images but we have a photo-biased query.
+        if (
+            user_wants_gallery
+            and len(aircraft_images) == 0
+            and run_tavily
+            and img_q
+            and not skip_img_pass
+            and not run_image_pass
+            and want_img_primary
+        ):
+            try:
+                img_boost = fetch_tavily_hints_for_query(
+                    img_q,
+                    result_limit=tavily_per_pass,
+                    search_depth=tdepth,
+                    request_timeout=tavily_timeout,
+                    include_images=True,
+                )
+                merged_boost = merge_tavily_consultant_payloads(
+                    tavily_payload,
+                    img_boost,
+                    max_results=20,
+                )
+                merged_boost = filter_tavily_results_for_phly_identity(merged_boost, phly_rows)
+                aircraft_images = build_consultant_aircraft_images(
+                    merged_boost,
+                    phly_rows,
+                    listing_urls=listing_urls_for_img or None,
+                    listing_rows=lr_img or None,
+                    trust_tail_biased_tavily_images=True,
+                )
+                if aircraft_images:
+                    image_boost_used = 1
+            except Exception as img_boost_e:
+                logger.debug("Consultant image-boost Tavily pass skipped: %s", img_boost_e)
 
         has_phly = bool((phly_authority or "").strip())
         has_market = bool((market_block or "").strip())
@@ -907,7 +1049,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             data_used["consultant_tavily_single_pass"] = 1
         if strict_market_sql:
             data_used["consultant_market_sql_strict"] = 1
-        data_used["consultant_pipeline"] = "phly_market_sql_tavily_expand_rag_parallel_v1"
+        data_used["consultant_pipeline"] = "phly_listings_sql_tavily_expand_rag_images_v2"
         data_used["consultant_fast_mode"] = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
             "1",
             "true",
@@ -915,6 +1057,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         )
         data_used["tavily_results"] = tavily_hits
         data_used["tavily_web_query_passes"] = tavily_passes
+        if run_image_pass:
+            data_used["tavily_image_focus_pass"] = 1
+        if image_boost_used:
+            data_used["tavily_image_boost_pass"] = 1
         if tavily_when_needed:
             data_used["consultant_tavily_when_needed"] = 1
             data_used["tavily_gate_reason"] = tavily_gate_reason
@@ -927,6 +1073,16 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         for r in results:
             et = (r.get("entity_type") or "other").replace("_", " ")
             data_used[et] = data_used.get(et, 0) + 1
+
+        data_used["aircraft_images"] = aircraft_images
+        data_used["consultant_aircraft_image_count"] = len(aircraft_images)
+        # Internal join helper for image lookup — not needed by clients; keeps responses smaller.
+        data_used.pop("consultant_listing_rows_for_images", None)
+        if wants_consultant_explicit_photo_web(query, history):
+            data_used["consultant_user_asked_photos"] = 1
+        if user_wants_gallery:
+            data_used["consultant_show_image_ui_context"] = 1
+        data_used["consultant_image_intent_source"] = consultant_image_intent_src
 
         system_prompt = CONSULTANT_SYSTEM_PROMPT
         if phly_authority:
@@ -951,6 +1107,17 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 "\n\nPurchase/price/availability: user expects **ask**, **source**, honest **availability**. "
                 "**Lead with PhlyData** internal lines and [FOR USER REPLY] guidance in the PhlyData block when present; then use [FOR USER REPLY] lines in the **listing** block as marketplace-ingest supplement — not as a replacement for PhlyData internal fields."
             )
+        if aircraft_images:
+            system_prompt += (
+                "\n\n**Aircraft images:** This response includes a curated gallery (real HTTPS URLs from web search, "
+                "saved marketplace galleries, and listing previews). You may briefly note that images are shown in "
+                "the app and that the user should verify they match this tail/serial on the host site."
+            )
+        else:
+            system_prompt += (
+                "\n\nThe product may show a **separate image gallery** when URLs are available (web search + listing "
+                "sources only). Do **not** invent image URLs; describe the aircraft in words when helpful."
+            )
 
         return "llm", {
             "context": context,
@@ -965,6 +1132,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             "query": query,
             "history": history,
             "purchase_context": purchase_ctx,
+            "aircraft_images": aircraft_images,
         }
 
     @staticmethod
@@ -1030,6 +1198,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     "type": "done",
                     "sources": payload.get("sources", []) if isinstance(payload, dict) else [],
                     "data_used": payload.get("data_used") if isinstance(payload, dict) else None,
+                    "aircraft_images": (payload.get("aircraft_images") if isinstance(payload, dict) else None)
+                    or [],
                     "error": payload.get("error") if isinstance(payload, dict) else None,
                 }
                 return
@@ -1053,13 +1223,20 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 try:
                     for d in self._stream_chat_deltas(messages, max_tokens=1536):
                         yield {"type": "delta", "text": d}
-                    yield {"type": "done", "sources": [], "data_used": {}, "error": None}
+                    yield {
+                        "type": "done",
+                        "sources": [],
+                        "data_used": {},
+                        "aircraft_images": [],
+                        "error": None,
+                    }
                 except Exception as gk_e:
                     logger.error("RAG stream (general knowledge) failed: %s", gk_e, exc_info=True)
                     yield {
                         "type": "done",
                         "sources": [],
                         "data_used": {},
+                        "aircraft_images": [],
                         "error": str(gk_e),
                     }
                 return
@@ -1153,12 +1330,27 @@ Produce the final client-facing answer.""",
                 len(results),
                 elapsed,
             )
-            yield {"type": "done", "sources": sources, "data_used": data_used, "error": None}
+            imgs = b.get("aircraft_images")
+            if not isinstance(imgs, list):
+                imgs = data_used.get("aircraft_images") if isinstance(data_used.get("aircraft_images"), list) else []
+            yield {
+                "type": "done",
+                "sources": sources,
+                "data_used": data_used,
+                "aircraft_images": imgs,
+                "error": None,
+            }
         except Exception as e:
             elapsed = time.perf_counter() - start
             logger.error("RAG answer_stream_events failed after %.2fs: %s", elapsed, e, exc_info=True)
             yield {"type": "error", "message": str(e)}
-            yield {"type": "done", "sources": [], "data_used": {}, "error": str(e)}
+            yield {
+                "type": "done",
+                "sources": [],
+                "data_used": {},
+                "aircraft_images": [],
+                "error": str(e),
+            }
 
     def answer(
         self,
@@ -1280,6 +1472,7 @@ Produce the final client-facing answer.""",
                 "answer": answer,
                 "sources": sources,
                 "data_used": data_used,
+                "aircraft_images": b.get("aircraft_images") or data_used.get("aircraft_images") or [],
                 "error": None,
             }
         except Exception as e:
@@ -1289,6 +1482,7 @@ Produce the final client-facing answer.""",
                 "answer": "",
                 "sources": [],
                 "data_used": {},
+                "aircraft_images": [],
                 "error": str(e),
             }
 

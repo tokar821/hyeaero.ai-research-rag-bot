@@ -1067,6 +1067,7 @@ class ChatResponse(BaseModel):
     answer: str
     sources: List[Any] = []
     data_used: Optional[dict] = None  # e.g. {"aircraft listing": 3, "aircraft sale": 2}
+    aircraft_images: Optional[List[Any]] = None  # Tavily + scrape_gallery (+ optional listing og) URLs
     error: Optional[str] = None
 
 class MarketComparisonRequest(BaseModel):
@@ -1294,6 +1295,7 @@ def rag_answer(req: ChatRequest):
             answer=out["answer"],
             sources=out.get("sources", []),
             data_used=out.get("data_used"),
+            aircraft_images=out.get("aircraft_images") or [],
             error=out.get("error"),
         )
     except HTTPException:
@@ -1303,7 +1305,8 @@ def rag_answer(req: ChatRequest):
 
 
 def _rag_sse_event(obj: dict) -> str:
-    return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
+    """SSE payload; ``default=str`` avoids rare serialization failures (e.g. odd types in ``data_used``)."""
+    return f"data: {json.dumps(obj, ensure_ascii=False, default=str)}\n\n"
 
 
 @app.post("/api/rag/answer/stream")
@@ -1331,7 +1334,9 @@ def rag_answer_stream(req: ChatRequest):
                 yield _rag_sse_event(ev)
         except Exception as e:
             yield _rag_sse_event({"type": "error", "message": str(e)})
-            yield _rag_sse_event({"type": "done", "sources": [], "data_used": {}, "error": str(e)})
+            yield _rag_sse_event(
+                {"type": "done", "sources": [], "data_used": {}, "aircraft_images": [], "error": str(e)}
+            )
 
     return StreamingResponse(
         event_iter(),

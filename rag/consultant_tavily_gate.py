@@ -13,7 +13,10 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from rag.consultant_market_lookup import consultant_wants_internal_market_sql
+from rag.consultant_market_lookup import (
+    consultant_wants_internal_market_sql,
+    wants_consultant_aircraft_detail_context,
+)
 from rag.phlydata_consultant_lookup import wants_consultant_owner_operator_context
 
 logger = logging.getLogger(__name__)
@@ -115,6 +118,9 @@ def should_run_consultant_tavily(
 
     if consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
         return True, "purchase_price_listing"
+
+    if wants_consultant_aircraft_detail_context(query, history):
+        return True, "aircraft_detail_context"
 
     if not (phly_authority or "").strip():
         return True, "no_phly_authority"

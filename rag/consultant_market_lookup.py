@@ -12,7 +12,10 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
-from rag.phlydata_consultant_lookup import extract_phlydata_tokens_with_history, ilike_patterns_for_token
+from rag.phlydata_consultant_lookup import (
+    extract_phlydata_tokens_with_history,
+    ilike_patterns_for_token,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -159,6 +162,192 @@ def consultant_wants_internal_market_sql(
     return wants_consultant_purchase_market_context(user_query, history)
 
 
+def _consultant_detail_view_phrases(blob_lc: str) -> bool:
+    """Detail/show-me/overview/photo wording (excludes tail-only token detection)."""
+    if not blob_lc.strip():
+        return False
+    phrases = (
+        "detail",
+        "details",
+        "information",
+        "tell me",
+        "show me",
+        "overview",
+        "summary",
+        "who owns",
+        "ownership",
+        "operator",
+        "specs",
+        "specifications",
+        "describe",
+        "background",
+        "profile",
+        "picture",
+        "pictures",
+        "photos",
+        "images",
+        "photo",
+    )
+    if any(k in blob_lc for k in phrases):
+        return True
+    if re.search(r"\b(info|about)\b", blob_lc):
+        return True
+    return False
+
+
+def wants_consultant_explicit_photo_web(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> bool:
+    """User asked for photos / images / gallery (web), not only narrative detail."""
+    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
+    if not blob.strip():
+        return False
+    keys = (
+        "image",
+        "images",
+        "photo",
+        "photos",
+        "photograph",
+        "picture",
+        "pictures",
+        "gallery",
+    )
+    return any(k in blob for k in keys)
+
+
+def wants_consultant_aircraft_images_in_answer(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> bool:
+    """True when the UI should show the aircraft image gallery — tall/research-only turns stay text-only.
+
+    Triggers on explicit photo/image requests or detail/deep-dive phrasing (not bare tail, not price-only).
+    """
+    if wants_consultant_explicit_photo_web(user_query, history):
+        return True
+    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
+    if not blob.strip():
+        return False
+    if re.search(
+        r"\b(details?|in[-\s]depth|overview|describe|description|specifications?|specs|"
+        r"full briefing|background on|profile of|walk-?through)\b",
+        blob,
+    ):
+        return True
+    if re.search(r"\b(tell me (more )?about|more about|information about)\b", blob):
+        return True
+    if re.search(r"\b(please show|show me (some )?details?|show me detail)\b", blob):
+        return True
+    if re.search(
+        r"\b(any|some|do you have|have you|got)\s+(photos?|images?|pictures?)\b",
+        blob,
+    ):
+        return True
+    if re.search(r"\b(see (the )?(photos?|images?)|look at (the )?(photos?|images?))\b", blob):
+        return True
+    return False
+
+
+def wants_consultant_aircraft_detail_phrases(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> bool:
+    """True when the user explicitly asked for narrative/detail/visual wording (not tail-only)."""
+    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
+    if _consultant_detail_view_phrases(blob):
+        return True
+    return wants_consultant_explicit_photo_web(user_query, history)
+
+
+def wants_consultant_aircraft_detail_context(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> bool:
+    """True for general aircraft questions (detail, overview, photos) or tail/serial in query/history."""
+    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
+    if not blob.strip():
+        return False
+    if _consultant_detail_view_phrases(blob):
+        return True
+    return bool(extract_phlydata_tokens_with_history(user_query, history))
+
+
+def consultant_wants_internal_listings_sql(
+    user_query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    phly_rows: Optional[List[Dict[str, Any]]] = None,
+    *,
+    strict: bool = False,
+) -> bool:
+    """Run Postgres listing/comps SQL for purchase-style questions, resolved Phly identity, or detail/tail queries."""
+    if consultant_wants_internal_market_sql(user_query, history, strict=strict):
+        return True
+    if phly_rows:
+        return True
+    return wants_consultant_aircraft_detail_context(user_query, history)
+
+
+def build_aircraft_photo_focus_tavily_query(
+    query: str,
+    phly_rows: List[Dict[str, Any]],
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Optional[str]:
+    """
+    Second-pass Tavily string biased toward **image** search hits (use with ``include_images``).
+
+    CDN image URLs rarely contain the tail; pairing this query with a relaxed identity filter
+    improves recall vs. generic web search.
+    """
+    reg = ""
+    serial = ""
+    for r in phly_rows[:4]:
+        rv = (r.get("registration_number") or "").strip()
+        if rv:
+            reg = re.sub(r"[\s\-]+", "", rv.upper())
+            break
+    for r in phly_rows[:4]:
+        sv = (r.get("serial_number") or "").strip()
+        if sv:
+            serial = sv
+            break
+    if not reg:
+        for t in extract_phlydata_tokens_with_history(query, history):
+            u = (t or "").strip().upper().replace(" ", "").replace("-", "")
+            if re.match(r"^N[A-Z0-9]{1,6}$", u):
+                reg = u
+                break
+    if not serial:
+        for t in extract_phlydata_tokens_with_history(query, history):
+            tv = (t or "").strip()
+            if tv and re.search(r"\d", tv) and len(tv) >= 4 and not re.match(
+                r"^N[A-Z0-9]{1,6}$", tv.upper().replace(" ", "").replace("-", "")
+            ):
+                serial = tv
+                break
+    parts: List[str] = []
+    if reg:
+        parts.append(f'"{reg}"')
+    elif serial:
+        parts.append(f'"{serial}"')
+    else:
+        return None
+    # Phrasing close to what users type in Google (e.g. "n807js images") — helps Tavily return image assets.
+    parts.extend(
+        [
+            "aircraft",
+            "images",
+            "photos",
+            "JetPhotos",
+            "exterior",
+            "cabin",
+            "interior",
+        ]
+    )
+    q = " ".join(parts)
+    return q[:420] if q else None
+
+
 def _listing_where_from_phly_rows(
     phly_rows: List[Dict[str, Any]],
 ) -> Tuple[List[str], List[Any]]:
@@ -270,6 +459,21 @@ def _fmt_money(v: Any) -> str:
         return str(v)
 
 
+def _phly_snapshot_includes_ask(phly_rows: List[Dict[str, Any]]) -> bool:
+    """True when PhlyData row(s) carry a positive numeric ask/take usable as internal snapshot."""
+    for r in phly_rows or []:
+        for key in ("ask_price", "take_price"):
+            v = r.get(key)
+            if v is None:
+                continue
+            try:
+                if float(v) > 0:
+                    return True
+            except (TypeError, ValueError):
+                continue
+    return False
+
+
 def build_consultant_market_authority_block(
     db: PostgresClient,
     query: str,
@@ -282,11 +486,14 @@ def build_consultant_market_authority_block(
     Returns ``(text_block, meta)`` for prepending to consultant context.
     ``meta`` counts rows used (for ``data_used``).
 
-    Skips all market SQL unless the user message(s) look market-related; set
-    ``strict_market_sql=True`` (``CONSULTANT_MARKET_SQL_STRICT=1``) for a narrower trigger list.
+    Skips listing SQL unless the user message(s) look market-related **or** PhlyData resolved an
+    aircraft **or** the query looks like a detail/overview/tail question; set
+    ``strict_market_sql=True`` (``CONSULTANT_MARKET_SQL_STRICT=1``) for a narrower purchase-only trigger.
     """
     meta: Dict[str, Any] = {"consultant_internal_listings": 0, "consultant_internal_sales_comps": 0}
-    if not consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
+    if not consultant_wants_internal_listings_sql(
+        query, history, phly_rows, strict=strict_market_sql
+    ):
         return "", meta
 
     pats = _collect_ilike_patterns(query, history, phly_rows)
@@ -341,6 +548,7 @@ def build_consultant_market_authority_block(
             SELECT
                 l.id,
                 l.source_platform,
+                l.source_listing_id,
                 l.listing_status,
                 l.ask_price,
                 l.sold_price,
@@ -368,10 +576,27 @@ def build_consultant_market_authority_block(
 
     if listings_out:
         meta["consultant_internal_listings"] = len(listings_out)
+        meta["consultant_listing_rows_for_images"] = [
+            {
+                "source_platform": r.get("source_platform"),
+                "source_listing_id": r.get("source_listing_id"),
+                "listing_url": r.get("listing_url"),
+            }
+            for r in listings_out
+        ]
         lines.append("")
         lines.append(
             "[FOR USER REPLY — Market / pricing (place near the top of your answer; keep exact dollar amounts and URLs):]"
         )
+        phly_ask = _phly_snapshot_includes_ask(phly_rows)
+        if phly_ask:
+            lines.append(
+                "[CRITICAL — If the PhlyData block already shows Ask Price / take for this tail, that is Hye Aero's "
+                "internal snapshot. A listing row below may say marketplace-ingest ask_price is missing on the row "
+                "only — that does NOT mean the user has no answering price: do not imply the ask is unknown, and do "
+                "not use a 'no confirmed live listing' closing on a simple how-much/asking-price question unless the "
+                "user asked about live purchase availability.]"
+            )
         for i, row in enumerate(listings_out, 1):
             ask_raw = row.get("ask_price")
             ask_s = _fmt_money(ask_raw)
@@ -388,6 +613,11 @@ def build_consultant_market_authority_block(
             ]
             if ask_s and ask_s != "—":
                 parts.append(f"asking price {ask_s} USD (from our database)")
+            elif phly_ask:
+                parts.append(
+                    "marketplace-ingest ask_price NULL on this row — use PhlyData block above for Hye Aero internal ask; "
+                    "listing URL confirms/timestamps on platform"
+                )
             else:
                 parts.append(
                     "asking price not stored in our database — tell the user to open the listing URL for current ask"
@@ -708,7 +938,7 @@ def enrich_rag_queries_for_purchase(
     strict_market_sql: bool = False,
 ) -> List[str]:
     """Add embedding-search phrases biased toward listings and prices for this aircraft."""
-    if not consultant_wants_internal_market_sql(query, history, strict=strict_market_sql):
+    if not consultant_wants_internal_listings_sql(query, history, phly_rows, strict=strict_market_sql):
         return base_queries
     out: List[str] = []
     for q in base_queries or []:

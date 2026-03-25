@@ -53,7 +53,7 @@ def expand_consultant_research_queries(
         instruction = """You help an aviation research assistant run (1) a public web search (Tavily) and (2) semantic search over a private database of aircraft listings, sales, and registry-related records.
 
 Given the user's question, respond with ONLY a JSON object (no markdown fences) with exactly these keys:
-- "tavily_query": one concise English string optimized for web search. Always include any serial, tail/registration, and make/model if inferable (including from recent conversation if provided). For ownership / "who owns" / operator questions, add terms like: owner, operator, registered owner, registrant, AOC, air operator certificate, charter, aircraft management, fleet — so results hit operator fleet pages and registry excerpts, not only Wikipedia. Put the tail/registration in quotes when it is alphanumeric (e.g. "OY-JSW"). For European tails (OY-, SE-, LN-, G-), add the country civil aviation authority / register name when known from context. For purchase / "can I buy" / price / for-sale / listing questions, add: asking price, for sale, aircraft listing, USD (and broker or marketplace names if natural) so snippets include **live listing pages with prices** (AvPay, Controller, JetNet, etc.), not only registry data.
+- "tavily_query": one concise English string optimized for web search. Always include any serial, tail/registration, and make/model if inferable (including from recent conversation if provided). For ownership / "who owns" / operator questions, add terms like: owner, operator, registered owner, registrant, AOC, air operator certificate, charter, aircraft management, fleet — so results hit operator fleet pages and registry excerpts, not only Wikipedia. Put the tail/registration in quotes when it is alphanumeric (e.g. "OY-JSW"). For European tails (OY-, SE-, LN-, G-), add the country civil aviation authority / register name when known from context. For purchase / "can I buy" / price / for-sale / listing questions, add: asking price, for sale, aircraft listing, USD (and broker or marketplace names if natural) so snippets include **live listing pages with prices** (AvPay, Controller, JetNet, etc.), not only registry data. If the user asks for **photos, images, pictures, or gallery** of the aircraft, add terms like: aircraft photos, exterior, cabin interior, and keep the quoted tail/serial so image-capable search returns relevant hits.
 - "rag_queries": an array of 2 to 4 short alternative search phrases for embedding search (synonyms, model variants, registration format, "Citation", "Gulfstream", etc. as relevant). If the user asks about buying, price, or availability, include at least one phrase with **asking price** or **for sale** plus serial or tail when known from the message or conversation.
 
 Keep strings under 200 characters each where possible."""
@@ -138,6 +138,20 @@ def format_tavily_payload_for_consultant(
             lines.append(f"   {body}")
         if url:
             lines.append(f"   URL: {url}")
+    imgs = payload.get("images") if isinstance(payload, dict) else None
+    if isinstance(imgs, list) and imgs:
+        lines.append("")
+        lines.append(
+            "[WEB — Image URLs from Tavily search (third-party; verify tail/serial matches before showing as this aircraft)]"
+        )
+        for j, im in enumerate(imgs[:14], 1):
+            if not isinstance(im, dict):
+                continue
+            iu = (im.get("url") or "").strip()
+            if not iu:
+                continue
+            lab = (im.get("description") or "").strip()
+            lines.append(f"  Image {j}: {iu}" + (f" — {lab}" if lab else ""))
     return "\n".join(lines) if len(lines) > 1 else "\n".join(lines) + "\n(no web results returned.)"
 
 
@@ -184,9 +198,41 @@ def merge_tavily_consultant_payloads(
     if not merged:
         err_out = primary.get("error") or secondary.get("error")
 
+    img_merged: List[Dict[str, Any]] = []
+
+    def _add_imgs(src: Dict[str, Any]) -> None:
+        raw = src.get("images") if isinstance(src, dict) else None
+        if not isinstance(raw, list):
+            return
+        seen_url: set[str] = {str(x.get("url") or "").strip() for x in img_merged if isinstance(x, dict)}
+        for it in raw:
+            if isinstance(it, dict):
+                u = str(it.get("url") or "").strip()
+                if not u.startswith("http") or u in seen_url:
+                    continue
+                seen_url.add(u)
+                img_merged.append(
+                    {
+                        "url": u,
+                        "description": (str(it.get("description")).strip() if it.get("description") else None),
+                    }
+                )
+            elif isinstance(it, str) and it.strip().startswith("http"):
+                u = it.strip()
+                if u in seen_url:
+                    continue
+                seen_url.add(u)
+                img_merged.append({"url": u, "description": None})
+            if len(img_merged) >= 28:
+                return
+
+    _add_imgs(primary)
+    _add_imgs(secondary)
+
     return {
         "query": qm[:800] if qm else None,
         "disclaimer": (primary.get("disclaimer") or secondary.get("disclaimer") or "").strip() or None,
         "results": merged,
+        "images": img_merged,
         "error": err_out,
     }

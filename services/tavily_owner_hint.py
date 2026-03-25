@@ -139,15 +139,18 @@ def _tavily_search_rest(
     search_depth: str = "basic",
     *,
     request_timeout: float = 45.0,
+    include_images: bool = False,
 ) -> Dict[str, Any]:
     import requests
 
-    body = {
+    body: Dict[str, Any] = {
         "api_key": api_key,
         "query": query,
         "max_results": max(1, min(10, max_results)),
         "search_depth": _normalize_search_depth(search_depth),
     }
+    if include_images:
+        body["include_images"] = True
     to = max(5.0, min(90.0, float(request_timeout)))
     r = requests.post(TAVILY_SEARCH_URL, json=body, timeout=to)
     r.raise_for_status()
@@ -155,7 +158,12 @@ def _tavily_search_rest(
 
 
 def _tavily_search_sdk(
-    api_key: str, query: str, max_results: int, search_depth: str = "basic"
+    api_key: str,
+    query: str,
+    max_results: int,
+    search_depth: str = "basic",
+    *,
+    include_images: bool = False,
 ) -> Dict[str, Any]:
     from tavily import TavilyClient  # type: ignore
 
@@ -163,10 +171,40 @@ def _tavily_search_sdk(
     n = max(1, min(10, max_results))
     sd = _normalize_search_depth(search_depth)
     try:
+        return client.search(
+            query, max_results=n, search_depth=sd, include_images=include_images
+        )
+    except TypeError:
+        try:
+            return client.search(query, max_results=n, include_images=include_images)
+        except TypeError:
+            pass
+    try:
         return client.search(query, max_results=n, search_depth=sd)
     except TypeError:
-        # Older tavily-python may not accept search_depth
         return client.search(query, max_results=n)
+
+
+def _normalize_tavily_images(raw: Any, *, cap: int = 24) -> List[Dict[str, Optional[str]]]:
+    """Map Tavily ``images`` field to ``{url, description}`` dicts."""
+    if not isinstance(raw, list):
+        return []
+    out: List[Dict[str, Optional[str]]] = []
+    seen: set[str] = set()
+    for item in raw[:cap]:
+        u = ""
+        desc: Optional[str] = None
+        if isinstance(item, str):
+            u = _strip(item)
+        elif isinstance(item, dict):
+            u = _strip(item.get("url"))
+            d = item.get("description") or item.get("alt") or item.get("title")
+            desc = _strip(d) if d else None
+        if not u or not u.startswith("http") or u in seen:
+            continue
+        seen.add(u)
+        out.append({"url": u, "description": desc})
+    return out
 
 
 def fetch_tavily_hints_for_query(
@@ -175,6 +213,7 @@ def fetch_tavily_hints_for_query(
     search_depth: Optional[str] = None,
     *,
     request_timeout: Optional[float] = None,
+    include_images: bool = False,
 ) -> Dict[str, Any]:
     """
     Call Tavily once. Returns a dict safe to JSON-serialize to the frontend.
@@ -190,6 +229,7 @@ def fetch_tavily_hints_for_query(
             "query": None,
             "disclaimer": DISCLAIMER,
             "results": [],
+            "images": [],
             "error": "empty_query",
         }
 
@@ -198,6 +238,7 @@ def fetch_tavily_hints_for_query(
             "query": query,
             "disclaimer": DISCLAIMER,
             "results": [],
+            "images": [],
             "error": "tavily_disabled",
         }
 
@@ -207,6 +248,7 @@ def fetch_tavily_hints_for_query(
             "query": query,
             "disclaimer": DISCLAIMER,
             "results": [],
+            "images": [],
             "error": "tavily_api_key_missing",
         }
 
@@ -231,10 +273,17 @@ def fetch_tavily_hints_for_query(
 
     try:
         try:
-            data = _tavily_search_sdk(api_key, query, max_results, depth)
+            data = _tavily_search_sdk(
+                api_key, query, max_results, depth, include_images=include_images
+            )
         except ImportError:
             data = _tavily_search_rest(
-                api_key, query, max_results, depth, request_timeout=rest_timeout
+                api_key,
+                query,
+                max_results,
+                depth,
+                request_timeout=rest_timeout,
+                include_images=include_images,
             )
     except Exception as e:
         logger.warning("Tavily search failed: %s", e)
@@ -242,6 +291,7 @@ def fetch_tavily_hints_for_query(
             "query": query,
             "disclaimer": DISCLAIMER,
             "results": [],
+            "images": [],
             "error": str(e)[:500],
         }
 
@@ -261,10 +311,14 @@ def fetch_tavily_hints_for_query(
             }
         )
 
+    img_raw = data.get("images") if isinstance(data, dict) else None
+    images_norm = _normalize_tavily_images(img_raw)
+
     return {
         "query": query,
         "disclaimer": DISCLAIMER,
         "results": slim,
+        "images": images_norm,
         "error": None,
     }
 
