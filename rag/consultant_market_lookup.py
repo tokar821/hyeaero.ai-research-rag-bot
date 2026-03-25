@@ -13,7 +13,10 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
 from rag.phlydata_consultant_lookup import (
-    extract_phlydata_tokens_with_history,
+    _N_TAIL_TOKEN,
+    _phly_identity_key,
+    _token_is_tail_registration,
+    consultant_phly_lookup_token_list,
     ilike_patterns_for_token,
 )
 
@@ -237,7 +240,11 @@ def wants_consultant_aircraft_images_in_answer(
         return True
     if re.search(r"\b(tell me (more )?about|more about|information about)\b", blob):
         return True
-    if re.search(r"\b(please show|show me (some )?details?|show me detail)\b", blob):
+    if re.search(r"\b(please show|show me (some )?details?|show me detail|show (me )?(the )?aircraft)\b", blob):
+        return True
+    if re.search(r"\blet me know (more )?about\b", (user_query or "").lower()) and consultant_phly_lookup_token_list(
+        user_query, history
+    ):
         return True
     if re.search(
         r"\b(any|some|do you have|have you|got)\s+(photos?|images?|pictures?)\b",
@@ -270,7 +277,7 @@ def wants_consultant_aircraft_detail_context(
         return False
     if _consultant_detail_view_phrases(blob):
         return True
-    return bool(extract_phlydata_tokens_with_history(user_query, history))
+    return bool(consultant_phly_lookup_token_list(user_query, history))
 
 
 def consultant_wants_internal_listings_sql(
@@ -312,13 +319,13 @@ def build_aircraft_photo_focus_tavily_query(
             serial = sv
             break
     if not reg:
-        for t in extract_phlydata_tokens_with_history(query, history):
+        for t in consultant_phly_lookup_token_list(query, history):
             u = (t or "").strip().upper().replace(" ", "").replace("-", "")
             if re.match(r"^N[A-Z0-9]{1,6}$", u):
                 reg = u
                 break
     if not serial:
-        for t in extract_phlydata_tokens_with_history(query, history):
+        for t in consultant_phly_lookup_token_list(query, history):
             tv = (t or "").strip()
             if tv and re.search(r"\d", tv) and len(tv) >= 4 and not re.match(
                 r"^N[A-Z0-9]{1,6}$", tv.upper().replace(" ", "").replace("-", "")
@@ -332,13 +339,16 @@ def build_aircraft_photo_focus_tavily_query(
         parts.append(f'"{serial}"')
     else:
         return None
-    # Phrasing close to what users type in Google (e.g. "n807js images") — helps Tavily return image assets.
+    # Phrasing close to what users type in Google — bias toward planespotting / listings, not fashion/lifestyle.
     parts.extend(
         [
             "aircraft",
-            "images",
+            "aviation",
+            "plane",
             "photos",
             "JetPhotos",
+            "planespotter",
+            "airliner",
             "exterior",
             "cabin",
             "interior",
@@ -351,24 +361,18 @@ def build_aircraft_photo_focus_tavily_query(
 def _listing_where_from_phly_rows(
     phly_rows: List[Dict[str, Any]],
 ) -> Tuple[List[str], List[Any]]:
-    """Extra OR-clauses so listings match hyphenated serials and aligned aircraft UUIDs.
-
-    ILIKE ``%5605354%`` does not match ``aircraft.serial_number`` = ``560-5354``; normalize in SQL.
-    When ``phlydata_aircraft.aircraft_id`` equals ``aircraft.id``, match listings directly.
-    """
+    """Extra OR-clauses: **strict** TRIM+UPPER serial match (hyphens literal, same as Phly) and aircraft UUIDs."""
     cond_parts: List[str] = []
     params_l: List[Any] = []
     seen_norm: set[str] = set()
     for r in phly_rows[:10]:
         sn = (r.get("serial_number") or "").strip()
         if sn:
-            collapsed = re.sub(r"[^0-9A-Za-z]", "", sn).upper()
-            if len(collapsed) >= 4 and collapsed not in seen_norm:
-                seen_norm.add(collapsed)
-                cond_parts.append(
-                    "REGEXP_REPLACE(UPPER(COALESCE(a.serial_number,'')), '[^A-Z0-9]', '', 'g') LIKE %s"
-                )
-                params_l.append(f"%{collapsed}%")
+            k = _phly_identity_key(sn)
+            if len(k) >= 2 and k not in seen_norm:
+                seen_norm.add(k)
+                cond_parts.append("TRIM(UPPER(COALESCE(a.serial_number,''))) = %s")
+                params_l.append(k)
     uuids: List[str] = []
     for r in phly_rows[:10]:
         aid = r.get("aircraft_id")
@@ -397,7 +401,7 @@ def _collect_ilike_patterns(
             uq.add(p)
             seen.append(p)
 
-    for t in extract_phlydata_tokens_with_history(query, history):
+    for t in consultant_phly_lookup_token_list(query, history):
         for p in ilike_patterns_for_token(t)[:6]:
             add_pat(p)
     for r in phly_rows[:4]:
@@ -459,6 +463,138 @@ def _fmt_money(v: Any) -> str:
         return str(v)
 
 
+def _listing_ilike_pattern_too_loose_for_serial_column(pat: str) -> bool:
+    """Short ILIKE tokens must not hit ``aircraft.serial_number`` (e.g. %678% matching unrelated MSNs)."""
+    inner = (pat or "").strip().strip("%").strip()
+    if not inner:
+        return True
+    collapsed = re.sub(r"[^A-Z0-9]", "", inner, flags=re.I)
+    if _N_TAIL_TOKEN.fullmatch(collapsed):
+        return False
+    if _token_is_tail_registration(inner):
+        return True
+    if len(collapsed) < 5:
+        return True
+    if collapsed.isdigit() and len(collapsed) < 6:
+        return True
+    return False
+
+
+def _models_compatible_tokens(pmm: str, rmm: str) -> bool:
+    """Model alignment; short numeric codes must not match as substrings inside longer numbers."""
+    if pmm in rmm or rmm in pmm:
+        return True
+    pn = re.sub(r"[^a-z0-9]", "", pmm)
+    rn = re.sub(r"[^a-z0-9]", "", rmm)
+    if not pn or not rn:
+        return False
+    if pn == rn:
+        return True
+    if pn.isdigit() and len(pn) <= 4:
+        return bool(re.search(rf"(^|\D){re.escape(pn)}(\D|$)", rn))
+    if rn.isdigit() and len(rn) <= 4:
+        return bool(re.search(rf"(^|\D){re.escape(rn)}(\D|$)", pn))
+    return len(pn) >= 2 and len(rn) >= 2 and (pn in rn or rn in pn)
+
+
+def _manufacturer_model_compatible(
+    phly_mfr: str,
+    phly_mdl: str,
+    row_mfr: str,
+    row_mdl: str,
+) -> bool:
+    """Reject marketplace rows joined to the wrong aircraft (same tail duplicated, substring SQL matches, etc.)."""
+    pm = (phly_mfr or "").strip().lower()
+    pmm = (phly_mdl or "").strip().lower()
+    rm = (row_mfr or "").strip().lower()
+    rmm = (row_mdl or "").strip().lower()
+
+    phly_has = bool(pm or pmm)
+    row_has = bool(rm or rmm)
+
+    if not phly_has and not row_has:
+        return True
+    # Phly carries make/model from export — a listing row with neither cannot be verified as the same type.
+    if phly_has and not row_has:
+        return False
+    if not phly_has and row_has:
+        return True
+
+    mfr_ok = True
+    if pm and rm:
+        mfr_ok = (
+            pm in rm
+            or rm in pm
+            or pm.split()[:1] == rm.split()[:1]
+            or (len(pm) >= 4 and pm[:4] in rm)
+            or (len(rm) >= 4 and rm[:4] in pm)
+        )
+
+    if pmm and rmm:
+        mdl_ok = _models_compatible_tokens(pmm, rmm)
+    elif pmm and not rmm:
+        mdl_ok = bool(rm and (pm in rm or rm in pm or pmm in rm))
+    elif not pmm and rmm:
+        mdl_ok = bool(pm and (pm in rm or rm in pm or rmm in pm))
+    else:
+        mdl_ok = True
+
+    return mfr_ok and mdl_ok
+
+
+def _listing_row_matches_phly_aircraft(row: Dict[str, Any], phly_rows: List[Dict[str, Any]]) -> bool:
+    """True when this listing's aircraft row is the same airframe as at least one PhlyData authority row."""
+    if not phly_rows:
+        return True
+    row_reg = _phly_identity_key(row.get("registration_number"))
+    row_sn = _phly_identity_key(row.get("serial_number"))
+    row_aid = row.get("aircraft_id")
+    row_mfr = (row.get("manufacturer") or "").strip()
+    row_mdl = (row.get("model") or "").strip()
+
+    for pr in phly_rows:
+        preg = _phly_identity_key(pr.get("registration_number"))
+        psn = _phly_identity_key(pr.get("serial_number"))
+        paid = pr.get("aircraft_id")
+        pmfr = (pr.get("manufacturer") or "").strip()
+        pmdl = (pr.get("model") or "").strip()
+
+        hook = False
+        if paid is not None and row_aid is not None and str(paid).strip() == str(row_aid).strip():
+            hook = True
+        if preg and row_reg and preg == row_reg:
+            hook = True
+        if psn and row_sn and psn == row_sn:
+            hook = True
+        if not hook:
+            continue
+        if _manufacturer_model_compatible(pmfr, pmdl, row_mfr, row_mdl):
+            return True
+    return False
+
+
+def _filter_listings_for_phly_identity(
+    listings: List[Dict[str, Any]],
+    phly_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    if not phly_rows or not listings:
+        return listings
+    kept: List[Dict[str, Any]] = []
+    for row in listings:
+        if _listing_row_matches_phly_aircraft(row, phly_rows):
+            kept.append(row)
+        else:
+            logger.info(
+                "consultant_market_lookup: dropped listing row not aligned with Phly identity "
+                "(reg=%s sn=%s mfr=%s model=%s)",
+                (row.get("registration_number") or "")[:16],
+                (row.get("serial_number") or "")[:24],
+                (row.get("manufacturer") or "")[:24],
+                (row.get("model") or "")[:32],
+            )
+    return kept
+
+
 def _phly_snapshot_includes_ask(phly_rows: List[Dict[str, Any]]) -> bool:
     """True when PhlyData row(s) carry a positive numeric ask/take usable as internal snapshot."""
     for r in phly_rows or []:
@@ -497,28 +633,43 @@ def build_consultant_market_authority_block(
         return "", meta
 
     pats = _collect_ilike_patterns(query, history, phly_rows)
-    # Collapsed serial variants (525-0444 → 5250444) help match listing URLs that omit hyphens.
-    extra: List[str] = []
-    seen_inner: set[str] = set()
-    for pat in list(pats):
-        inner = pat.strip("%").strip()
-        if inner.lower() in seen_inner:
-            continue
-        seen_inner.add(inner.lower())
-        collapsed = re.sub(r"[^0-9A-Za-z]", "", inner)
-        if len(collapsed) >= 5 and collapsed.lower() != inner.lower():
-            ep = f"%{collapsed}%"
-            if ep not in pats and ep not in extra:
-                extra.append(ep)
-    pats = list(dict.fromkeys(pats + extra))[:36]
+    pats = list(dict.fromkeys(pats))[:36]
 
     cond_parts: List[str] = []
     params_l: List[Any] = []
+    _tu = "TRIM(UPPER(COALESCE({col},'')))"
     for p in pats:
-        cond_parts.append(
-            "(a.serial_number ILIKE %s OR a.registration_number ILIKE %s OR l.listing_url ILIKE %s)"
-        )
-        params_l.extend([p, p, p])
+        inner = (p or "").strip().strip("%").strip()
+        collapsed = re.sub(r"[^0-9A-Za-z]", "", inner, flags=re.I).upper()
+        # Markings: strict TRIM+UPPER on reg or serial (hyphens literal); URL pattern is auxiliary only.
+        if inner and _token_is_tail_registration(inner):
+            tc = _phly_identity_key(inner)
+            cond_parts.append(
+                "("
+                f"{_tu.format(col='a.registration_number')} = %s OR "
+                f"{_tu.format(col='a.serial_number')} = %s OR "
+                "l.listing_url ILIKE %s)"
+            )
+            params_l.extend([tc, tc, p])
+            continue
+        # Pure numeric: exact TRIM+UPPER serial **or** registration — no substring ILIKE on tail columns.
+        if collapsed.isdigit() and 3 <= len(collapsed) <= 8:
+            cond_parts.append(
+                "("
+                f"{_tu.format(col='a.serial_number')} = %s OR "
+                f"{_tu.format(col='a.registration_number')} = %s OR "
+                "l.listing_url ILIKE %s)"
+            )
+            params_l.extend([collapsed.upper(), collapsed.upper(), p])
+            continue
+        if _listing_ilike_pattern_too_loose_for_serial_column(p):
+            cond_parts.append("(a.registration_number ILIKE %s OR l.listing_url ILIKE %s)")
+            params_l.extend([p, p])
+        else:
+            cond_parts.append(
+                "(a.serial_number ILIKE %s OR a.registration_number ILIKE %s OR l.listing_url ILIKE %s)"
+            )
+            params_l.extend([p, p, p])
     extra_parts, extra_params = _listing_where_from_phly_rows(phly_rows)
     cond_parts.extend(extra_parts)
     params_l.extend(extra_params)
@@ -538,6 +689,9 @@ def build_consultant_market_authority_block(
         "  - **No matching listing row:** say no row for this tail/serial in **Hye Aero listing records** (and web if relevant).",
         "Use this block for **asking price**, **sold price**, platform, seller, URLs, **listing_status** from ingest. Amounts as stored (typically USD).",
         "If the user asks whether they can buy now: after PhlyData internal lines (if any), use listing-row interpretation (per-row LLM notes), then web; never overstate certainty.",
+        "CRITICAL — Listing rows include Serial/Reg and Make/Model from the joined aircraft table. **Only** discuss a row as this aircraft "
+        "if those fields match the PhlyData identity block (same tail/serial as Phly and compatible make/model). "
+        "If make/model clearly differ (e.g. Pitts vs Eclipse), **omit** that row — it is a false match from loose SQL — do not cite its price or URL.",
     ]
 
     listings_out: List[Dict[str, Any]] = []
@@ -547,6 +701,7 @@ def build_consultant_market_authority_block(
             f"""
             SELECT
                 l.id,
+                l.aircraft_id,
                 l.source_platform,
                 l.source_listing_id,
                 l.listing_status,
@@ -573,6 +728,15 @@ def build_consultant_market_authority_block(
         )
     except Exception as e:
         logger.warning("consultant_market_lookup: listings query failed: %s", e)
+
+    if listings_out and phly_rows:
+        before = len(listings_out)
+        listings_out = _filter_listings_for_phly_identity(listings_out, phly_rows)
+        if before and not listings_out:
+            logger.info(
+                "consultant_market_lookup: all %s listing candidates dropped after Phly identity filter",
+                before,
+            )
 
     if listings_out:
         meta["consultant_internal_listings"] = len(listings_out)
@@ -991,7 +1155,7 @@ def build_purchase_listing_tavily_query(
         mdl = (r.get("model") or "").strip()
         mm = " ".join(x for x in (mfr, mdl) if x).strip()
     else:
-        for t in extract_phlydata_tokens_with_history(query, history):
+        for t in consultant_phly_lookup_token_list(query, history):
             u = (t or "").strip().upper().replace(" ", "")
             if re.match(r"^N[-]?[A-Z0-9]{1,6}$", u):
                 reg = u.replace("-", "")

@@ -125,6 +125,9 @@ def should_run_consultant_tavily(
     if not (phly_authority or "").strip():
         return True, "no_phly_authority"
 
+    if int((phly_meta or {}).get("phlydata_no_row_for_tokens") or 0):
+        return True, "phly_no_row_use_web_and_rag"
+
     n_phly = len(phly_rows or [])
     faa_hits = int((phly_meta or {}).get("faa_master_owner_rows") or 0)
 

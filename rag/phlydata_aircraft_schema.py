@@ -1,9 +1,19 @@
 """
 Columns for ``public.phlydata_aircraft`` (internal CSV → Postgres).
 
-Canonical typed columns are listed in ``PHLYDATA_AIRCRAFT_DB_COLUMNS``. The table may also contain
-one TEXT column per extra CSV header (``csv_*``). Use :func:`phlydata_aircraft_select_sql` with a
-database client to SELECT all non-PK data columns dynamically.
+This table is **Hye Aero’s internal PhlyData** only — the product’s canonical aircraft export in Postgres.
+It is **not** marketplace ingest (that is ``aircraft_listings`` / Controller / exchanges).
+
+**Standard semantics (what Ask Consultant and the Phly tab treat as authoritative):**
+
+- **aircraft_status** — for-sale / disposition / inventory wording exactly as in the Phly export.
+- **ask_price** — internal asking price from that export (same column name in the DB).
+
+There is **no separate transaction_status** in the normal Hye Aero PhlyData shape; if a column with that
+name exists on some deployments, treat it as **legacy / optional** (historic ETL or old spreadsheets).
+
+``PHLYDATA_AIRCRAFT_DB_COLUMNS`` lists typed columns the ETL *may* create; for the live table use
+:func:`fetch_phlydata_aircraft_data_columns` so missing columns are omitted from SELECT/API shapes.
 """
 
 from __future__ import annotations
@@ -14,6 +24,7 @@ if TYPE_CHECKING:
     from database.postgres_client import PostgresClient
 
 # Core typed columns (always created by ETL). Extra CSV fields become additional ``csv_*`` TEXT columns.
+# For-sale → aircraft_status. Internal ask → ask_price. transaction_status is legacy/optional only.
 PHLYDATA_AIRCRAFT_DB_COLUMNS: tuple[str, ...] = (
     "serial_number",
     "registration_number",
@@ -23,7 +34,7 @@ PHLYDATA_AIRCRAFT_DB_COLUMNS: tuple[str, ...] = (
     "delivery_year",
     "category",
     "aircraft_status",
-    "transaction_status",
+    "transaction_status",  # optional; omitted when not present in information_schema
     "ask_price",
     "take_price",
     "sold_price",

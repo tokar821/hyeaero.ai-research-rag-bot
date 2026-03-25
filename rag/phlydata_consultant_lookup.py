@@ -1,20 +1,94 @@
 """
-Direct PostgreSQL lookup for Ask Consultant when the user cites a PhlyData serial / tail.
+Direct PostgreSQL lookup for Ask Consultant against ``phlydata_aircraft``.
 
-PhlyData tab uses ``phlydata_aircraft``; RAG/Pinecone often does not index it, so vector search
-misses these rows. This module runs before Pinecone when we detect serial- or N-number-like tokens.
+Users cite serials, tails, **model codes** (e.g. HA-420, 525-0682), **make/model** phrases, etc.
+We query Postgres on **registration_number**, **serial_number**, **manufacturer**, **model**,
+**category**, and **features** (plus ILIKE/patterns), then post-filter so every extracted token
+matches **identity or text** on the row.
+
+RAG/Pinecone usually does **not** embed Phly export rows; optional future: a dedicated PhlyData
+vector index for fuzzy/long-form questions — this module remains the deterministic primary path.
 """
 
 from __future__ import annotations
 
 import logging
 import re
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
 from rag.phlydata_aircraft_schema import phlydata_aircraft_select_sql
 
 logger = logging.getLogger(__name__)
+
+
+def _phly_verbatim_scalar(value: Any, *, null_label: str = "(null)") -> str:
+    """String for LLM copy-paste — no interpretation."""
+    if value is None:
+        return null_label
+    if isinstance(value, Decimal):
+        s = format(value, "f").rstrip("0").rstrip(".")
+        return s if s else null_label
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return str(value)
+    s = str(value).strip()
+    return s if s else "(empty)"
+
+
+def _phly_verbatim_money_field(value: Any, column: str) -> str:
+    """Readable $ line when numeric; else exact export string."""
+    if value is None:
+        return f"(null) — phlydata_aircraft.{column} has no value in DB"
+    try:
+        x = float(value) if not isinstance(value, Decimal) else float(value)
+        if abs(x - round(x)) < 1e-9:
+            return f"${int(round(x)):,} (numeric phlydata_aircraft.{column})"
+        return f"${x:,.2f} (numeric phlydata_aircraft.{column})".rstrip("0").rstrip(".")
+    except (TypeError, ValueError):
+        return f"{_phly_verbatim_scalar(value)} (phlydata_aircraft.{column} as stored)"
+
+
+def _append_phly_mandatory_verbatim_reply(lines: List[str], r: Dict[str, Any], index: int) -> None:
+    """
+    Hard anchor for the answer LLM: exact phlydata_aircraft typed fields — not paraphrased,
+    not replaced by aircraft_listings or web.
+    """
+    reg = (r.get("registration_number") or "").strip() or "(null)"
+    sn = (r.get("serial_number") or "").strip() or "(null)"
+    mfr = (r.get("manufacturer") or "").strip()
+    mdl = (r.get("model") or "").strip()
+    mm = " ".join(x for x in (mfr, mdl) if x).strip() or "(null)"
+    y = r.get("manufacturer_year") if r.get("manufacturer_year") is not None else r.get("delivery_year")
+    cat = (r.get("category") or "").strip() or "(null)"
+    ast = (r.get("aircraft_status") or "").strip()
+    ast_out = ast if ast else "(null or empty in phlydata_aircraft.aircraft_status)"
+
+    lines.append("")
+    lines.append(
+        f"[FOR USER REPLY — PhlyData (table phlydata_aircraft only) — MANDATORY VERBATIM — Aircraft {index}]"
+    )
+    lines.append(
+        "  These keys come straight from Hye Aero internal Postgres (phlydata_aircraft). "
+        "**Not** aircraft_listings, not Tavily, not vector DB. Copy status and prices into your answer exactly; "
+        "do not infer, soften, or substitute marketplace listing fields."
+    )
+    lines.append(f"  registration_number: {reg}")
+    lines.append(f"  serial_number: {sn}")
+    lines.append(f"  manufacturer / model (combined): {mm}")
+    lines.append(f"  manufacturer_year (or delivery if used): {y if y is not None else '(null)'}")
+    lines.append(f"  category: {cat}")
+    lines.append(f"  aircraft_status: {ast_out}")
+    lines.append(f"  ask_price: {_phly_verbatim_money_field(r.get('ask_price'), 'ask_price')}")
+    lines.append(f"  take_price: {_phly_verbatim_money_field(r.get('take_price'), 'take_price')}")
+    lines.append(f"  sold_price: {_phly_verbatim_money_field(r.get('sold_price'), 'sold_price')}")
+    lines.append(
+        "  [LLM — non-negotiable] **Forbidden:** fabricating or paraphrasing these values; pulling status/ask from "
+        "Hye Aero listing records or web as if they were PhlyData; inventing transaction_status (Phly export uses "
+        "**aircraft_status** and **ask_price**). **Required:** When the user asks for internal DB / Phly data / "
+        "ask or for-sale disposition, repeat **aircraft_status** and **ask_price** (and identity) consistent with "
+        "the lines above; then you may add 'Separately, …' for listing-ingest or web."
+    )
 
 
 def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) -> None:
@@ -32,12 +106,24 @@ def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) ->
 
     def _ask_placeholder(t: str) -> bool:
         u = (t or "").strip().upper()
-        return not u or u in ("M/O", "N/A", "NA", "TBD", "—", "-")
+        return not u or u in ("M/O", "N/A", "NA", "TBD", "—", "-", "NULL", "NONE")
+
+    def _csv_cell_looks_like_list_price(text: str) -> bool:
+        """Heuristic: export value is probably a USD list/ask, not a serial/year."""
+        x = (text or "").strip()
+        if not x or _ask_placeholder(x):
+            return False
+        if "$" in x and re.search(r"\$[\d,]+(?:\.\d{1,2})?", x):
+            return True
+        if re.search(r"[\d]{1,3}(?:,[\d]{3})+(?:\.\d{1,2})?", x):
+            return True
+        if re.search(r"\b\d{1,3}(?:\.\d{1,3})?\s*(?:million|mm|mn)\b", x, re.I):
+            return True
+        return False
 
     pairs: List[tuple[str, str]] = [
-        ("Aircraft status (internal export)", "aircraft_status"),
-        ("Transaction status", "transaction_status"),
-        ("Ask price (as in export)", "ask_price"),
+        ("Aircraft status — for sale / disposition (phlydata_aircraft.aircraft_status)", "aircraft_status"),
+        ("Ask price — internal export (phlydata_aircraft.ask_price)", "ask_price"),
         ("Take price", "take_price"),
         ("Sold price", "sold_price"),
         ("Airframe total time (hrs)", "airframe_total_time"),
@@ -98,6 +184,13 @@ def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) ->
         v = r.get(key)
         if v is None:
             continue
+        # Empty spreadsheet cell in DB → treat like NULL for money fields so placeholder recovery runs.
+        if isinstance(v, str) and not v.strip() and key in ("ask_price", "take_price", "sold_price"):
+            continue
+        if isinstance(v, Decimal):
+            lines.append(f"  - {label}: {v}")
+            any_line = True
+            continue
         if isinstance(v, (int, float)) and not isinstance(v, bool):
             lines.append(f"  - {label}: {v}")
             any_line = True
@@ -109,8 +202,11 @@ def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) ->
 
     # If typed ask is M/O/empty but another PhlyData column holds a dollar figure, call it out for the LLM.
     ap = _s(r.get("ask_price"))
+    found_alt_ask = False
     if _ask_placeholder(ap):
-        price_hint_keys = re.compile(r"(ask|price|list|sale|offer|amount)", re.I)
+        price_hint_keys = re.compile(
+            r"(ask|price|list|sale|offer|amount|value|usd|quote|figure)", re.I
+        )
         for k in sorted(r.keys()):
             if not isinstance(k, str) or k in skip | pair_db_keys:
                 continue
@@ -123,6 +219,25 @@ def _append_phly_internal_snapshot_lines(lines: List[str], r: Dict[str, Any]) ->
                     f"{k.replace('_', ' ')} contains: {tv} — still PhlyData; report both if relevant."
                 )
                 any_line = True
+                found_alt_ask = True
+                break
+        # Some exports put list price only in generically named csv_* cells; name may not match price_hint_keys.
+        if not found_alt_ask:
+            for k in sorted(r.keys()):
+                if not isinstance(k, str) or not k.startswith("csv_"):
+                    continue
+                tv = _s(r.get(k))
+                if not tv or _ask_placeholder(tv):
+                    continue
+                if not _csv_cell_looks_like_list_price(tv):
+                    continue
+                lines.append(
+                    f"  - Note: typed ask_price is unset or placeholder ({ap or 'empty'}) in PhlyData; "
+                    f"export column {k} contains a list/ask-like figure: {tv}. Treat as PhlyData for pricing questions "
+                    f"(do not say ask was not specified in PhlyData)."
+                )
+                any_line = True
+                found_alt_ask = True
                 break
 
     for k in sorted(r.keys()):
@@ -323,68 +438,287 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
     for m in re.finditer(r"\b([Nn][-\s]?[A-Z0-9]{1,6})\b", q):
         add(m.group(1).upper().replace(" ", ""))
 
+    # International-style marks: V-682, XA-98723, G-CIVG — not MSN forms like 525-0444 (those start with a digit)
+    for m in re.finditer(r"\b([A-Za-z]{1,3}-[A-Za-z0-9]{2,16})\b", q):
+        add(m.group(1))
+
+    # Leading-zero MSNs: 0011 (4 chars) through 0000171 (7 chars) — was missing 0\d{4,6} minimum length
+    for m in re.finditer(r"\b(0\d{2,6})\b", q):
+        add(m.group(1))
+
+    # Standalone numeric tokens length 5–8 (avoid bare 4-digit years)
+    for m in re.finditer(r"\b(\d{5,8})\b", q):
+        add(m.group(1))
+
+    # 3–4 digit serials without required leading zero (e.g. 0011 already covered; catches 425, 1910)
+    for m in re.finditer(r"\b(\d{3,4})\b", q):
+        s = m.group(1)
+        if len(s) == 4 and s.startswith(("19", "20")):
+            continue
+        add(s)
+
     return out
+
+
+def consultant_phly_lookup_token_list(
+    query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> List[str]:
+    """
+    Tokens for Phly SQL lookup: **current user message first**. If the user cites a new tail/serial,
+    do not merge older thread tokens (prevents repeating N678PS when they ask about 000017).
+    If the current message has no aircraft tokens, fall back to recent chat (e.g. "thanks", "and the hours?").
+    """
+    primary = extract_phlydata_lookup_tokens(query or "")
+    if primary:
+        return primary
+    return extract_phlydata_tokens_with_history(query, history)
+
+
+def consultant_user_asks_aircraft_master_table(query: str) -> bool:
+    """User explicitly referenced the synced Postgres aircraft entity table."""
+    q = (query or "").lower()
+    needles = (
+        "aircraft table",
+        "public.aircraft",
+        "the aircraft table",
+        "in aircraft table",
+        "aircraft_master",
+        "master aircraft",
+        "from aircraft",
+        "in the aircraft ",
+    )
+    return any(n in q for n in needles)
+
+
+def lookup_aircraft_master_rows(db: PostgresClient, tokens: List[str]) -> List[Dict[str, Any]]:
+    """Match ``public.aircraft`` by **strict** TRIM+UPPER equality on registration and/or serial (hyphens literal)."""
+    if not tokens:
+        return []
+    parts: List[str] = []
+    params: List[Any] = []
+    seen: set[str] = set()
+    _trim_up = "TRIM(UPPER(COALESCE({col},'')))"
+
+    def add_cond(kind: str, value: str) -> None:
+        key = f"{kind}:{value}"
+        if key in seen:
+            return
+        seen.add(key)
+        if kind == "reg":
+            parts.append(f"{_trim_up.format(col='registration_number')} = %s")
+            params.append(value)
+        elif kind == "sn":
+            parts.append(f"{_trim_up.format(col='serial_number')} = %s")
+            params.append(value)
+
+    for raw in tokens:
+        t = (raw or "").strip()
+        if not t:
+            continue
+        tk = _phly_identity_key(t)
+        if _token_is_tail_registration(t):
+            add_cond("reg", tk)
+            add_cond("sn", tk)
+            continue
+        if re.search(r"\d", t) and len(t) >= 3:
+            for vn in _serial_token_match_variants(t):
+                if len(vn) >= 2:
+                    add_cond("sn", vn)
+
+    if not parts:
+        return []
+
+    where_sql = " OR ".join(parts)
+    try:
+        rows = db.execute_query(
+            f"""
+            SELECT id,
+                   serial_number,
+                   registration_number,
+                   manufacturer,
+                   model,
+                   manufacturer_year,
+                   delivery_year,
+                   category,
+                   aircraft_status,
+                   condition,
+                   registration_country,
+                   based_country
+            FROM public.aircraft
+            WHERE ({where_sql})
+            ORDER BY updated_at DESC NULLS LAST
+            LIMIT 15
+            """,
+            tuple(params),
+        )
+    except Exception as e:
+        logger.warning("consultant: public.aircraft lookup failed: %s", e)
+        return []
+
+    if not rows:
+        return []
+    by_id: Dict[Any, Dict[str, Any]] = {}
+    for r in rows:
+        aid = r.get("id")
+        if aid is not None and aid not in by_id:
+            by_id[aid] = dict(r)
+    return list(by_id.values())
+
+
+def phly_like_row_from_aircraft_master(r: Dict[str, Any]) -> Dict[str, Any]:
+    """Shape aircraft.id as aircraft_id for listing / Tavily filters when PhlyData has no row."""
+    return {
+        "aircraft_id": r.get("id"),
+        "serial_number": r.get("serial_number"),
+        "registration_number": r.get("registration_number"),
+        "manufacturer": r.get("manufacturer"),
+        "model": r.get("model"),
+    }
+
+
+def format_aircraft_master_consultant_block(rows: List[Dict[str, Any]]) -> Tuple[str, Dict[str, Any]]:
+    """Readable authority block for ``public.aircraft`` (not Phly export)."""
+    lines: List[str] = [
+        "",
+        "[AUTHORITATIVE — Hye Aero aircraft master (PostgreSQL: public.aircraft)]",
+        "This table is the synced **aircraft** entity used with listings/FAA ingest — **not** phlydata_aircraft (Phly export). "
+        "When the user asks for status **in the aircraft table**, use **aircraft_status** below verbatim.",
+        "",
+    ]
+    for i, r in enumerate(rows, 1):
+        lines.append(f"--- public.aircraft row {i} ---")
+        lines.append(
+            f"[FOR USER REPLY — public.aircraft — MANDATORY VERBATIM — row {i}]"
+        )
+        lines.append(
+            "  Copy **aircraft_status** (and identity) exactly for questions about the aircraft table; "
+            "do not substitute PhlyData or listing rows unless the user asks for those layers."
+        )
+        lines.append(f"  id: {r.get('id')}")
+        lines.append(f"  serial_number: {(r.get('serial_number') or '').strip() or '(null)'}")
+        lines.append(f"  registration_number: {(r.get('registration_number') or '').strip() or '(null)'}")
+        mm = " ".join(
+            x
+            for x in (
+                (r.get("manufacturer") or "").strip(),
+                (r.get("model") or "").strip(),
+            )
+            if x
+        )
+        lines.append(f"  manufacturer / model: {mm or '(null)'}")
+        y = r.get("manufacturer_year")
+        if y is None:
+            y = r.get("delivery_year")
+        lines.append(f"  manufacturer_year: {y if y is not None else '(null)'}")
+        lines.append(f"  category: {(r.get('category') or '').strip() or '(null)'}")
+        st = (r.get("aircraft_status") or "").strip()
+        lines.append(f"  aircraft_status: {st if st else '(null)'}")
+        lines.append(f"  condition: {(r.get('condition') or '').strip() or '(null)'}")
+        lines.append("")
+    meta = {"aircraft_master_rows": len(rows)}
+    return "\n".join(lines).rstrip() + "\n", meta
 
 
 _N_TAIL_TOKEN = re.compile(r"^N[A-Z0-9]{1,6}$", re.IGNORECASE)
 
 
-def _normalize_registration_compare(value: Any) -> str:
-    """Uppercase tail for equality checks (no spaces/hyphens)."""
-    s = (value if value is not None else "") or ""
-    return re.sub(r"[\s\-]+", "", str(s).strip().upper())
+def _phly_identity_key(value: Any) -> str:
+    """Phly / aircraft **identity** compare: trim + uppercase only — **hyphens and digits are literal** (LJ-1682 ≠ LJ1682)."""
+    return str(value if value is not None else "").strip().upper()
 
 
-def _normalize_serial_compare(value: Any) -> str:
-    """Alphanumeric only, uppercase — matches hyphenated serials to collapsed tokens."""
-    s = (value if value is not None else "") or ""
-    return re.sub(r"[^A-Z0-9]", "", str(s).strip().upper())
-
-
-def _phly_rows_match_tokens_exact_first(rows: List[Dict[str, Any]], tokens: List[str]) -> List[Dict[str, Any]]:
+def _token_is_tail_registration(raw: str) -> bool:
     """
-    ILIKE '%N807JS%' can match the wrong aircraft (e.g. registration containing that substring).
-    When tokens include a clear U.S. tail or serial, keep only rows that match exactly; if none,
-    fall back to the original list (avoid empty PhlyData when data is messy).
+    Shape heuristic for hyphenated / N-tail tokens (routing to text fallback when reg/sn do not match).
+    **Equality** always uses ``_phly_identity_key`` — never hyphen-stripped forms.
     """
+    t = (raw or "").strip()
+    if not t:
+        return False
+    u = re.sub(r"\s+", "", t.upper())
+    # Compact U.S. N-number without hyphen (N682TM)
+    if _N_TAIL_TOKEN.fullmatch(u):
+        return True
+    # Explicit hyphen after 1–3 letter mark (G-CIVG, V-682, XA-98723, N-682TM, LJ-1682)
+    if re.fullmatch(r"[A-Z]{1,3}-[A-Z0-9]{2,16}", u):
+        return True
+    # Letters then digit, no hyphen in token (e.g. XA98723) — not pure numeric MSNs like 5250682
+    if re.fullmatch(r"[A-Z]{1,3}\d[A-Z0-9]{0,11}", u) and not re.fullmatch(r"\d+", u):
+        return True
+    return False
+
+
+def _serial_token_match_variants(raw: str) -> set[str]:
+    """Single strict identity key for Phly token (hyphen-preserving)."""
+    s = _phly_identity_key(raw or "")
+    return {s} if s else set()
+
+
+def _phly_row_text_contains_token(r: Dict[str, Any], token: str) -> bool:
+    """True when manufacturer, model, category, or features contain the **exact** token spelling (trim+upper; hyphens kept)."""
+    t = (token or "").strip()
+    if len(t) < 3:
+        return False
+    parts: List[str] = []
+    for key in ("manufacturer", "model", "category", "features"):
+        v = r.get(key)
+        if isinstance(v, str) and v.strip():
+            parts.append(v.strip())
+    blob = " ".join(parts).upper()
+    if not blob.strip():
+        return False
+    needle = t.upper()
+    blob_nf = re.sub(r"\s+", " ", blob)
+    if len(needle) >= 3 and needle in blob_nf:
+        return True
+    return False
+
+
+def _token_matches_phly_row(r: Dict[str, Any], token: str) -> bool:
+    """
+    One user token matches this row: **strict** ``registration_number`` / ``serial_number`` equality (hyphen-preserving),
+    or manufacturer/model/category/features substring match with the same spelling.
+    """
+    t = (token or "").strip()
+    if not t or len(t) < 3:
+        return True
+    reg_k = _phly_identity_key(r.get("registration_number"))
+    sn_k = _phly_identity_key(r.get("serial_number"))
+    tok_k = _phly_identity_key(t)
+    u = re.sub(r"\s+", "", t.upper())
+
+    if _N_TAIL_TOKEN.fullmatch(u):
+        return reg_k == tok_k
+
+    if tok_k and (reg_k == tok_k or sn_k == tok_k):
+        return True
+
+    if _token_is_tail_registration(t):
+        return _phly_row_text_contains_token(r, t)
+
+    if re.search(r"\d", t) and len(t) >= 3:
+        return _phly_row_text_contains_token(r, t)
+
+    return _phly_row_text_contains_token(r, t)
+
+
+def _phly_rows_match_consultant_tokens(rows: List[Dict[str, Any]], tokens: List[str]) -> List[Dict[str, Any]]:
+    """Keep rows where **every** token (len≥3) matches via ``_token_matches_phly_row`` (AND across tokens)."""
     if not rows or not tokens:
         return rows
-
-    tail_norms: set[str] = set()
-    serial_norms: set[str] = set()
-    for raw in tokens:
-        t = (raw or "").strip()
-        if not t:
-            continue
-        tc = _normalize_registration_compare(t.replace("N-", "N"))
-        if _N_TAIL_TOKEN.fullmatch(tc):
-            tail_norms.add(tc)
-        # Citation-style serial 560-5354
-        if re.search(r"\d", t) and len(t) >= 4:
-            serial_norms.add(_normalize_serial_compare(t))
-
+    meaningful = [x.strip() for x in tokens if (x or "").strip() and len((x or "").strip()) >= 3]
+    if not meaningful:
+        return rows
     narrowed: List[Dict[str, Any]] = []
-    if tail_norms:
-        for r in rows:
-            reg = _normalize_registration_compare(r.get("registration_number"))
-            if reg and reg in tail_norms:
-                narrowed.append(r)
-        if narrowed:
-            return narrowed
-
-    if serial_norms:
-        for r in rows:
-            sn = _normalize_serial_compare(r.get("serial_number"))
-            if sn and sn in serial_norms:
-                narrowed.append(r)
-        if narrowed:
-            return narrowed
-
-    return rows
+    for r in rows:
+        if all(_token_matches_phly_row(r, tok) for tok in meaningful):
+            narrowed.append(r)
+    return narrowed
 
 
 def ilike_patterns_for_token(token: str) -> List[str]:
-    """Build a small set of ILIKE patterns for hyphen / spacing variants."""
+    """ILIKE patterns for recall — **hyphens preserved** (no collapsed ``HA420`` variant for ``HA-420``)."""
     u = token.strip()
     if not u:
         return []
@@ -392,11 +726,6 @@ def ilike_patterns_for_token(token: str) -> List[str]:
     for variant in {u, u.upper(), u.lower()}:
         if variant and f"%{variant}%" not in pats:
             pats.append(f"%{variant}%")
-    if "-" in u:
-        collapsed = u.replace("-", "")
-        pats.append(f"%{collapsed}%")
-        pats.append(f"%{collapsed.upper()}%")
-    # de-dupe preserve order
     seen: set[str] = set()
     uniq: List[str] = []
     for p in pats:
@@ -407,48 +736,105 @@ def ilike_patterns_for_token(token: str) -> List[str]:
 
 
 def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List[Dict[str, Any]]:
-    """Return matching ``phlydata_aircraft`` rows (deduped by aircraft_id)."""
+    """Return matching ``phlydata_aircraft`` rows: serial, tail, **and** make/model/category/features text."""
     if not tokens:
         return []
     all_pats: List[str] = []
     for t in tokens:
         all_pats.extend(ilike_patterns_for_token(t))
-    # cap for query size
     all_pats = list(dict.fromkeys(all_pats))[:28]
-    if not all_pats:
+
+    _tu_sn = "TRIM(UPPER(COALESCE(serial_number,'')))"
+    _tu_reg = "TRIM(UPPER(COALESCE(registration_number,'')))"
+    norm_parts: List[str] = []
+    norm_params: List[Any] = []
+    seen_n: set[str] = set()
+    for t in tokens[:14]:
+        for v in _serial_token_match_variants(t):
+            if len(v) < 2 or v in seen_n:
+                continue
+            seen_n.add(v)
+            norm_parts.append(f"({_tu_sn} = %s OR {_tu_reg} = %s)")
+            norm_params.extend([v, v])
+    norm_parts = norm_parts[:36]
+
+    text_parts: List[str] = []
+    text_params: List[Any] = []
+    for p in all_pats[:24]:
+        text_parts.append(
+            "("
+            "UPPER(COALESCE(manufacturer,'')) LIKE UPPER(%s) OR "
+            "UPPER(COALESCE(model,'')) LIKE UPPER(%s) OR "
+            "UPPER(COALESCE(category,'')) LIKE UPPER(%s) OR "
+            "UPPER(COALESCE(features,'')) LIKE UPPER(%s)"
+            ")"
+        )
+        text_params.extend([p, p, p, p])
+
+    ilike_clause = (
+        "(serial_number ILIKE ANY(%s) OR registration_number ILIKE ANY(%s))"
+        if all_pats
+        else ""
+    )
+
+    chunks: List[str] = []
+    params_list: List[Any] = []
+    if all_pats:
+        chunks.append(ilike_clause)
+        params_list.extend([all_pats, all_pats])
+    if text_parts:
+        chunks.append("(" + " OR ".join(text_parts) + ")")
+        params_list.extend(text_params)
+    if norm_parts:
+        chunks.append("(" + " OR ".join(norm_parts) + ")")
+        params_list.extend(norm_params)
+
+    if not chunks:
         return []
+
+    where_body = "(" + " OR ".join(chunks) + ")"
+    params = tuple(params_list)
+
     try:
         rows = db.execute_query(
             f"""
             SELECT aircraft_id,
             {phlydata_aircraft_select_sql(include_cast_id=False, db=db)}
             FROM public.phlydata_aircraft
-            WHERE serial_number ILIKE ANY(%s)
-               OR registration_number ILIKE ANY(%s)
-            LIMIT 25
+            WHERE {where_body}
+            LIMIT 75
             """,
-            (all_pats, all_pats),
+            params,
         )
     except Exception as e:
         logger.warning("phlydata_consultant_lookup: query failed (%s); skipping direct path.", e)
         return []
     if not rows:
         return []
-    rows = _phly_rows_match_tokens_exact_first(rows, tokens)
-    # Prefer exact tail/serial matches first, then stable order
+    rows = _phly_rows_match_consultant_tokens(rows, tokens)
+    # Prefer exact tail/serial, then identity hit, then text-only
     def _rank(r: Dict[str, Any]) -> tuple:
-        reg = _normalize_registration_compare(r.get("registration_number"))
-        sn = _normalize_serial_compare(r.get("serial_number"))
+        reg = _phly_identity_key(r.get("registration_number"))
+        sn = _phly_identity_key(r.get("serial_number"))
         tail_hit = 0
         serial_hit = 0
+        text_hit = 0
         for raw in tokens:
-            tc = _normalize_registration_compare((raw or "").strip().replace("N-", "N"))
-            if _N_TAIL_TOKEN.fullmatch(tc) and reg == tc:
+            tr = (raw or "").strip()
+            trk = _phly_identity_key(tr)
+            tu = re.sub(r"\s+", "", (tr or "").upper())
+            if _N_TAIL_TOKEN.fullmatch(tu) and reg == trk:
                 tail_hit = 1
-            snt = _normalize_serial_compare(raw or "")
-            if snt and sn == snt:
+            elif _token_is_tail_registration(tr) and (reg == trk or sn == trk):
+                tail_hit = 1
+            variants = _serial_token_match_variants(raw or "")
+            if sn and sn in variants:
                 serial_hit = 1
-        return (-tail_hit, -serial_hit)
+            if reg == trk or sn == trk:
+                serial_hit = max(serial_hit, 1)
+            if _phly_row_text_contains_token(r, tr):
+                text_hit = 1
+        return (-tail_hit, -serial_hit, -text_hit)
 
     rows = sorted(rows, key=_rank)
     by_id: Dict[Any, Dict[str, Any]] = {}
@@ -470,9 +856,9 @@ def format_phlydata_consultant_answer(
     """
     lines: List[str] = []
     lines.append(
-        "PhlyData — Hye Aero's canonical internal aircraft record (table phlydata_aircraft). "
-        "This is what Hye Aero treats as source of truth for the product: identity and every field loaded from the internal export — "
-        "not the separate aircraft_listings marketplace-ingest table."
+        "PhlyData — Hye Aero's internal aircraft record (PostgreSQL table **phlydata_aircraft** only). "
+        "Identity, **aircraft_status** (for-sale / disposition from the internal export), **ask_price** / take / sold, "
+        "and other export columns below are authoritative for this layer — not **aircraft_listings** (marketplace ingest)."
     )
     lines.append(
         "Evaluation order: When answering, ground and lead on PhlyData (this block) for identity and all snapshot fields below. "
@@ -499,7 +885,15 @@ def format_phlydata_consultant_answer(
         lines.append(f"  - Make / model: {mm}")
         lines.append(f"  - Year: {y if y is not None else '—'}")
         lines.append(f"  - Category: {cat}")
+        _append_phly_mandatory_verbatim_reply(lines, r, i)
         _append_phly_internal_snapshot_lines(lines, r)
+        if (r.get("aircraft_status") or "").strip() or (r.get("ask_price") is not None):
+            lines.append(
+                "  [LLM: **phlydata_aircraft** has no separate transaction_status in the standard internal export — "
+                "use **aircraft_status** for whether the export shows for sale / disposition, and **ask_price** for the "
+                "internal asking price. Quote those fields exactly as printed; do not substitute listing-ingest status. "
+                "If **ask_price** (or take/sold) appears above, do not tell the user there is no internal asking price.]"
+            )
 
         serial = str(r.get("serial_number") or "").strip()
         reg_s = str(r.get("registration_number") or "").strip() or None
