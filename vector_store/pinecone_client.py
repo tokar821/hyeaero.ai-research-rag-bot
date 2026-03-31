@@ -122,6 +122,34 @@ class PineconeClient:
         except PineconeException as e:
             logger.error(f"Failed to delete vectors: {e}")
             return False
+
+    def delete_by_metadata_filter(
+        self,
+        filter: Dict[str, Any],
+        namespace: Optional[str] = None,
+    ) -> bool:
+        """Delete all vectors in ``namespace`` matching a Pinecone metadata ``filter``."""
+        if not self.index:
+            raise RuntimeError("Not connected to Pinecone index. Call connect() first.")
+        try:
+            self.index.delete(filter=filter, namespace=namespace)
+            logger.info("Pinecone delete by filter ns=%r filter=%s", namespace, filter)
+            return True
+        except PineconeException as e:
+            logger.error("Pinecone delete by filter failed: %s", e)
+            return False
+
+    def delete_all_in_namespace(self, namespace: str) -> bool:
+        """Remove every vector in ``namespace`` (``delete_all=True``)."""
+        if not self.index:
+            raise RuntimeError("Not connected to Pinecone index. Call connect() first.")
+        try:
+            self.index.delete(delete_all=True, namespace=namespace)
+            logger.info("Pinecone delete_all in namespace=%r", namespace)
+            return True
+        except PineconeException as e:
+            logger.error("Pinecone delete_all failed: %s", e)
+            return False
     
     def query(
         self,

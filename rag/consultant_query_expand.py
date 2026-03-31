@@ -1,19 +1,292 @@
 """
-LLM-assisted search query expansion for Ask Consultant (Tavily + Pinecone RAG).
+Lightweight rule-based query rewrite for Ask Consultant (Tavily + Pinecone RAG).
 
-Produces a web search string and 2–4 paraphrases for vector retrieval so RAG is not tied
-to the user's exact wording.
+Replaces LLM expansion: detects tails/serials, manufacturers, model tokens, and intent
+(price / range / operator) to build 1–2 RAG strings and one Tavily-optimized string.
 """
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
+
+# --- Manufacturers (substring or token match, lowercase) ---
+_MANUFACTURER_KEYS: Tuple[Tuple[str, str], ...] = (
+    ("gulfstream", "Gulfstream"),
+    ("gulf stream", "Gulfstream"),
+    ("bombardier", "Bombardier"),
+    ("dassault", "Dassault"),
+    ("falcon", "Dassault Falcon"),
+    ("embraer", "Embraer"),
+    ("phenom", "Embraer Phenom"),
+    ("praetor", "Embraer Praetor"),
+    ("legacy", "Embraer Legacy"),
+    ("lineage", "Embraer Lineage"),
+    ("cessna", "Cessna"),
+    ("citation", "Cessna Citation"),
+    ("longitude", "Cessna Longitude"),
+    ("latitude", "Cessna Latitude"),
+    ("king air", "King Air"),
+    ("beechcraft", "Beechcraft"),
+    ("hawker", "Hawker"),
+    ("pilatus", "Pilatus"),
+    ("pc-12", "Pilatus PC-12"),
+    ("pc12", "Pilatus PC-12"),
+    ("honda", "HondaJet"),
+    ("hondajet", "HondaJet"),
+    ("cirrus", "Cirrus"),
+    ("vision jet", "Cirrus Vision"),
+    ("global ", "Bombardier Global"),
+    ("global 5000", "Global 5000"),
+    ("global 6000", "Global 6000"),
+    ("global 7500", "Global 7500"),
+    ("challenger", "Challenger"),
+    ("learjet", "Learjet"),
+    ("atr ", "ATR"),
+    ("airbus", "Airbus"),
+    ("boeing", "Boeing"),
+    ("grob", "Grob"),
+    ("diamond", "Diamond"),
+)
+
+# Regex (pattern, canonical label) for models / families
+_MODEL_REGEX: Tuple[Tuple[re.Pattern, str], ...] = tuple(
+    (re.compile(p, re.IGNORECASE), label)
+    for p, label in (
+        (r"\bg\s*[-.]?\s*650(?:\s*er)?\b", "G650"),
+        (r"\bg\s*[-.]?\s*550\b", "G550"),
+        (r"\bg\s*[-.]?\s*500\b", "G500"),
+        (r"\bg\s*[-.]?\s*280\b", "G280"),
+        (r"\bg\s*[-.]?\s*400\b", "G400"),
+        (r"\bgvi\b", "G650"),
+        (r"\bcitation\s+latitude\b", "Citation Latitude"),
+        (r"\bcitation\s+longitude\b", "Citation Longitude"),
+        (r"\bcitation\s+x\b", "Citation X"),
+        (r"\bcj\s*[1-4]\b", "Citation CJ"),
+        (r"\bcitation\s+m2\b", "Citation M2"),
+        (r"\bphenom\s*100\b", "Phenom 100"),
+        (r"\bphenom\s*300\b", "Phenom 300"),
+        (r"\bcl\s*300\b", "Challenger 300"),
+        (r"\bcl\s*350\b", "Challenger 350"),
+        (r"\bcl\s*600\b", "Challenger 600"),
+        (r"\bcl\s*650\b", "Challenger 650"),
+        (r"\bfalcon\s*8x\b", "Falcon 8X"),
+        (r"\bfalcon\s*7x\b", "Falcon 7X"),
+        (r"\bfalcon\s*900\b", "Falcon 900"),
+        (r"\bfalcon\s*2000\b", "Falcon 2000"),
+        (r"\bprae?tor\s*500\b", "Praetor 500"),
+        (r"\bprae?tor\s*600\b", "Praetor 600"),
+        (r"\blegacy\s*500\b", "Legacy 500"),
+        (r"\blegacy\s*600\b", "Legacy 600"),
+        (r"\bvision\s*jet\b", "Vision Jet"),
+    )
+)
+
+_TAIL_RE = re.compile(r"\b(N)(?:[- ]?)([A-Z0-9]{1,6})\b", re.IGNORECASE)
+_EU_TAIL_RE = re.compile(
+    r"\b([CGLOVSXB][A-Z]{1,2}|[OY]{2}|SE|LN)-?([A-Z0-9]{2,6})\b", re.IGNORECASE
+)
+
+_INTENT_KEYWORDS: Dict[str, Tuple[str, ...]] = {
+    "price": (
+        "price",
+        "pricing",
+        "cost",
+        "how much",
+        "asking",
+        "ask price",
+        "usd",
+        "dollar",
+        "$",
+        "for sale",
+        "buy",
+        "purchase",
+        "listing",
+        "market value",
+        "valuation",
+    ),
+    "range": (
+        "range",
+        "nm",
+        "nautical mile",
+        "endurance",
+        "fuel burn",
+        "consumption",
+        "cruise speed",
+        "max cruise",
+        "mach ",
+        "specifications",
+        "specs",
+        "performance",
+        "payload",
+    ),
+    "operator": (
+        "who owns",
+        "who own",
+        "owner",
+        "operate",
+        "operator",
+        "operated",
+        "operating",
+        "charter",
+        "fleet",
+        "registrant",
+        "management",
+        "aoc",
+        "certificate holder",
+    ),
+}
+
+
+def _norm_blob(user_query: str, history_snippet: Optional[str]) -> str:
+    parts = []
+    if (history_snippet or "").strip():
+        parts.append(history_snippet.strip()[:3500])
+    parts.append((user_query or "").strip())
+    return "\n".join(parts)
+
+
+def _detect_intents(blob_lc: str) -> Set[str]:
+    found: Set[str] = set()
+    for intent, needles in _INTENT_KEYWORDS.items():
+        if any(n in blob_lc for n in needles):
+            found.add(intent)
+    return found
+
+
+def _detect_manufacturers(blob_lc: str) -> List[str]:
+    names: List[str] = []
+    seen: Set[str] = set()
+    for key, display_mfr in _MANUFACTURER_KEYS:
+        if key in blob_lc and display_mfr.lower() not in seen:
+            seen.add(display_mfr.lower())
+            names.append(display_mfr)
+    return names[:3]
+
+
+def _detect_models(blob: str) -> List[str]:
+    labels: List[str] = []
+    seen: Set[str] = set()
+    for pat, label in _MODEL_REGEX:
+        if pat.search(blob):
+            lk = label.lower()
+            if lk not in seen:
+                seen.add(lk)
+                labels.append(label)
+    return labels[:4]
+
+
+def _extract_tails(blob: str) -> List[str]:
+    tails: List[str] = []
+    seen: Set[str] = set()
+    for m in _TAIL_RE.finditer(blob):
+        t = f"{m.group(1).upper()}{m.group(2).upper().replace(' ', '')}"
+        if len(t) >= 3 and t not in seen:
+            seen.add(t)
+            tails.append(t)
+    for m in _EU_TAIL_RE.finditer(blob):
+        pre, suf = m.group(1).upper(), m.group(2).upper().replace(" ", "")
+        t = f"{pre}-{suf}"
+        if t not in seen and len(suf) >= 2:
+            seen.add(t)
+            tails.append(t)
+    return tails[:4]
+
+
+def _build_tavily_query(
+    user_query: str,
+    blob: str,
+    blob_lc: str,
+    tails: List[str],
+    manufacturers: List[str],
+    models: List[str],
+    intents: Set[str],
+) -> str:
+    parts: List[str] = [(user_query or "").strip()]
+    if tails:
+        parts.append(" ".join(f'"{t}"' for t in tails))
+    if manufacturers:
+        parts.append(manufacturers[0])
+    if models:
+        parts.append(" ".join(models))
+
+    suffix: List[str] = []
+    if "operator" in intents:
+        suffix.extend(
+            ["owner", "operator", "registered owner", "charter", "fleet"]
+        )
+    if "price" in intents:
+        suffix.extend(
+            ["asking price", "for sale", "aircraft listing", "USD"]
+        )
+    if "range" in intents:
+        suffix.extend(["range", "cruise", "specifications", "nm"])
+
+    if "photo" in blob_lc or "image" in blob_lc or "gallery" in blob_lc or "picture" in blob_lc:
+        suffix.extend(["aircraft photos", "exterior", "interior"])
+
+    core = " ".join(p for p in parts if p).strip()
+    if suffix:
+        core = f"{core} {' '.join(suffix)}".strip()
+
+    return core[:500] if core else (user_query or "")[:500]
+
+
+def _build_rag_queries(
+    user_query: str,
+    manufacturers: List[str],
+    models: List[str],
+    tails: List[str],
+    intents: Set[str],
+) -> List[str]:
+    """Return 1–2 concise strings for embedding search."""
+    q = (user_query or "").strip()
+    pieces: List[str] = []
+    if manufacturers:
+        pieces.append(manufacturers[0])
+    if models:
+        pieces.extend(models[:2])
+    if tails:
+        pieces.append(tails[0])
+
+    base = " ".join(dict.fromkeys(pieces)) if pieces else ""
+    intent_bits: List[str] = []
+    if "price" in intents:
+        intent_bits.append("asking price for sale")
+    if "range" in intents:
+        intent_bits.append("range cruise specifications")
+    if "operator" in intents:
+        intent_bits.append("operator owner registrant")
+
+    primary = " ".join(x for x in [base, q] if x).strip() or q
+    head = " ".join(primary.split()[:14])
+    if intent_bits:
+        secondary = f"{head} {' '.join(intent_bits)}".strip()
+    else:
+        secondary = ""
+
+    if len(primary) > 220:
+        primary = primary[:217] + "..."
+    if len(secondary) > 220:
+        secondary = secondary[:217] + "..."
+
+    out: List[str] = [primary]
+    if secondary and secondary.lower() != primary.lower():
+        out.append(secondary)
+    dedup: List[str] = []
+    seen: Set[str] = set()
+    for s in out:
+        k = s.lower()
+        if k not in seen:
+            seen.add(k)
+            dedup.append(s)
+        if len(dedup) >= 2:
+            break
+    return dedup or ([q] if q else [""])
 
 
 def expand_consultant_research_queries(
@@ -23,13 +296,64 @@ def expand_consultant_research_queries(
     history_snippet: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Returns ``{"tavily_query": str, "rag_queries": List[str]}``.
+    Returns ``{"tavily_query": str, "rag_queries": List[str]}`` (1–2 RAG queries).
 
-    ``history_snippet``: recent user/assistant text so follow-ups like "tell me more" still include
-    tail/serial/model in the web search string.
+    ``openai_api_key`` / ``chat_model`` are kept for API compatibility; they are not used.
 
-    On any failure, falls back to using the raw user question for both paths.
+    Set ``CONSULTANT_QUERY_EXPAND_LLM=1`` to restore the previous OpenAI JSON expansion
+    (slower, ~1–2s extra latency).
     """
+    q = (user_query or "").strip()
+    base_rag = [q] if q else []
+    default: Dict[str, Any] = {
+        "tavily_query": q[:400] if q else "",
+        "rag_queries": base_rag or [""],
+    }
+    if not q:
+        return default
+
+    if (os.getenv("CONSULTANT_QUERY_EXPAND_LLM") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    ):
+        return _expand_consultant_research_queries_llm(
+            user_query, openai_api_key, chat_model, history_snippet
+        )
+
+    return _expand_consultant_research_queries_rules(user_query, history_snippet)
+
+
+def _expand_consultant_research_queries_rules(
+    user_query: str,
+    history_snippet: Optional[str] = None,
+) -> Dict[str, Any]:
+    q = (user_query or "").strip()
+    blob = _norm_blob(q, history_snippet)
+    blob_lc = blob.lower()
+
+    tails = _extract_tails(blob)
+    manufacturers = _detect_manufacturers(blob_lc)
+    models = _detect_models(blob)
+    intents = _detect_intents(blob_lc)
+
+    tq = _build_tavily_query(q, blob, blob_lc, tails, manufacturers, models, intents)
+    rag_list = _build_rag_queries(q, manufacturers, models, tails, intents)
+    final_rag = (rag_list[:2] if rag_list else [q])[:2]
+
+    return {
+        "tavily_query": (tq or q)[:500],
+        "rag_queries": final_rag,
+    }
+
+
+def _expand_consultant_research_queries_llm(
+    user_query: str,
+    openai_api_key: str,
+    chat_model: str,
+    history_snippet: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Legacy LLM path (opt-in via CONSULTANT_QUERY_EXPAND_LLM=1)."""
     q = (user_query or "").strip()
     base_rag = [q] if q else []
     default: Dict[str, Any] = {
@@ -40,6 +364,8 @@ def expand_consultant_research_queries(
         return default
 
     try:
+        import json
+
         import openai
 
         try:
@@ -93,8 +419,8 @@ Keep strings under 200 characters each where possible."""
             rag_list = [q]
         return {"tavily_query": tq[:500], "rag_queries": rag_list[:6]}
     except Exception as e:
-        logger.warning("consultant query expand failed, using raw query: %s", e)
-        return default
+        logger.warning("consultant LLM query expand failed, using rules: %s", e)
+        return _expand_consultant_research_queries_rules(user_query, history_snippet)
 
 
 def format_tavily_payload_for_consultant(
@@ -162,7 +488,7 @@ def merge_tavily_consultant_payloads(
     max_results: int = 12,
 ) -> Dict[str, Any]:
     """
-    Combine two Tavily responses (e.g. LLM-expanded query + registration-focused query).
+    Combine two Tavily responses (e.g. expanded query + registration-focused query).
     Deduplicates by URL; preserves primary order then appends new rows from secondary.
     """
     seen: set[str] = set()

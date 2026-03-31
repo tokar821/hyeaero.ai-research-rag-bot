@@ -11,6 +11,7 @@ from vector_store.pinecone_client import PineconeClient
 from rag.embedding_service import EmbeddingService
 from rag.chunking_service import ChunkingService
 from rag.entity_extractors import EXTRACTORS, EntityExtractor
+from rag.pinecone_metadata import build_vector_metadata, sanitize_pinecone_metadata_dict
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,8 @@ class RAGPipeline:
         chunking_service: ChunkingService,
         embedding_model: str = "text-embedding-3-large",
         embedding_dimension: int = 1024,
-        batch_size: int = 100
+        batch_size: int = 100,
+        embedding_batch_size: int = 100,
     ):
         """Initialize RAG pipeline.
         
@@ -45,6 +47,7 @@ class RAGPipeline:
         self.embedding_model = embedding_model
         self.embedding_dimension = embedding_dimension
         self.batch_size = batch_size
+        self.embedding_batch_size = max(1, min(500, int(embedding_batch_size)))
         # Upsert to Pinecone every N records to avoid holding all vectors in memory
         self.upsert_record_batch = 100
     
@@ -180,7 +183,12 @@ class RAGPipeline:
                 # Chunk text if needed
                 base_metadata = extractor.get_metadata(record)
                 try:
-                    chunks = self.chunking_service.chunk_text(text, base_metadata, chunk_id_prefix=f"{entity_type}_{entity_id}")
+                    chunks = self.chunking_service.chunk_for_entity(
+                        entity_type,
+                        text,
+                        base_metadata,
+                        chunk_id_prefix=f"{entity_type}_{entity_id}",
+                    )
                 except MemoryError:
                     logger.warning(f"Memory error chunking {entity_type} {entity_id} (text length: {len(text)}), skipping")
                     stats['skipped'] += 1
@@ -194,27 +202,36 @@ class RAGPipeline:
                 
                 # Generate embeddings for chunks
                 chunk_texts = [chunk['text'] for chunk in chunks]
-                embeddings = self.embedding_service.embed_batch(chunk_texts)
+                embeddings = self.embedding_service.embed_batch(
+                    chunk_texts, batch_size=self.embedding_batch_size
+                )
                 
                 # Create vectors for Pinecone
+                n_chunks = len(chunks)
                 for chunk, embedding in zip(chunks, embeddings):
                     if embedding is None:
                         continue
-                    
-                    # Create unique vector ID
+
                     vector_id = f"{entity_type}_{entity_id}_chunk_{chunk['chunk_index']}"
-                    
-                    # Filter out None/null values from metadata (Pinecone doesn't accept null)
-                    clean_metadata = {
-                        k: v for k, v in chunk['metadata'].items() 
-                        if v is not None and v != '' and not (isinstance(v, float) and (v != v or v == float('inf') or v == float('-inf')))
-                    }
-                    
-                    vectors_to_upsert.append({
-                        'id': vector_id,
-                        'values': embedding,
-                        'metadata': clean_metadata
-                    })
+
+                    std_meta = build_vector_metadata(
+                        entity_type,
+                        record,
+                        chunk_index=int(chunk["chunk_index"]),
+                        total_chunks=n_chunks,
+                    )
+                    cstrat = (chunk.get("metadata") or {}).get("chunking_strategy")
+                    if cstrat:
+                        std_meta["chunking_strategy"] = str(cstrat)[:48]
+                    clean_metadata = sanitize_pinecone_metadata_dict(std_meta)
+
+                    vectors_to_upsert.append(
+                        {
+                            "id": vector_id,
+                            "values": embedding,
+                            "metadata": clean_metadata,
+                        }
+                    )
                 
                 # Track metadata for database
                 metadata_to_insert.append({

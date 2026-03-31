@@ -7,6 +7,11 @@ import json
 import logging
 from typing import Dict, Any, List, Optional
 
+from rag.aircraft_normalization import (
+    normalize_aircraft_identity,
+    normalize_engine_display,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -46,9 +51,14 @@ class AircraftListingExtractor(EntityExtractor):
         """Extract text from aircraft listing."""
         parts = []
         
-        # Basic info
-        if record.get('manufacturer') or record.get('model'):
-            parts.append(f"Aircraft: {record.get('manufacturer', '')} {record.get('model', '')}".strip())
+        # Basic info (canonical make/model for embedding clustering)
+        cm, cmo = normalize_aircraft_identity(record.get("manufacturer"), record.get("model"))
+        if cm or cmo:
+            parts.append(f"Aircraft: {(cm or '')} {(cmo or '')}".strip())
+        elif record.get("manufacturer") or record.get("model"):
+            parts.append(
+                f"Aircraft: {record.get('manufacturer', '')} {record.get('model', '')}".strip()
+            )
         
         if record.get('manufacturer_year'):
             parts.append(f"Year: {record.get('manufacturer_year')}")
@@ -156,8 +166,13 @@ class AircraftExtractor(EntityExtractor):
         """Extract text from aircraft record."""
         parts = []
         
-        if record.get('manufacturer') or record.get('model'):
-            parts.append(f"Aircraft: {record.get('manufacturer', '')} {record.get('model', '')}".strip())
+        cm, cmo = normalize_aircraft_identity(record.get("manufacturer"), record.get("model"))
+        if cm or cmo:
+            parts.append(f"Aircraft: {(cm or '')} {(cmo or '')}".strip())
+        elif record.get("manufacturer") or record.get("model"):
+            parts.append(
+                f"Aircraft: {record.get('manufacturer', '')} {record.get('model', '')}".strip()
+            )
         
         if record.get('serial_number'):
             parts.append(f"Serial Number: {record.get('serial_number')}")
@@ -186,8 +201,9 @@ class AircraftExtractor(EntityExtractor):
         if record.get('type_aircraft'):
             parts.append(f"Type: {record.get('type_aircraft')}")
         
-        if record.get('type_engine'):
-            parts.append(f"Engine Type: {record.get('type_engine')}")
+        te = normalize_engine_display(record.get("type_engine"))
+        if te:
+            parts.append(f"Engine Type: {te}")
         
         if not parts:
             return None
@@ -216,8 +232,13 @@ class AircraftSaleExtractor(EntityExtractor):
         """Extract text from aircraft sale."""
         parts = []
         
-        if record.get('manufacturer') or record.get('model'):
-            parts.append(f"Aircraft Sale: {record.get('manufacturer', '')} {record.get('model', '')}".strip())
+        cm, cmo = normalize_aircraft_identity(record.get("manufacturer"), record.get("model"))
+        if cm or cmo:
+            parts.append(f"Aircraft Sale: {(cm or '')} {(cmo or '')}".strip())
+        elif record.get("manufacturer") or record.get("model"):
+            parts.append(
+                f"Aircraft Sale: {record.get('manufacturer', '')} {record.get('model', '')}".strip()
+            )
         
         if record.get('serial_number'):
             parts.append(f"Serial Number: {record.get('serial_number')}")
@@ -327,9 +348,14 @@ class AviacostAircraftDetailExtractor(EntityExtractor):
         """Extract text from Aviacost aircraft detail for RAG."""
         parts = []
 
-        if record.get("name"):
+        cm, cmo = normalize_aircraft_identity(
+            record.get("manufacturer_name"), record.get("name")
+        )
+        if cm or cmo:
+            parts.append(f"Aircraft type: {(cm or '')} {(cmo or '')}".strip())
+        elif record.get("name"):
             parts.append(f"Aircraft type: {record['name']}")
-        if record.get("manufacturer_name"):
+        if record.get("manufacturer_name") and not (cm or cmo):
             parts.append(f"Manufacturer: {record['manufacturer_name']}")
         if record.get("category_name"):
             parts.append(f"Category: {record['category_name']}")

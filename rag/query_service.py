@@ -12,12 +12,92 @@ from rag.entity_extractors import EXTRACTORS
 from vector_store.pinecone_client import PineconeClient
 from database.postgres_client import PostgresClient
 from services.aviacost_lookup import lookup_aviacost
+from rag.pinecone_metadata import infer_pinecone_entity_filter, legacy_meta_aircraft_model
+from rag.semantic_reranker import SemanticRerankerService
 
 logger = logging.getLogger(__name__)
 
 
 def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
+
+
+def _consultant_faa_no_phly_user_directive(phly_meta: Optional[Dict[str, Any]]) -> str:
+    """
+    Extra user-message instructions when Phly has no row but FAA MASTER matched — stops the drafter/reviewer
+    from claiming make/model or ownership are unknown despite FAA lines in context.
+    """
+    if not phly_meta:
+        return ""
+    if not int(phly_meta.get("phlydata_no_row_for_tokens") or 0):
+        return ""
+    if not int(phly_meta.get("faa_master_owner_rows") or 0):
+        return ""
+    return (
+        "\n\n**Answer structure (mandatory):** PhlyData has no internal export row for this tail, but **FAA MASTER** "
+        "lines are in the context above. Open with FAA **registrant** and **mailing address** (verbatim where marked) "
+        "and FAA **aircraft identity** (reference model, year, serial, type) when present. "
+        "Do **not** state that make/model, year, or U.S. legal ownership are unknown or absent if those FAA lines are filled. "
+        "Then briefly note PhlyData has no row; then add Tavily/vector/listing supplements with source labels.\n"
+    )
+
+
+def _consultant_no_phly_no_faa_snapshot_user_directive(phly_meta: Optional[Dict[str, Any]]) -> str:
+    """
+    When our ingested faa_master has no row (but the user cited a tail), force leading with Tavily — not a hollow
+    \"nothing in the data\" answer.
+    """
+    if not phly_meta:
+        return ""
+    if not int(phly_meta.get("faa_internal_snapshot_miss") or 0):
+        return ""
+    return (
+        "\n\n**Answer structure (mandatory):** PhlyData has no internal row, and **our ingested FAA MASTER snapshot** "
+        "has no row for this tail in the context above. **Lead with Tavily web results** (and vector excerpts if any) "
+        "for aircraft identity and U.S. registry/owner facts — cite snippet # and domain. "
+        "Do **not** conclude that make/model, year, or ownership are \"not available\" if any Tavily snippet provides "
+        "them. Avoid hollow closings (\"let me know if you have other queries\").\n"
+    )
+
+
+def _consultant_faa_no_phly_priority_prefix(phly_meta: Optional[Dict[str, Any]]) -> str:
+    """
+    When PhlyData has no row but FAA MASTER matched, force the draft model to open with FAA facts
+    (some models anchor on the long [NO PHLYDATA ROW MATCH] paragraph and answer as if nothing exists).
+    """
+    if not phly_meta:
+        return ""
+    if not int(phly_meta.get("phlydata_no_row_for_tokens") or 0):
+        return ""
+    if not int(phly_meta.get("faa_master_owner_rows") or 0):
+        return ""
+    return (
+        "[ANSWER ORDER — MANDATORY]\n"
+        "1) If **AUTHORITATIVE — FAA MASTER** appears in this context, open with FAA registrant, mailing address, "
+        "and aircraft identity lines (reference model, year_mfr, serial, type) from that block — verbatim where MANDATORY.\n"
+        "2) Then briefly note that PhlyData (phlydata_aircraft) has no internal export row for this identifier.\n"
+        "3) Then add Tavily / vector / listing supplements with clear source labels.\n\n"
+    )
+
+
+def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dict[str, Any]]) -> str:
+    """
+    When Phly has no row and our ingested ``faa_master`` snapshot also has no row for a cited U.S. tail,
+    force the model to lead on Tavily/vector (public registry–equivalent facts), not a hollow \"unknown\" brief.
+    """
+    if not phly_meta:
+        return ""
+    if not int(phly_meta.get("faa_internal_snapshot_miss") or 0):
+        return ""
+    return (
+        "[ANSWER ORDER — MANDATORY — INGESTED FAA SNAPSHOT MISS]\n"
+        "Our **internal** ``faa_master`` table did **not** return a row for this tail in this environment, but the user "
+        "may still expect **public** U.S. registry / aircraft facts. **Lead with substantive lines from Tavily web results "
+        "and vector excerpts** in this context (aircraft class, manufacturer/model family, year/serial if stated, "
+        "registrant or operator when snippets support them). Cite **snippet #** and domain.\n"
+        "Do **not** claim make/model, year, serial, or ownership are \"not available in the data gathered\" when any "
+        "Tavily or vector line supports them. Briefly note PhlyData has no internal export row; avoid hollow closings.\n\n"
+    )
 
 
 # Minimum similarity score to include a Pinecone match (cosine: higher = more similar)
@@ -90,7 +170,7 @@ Context layers (how Hye Aero uses them):
 3) **Vector DB** — corroboration and long-tail context; must not contradict PhlyData identity or internal snapshot when Phly is present.
 4) **Hye Aero listing & sales / ops-reference tables** — marketplace ingests (**Controller**, **Aircraft Exchange**, **AircraftPost**, **AviaCost**, etc.); **not** PhlyData. When Phly exists: use **after** Phly for asks, URLs, comps — never override PhlyData internal fields. When Phly is absent: these listing layers are **first-class** evidence alongside Tavily and vector — weave them for a **comprehensive** market picture and label each row by source.
 
-When the context includes **[NO PHLYDATA ROW MATCH]** (or there is clearly no Phly block for the identifier), **do not** pretend PhlyData contained the aircraft. Build the **best** answer by combining **Tavily**, **vector DB**, **listing ingests** (Controller, Aircraft Exchange, AircraftPost, AviaCost, and any other marketplace rows in context), **public.aircraft** if present, and clear **LLM synthesis** tied only to that evidence. Label every claim by source."""
+When the context includes **[NO PHLYDATA ROW MATCH]** (or there is clearly no Phly block for the identifier), **do not** pretend PhlyData contained the aircraft. If **[AUTHORITATIVE — FAA MASTER]** appears for this U.S. tail, treat **FAA as Tier 1** for legal registrant + aircraft identity (reference model, year, serial) — **lead with it** before Tavily/vector; never answer as if ownership and aircraft type are unknown when those FAA lines are filled. Otherwise build the **best** answer by combining **Tavily**, **vector DB**, **listing ingests** (Controller, Aircraft Exchange, AircraftPost, AviaCost, and any other marketplace rows in context), **public.aircraft** if present, and clear **LLM synthesis** tied only to that evidence. Label every claim by source."""
 
 CONSULTANT_REVIEW_SYSTEM_PROMPT = """You are a senior aviation research editor for Hye Aero. You receive:
 - The user's question
@@ -107,6 +187,7 @@ Rules:
 - Identity: serial, tail/registration, make/model, and year MUST match the PhlyData + FAA block when those fields appear there.
 - FAA registrant: When **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** or **FAA MASTER registrant (faa_master):** is present, the final answer **must** state that exact registrant name and mailing lines — remove any draft that names a different legal owner from web/vector (including "{tail} LLC" style names not in the block). If the block says there is no FAA row for a non-U.S. tail, lead with the strongest Tavily-backed operator/owner — not a hedge that hides good web hits.
 - Web vs PhlyData/FAA: FAA legal registrant does not need to appear in Tavily. For **operator/fleet/management** claims only, names must be traceable to Tavily snippet text; cite result # or domain. Do not let operator narrative replace the FAA registrant line.
+- **[NO INGESTED FAA MASTER ROW — Hye Aero internal faa_master snapshot]** in context: our ingested FAA table had no row — if Tavily snippets name aircraft type, serial, or owner/registrant for this tail, the final answer **must** use them (with snippet #); fix drafts that say \"not available\" despite good web hits.
 - Remove invented database or portal names. No guessing: if snippets do not name a party, say so.
 - **Listing / availability:** If the draft implies the aircraft is "available," "on the market," or "you can buy" without support, **fix it**. Hye Aero **listing records** are marketplace snapshots — honor **listing_status** and **LLM:** lines as **secondary** to PhlyData. Never label listing tables as PhlyData.
 - **Market / pricing:** If PhlyData includes internal ask/status/sold lines, the **Market** section should **lead with PhlyData**, then **"Separately, …"** for **[FOR USER REPLY — Market / pricing]** listing rows or web. Reflect exact $ and URLs from listing block when used as supplemental context.
@@ -133,6 +214,14 @@ PURCHASE / PRICE / AVAILABILITY: Sound like a trusted advisor — tight opening,
 
 def _consultant_purchase_tail(bundle: Dict[str, Any]) -> str:
     return CONSULTANT_PURCHASE_USER_DIRECTIVES if bundle.get("purchase_context") else ""
+
+
+def _consultant_phly_faa_user_directives_suffix(phly_meta: Optional[Dict[str, Any]]) -> str:
+    """Forces draft/review models to use FAA lines when present and Tavily when ingested FAA has no row."""
+    return (
+        _consultant_faa_no_phly_user_directive(phly_meta)
+        + _consultant_no_phly_no_faa_snapshot_user_directive(phly_meta)
+    )
 
 
 CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are Hye Aero's Aircraft Research & Valuation Consultant. We always search our Pinecone database first; for this question, no matching listings, sales, or FAA data were found. So you are answering from your own general knowledge. Think like a human expert: consider the full conversation, remember what you already said, and answer the current question in context. If the user asks a follow-up (e.g. "Is this all?", "What about X?"), interpret it in light of your previous answer and respond like a human.
@@ -169,12 +258,15 @@ class RAGQueryService:
         postgres_client: PostgresClient,
         openai_api_key: str,
         chat_model: str = "gpt-4o-mini",
+        reranker: Optional[SemanticRerankerService] = None,
     ):
         self.embedding_service = embedding_service
         self.pinecone = pinecone_client
         self.db = postgres_client
         self.openai_api_key = openai_api_key
         self.chat_model = chat_model
+        self._reranker: Optional[SemanticRerankerService] = reranker
+        self._reranker_init_failed = False
 
     def _get_meta(self, match: Any) -> Dict[str, Any]:
         if hasattr(match, "metadata"):
@@ -338,64 +430,202 @@ class RAGQueryService:
         # Fallback: key fields
         return " ".join(f"{k}={v}" for k, v in list(record.items())[:20] if v is not None)
 
+    @staticmethod
+    def _pinecone_match_vector_id(match: Any) -> Optional[str]:
+        mid = getattr(match, "id", None) if not isinstance(match, dict) else match.get("id")
+        return str(mid) if mid is not None and str(mid) != "" else None
+
+    @staticmethod
+    def _pinecone_match_score(match: Any) -> float:
+        s = getattr(match, "score", None) if hasattr(match, "score") else None
+        if s is None and isinstance(match, dict):
+            s = match.get("score")
+        try:
+            return float(s) if s is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    def _rerank_enabled_globally(self) -> bool:
+        return (os.getenv("RAG_RERANK_ENABLED") or "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+        )
+
+    def _get_reranker(self) -> Optional[SemanticRerankerService]:
+        if not self._rerank_enabled_globally():
+            return None
+        if self._reranker_init_failed:
+            return None
+        if self._reranker is not None:
+            return self._reranker
+        try:
+            self._reranker = SemanticRerankerService.from_env()
+        except Exception as e:
+            logger.warning("RAG semantic reranker disabled: %s", e)
+            self._reranker_init_failed = True
+            return None
+        return self._reranker
+
+    def _hydrate_pinecone_match(
+        self,
+        match: Any,
+        score_threshold: Optional[float],
+    ) -> Optional[Dict[str, Any]]:
+        """Build one retrieval row from a Pinecone match (metadata + Postgres hydrate)."""
+        meta = self._get_meta(match)
+        entity_type = meta.get("entity_type") or ""
+        entity_id = meta.get("entity_id") or ""
+        preview = (meta.get("text") or "").strip()
+        if not preview:
+            mm = legacy_meta_aircraft_model(meta)
+            mf = (meta.get("manufacturer") or "").strip()
+            preview = f"{mf} {mm}".strip() if (mm or mf) else ""
+        chunk_text = preview[:2000]
+        score = (
+            getattr(match, "score", None)
+            if hasattr(match, "score")
+            else (match.get("score") if isinstance(match, dict) else None)
+        )
+        if score_threshold is not None and score is not None and score < score_threshold:
+            return None
+        full_context = ""
+        if entity_type and entity_id:
+            record = self._fetch_full_record(entity_type, entity_id)
+            if record:
+                full_context = self._record_to_context_text(entity_type, record)
+                if entity_type in ENTITY_HAS_AIRCRAFT_ID and full_context:
+                    aircraft_id = record.get("aircraft_id")
+                    if aircraft_id:
+                        aircraft_id_str = str(aircraft_id)
+                        aircraft_record = self._fetch_aircraft_by_id(aircraft_id_str)
+                        if aircraft_record:
+                            aircraft_text = self._record_to_context_text("aircraft", aircraft_record)
+                            if aircraft_text:
+                                full_context += "\n\n[Synced aircraft/model details]\n" + aircraft_text
+        return {
+            "score": float(score) if score is not None else 0.0,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "chunk_text": chunk_text,
+            "full_context": full_context or chunk_text,
+        }
+
     def retrieve(
         self,
         query: str,
         top_k: int = 25,
         score_threshold: Optional[float] = None,
         max_results: int = 18,
+        pinecone_filter: Optional[Dict[str, Any]] = None,
+        *,
+        skip_rerank: bool = False,
+        rerank_query: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Embed query, search Pinecone (with score threshold and dedupe), then fetch full
-        records from PostgreSQL and enrich with synced aircraft/model details where available.
-        Returns list of dicts with: score, entity_type, entity_id, chunk_text, full_context.
+        Embed query → Pinecone → hydrate Postgres rows.
+
+        When ``RAG_RERANK_ENABLED`` and ``skip_rerank`` is False: fetch up to
+        ``RAG_PINECONE_PREFETCH`` (default 40) unique entities, **BGE rerank**, return
+        ``RAG_RERANK_TOP_K`` (default 5). Otherwise: legacy cap by ``max_results``.
+
+        When ``RAG_PINECONE_INFER_ENTITY_FILTER`` is not disabled, infers a metadata filter
+        from the query. If the filtered query returns too few hits, merges unfiltered results.
         """
         if score_threshold is None:
             score_threshold = DEFAULT_SCORE_THRESHOLD
         vector = self.embedding_service.embed_text(query)
         if not vector:
             return []
-        # Fetch more candidates from Pinecone so we have enough after filtering and dedupe
-        pinecone_k = max(top_k, max_results * 2)
-        matches = self.pinecone.query(vector=vector, top_k=pinecone_k)
-        results = []
+
+        try:
+            prefetch = int((os.getenv("RAG_PINECONE_PREFETCH") or "40").strip())
+            prefetch = max(10, min(120, prefetch))
+        except ValueError:
+            prefetch = 40
+        try:
+            rerank_top_k = int((os.getenv("RAG_RERANK_TOP_K") or "5").strip())
+            rerank_top_k = max(1, min(30, rerank_top_k))
+        except ValueError:
+            rerank_top_k = 5
+
+        rerank_requested = self._rerank_enabled_globally() and not skip_rerank
+        if rerank_requested:
+            pinecone_k = prefetch
+            collect_limit = prefetch
+        else:
+            pinecone_k = max(top_k, max_results * 2)
+            collect_limit = max_results
+
+        infer_on = (os.getenv("RAG_PINECONE_INFER_ENTITY_FILTER") or "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+        )
+        filt: Optional[Dict[str, Any]] = pinecone_filter
+        if infer_on and filt is None:
+            filt = infer_pinecone_entity_filter(query)
+
+        matches = self.pinecone.query(vector=vector, top_k=pinecone_k, filter=filt)
+
+        min_expand = max(4, collect_limit // 2) if not rerank_requested else max(4, prefetch // 2)
+        if filt and len(matches) < min_expand:
+            try:
+                extra = self.pinecone.query(vector=vector, top_k=pinecone_k, filter=None)
+            except Exception as e:
+                logger.debug("Pinecone unfiltered fallback query skipped: %s", e)
+                extra = []
+            seen_ids = {self._pinecone_match_vector_id(m) for m in matches if self._pinecone_match_vector_id(m)}
+            merged = list(matches)
+            for m in extra:
+                vid = self._pinecone_match_vector_id(m)
+                if vid and vid not in seen_ids:
+                    seen_ids.add(vid)
+                    merged.append(m)
+                if len(merged) >= pinecone_k:
+                    break
+            merged.sort(key=self._pinecone_match_score, reverse=True)
+            matches = merged
+
+        results: List[Dict[str, Any]] = []
         seen = set()
         for m in matches:
-            if len(results) >= max_results:
+            if len(results) >= collect_limit:
                 break
             meta = self._get_meta(m)
             entity_type = meta.get("entity_type") or ""
             entity_id = meta.get("entity_id") or ""
-            chunk_text = (meta.get("text") or "")[:2000]
-            score = getattr(m, "score", None) if hasattr(m, "score") else (m.get("score") if isinstance(m, dict) else None)
-            if score is not None and score < score_threshold:
-                continue
             key = (entity_type, entity_id)
             if key in seen:
                 continue
+            row = self._hydrate_pinecone_match(m, score_threshold)
+            if row is None:
+                continue
             seen.add(key)
-            full_context = ""
-            if entity_type and entity_id:
-                record = self._fetch_full_record(entity_type, entity_id)
-                if record:
-                    full_context = self._record_to_context_text(entity_type, record)
-                    # Enrich with synced aircraft/master model details from PostgreSQL when available
-                    if entity_type in ENTITY_HAS_AIRCRAFT_ID and full_context:
-                        aircraft_id = record.get("aircraft_id")
-                        if aircraft_id:
-                            aircraft_id_str = str(aircraft_id)
-                            aircraft_record = self._fetch_aircraft_by_id(aircraft_id_str)
-                            if aircraft_record:
-                                aircraft_text = self._record_to_context_text("aircraft", aircraft_record)
-                                if aircraft_text:
-                                    full_context += "\n\n[Synced aircraft/model details]\n" + aircraft_text
-            results.append({
-                "score": score,
-                "entity_type": entity_type,
-                "entity_id": entity_id,
-                "chunk_text": chunk_text,
-                "full_context": full_context or chunk_text,
-            })
+            results.append(row)
+
+        rq = (rerank_query if rerank_query is not None else query) or ""
+        if rerank_requested:
+            rz = self._get_reranker()
+            n_cand = len(results)
+            if not results:
+                pass
+            elif rz:
+                try:
+                    results = rz.rerank(rq.strip(), results, top_k=rerank_top_k)
+                    logger.debug(
+                        "RAG rerank: query_len=%s candidates=%s kept=%s",
+                        len(rq),
+                        n_cand,
+                        len(results),
+                    )
+                except Exception as e:
+                    logger.warning("RAG rerank failed, using Pinecone order: %s", e)
+                    results = results[:rerank_top_k]
+            else:
+                results = results[:rerank_top_k]
+        else:
+            results = results[:max_results]
         return results
 
     def _retrieve_multi(
@@ -406,10 +636,18 @@ class RAGQueryService:
         score_threshold: Optional[float] = None,
         max_results_total: int = 18,
         max_query_variants: int = 5,
+        skip_rerank: bool = False,
+        rerank_anchor_query: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Run vector retrieval for several paraphrased queries; dedupe by (entity_type, entity_id),
-        keep the highest similarity score per entity.
+        Run vector retrieval for several paraphrased queries.
+
+        When reranking is enabled (see ``RAG_RERANK_ENABLED``) and ``skip_rerank`` is False:
+        each variant fetches up to ``RAG_PINECONE_PREFETCH`` candidates (no rerank), results are
+        merged by (entity_type, entity_id) keeping the best Pinecone score, then **one** BGE rerank
+        with ``rerank_anchor_query`` (fallback: first query) yields ``RAG_RERANK_TOP_K`` rows.
+
+        Otherwise: legacy behavior — per-query retrieve capped by ``max_results_total``.
         """
         if score_threshold is None:
             score_threshold = DEFAULT_SCORE_THRESHOLD
@@ -422,15 +660,57 @@ class RAGQueryService:
             return []
         cap = max(1, min(8, int(max_query_variants)))
         nq = min(len(uniq_q), cap)
-        per_query_cap = max(6, min(top_k, max_results_total // max(nq, 1) + 4))
-        best: Dict[tuple, Dict[str, Any]] = {}
+
+        rerank_requested = self._rerank_enabled_globally() and not skip_rerank
+
+        if not rerank_requested:
+            per_query_cap = max(6, min(top_k, max_results_total // max(nq, 1) + 4))
+            best: Dict[tuple, Dict[str, Any]] = {}
+            for q in uniq_q[:nq]:
+                try:
+                    batch = self.retrieve(
+                        q,
+                        top_k=per_query_cap,
+                        score_threshold=score_threshold,
+                        max_results=per_query_cap + 4,
+                        skip_rerank=True,
+                    )
+                except Exception as e:
+                    logger.warning("retrieve_multi: skip q=%r: %s", q[:100], e)
+                    continue
+                for r in batch:
+                    et = r.get("entity_type") or ""
+                    eid = str(r.get("entity_id") or "")
+                    if not et:
+                        continue
+                    key = (et, eid)
+                    sc = float(r.get("score") or 0.0)
+                    prev = best.get(key)
+                    if prev is None or sc > float(prev.get("score") or 0.0):
+                        best[key] = r
+            out = sorted(best.values(), key=lambda x: float(x.get("score") or 0.0), reverse=True)
+            return out[:max_results_total]
+
+        try:
+            prefetch = int((os.getenv("RAG_PINECONE_PREFETCH") or "40").strip())
+            prefetch = max(10, min(120, prefetch))
+        except ValueError:
+            prefetch = 40
+        try:
+            rerank_top_k = int((os.getenv("RAG_RERANK_TOP_K") or "5").strip())
+            rerank_top_k = max(1, min(30, rerank_top_k))
+        except ValueError:
+            rerank_top_k = 5
+
+        merged: Dict[tuple, Dict[str, Any]] = {}
         for q in uniq_q[:nq]:
             try:
                 batch = self.retrieve(
                     q,
-                    top_k=per_query_cap,
+                    top_k=prefetch,
                     score_threshold=score_threshold,
-                    max_results=per_query_cap + 4,
+                    max_results=prefetch,
+                    skip_rerank=True,
                 )
             except Exception as e:
                 logger.warning("retrieve_multi: skip q=%r: %s", q[:100], e)
@@ -442,11 +722,26 @@ class RAGQueryService:
                     continue
                 key = (et, eid)
                 sc = float(r.get("score") or 0.0)
-                prev = best.get(key)
+                prev = merged.get(key)
                 if prev is None or sc > float(prev.get("score") or 0.0):
-                    best[key] = r
-        out = sorted(best.values(), key=lambda x: float(x.get("score") or 0.0), reverse=True)
-        return out[:max_results_total]
+                    merged[key] = r
+
+        merged_list = sorted(
+            merged.values(),
+            key=lambda x: float(x.get("score") or 0.0),
+            reverse=True,
+        )[:prefetch]
+
+        anchor = (rerank_anchor_query or uniq_q[0] or "").strip()
+        rz = self._get_reranker()
+        if rz and merged_list:
+            try:
+                return rz.rerank(anchor, merged_list, top_k=rerank_top_k)
+            except Exception as e:
+                logger.warning("retrieve_multi rerank failed: %s", e)
+        if merged_list:
+            return merged_list[:rerank_top_k]
+        return []
 
     def _answer_from_general_knowledge(
         self,
@@ -529,9 +824,13 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         """
         try:
             from rag.phlydata_consultant_lookup import (
+                _should_attempt_faa_registration_lookup,
                 consultant_phly_lookup_token_list,
                 consultant_user_asks_aircraft_master_table,
                 extract_phlydata_lookup_tokens,
+                extract_us_registration_tail_candidates,
+                faa_internal_miss_context_block,
+                faa_master_standalone_authority_for_tokens,
                 format_aircraft_master_consultant_block,
                 format_phlydata_consultant_answer,
                 lookup_aircraft_master_rows,
@@ -542,6 +841,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
 
             toks = consultant_phly_lookup_token_list(query, history)
             primary = extract_phlydata_lookup_tokens(query or "")
+            # Include recent chat so tails only in thread history (e.g. follow-up "who owns it?")
+            # still feed FAA standalone + Tavily anchoring — same as extract_phlydata_tokens_with_history.
+            us_reg_scan = extract_us_registration_tail_candidates(query or "", history)
+            faa_scan_tokens = list(dict.fromkeys([*(toks or []), *(primary or []), *us_reg_scan]))
             rows = lookup_phlydata_aircraft_rows(self.db, toks) if toks else []
             meta_out: Dict[str, Any] = {"phlydata_aircraft_rows": 0, "faa_master_owner_rows": 0}
             phly_rows_out: List[Dict[str, Any]] = list(rows)
@@ -569,10 +872,30 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     toks[:8],
                 )
 
-            if not rows and toks:
+            if not rows and faa_scan_tokens:
+                meta_out["phlydata_no_row_for_tokens"] = 1
+                # Union: consultant tokens + current-message extract + raw-query N-number scan so FAA tail lookup
+                # never misses tails like N448SJ when Phly SQL tokens differ or omit the registration.
+                faa_only_text, faa_only_meta, faa_fr = faa_master_standalone_authority_for_tokens(
+                    self.db, faa_scan_tokens, fetch_faa_master_owner_rows
+                )
+                if faa_only_text:
+                    # FAA MASTER must appear **before** the long Phly-gap instructions so the model
+                    # does not anchor on "no data" and skip verbatim registrant / identity lines.
+                    authority_chunks.append(faa_only_text)
+                    meta_out.update(faa_only_meta)
+                    if faa_fr and not phly_rows_out:
+                        from rag.phlydata_consultant_lookup import synthetic_phly_row_from_faa_master
+
+                        phly_rows_out = [synthetic_phly_row_from_faa_master(faa_fr)]
+                else:
+                    # Ingested faa_master had no row; Tavily/public web may still have registry-class facts.
+                    meta_out["faa_internal_snapshot_miss"] = 1
+                    authority_chunks.append(faa_internal_miss_context_block(faa_scan_tokens))
+
                 phly_gap = (
                     "[NO PHLYDATA ROW MATCH — phlydata_aircraft]\n"
-                    f"Search identifiers for this turn: {', '.join(str(x) for x in toks[:16])}.\n"
+                    f"Search identifiers for this turn: {', '.join(str(x) for x in faa_scan_tokens[:16])}.\n"
                     "There is **no matching row** in table **phlydata_aircraft** for these values. "
                     "**Registration (tail) and serial numbers are unique as in Postgres**: matching uses TRIM + UPPER only — "
                     "**hyphens are literal** (e.g. ``LJ-1682`` ≠ ``LJ1682``; ``525-0682`` ≠ ``5250682`` unless stored that way). "
@@ -581,20 +904,32 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     "Never substitute a shorter or zero-stripped variant for the user's token.\n"
                     "**Forbidden:** Do not invent a PhlyData aircraft block with placeholder 'Not listed' fields as if they came "
                     "from Postgres — that will mislead the user.\n"
-                    "**Required:** State explicitly that **PhlyData has no internal export row** for this identifier, then "
+                    "**Required:** State briefly that **PhlyData has no internal export row** for this identifier, then "
                     "deliver the **best, most comprehensive** answer by combining **Tavily web results**, **vector database** "
                     "excerpts, **Hye Aero listing ingests** when present in context (e.g. Controller, Aircraft Exchange, AircraftPost, "
                     "AviaCost), and **public.aircraft** if present — with clear source labels on each claim. "
                     "Treat those layers as the factual basis when Phly is empty; use careful synthesis (no fabricated Phly fields).\n"
+                    "If an **[AUTHORITATIVE — FAA MASTER]** block appears **above** in this context (before this paragraph), "
+                    "you MUST lead your answer with that FAA data: use it **verbatim** for U.S. legal registrant and mailing address — "
+                    "do **not** say ownership is unknown or omit it. "
+                    "Use the **[FAA aircraft identity from MASTER]** lines (reference model, year_mfr, type_aircraft, serial) "
+                    "for aircraft type/year when present — do **not** claim make/model or registry identity are unavailable "
+                    "when those FAA lines are filled. Use Tavily/vector for operator, fleet, or market color when not in FAA lines.\n"
                 )
-                authority_chunks.insert(0, phly_gap)
-                meta_out["phlydata_no_row_for_tokens"] = 1
+                authority_chunks.append(phly_gap)
 
-            need_aircraft_master = bool(primary) and (
-                (not rows) or consultant_user_asks_aircraft_master_table(query)
-            )
-            if need_aircraft_master and primary:
-                am_rows = lookup_aircraft_master_rows(self.db, primary)
+            # Include tails from history (faa_scan_tokens) when Phly has no row so follow-ups still resolve public.aircraft.
+            if not rows:
+                am_tokens = list(dict.fromkeys([*(primary or []), *(faa_scan_tokens or [])]))
+                need_aircraft_master = bool(am_tokens)
+            elif consultant_user_asks_aircraft_master_table(query) and primary:
+                am_tokens = list(primary)
+                need_aircraft_master = True
+            else:
+                am_tokens = []
+                need_aircraft_master = False
+            if need_aircraft_master and am_tokens:
+                am_rows = lookup_aircraft_master_rows(self.db, am_tokens[:28])
                 if am_rows:
                     am_text, am_m = format_aircraft_master_consultant_block(am_rows)
                     authority_chunks.append(am_text)
@@ -606,6 +941,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 return "", {}, []
 
             full_text = "\n\n".join(authority_chunks)
+            if faa_scan_tokens:
+                meta_out["faa_lookup_tokens"] = faa_scan_tokens[:24]
+
             logger.info(
                 "RAG: consultant authority attached (phly=%s, tokens=%s, aircraft_master=%s)",
                 len(rows),
@@ -628,6 +966,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             sources.append({"entity_type": "phlydata_aircraft", "entity_id": None, "score": None})
         if phly_meta.get("aircraft_master_rows"):
             sources.append({"entity_type": "aircraft_master", "entity_id": None, "score": None})
+        if phly_meta.get("faa_master_owner_rows"):
+            sources.append({"entity_type": "faa_master", "entity_id": None, "score": None})
         if tavily_hits > 0:
             sources.append({"entity_type": "tavily_web", "entity_id": None, "score": None})
         sources.extend(
@@ -672,8 +1012,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             merge_tavily_consultant_payloads,
         )
         from rag.phlydata_consultant_lookup import (
-            enrich_tavily_query_for_consultant,
             build_owner_operator_focus_tavily_query,
+            consultant_merge_lookup_tokens,
+            consultant_phly_lookup_token_list,
+            enrich_tavily_query_for_consultant,
         )
         from rag.consultant_intent import resolve_aircraft_image_gallery_intent
         from rag.consultant_market_lookup import (
@@ -691,7 +1033,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         )
         from rag.consultant_tavily_gate import (
             empty_consultant_tavily_payload,
-            should_run_consultant_tavily,
+            should_run_consultant_tavily_after_internal,
         )
         from services.tavily_owner_hint import fetch_tavily_hints_for_query
 
@@ -770,6 +1112,11 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 f_phly = pre_pool.submit(_run_phly)
                 f_int = pre_pool.submit(_run_image_gallery_intent)
                 phly_authority, phly_meta, phly_rows = f_phly.result()
+                phly_authority = (
+                    _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
+                    + _consultant_faa_no_phly_priority_prefix(phly_meta)
+                    + (phly_authority or "")
+                )
                 user_wants_gallery, consultant_image_intent_src = f_int.result()
             qstrip = (query or "").strip()
             expanded = {
@@ -793,6 +1140,11 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 f_exp = pre_pool.submit(_run_expand)
                 f_int = pre_pool.submit(_run_image_gallery_intent)
                 phly_authority, phly_meta, phly_rows = f_phly.result()
+                phly_authority = (
+                    _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
+                    + _consultant_faa_no_phly_priority_prefix(phly_meta)
+                    + (phly_authority or "")
+                )
                 expanded = f_exp.result()
                 user_wants_gallery, consultant_image_intent_src = f_int.result()
 
@@ -811,18 +1163,27 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             max_total=enrich_rag_max,
             strict_market_sql=strict_market_sql,
         )
+        consultant_lookup_tokens = consultant_merge_lookup_tokens(
+            query, history, phly_meta.get("faa_lookup_tokens")
+        )
         tq = enrich_tavily_query_for_consultant(
             query,
             expanded.get("tavily_query") or query,
             phly_rows,
             history_snippet=hs_opt,
+            lookup_tokens=consultant_lookup_tokens,
         )
 
         tdepth: Optional[str] = None
         if (os.getenv("CONSULTANT_TAVILY_ADVANCED") or "").strip().lower() in ("1", "true", "yes"):
             tdepth = "advanced"
 
-        sq = build_owner_operator_focus_tavily_query(query, phly_rows, history_snippet=hs_opt)
+        sq = build_owner_operator_focus_tavily_query(
+            query,
+            phly_rows,
+            history_snippet=hs_opt,
+            lookup_tokens=consultant_lookup_tokens,
+        )
         sq_c = " ".join(sq.split()).lower() if sq else ""
         tq_c = " ".join(tq.split()).lower()
         run_secondary = bool(sq and sq_c != tq_c)
@@ -836,15 +1197,24 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             merge_purchase = False
         img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
         skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
-        tavily_when_needed = _env_truthy("CONSULTANT_TAVILY_WHEN_NEEDED")
-        run_tavily, tavily_gate_reason = should_run_consultant_tavily(
-            when_needed_enabled=tavily_when_needed,
-            query=query,
-            history=history,
-            phly_authority=phly_authority,
-            phly_rows=phly_rows,
-            phly_meta=phly_meta,
-            strict_market_sql=strict_market_sql,
+
+        results = self._retrieve_multi(
+            rag_qs,
+            top_k=top_k,
+            score_threshold=score_threshold,
+            max_results_total=rag_max_chunks,
+            max_query_variants=max_rag_variants,
+            skip_rerank=fast_retrieval or low_latency,
+            rerank_anchor_query=query,
+        )
+        results = self._filter_rag_results_for_phly_aircraft(results, phly_rows)
+
+        sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
+        force_tavily_always = _env_truthy("CONSULTANT_TAVILY_ALWAYS")
+        run_tavily, tavily_gate_reason = should_run_consultant_tavily_after_internal(
+            vector_result_count=len(results),
+            sql_context_nonempty=sql_nonempty,
+            force_always=force_tavily_always,
         )
         run_image_pass = (
             bool(run_tavily and img_q and not skip_img_pass and user_wants_gallery)
@@ -860,7 +1230,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             merge_purchase = False
             run_image_pass = False
             logger.info(
-                "Consultant: Tavily skipped (CONSULTANT_TAVILY_WHEN_NEEDED=1, reason=%s)",
+                "Consultant: Tavily skipped (internal SQL + vector sufficient, reason=%s)",
                 tavily_gate_reason,
             )
         else:
@@ -870,8 +1240,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 + (1 if merge_purchase else 0)
                 + (1 if run_image_pass else 0)
             )
-            if tavily_when_needed:
-                logger.debug("Consultant: Tavily run (when-needed mode, reason=%s)", tavily_gate_reason)
+            logger.debug("Consultant: Tavily run (fallback, reason=%s)", tavily_gate_reason)
         purchase_ctx = consultant_wants_internal_market_sql(
             query, history, strict=strict_market_sql
         )
@@ -922,36 +1291,24 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 include_images=True,
             )
 
-        def _fetch_rag() -> List[Dict[str, Any]]:
-            return self._retrieve_multi(
-                rag_qs,
-                top_k=top_k,
-                score_threshold=score_threshold,
-                max_results_total=rag_max_chunks,
-                max_query_variants=max_rag_variants,
-            )
-
         primary: Dict[str, Any] = {}
         secondary: Optional[Dict[str, Any]] = None
         tertiary: Optional[Dict[str, Any]] = None
         quaternary: Optional[Dict[str, Any]] = None
-        results: List[Dict[str, Any]] = []
         if run_tavily:
             max_workers = (
-                2
+                1
                 + (1 if run_secondary else 0)
                 + (1 if merge_purchase else 0)
                 + (1 if run_image_pass else 0)
             )
-            max_workers = max(2, min(5, max_workers))
+            max_workers = max(1, min(4, max_workers))
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
                 f_pri = pool.submit(_fetch_pri)
-                f_rag = pool.submit(_fetch_rag)
                 f_sec = pool.submit(_fetch_sec) if run_secondary else None
                 f_pur = pool.submit(_fetch_pur) if merge_purchase else None
                 f_img = pool.submit(_fetch_img) if run_image_pass else None
                 primary = f_pri.result()
-                results = f_rag.result()
                 if f_sec is not None:
                     secondary = f_sec.result()
                 if f_pur is not None:
@@ -959,15 +1316,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 if f_img is not None:
                     quaternary = f_img.result()
         else:
-            results = self._retrieve_multi(
-                rag_qs,
-                top_k=top_k,
-                score_threshold=score_threshold,
-                max_results_total=rag_max_chunks,
-                max_query_variants=max_rag_variants,
-            )
             primary = empty_consultant_tavily_payload()
-        results = self._filter_rag_results_for_phly_aircraft(results, phly_rows)
         tavily_payload = primary
         if run_secondary and secondary is not None:
             tavily_payload = merge_tavily_consultant_payloads(
@@ -1133,15 +1482,24 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             data_used["tavily_image_focus_pass"] = 1
         if image_boost_used:
             data_used["tavily_image_boost_pass"] = 1
-        if tavily_when_needed:
-            data_used["consultant_tavily_when_needed"] = 1
-            data_used["tavily_gate_reason"] = tavily_gate_reason
+        data_used["tavily_gate_reason"] = tavily_gate_reason
+        if force_tavily_always:
+            data_used["consultant_tavily_always"] = 1
         if not run_tavily:
             data_used["tavily_skipped"] = 1
         if purchase_tavily_merged:
             data_used["tavily_purchase_focus"] = 1
         data_used["tavily_error"] = tavily_payload.get("error")
         data_used["rag_query_variants"] = len(rag_qs)
+        if self._rerank_enabled_globally() and not (fast_retrieval or low_latency):
+            data_used["rag_semantic_rerank"] = 1
+            data_used["rag_rerank_model"] = (
+                (os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-large").strip()
+            )
+            if results and any(r.get("rerank_score") is not None for r in results):
+                data_used["rag_rerank_applied"] = 1
+        else:
+            data_used["rag_semantic_rerank"] = 0
         for r in results:
             et = (r.get("entity_type") or "other").replace("_", " ")
             data_used[et] = data_used.get(et, 0) + 1
@@ -1179,6 +1537,18 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     "\n\nA **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** block is present: "
                     "you MUST repeat that registrant name and mailing address verbatim as the FAA legal registrant. "
                     "Tavily or vector text must not replace or contradict them."
+                )
+            if "AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row" in phly_authority:
+                system_prompt += (
+                    "\n\nAn **[AUTHORITATIVE — FAA MASTER — no PhlyData row]** block is present: lead the answer with "
+                    "FAA aircraft identity and U.S. legal registrant lines from that block before Tavily or vector; "
+                    "do not claim make/model, year, serial, or registrant are unknown when those lines are filled."
+                )
+            if int((phly_meta or {}).get("faa_internal_snapshot_miss") or 0):
+                system_prompt += (
+                    "\n\n**Ingested FAA snapshot miss:** If **[NO INGESTED FAA MASTER ROW]** appears, our internal "
+                    "`faa_master` table had no row — you MUST still use **Tavily** and vector excerpts in context for "
+                    "public registry–class facts; do not answer as if all fields are unavailable when snippets name type, serial, or owner."
                 )
         if market_block:
             system_prompt += (
@@ -1263,7 +1633,35 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         SSE-friendly events for ChatGPT-style token streaming.
         Yields: {type: status|delta|done|error, ...}
         """
+        from rag.rag_answer_cache import (
+            apply_cache_hit_metadata,
+            apply_cache_miss_metadata,
+            cache_get,
+            cache_set,
+            normalize_answer_payload_for_cache,
+            rag_cache_enabled,
+        )
+
         start = time.perf_counter()
+        q = (query or "").strip()
+        cacheable = rag_cache_enabled() and bool(q) and not history
+
+        if cacheable:
+            hit = cache_get(q)
+            if hit:
+                norm = normalize_answer_payload_for_cache(hit)
+                yield {"type": "status", "message": "Preparing answer…"}
+                for piece in self._iter_display_chunks(norm.get("answer") or ""):
+                    yield {"type": "delta", "text": piece}
+                yield {
+                    "type": "done",
+                    "sources": norm.get("sources") or [],
+                    "data_used": apply_cache_hit_metadata(norm.get("data_used")),
+                    "aircraft_images": norm.get("aircraft_images") or [],
+                    "error": norm.get("error"),
+                }
+                return
+
         try:
             kind, payload = self._consultant_retrieval_bundle(
                 query,
@@ -1274,16 +1672,25 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             )
             if kind == "professional":
                 yield {"type": "status", "message": "Preparing answer…"}
-                ans = (payload.get("answer") or "") if isinstance(payload, dict) else ""
+                pl = payload if isinstance(payload, dict) else {}
+                ans = (pl.get("answer") or "") if isinstance(payload, dict) else ""
                 for piece in self._iter_display_chunks(ans):
                     yield {"type": "delta", "text": piece}
+                norm = normalize_answer_payload_for_cache(pl)
+                written = bool(
+                    cacheable and not norm.get("error") and cache_set(q, norm)
+                )
+                du = dict(norm.get("data_used") or {})
+                if cacheable:
+                    du = apply_cache_miss_metadata(du)
+                    if written:
+                        du["rag_cache_write"] = 1
                 yield {
                     "type": "done",
-                    "sources": payload.get("sources", []) if isinstance(payload, dict) else [],
-                    "data_used": payload.get("data_used") if isinstance(payload, dict) else None,
-                    "aircraft_images": (payload.get("aircraft_images") if isinstance(payload, dict) else None)
-                    or [],
-                    "error": payload.get("error") if isinstance(payload, dict) else None,
+                    "sources": pl.get("sources", []),
+                    "data_used": du,
+                    "aircraft_images": pl.get("aircraft_images") or [],
+                    "error": pl.get("error"),
                 }
                 return
 
@@ -1303,13 +1710,31 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
 
 Consider the conversation so far. If the user's message is a follow-up (e.g. "Is this all?", "What about the price?", "Tell me more"), interpret it in light of your previous answer and respond like a human would. Provide a full, helpful answer using your general knowledge. If the question is about flight, aviation, or aircraft, give a complete answer. Start with a brief note that this is not from Hye Aero's database if relevant, then give the full answer."""
                 messages.append({"role": "user", "content": user_content})
+                gk_parts: List[str] = []
                 try:
                     for d in self._stream_chat_deltas(messages, max_tokens=1536):
+                        gk_parts.append(d)
                         yield {"type": "delta", "text": d}
+                    gk_ans = "".join(gk_parts)
+                    gk_norm = normalize_answer_payload_for_cache(
+                        {
+                            "answer": gk_ans,
+                            "sources": [],
+                            "data_used": {},
+                            "aircraft_images": [],
+                            "error": None,
+                        }
+                    )
+                    written_gk = bool(cacheable and cache_set(q, gk_norm))
+                    du_gk: Dict[str, Any] = {}
+                    if cacheable:
+                        du_gk = apply_cache_miss_metadata(du_gk)
+                        if written_gk:
+                            du_gk["rag_cache_write"] = 1
                     yield {
                         "type": "done",
                         "sources": [],
-                        "data_used": {},
+                        "data_used": du_gk,
                         "aircraft_images": [],
                         "error": None,
                     }
@@ -1352,6 +1777,7 @@ Context:
 
 Current question: {b["query"]}
 {_consultant_purchase_tail(b)}
+{_consultant_phly_faa_user_directives_suffix(phly_meta)}
 Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
 
@@ -1367,6 +1793,7 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
 
             sync_client = openai.OpenAI(api_key=self.openai_api_key, timeout=120.0)
             draft = ""
+            stream_parts: List[str] = []
             if not review_disabled:
                 response = sync_client.chat.completions.create(
                     model=self.chat_model,
@@ -1393,13 +1820,16 @@ Produce the final client-facing answer.""",
                 ]
                 try:
                     for d in self._stream_chat_deltas(rev_messages, max_tokens=1536, temperature=0.2):
+                        stream_parts.append(d)
                         yield {"type": "delta", "text": d}
                 except Exception as rev_e:
                     logger.warning("Consultant stream review failed, falling back to draft chunks: %s", rev_e)
                     for piece in self._iter_display_chunks(draft):
+                        stream_parts.append(piece)
                         yield {"type": "delta", "text": piece}
             else:
                 for d in self._stream_chat_deltas(messages, max_tokens=1536):
+                    stream_parts.append(d)
                     yield {"type": "delta", "text": d}
 
             data_used["final_review_pass"] = not review_disabled
@@ -1416,10 +1846,26 @@ Produce the final client-facing answer.""",
             imgs = b.get("aircraft_images")
             if not isinstance(imgs, list):
                 imgs = data_used.get("aircraft_images") if isinstance(data_used.get("aircraft_images"), list) else []
+            final_stream_answer = "".join(stream_parts)
+            llm_norm = normalize_answer_payload_for_cache(
+                {
+                    "answer": final_stream_answer,
+                    "sources": sources,
+                    "data_used": dict(data_used),
+                    "aircraft_images": imgs,
+                    "error": None,
+                }
+            )
+            written_llm = bool(cacheable and cache_set(q, llm_norm))
+            du_out = dict(data_used)
+            if cacheable:
+                du_out = apply_cache_miss_metadata(du_out)
+                if written_llm:
+                    du_out["rag_cache_write"] = 1
             yield {
                 "type": "done",
                 "sources": sources,
-                "data_used": data_used,
+                "data_used": du_out,
                 "aircraft_images": imgs,
                 "error": None,
             }
@@ -1448,7 +1894,26 @@ Produce the final client-facing answer.""",
         multi-query Pinecone RAG → draft LLM → optional review LLM. Falls back to general knowledge
         only when there is no usable context at all.
         """
+        from rag.rag_answer_cache import (
+            apply_cache_hit_metadata,
+            apply_cache_miss_metadata,
+            cache_get,
+            cache_set,
+            normalize_answer_payload_for_cache,
+            rag_cache_enabled,
+        )
+
         start = time.perf_counter()
+        q = (query or "").strip()
+        cacheable = rag_cache_enabled() and bool(q) and not history
+
+        if cacheable:
+            cached_hit = cache_get(q)
+            if cached_hit:
+                norm = normalize_answer_payload_for_cache(cached_hit)
+                norm["data_used"] = apply_cache_hit_metadata(norm.get("data_used"))
+                return norm
+
         try:
             kind, payload = self._consultant_retrieval_bundle(
                 query,
@@ -1458,9 +1923,29 @@ Produce the final client-facing answer.""",
                 history,
             )
             if kind == "professional":
-                return payload
+                pl = payload if isinstance(payload, dict) else {}
+                norm = normalize_answer_payload_for_cache(pl)
+                written = bool(
+                    cacheable and not norm.get("error") and cache_set(q, norm)
+                )
+                out = dict(norm)
+                if cacheable:
+                    out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
+                    if written:
+                        out["data_used"]["rag_cache_write"] = 1
+                return out
             if kind == "gk":
-                return self._answer_from_general_knowledge(query, start, history=history)
+                gk_out = self._answer_from_general_knowledge(query, start, history=history)
+                norm = normalize_answer_payload_for_cache(gk_out)
+                written_gk = bool(
+                    cacheable and not norm.get("error") and cache_set(q, norm)
+                )
+                out = dict(norm)
+                if cacheable:
+                    out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
+                    if written_gk:
+                        out["data_used"]["rag_cache_write"] = 1
+                return out
 
             b = payload
             context = b["context"]
@@ -1551,13 +2036,21 @@ Produce the final client-facing answer.""",
                 len(answer),
                 elapsed,
             )
-            return {
+            imgs_final = b.get("aircraft_images") or data_used.get("aircraft_images") or []
+            resp = {
                 "answer": answer,
                 "sources": sources,
                 "data_used": data_used,
-                "aircraft_images": b.get("aircraft_images") or data_used.get("aircraft_images") or [],
+                "aircraft_images": imgs_final,
                 "error": None,
             }
+            norm = normalize_answer_payload_for_cache(resp)
+            written = bool(cacheable and cache_set(q, norm))
+            if cacheable:
+                resp["data_used"] = apply_cache_miss_metadata(resp["data_used"])
+                if written:
+                    resp["data_used"]["rag_cache_write"] = 1
+            return resp
         except Exception as e:
             elapsed = time.perf_counter() - start
             logger.error("RAG answer failed after %.2fs: %s", elapsed, e, exc_info=True)

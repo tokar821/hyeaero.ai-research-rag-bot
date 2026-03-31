@@ -1,16 +1,19 @@
 """
-Optional Tavily gating for Ask Consultant.
+Tavily gating for Ask Consultant.
 
-When ``CONSULTANT_TAVILY_WHEN_NEEDED=1``, skip Tavily if PhlyData + FAA MASTER already
-answer the question class (identity / U.S. registrant) and the user is not asking for
-purchase/listing web, operator/fleet web, or other explicit live-web topics.
+**Default:** web search runs only as a **fallback** after internal retrieval — see
+:func:`should_run_consultant_tavily_after_internal`.
 
-Default (env unset / 0): always run Tavily — preserves existing behavior.
+Set ``CONSULTANT_TAVILY_ALWAYS=1`` to always run Tavily (previous default-style behavior).
+
+Legacy heuristic: :func:`should_run_consultant_tavily` (still available; no longer used by
+``RAGQueryService`` by default).
 """
 
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 from rag.consultant_market_lookup import (
@@ -20,6 +23,45 @@ from rag.consultant_market_lookup import (
 from rag.phlydata_consultant_lookup import wants_consultant_owner_operator_context
 
 logger = logging.getLogger(__name__)
+
+
+def consultant_tavily_min_vector_threshold() -> int:
+    """Minimum Pinecone hits before Tavily may be skipped (default ``3``)."""
+    try:
+        v = int((os.getenv("CONSULTANT_TAVILY_MIN_VECTOR_RESULTS") or "3").strip())
+    except ValueError:
+        return 3
+    return max(0, min(50, v))
+
+
+def should_run_consultant_tavily_after_internal(
+    *,
+    vector_result_count: int,
+    sql_context_nonempty: bool,
+    force_always: bool = False,
+    min_vector_results: Optional[int] = None,
+) -> Tuple[bool, str]:
+    """
+    Run Tavily when internal context is thin: too few vector hits **or** no SQL-backed
+    authority (PhlyData / FAA / listing block).
+
+    Skip Tavily when ``vector_result_count >= min_vector_results`` **and**
+    ``sql_context_nonempty`` (unless ``force_always``).
+
+    ``min_vector_results`` defaults to :func:`consultant_tavily_min_vector_threshold`.
+    """
+    if force_always:
+        return True, "forced_always_on"
+    min_v = (
+        consultant_tavily_min_vector_threshold()
+        if min_vector_results is None
+        else max(0, min(50, int(min_vector_results)))
+    )
+    if not sql_context_nonempty:
+        return True, "sql_context_empty"
+    if vector_result_count < min_v:
+        return True, "vector_below_threshold"
+    return False, "internal_sql_and_vector_sufficient"
 
 
 def _gate_context_blob(

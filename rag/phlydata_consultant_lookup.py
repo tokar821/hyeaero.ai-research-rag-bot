@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
 from rag.phlydata_aircraft_schema import phlydata_aircraft_select_sql
+from services.faa_master_lookup import registration_tail_canonical
 
 logger = logging.getLogger(__name__)
 
@@ -309,6 +310,9 @@ def registry_web_hint_for_tail(registration: str) -> str:
         return "Australia CASA aircraft"
     if u.startswith("C-G") or u.startswith("CF-"):
         return "Canada Transport Canada aircraft"
+    # U.S. civil registry — critical when PhlyData has no row and faa_master ingest may lag public FAA
+    if u.startswith("N") and len(u) > 1 and u[1:].replace("-", "").isalnum():
+        return "FAA civil aircraft registry N-number flightaware"
     return ""
 
 
@@ -316,17 +320,33 @@ def build_owner_operator_focus_tavily_query(
     user_query: str,
     phly_rows: List[Dict[str, Any]],
     history_snippet: Optional[str] = None,
+    lookup_tokens: Optional[List[str]] = None,
 ) -> Optional[str]:
     """
     Second Tavily query focused on tail + serial + operator/owner keywords.
     Use together with the LLM-expanded query to reduce stale or generic snippets.
     ``history_snippet`` lets short follow-ups (e.g. "thanks") still run owner-focused web search
     when the thread already asked about ownership.
+
+    When **PhlyData has no row**, we still build a query from ``lookup_tokens`` (synthetic identity)
+    so U.S. tails (e.g. ``N448SJ``) get an FAA/registry-focused second pass instead of skipping entirely.
     """
     blob = "\n".join(x for x in ((history_snippet or "").strip(), (user_query or "").strip()) if x)
-    if not wants_consultant_owner_operator_context(blob) or not phly_rows:
+    rows_eff: List[Dict[str, Any]] = list(phly_rows or [])
+    if not rows_eff and lookup_tokens:
+        rows_eff = synthetic_phyl_like_rows_from_tokens(lookup_tokens) or []
+    if not rows_eff:
         return None
-    r = phly_rows[0]
+
+    reg0 = (rows_eff[0].get("registration_number") or "").strip().upper()
+    no_phly = not (phly_rows or [])
+    n_tail_us = reg0.startswith("N") and len(reg0) > 1
+    owner_q = wants_consultant_owner_operator_context(blob)
+    # Secondary pass: explicit owner/operator questions, OR missing Phly + U.S. N-number (FAA / type / owner color)
+    if not owner_q and not (no_phly and n_tail_us):
+        return None
+
+    r = rows_eff[0]
     reg = (r.get("registration_number") or "").strip()
     serial = (r.get("serial_number") or "").strip()
     mfr = (r.get("manufacturer") or "").strip()
@@ -351,6 +371,15 @@ def build_owner_operator_focus_tavily_query(
         parts.append("Cessna 525A Citation CJ2+")
     if hint:
         parts.append(hint)
+    if no_phly and n_tail_us:
+        parts.extend(
+            [
+                "aircraft type",
+                "make model",
+                "year",
+                "FAA registered owner",
+            ]
+        )
     # Bias toward recent fleet/operator pages (Tavily still returns static pages; helps ranking)
     reg_u = (reg or "").strip().upper()
     if reg_u.startswith("OY"):
@@ -434,8 +463,8 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
     ):
         add(m.group(1))
 
-    # Tail / N-number
-    for m in re.finditer(r"\b([Nn][-\s]?[A-Z0-9]{1,6})\b", q):
+    # Tail / N-number (allow lowercase letters, e.g. n448sj → N448SJ)
+    for m in re.finditer(r"\b([Nn][-\s]?[A-Za-z0-9]{1,6})\b", q):
         add(m.group(1).upper().replace(" ", ""))
 
     # International-style marks: V-682, XA-98723, G-CIVG — not MSN forms like 525-0444 (those start with a digit)
@@ -458,6 +487,78 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
         add(s)
 
     return out
+
+
+def extract_us_registration_tail_candidates(
+    query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> List[str]:
+    """
+    Scan the **current message** and (when provided) **recent chat** for U.S. civil registration marks
+    (N-numbers), without relying on :func:`consultant_phly_lookup_token_list` alone.
+
+    Used so **faa_master** standalone lookup still runs for tails like ``N448SJ`` when the user cites the
+    tail only in an earlier turn (follow-up: "what about ownership?") or when Phly SQL tokens differ.
+
+    History scan fixes gaps where the raw ``query`` string has no tail but the thread does.
+    """
+    seen: set[str] = set()
+    out: List[str] = []
+
+    def add(raw: str) -> None:
+        t = (raw or "").strip().upper().replace(" ", "")
+        if len(t) < 3 or len(t) > 10:
+            return
+        if t in seen:
+            return
+        seen.add(t)
+        out.append(t)
+
+    def scan_text(blob: str) -> None:
+        if not (blob or "").strip():
+            return
+        for m in re.finditer(r"\b([Nn][-\s]?[A-Za-z0-9]{1,6})\b", blob):
+            add(m.group(1))
+
+    scan_text(query or "")
+    if history:
+        for h in history[-16:]:
+            role = (h.get("role") or "").strip().lower()
+            if role not in ("user", "assistant"):
+                continue
+            scan_text(h.get("content") or "")
+
+    return out[:24]
+
+
+def faa_internal_miss_context_block(tokens: List[str]) -> str:
+    """
+    When PhlyData has no row **and** our ingested ``faa_master`` snapshot has no row for the tail,
+    instruct the answer model to lead on Tavily / web (public FAA-equivalent facts), not "unknown."
+    """
+    toks = ", ".join(str(x) for x in (tokens or [])[:16])
+    return (
+        "[NO INGESTED FAA MASTER ROW — Hye Aero internal faa_master snapshot]\n"
+        f"Identifiers for this turn: {toks}.\n"
+        "Our ingested **faa_master** table has **no** row for this registration in this environment "
+        "(ingest lag, non-U.S. registry, or tail not yet loaded). **Public FAA / registry data may still exist** "
+        "on the internet — you **must** use the **Tavily web results** and vector excerpts in this context when present. "
+        "Lead with **substantive facts from Tavily snippets** (aircraft class, manufacturer/model class, year, serial, "
+        "registered owner/operator when snippets support them) and cite **snippet #** and domain. "
+        "Do **not** say make/model, year, or ownership are \"not available in the data gathered\" if any Tavily or "
+        "vector line provides them. If web snippets are empty, say that clearly and still avoid implying the aircraft "
+        "does not exist in public registries — suggest verifying on the FAA registry or flight-tracking sites.\n"
+    )
+
+
+def _should_attempt_faa_registration_lookup(raw: str) -> bool:
+    """True if ``raw`` might be a U.S. tail worth querying ``faa_master`` (cheap filter)."""
+    if registration_tail_canonical(raw):
+        return True
+    u = (raw or "").strip().upper().replace(" ", "")
+    if u.startswith("N") and 4 <= len(u) <= 8:
+        return True
+    return False
 
 
 def consultant_phly_lookup_token_list(
@@ -845,6 +946,241 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
     return list(by_id.values())[:12]
 
 
+def _faa_master_aircraft_identity_lines(fr: Dict[str, Any]) -> List[str]:
+    """FAA MASTER aircraft fields (not Phly) — make/model/year context when PhlyData has no row."""
+    out: List[str] = []
+    nn = (fr.get("n_number") or "").strip()
+    sn = (fr.get("serial_number") or "").strip()
+    mcode = (fr.get("mfr_mdl_code") or "").strip()
+    ref_model = (fr.get("faa_reference_model") or "").strip()
+    yr = fr.get("year_mfr")
+    ta = (fr.get("type_aircraft") or "").strip()
+    te = (fr.get("type_engine") or "").strip()
+    cert = (fr.get("certification") or "").strip()
+    stc = (fr.get("status_code") or "").strip()
+    if nn:
+        out.append(f"- FAA n_number (as in MASTER): {nn}")
+    if sn:
+        out.append(f"- FAA serial_number (as in MASTER): {sn}")
+    if mcode:
+        out.append(f"- FAA mfr_mdl_code: {mcode}")
+    if ref_model:
+        out.append(f"- FAA aircraft reference model (ACFTREF decode): {ref_model}")
+    if yr is not None:
+        out.append(f"- FAA year_mfr: {yr}")
+    if ta:
+        out.append(f"- FAA type_aircraft: {ta}")
+    if te:
+        out.append(f"- FAA type_engine: {te}")
+    if cert:
+        out.append(f"- FAA certification: {cert}")
+    if stc:
+        out.append(f"- FAA status_code: {stc}")
+    return out
+
+
+def synthetic_phly_row_from_faa_master(fr: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Minimal ``phlydata_aircraft``-shaped row so downstream consultant paths (Tavily, listing SQL)
+    can anchor tail/serial when only **faa_master** matched.
+    """
+    nn = (fr.get("n_number") or "").strip()
+    reg = nn.upper() if nn else ""
+    if reg and not reg.startswith("N") and len(reg) <= 6:
+        reg = f"N{reg}"
+    ref = (fr.get("faa_reference_model") or "").strip()
+    sn = (fr.get("serial_number") or "").strip()
+    yr = fr.get("year_mfr")
+    mdl = ref or (fr.get("mfr_mdl_code") or "").strip()
+    return {
+        "registration_number": reg,
+        "serial_number": sn,
+        "manufacturer": "",
+        "model": mdl,
+        "manufacturer_year": yr,
+        "category": "",
+    }
+
+
+def sort_tokens_faa_priority(tokens: List[str]) -> List[str]:
+    """
+    Order tokens so U.S. N-numbers are tried first in ``faa_master_standalone_authority_for_tokens``.
+    Long numeric MSNs or years first in the list can waste attempts and delay tail matches.
+    """
+    if not tokens:
+        return []
+    scored: List[tuple[int, int, str]] = []
+    for i, t in enumerate(tokens):
+        u = re.sub(r"\s+", "", (t or "").strip())
+        if _N_TAIL_TOKEN.fullmatch(u):
+            pri = 0
+        elif _token_is_tail_registration(t):
+            pri = 1
+        elif u.startswith(("N", "n")) and len(u) >= 4:
+            pri = 2
+        else:
+            pri = 3
+        scored.append((pri, i, t))
+    scored.sort(key=lambda x: (x[0], x[1]))
+    return [x[2] for x in scored]
+
+
+def consultant_merge_lookup_tokens(
+    query: str,
+    history: Optional[List[Dict[str, str]]],
+    faa_lookup_tokens: Optional[List[str]] = None,
+) -> List[str]:
+    """
+    Merge token lists used for Phly SQL, FAA scan, and Tavily enrichment so tails cited only in
+    history (or duplicated across paths) stay anchored on one identifier list.
+    """
+    base = consultant_phly_lookup_token_list(query, history)
+    extra = [x for x in (faa_lookup_tokens or []) if (x or "").strip()]
+    return list(dict.fromkeys([*base, *extra]))
+
+
+def _faa_registration_lookup_variants(raw: str) -> List[str]:
+    """
+    Try multiple string forms for ``fetch_faa_master_owner_rows`` tail matching
+    (CSV may store ``N448SJ``, ``448SJ``, or mixed case).
+    """
+    t = (raw or "").strip()
+    if not t:
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+
+    def add(x: str) -> None:
+        s = (x or "").strip()
+        if not s or s in seen:
+            return
+        seen.add(s)
+        out.append(s)
+
+    u = t.upper().replace(" ", "")
+    add(t)
+    add(u)
+    add(u.replace("-", ""))
+    # US civil: ensure N-prefix form when user typed short form (e.g. 448SJ → N448SJ)
+    if re.match(r"^[A-Z0-9]{2,6}$", u) and not u.startswith("N"):
+        add(f"N{u}")
+    if u.startswith("N") and len(u) > 2:
+        add(u[1:])
+    return out[:8]
+
+
+def faa_master_standalone_authority_for_tokens(
+    db: PostgresClient,
+    tokens: List[str],
+    fetch_faa_master,
+) -> Tuple[str, Dict[str, Any], Optional[Dict[str, Any]]]:
+    """
+    When **phlydata_aircraft** has no matching row, still look up **faa_master** using the user's
+    registration / tail tokens (e.g. ``N448SJ``) so the consultant receives verbatim FAA registrant
+    lines — same source as when Phly rows exist.
+
+    Also emits **faa_aircraft_reference** / MASTER identity fields (make/model class, year, serial)
+    so the answer LLM does not claim "unknown" when the registry row exists.
+
+    Returns ``(authority_text, meta, first_faa_row_or_none)`` for downstream synthetic Phly-shaped rows.
+    """
+    if not tokens:
+        return "", {}, None
+    tried: set[str] = set()
+    for raw in sort_tokens_faa_priority(tokens)[:24]:
+        t = (raw or "").strip()
+        if not t:
+            continue
+        # Prefer tokens that can map to a US registry tail; still try variants for robustness.
+        variants = _faa_registration_lookup_variants(t)
+        for reg_try in variants:
+            if reg_try in tried:
+                continue
+            if not _should_attempt_faa_registration_lookup(reg_try):
+                continue
+            tried.add(reg_try)
+            try:
+                faa_rows, kind = fetch_faa_master(
+                    db,
+                    serial="",
+                    model=None,
+                    registration=reg_try,
+                )
+            except Exception as e:
+                logger.debug("faa_master standalone lookup: %s", e)
+                continue
+            if not faa_rows:
+                continue
+            fr = faa_rows[0]
+            rn = (fr.get("registrant_name") or "").strip()
+            st1 = (fr.get("street") or "").strip()
+            st2 = (fr.get("street2") or "").strip()
+            street_combined = " ".join(x for x in (st1, st2) if x).strip()
+            city = (fr.get("city") or "").strip()
+            st = (fr.get("state") or "").strip()
+            z = (fr.get("zip_code") or "").strip()
+            ctry = (fr.get("country") or "").strip()
+            loc = ", ".join(x for x in (city, st, z, ctry) if x)
+
+            lines: List[str] = [
+                "[AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row for this identifier]",
+                "PhlyData (**phlydata_aircraft**) has **no** internal export row for the user's search tokens. "
+                "The following lines are from our ingested **FAA MASTER** snapshot only (U.S. civil registry). "
+                "Use **every** non-empty FAA line below for your answer: aircraft identity (reference model, year, type) "
+                "and U.S. legal registrant — do **not** say make/model or ownership is unknown or not in the data when "
+                "those lines are present. Supplement with Tavily/vector only for operator, fleet, or market color not in MASTER.",
+                "",
+                f"- Registration token matched: {reg_try} (from query token {raw!r})",
+                f"- FAA match kind: {kind or 'unknown'}",
+                "",
+                "[FAA aircraft identity from MASTER — use when PhlyData absent]",
+            ]
+            for id_line in _faa_master_aircraft_identity_lines(fr):
+                lines.append(id_line)
+            lines.append("")
+            if rn:
+                lines.append(f"- FAA MASTER registrant (faa_master): {rn}")
+            if street_combined:
+                lines.append(f"- FAA mailing street: {street_combined}")
+            if loc:
+                lines.append(f"- FAA mailing location: {loc}")
+            ref_model = (fr.get("faa_reference_model") or "").strip()
+            if ref_model or fr.get("year_mfr") is not None:
+                lines.extend(
+                    [
+                        "",
+                        "[FOR USER REPLY — FAA aircraft type / year (faa_master) — when PhlyData absent]",
+                        "  If the FAA identity lines above include **faa_reference_model** or **year_mfr**, state aircraft class / year from those lines.",
+                        "  Do **not** claim make/model or year are unavailable when those fields appear above.",
+                    ]
+                )
+            if rn:
+                lines.extend(
+                    [
+                        "",
+                        "[FOR USER REPLY — U.S. legal registrant (FAA MASTER) — MANDATORY VERBATIM]",
+                        "  Source: FAA MASTER (registrant/address). State name and mailing verbatim — do NOT replace with web guesses.",
+                        f"  Registrant name: {rn}",
+                    ]
+                )
+                if street_combined:
+                    lines.append(f"  Mailing street: {street_combined}")
+                if loc:
+                    lines.append(f"  Mailing city/state/ZIP/country: {loc}")
+            meta = {
+                "faa_master_owner_rows": 1,
+                "faa_master_match_kind": kind,
+                "faa_standalone_from_tokens": 1,
+            }
+            return "\n".join(lines), meta, fr
+
+    logger.info(
+        "faa_master_standalone: no FAA row matched for tokens (sample): %s",
+        [str(x) for x in tokens[:12]],
+    )
+    return "", {}, None
+
+
 def format_phlydata_consultant_answer(
     db: PostgresClient,
     rows: List[Dict[str, Any]],
@@ -967,16 +1303,41 @@ def format_phlydata_consultant_answer(
     return "\n".join(lines), data_used
 
 
+def synthetic_phyl_like_rows_from_tokens(lookup_tokens: Optional[List[str]]) -> List[Dict[str, Any]]:
+    """
+    When PhlyData matched nothing, still give Tavily enrichment a minimal ``registration_number``
+    (and optional identity) so searches are anchored on the user's tail/serial tokens.
+    """
+    if not lookup_tokens:
+        return []
+    for t in lookup_tokens[:8]:
+        u = re.sub(r"\s+", "", (t or "").strip())
+        if u and _N_TAIL_TOKEN.fullmatch(u):
+            return [{"registration_number": u.upper(), "serial_number": "", "manufacturer": "", "model": ""}]
+    for t in lookup_tokens[:8]:
+        if _token_is_tail_registration(t):
+            return [{"registration_number": _phly_identity_key(t), "serial_number": "", "manufacturer": "", "model": ""}]
+    return []
+
+
 def enrich_tavily_query_for_consultant(
     user_query: str,
     base_tavily_query: str,
     phly_rows: List[Dict[str, Any]],
     history_snippet: Optional[str] = None,
+    lookup_tokens: Optional[List[str]] = None,
 ) -> str:
     """
     When the user asks about ownership and we matched PhlyData rows, append tail/serial/model
     plus owner/operator terms so Tavily returns registry and fleet pages (not just the raw user phrase).
+
+    When PhlyData matched **no** rows but ``lookup_tokens`` contains a tail (e.g. ``N448SJ``), we still
+    append those identifiers so Tavily is not left with a generic phrase and empty context.
     """
+    rows_use: List[Dict[str, Any]] = list(phly_rows or [])
+    if not rows_use and lookup_tokens:
+        rows_use = synthetic_phyl_like_rows_from_tokens(lookup_tokens)
+
     blob = "\n".join(x for x in ((history_snippet or "").strip(), (user_query or "").strip()) if x)
     ql = blob.lower()
     wants_owner = any(
@@ -992,11 +1353,12 @@ def enrich_tavily_query_for_consultant(
             "registration",
         )
     )
-    if not wants_owner or not phly_rows:
+    should_enrich = wants_owner or (not phly_rows and bool(rows_use))
+    if not should_enrich or not rows_use:
         return (base_tavily_query or user_query)[:500]
 
     parts: List[str] = [(base_tavily_query or user_query).strip()]
-    for r in phly_rows[:2]:
+    for r in rows_use[:2]:
         reg = (r.get("registration_number") or "").strip()
         serial = (r.get("serial_number") or "").strip()
         mfr = (r.get("manufacturer") or "").strip()

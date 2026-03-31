@@ -1,7 +1,7 @@
 """
 Embed ``public.phlydata_aircraft`` rows from PostgreSQL into Pinecone (dedicated namespace).
 
-One aircraft → one or more text chunks (via :class:`~rag.chunking_service.ChunkingService`),
+One Phly aircraft row → one structured text chunk (via :class:`~rag.chunking_service.ChunkingService.chunk_for_entity`),
 built from **all** table columns (including dynamic ``csv_*``). Use **SQL / format_phlydata**
 for verbatim prices; vectors are for **semantic recall** only.
 
@@ -23,6 +23,8 @@ from typing import Any, Dict, List, Optional, Set
 from database.postgres_client import PostgresClient
 from rag.chunking_service import ChunkingService
 from rag.embedding_service import EmbeddingService
+from rag.aircraft_normalization import normalize_aircraft_identity
+from rag.pinecone_metadata import build_vector_metadata, sanitize_pinecone_metadata_dict
 from rag.phlydata_aircraft_schema import _DEFAULT_EXCLUDE, fetch_phlydata_aircraft_data_columns
 from vector_store.pinecone_client import PineconeClient
 
@@ -67,6 +69,10 @@ def phly_row_to_embedding_text(row: Dict[str, Any], column_order: List[str]) -> 
     ]
     aid = row.get("aircraft_id")
     lines.append(f"aircraft_id: {aid}")
+    cm, cmo = normalize_aircraft_identity(row.get("manufacturer"), row.get("model"))
+    if cm and cmo:
+        lines.append(f"rag_canonical_aircraft_type: {cm} {cmo}")
+        lines.append("")
 
     # Preferred identity order first if present
     priority = (
@@ -103,43 +109,6 @@ def phly_row_to_embedding_text(row: Dict[str, Any], column_order: List[str]) -> 
         lines.append(f"{col}: {t}")
 
     return "\n".join(lines).strip()
-
-
-def _pinecone_clean_metadata(meta: Dict[str, Any]) -> Dict[str, Any]:
-    """Pinecone: no null/empty; strings/numbers/bools only; truncate long strings."""
-    out: Dict[str, Any] = {}
-    for k, v in meta.items():
-        if v is None or v == "":
-            continue
-        if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
-            continue
-        if isinstance(v, bool):
-            out[k] = v
-        elif isinstance(v, (int, float)):
-            out[k] = v
-        elif isinstance(v, str):
-            s = v.strip()
-            if not s:
-                continue
-            out[k] = s[:1024] if len(s) > 1024 else s
-        else:
-            s = str(v).strip()
-            if s:
-                out[k] = s[:1024]
-    return out
-
-
-def _pinecone_metadata_from_row(row: Dict[str, Any]) -> Dict[str, Any]:
-    aid = row.get("aircraft_id")
-    base: Dict[str, Any] = {
-        "entity_type": ENTITY_TYPE,
-        "entity_id": str(aid) if aid is not None else "",
-        "registration_number": _scalar_to_text(row.get("registration_number"))[:256],
-        "serial_number": _scalar_to_text(row.get("serial_number"))[:256],
-        "manufacturer": _scalar_to_text(row.get("manufacturer"))[:256],
-        "model": _scalar_to_text(row.get("model"))[:512],
-    }
-    return _pinecone_clean_metadata(base)
 
 
 def get_embedded_phly_aircraft_ids(
@@ -229,6 +198,7 @@ def sync_phlydata_aircraft_embeddings(
     page_size: int = 200,
     upsert_batch: int = 100,
     pinecone_batch: int = 100,
+    openai_embed_batch: int = 200,
 ) -> Dict[str, Any]:
     """
     Read all ``phlydata_aircraft`` rows from Postgres; embed; upsert to Pinecone namespace ``phlydata_aircraft``.
@@ -299,11 +269,11 @@ def sync_phlydata_aircraft_embeddings(
                 logger.warning("Phly row %s: text truncated from %s chars", eid, len(text))
                 text = text[: MAX_EMBED_TEXT_CHARS - 200] + "\n…(truncated)"
 
-            base_meta = _pinecone_metadata_from_row(row)
             try:
-                chunks = chunking_service.chunk_text(
+                chunks = chunking_service.chunk_for_entity(
+                    ENTITY_TYPE,
                     text,
-                    base_meta,
+                    {},
                     chunk_id_prefix=f"{ENTITY_TYPE}_{eid}",
                 )
             except Exception as e:
@@ -315,15 +285,27 @@ def sync_phlydata_aircraft_embeddings(
                 continue
 
             texts = [c["text"] for c in chunks]
-            embeddings = embedding_service.embed_batch(texts, batch_size=64)
+            eb = max(32, min(500, int(openai_embed_batch)))
+            embeddings = embedding_service.embed_batch(texts, batch_size=eb)
 
             row_vectors: List[Dict[str, Any]] = []
+            n_chunks = len(chunks)
             for chunk, emb in zip(chunks, embeddings):
                 if emb is None:
                     continue
                 cid = chunk["chunk_index"]
                 vector_id = f"{ENTITY_TYPE}_{eid}_chunk_{cid}"
-                meta = _pinecone_clean_metadata({**chunk.get("metadata", {}), **base_meta})
+                std_meta = build_vector_metadata(
+                    ENTITY_TYPE,
+                    row,
+                    entity_id_override=eid if eid else None,
+                    chunk_index=int(cid),
+                    total_chunks=n_chunks,
+                )
+                cstrat = (chunk.get("metadata") or {}).get("chunking_strategy")
+                if cstrat:
+                    std_meta["chunking_strategy"] = str(cstrat)[:48]
+                meta = sanitize_pinecone_metadata_dict(std_meta)
                 row_vectors.append({"id": vector_id, "values": emb, "metadata": meta})
 
             if not row_vectors:

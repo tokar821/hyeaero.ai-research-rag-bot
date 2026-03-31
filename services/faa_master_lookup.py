@@ -18,10 +18,17 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Include aircraft identity fields so Ask Consultant can ground make/model/year when PhlyData has no row.
 _SELECT_FM = """
     SELECT
       fm.registrant_name, fm.street, fm.street2, fm.city, fm.state, fm.zip_code,
-      fm.region, fm.county, fm.country
+      fm.region, fm.county, fm.country,
+      fm.n_number,
+      fm.serial_number, fm.mfr_mdl_code, fm.year_mfr, fm.type_aircraft, fm.type_engine,
+      fm.certification, fm.status_code,
+      far_ref.model AS faa_reference_model
+    FROM faa_master fm
+    LEFT JOIN faa_aircraft_reference far_ref ON far_ref.code = fm.mfr_mdl_code
 """
 
 
@@ -96,11 +103,25 @@ def fetch_faa_master_owner_rows(
     ``serial_model``, ``serial_only``, or ``None``.
     """
     serial = (serial or "").strip()
-    if not serial:
-        return [], None
-
     mdl = (model or "").strip() or None
     tail_key = registration_tail_canonical(registration)
+
+    # Tail-only lookup (e.g. user cites N448SJ, not in Phly — no serial passed): still query FAA by n_number.
+    if not serial:
+        if not tail_key:
+            return [], None
+        rows = _safe_select(
+            db,
+            _SELECT_FM
+            + f"""
+    WHERE {_FM_N_TAIL} = %s
+    ORDER BY fm.ingestion_date DESC NULLS LAST
+    LIMIT 1
+    """,
+            (tail_key,),
+        )
+        return rows, "n_number_only" if rows else ([], None)
+
     ser_keys = serial_keys_for_faa_master_match(serial)
     if not ser_keys:
         ser_keys = [re.sub(r"[\s\-.]+", "", serial.strip().upper())]
@@ -110,7 +131,6 @@ def fetch_faa_master_owner_rows(
             db,
             _SELECT_FM
             + f"""
-    FROM faa_master fm
     WHERE {_FM_N_TAIL} = %s
       AND {_FM_SERIAL_NORM} = ANY(%s)
     ORDER BY fm.ingestion_date DESC NULLS LAST
@@ -126,7 +146,6 @@ def fetch_faa_master_owner_rows(
             db,
             _SELECT_FM
             + f"""
-    FROM faa_master fm
     WHERE {_FM_N_TAIL} = %s
     ORDER BY fm.ingestion_date DESC NULLS LAST
     LIMIT 1
@@ -141,7 +160,6 @@ def fetch_faa_master_owner_rows(
             db,
             _SELECT_FM
             + f"""
-    FROM faa_master fm
     WHERE {_FM_SERIAL_NORM} = ANY(%s)
       AND fm.mfr_mdl_code IN (
         SELECT far.code FROM faa_aircraft_reference far
@@ -158,7 +176,6 @@ def fetch_faa_master_owner_rows(
         db,
         _SELECT_FM
         + f"""
-    FROM faa_master fm
     WHERE {_FM_SERIAL_NORM} = ANY(%s)
     ORDER BY fm.ingestion_date DESC NULLS LAST
     LIMIT 3
