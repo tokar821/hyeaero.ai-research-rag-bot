@@ -8,6 +8,19 @@ from pinecone.exceptions import PineconeException
 logger = logging.getLogger(__name__)
 
 
+def _pinecone_namespace_missing(exc: BaseException) -> bool:
+    """True when delete targets a namespace that does not exist yet (no vectors ever upserted)."""
+    msg = str(exc).lower()
+    if "namespace not found" in msg:
+        return True
+    if "not found" in msg and "404" in msg:
+        return True
+    code = getattr(exc, "status", None) or getattr(exc, "code", None)
+    if code == 404 or code == 5:
+        return True
+    return False
+
+
 class PineconeClient:
     """Pinecone vector database client."""
     
@@ -147,7 +160,13 @@ class PineconeClient:
             self.index.delete(delete_all=True, namespace=namespace)
             logger.info("Pinecone delete_all in namespace=%r", namespace)
             return True
-        except PineconeException as e:
+        except Exception as e:
+            if _pinecone_namespace_missing(e):
+                logger.info(
+                    "Pinecone delete_all: namespace %r missing or empty (nothing to delete) — continuing",
+                    namespace,
+                )
+                return True
             logger.error("Pinecone delete_all failed: %s", e)
             return False
     

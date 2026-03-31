@@ -24,6 +24,20 @@ def test_delete_all_in_namespace():
     )
 
 
+def test_delete_all_namespace_not_found_is_ok():
+    """Pinecone returns 404 when namespace was never created — treat as success."""
+    pc = PineconeClient(api_key="k", index_name="idx", dimension=1024)
+    pc.index = MagicMock()
+
+    def boom(**_kwargs):
+        raise Exception(
+            '(404) Reason: Not Found\nHTTP response body: {"code":5,"message":"Namespace not found"}'
+        )
+
+    pc.index.delete = boom
+    assert pc.delete_all_in_namespace("phlydata_aircraft") is True
+
+
 def test_structured_constants_exclude_documents_include_aircraftpost():
     from rag.structured_reembed_constants import (
         DOCUMENT_ENTITY_TYPE,
