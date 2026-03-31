@@ -15,14 +15,21 @@ from functools import lru_cache
 # Backend root on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any
+from typing import Annotated, List, Optional, Any, Tuple
 
 from config.config_loader import Config  # Config.from_env() without validate for flexible API
 from database.postgres_client import PostgresClient
+from database.ensure_consultant_query_log import apply_consultant_query_log_schema
+from database.ensure_app_users import apply_app_users_schema
+from api.runtime_db import register_postgres_client, get_registered_postgres_client
+from api.auth_dependencies import get_current_user_optional
+from api.routers.auth_api import router as auth_api_router
+from api.routers.admin_users_api import router as admin_users_api_router
+from api.routers.super_admin_api import router as super_admin_api_router
 from rag.embedding_service import EmbeddingService
 from rag.query_service import RAGQueryService
 from rag.phlydata_aircraft_schema import phlydata_aircraft_api_null_payload, phlydata_aircraft_select_sql
@@ -42,6 +49,16 @@ from services.zoominfo_client import (
     phones_match as zoominfo_phones_match,
 )
 from services.zoominfo_match_verify import verify_faa_zoominfo_company_match
+from services.app_user_service import bootstrap_super_admin_from_env
+from services.consultant_query_analytics import (
+    ConsultantQueryListFilters,
+    consultant_query_analytics_enabled,
+    count_consultant_queries,
+    delete_consultant_queries_by_ids,
+    delete_consultant_query_by_id,
+    list_consultant_queries,
+    record_consultant_query,
+)
 
 # Match method returned to frontend and logged
 MATCH_METHOD_PHONE = "phone"
@@ -1070,6 +1087,32 @@ class ChatResponse(BaseModel):
     aircraft_images: Optional[List[Any]] = None  # Tavily + scrape_gallery (+ optional listing og) URLs
     error: Optional[str] = None
 
+
+class ConsultantQueryLogItem(BaseModel):
+    id: int
+    created_at: str
+    query_text: str
+    endpoint: str
+    history_turn_count: int
+    client_ip: Optional[str] = None
+    user_agent: Optional[str] = None
+    user_id: Optional[int] = None
+    user_email: Optional[str] = None
+
+
+class ConsultantQueryLogListResponse(BaseModel):
+    total: int
+    items: List[ConsultantQueryLogItem]
+
+
+class ConsultantQueryBulkDeleteRequest(BaseModel):
+    ids: List[int] = Field(..., min_length=1, max_length=500)
+
+
+class ConsultantQueryDeleteResult(BaseModel):
+    deleted: int
+
+
 class MarketComparisonRequest(BaseModel):
     models: List[str] = Field(..., min_length=1)
     region: Optional[str] = None
@@ -1114,6 +1157,72 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_api_router)
+app.include_router(admin_users_api_router)
+app.include_router(super_admin_api_router)
+
+
+def _env_truthy(key: str) -> bool:
+    return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
+
+
+def _consultant_analytics_client_meta(request: Request) -> Tuple[Optional[str], Optional[str]]:
+    """Best-effort client IP (proxy-aware) and User-Agent for opt-in query logging."""
+    xff = request.headers.get("x-forwarded-for") or request.headers.get("X-Forwarded-For")
+    if xff:
+        ip = xff.split(",")[0].strip()[:200] or None
+    elif request.client:
+        ip = (request.client.host or "")[:200] or None
+    else:
+        ip = None
+    ua_raw = request.headers.get("user-agent") or request.headers.get("User-Agent") or ""
+    ua = ua_raw[:512] if ua_raw else None
+    return (ip, ua)
+
+
+def _log_consultant_question(
+    request: Request,
+    query: str,
+    endpoint: str,
+    history: Optional[List],
+    viewer: Optional[dict] = None,
+) -> None:
+    if not consultant_query_analytics_enabled():
+        return
+    try:
+        db = get_db()
+        ip, ua = _consultant_analytics_client_meta(request)
+        uid = int(viewer["id"]) if viewer and viewer.get("id") is not None else None
+        record_consultant_query(
+            db,
+            query=query,
+            endpoint=endpoint,
+            history_turn_count=len(history or []),
+            client_ip=ip,
+            user_agent=ua,
+            user_id=uid,
+        )
+    except Exception as e:
+        logger.warning("consultant query analytics insert failed (non-fatal): %s", e)
+
+
+@app.on_event("startup")
+async def _startup_db_schemas():
+    try:
+        c = Config.from_env()
+        if not c.postgres_connection_string:
+            return
+        global _db
+        db = PostgresClient(c.postgres_connection_string)
+        _db = db
+        register_postgres_client(db)
+        apply_consultant_query_log_schema(db)
+        apply_app_users_schema(db)
+        bootstrap_super_admin_from_env(db)
+    except Exception as e:
+        logger.warning("startup DB schema (non-fatal): %s", e)
+
+
 # Lazy-loaded dependencies
 _config: Optional[Config] = None
 _db: Optional[PostgresClient] = None
@@ -1128,10 +1237,15 @@ def get_config() -> Config:
 def get_db() -> PostgresClient:
     global _db
     if _db is None:
-        c = get_config()
-        if not c.postgres_connection_string:
-            raise HTTPException(status_code=503, detail="PostgreSQL not configured")
-        _db = PostgresClient(c.postgres_connection_string)
+        reg = get_registered_postgres_client()
+        if reg is not None:
+            _db = reg
+        else:
+            c = get_config()
+            if not c.postgres_connection_string:
+                raise HTTPException(status_code=503, detail="PostgreSQL not configured")
+            _db = PostgresClient(c.postgres_connection_string)
+            register_postgres_client(_db)
     return _db
 
 def get_rag() -> RAGQueryService:
@@ -1283,11 +1397,16 @@ def price_estimate_models():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/rag/answer", response_model=ChatResponse)
-def rag_answer(req: ChatRequest):
+def rag_answer(
+    req: ChatRequest,
+    request: Request,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+):
     """Ask the Consultant: natural language over Hye Aero's sale history + market feed (RAG)."""
     try:
         rag = get_rag()
         history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+        _log_consultant_question(request, req.query.strip(), "sync", history_dicts, viewer)
         out = rag.answer(query=req.query.strip(), top_k=20, history=history_dicts if history_dicts else None)
         if out.get("error"):
             raise HTTPException(status_code=500, detail=out["error"])
@@ -1310,7 +1429,11 @@ def _rag_sse_event(obj: dict) -> str:
 
 
 @app.post("/api/rag/answer/stream")
-def rag_answer_stream(req: ChatRequest):
+def rag_answer_stream(
+    req: ChatRequest,
+    request: Request,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+):
     """
     Same consultant pipeline as POST /api/rag/answer, but streams the assistant text with SSE
     (ChatGPT-style). Events: {type: status|delta|done|error, ...}.
@@ -1323,6 +1446,7 @@ def rag_answer_stream(req: ChatRequest):
         raise HTTPException(status_code=503, detail=str(e))
 
     history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+    _log_consultant_question(request, req.query.strip(), "stream", history_dicts, viewer)
 
     def event_iter():
         try:
@@ -1347,6 +1471,99 @@ def rag_answer_stream(req: ChatRequest):
             "X-Accel-Buffering": "no",
         },
     )
+
+
+def _consultant_analytics_access_or_raise(request: Request, viewer: Optional[dict]) -> None:
+    key = (os.getenv("CONSULTANT_ANALYTICS_ADMIN_KEY") or "").strip()
+    key_ok = bool(key) and (request.headers.get("X-Admin-Key") or "").strip() == key
+    jwt_ok = bool(viewer and viewer.get("role") in ("admin", "super_admin"))
+    if key_ok or jwt_ok:
+        return
+    raise HTTPException(
+        status_code=403,
+        detail="Use X-Admin-Key or sign in as admin (Bearer JWT)",
+    )
+
+
+@app.get("/api/admin/consultant-queries", response_model=ConsultantQueryLogListResponse)
+def admin_list_consultant_queries(
+    request: Request,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+    limit: int = 50,
+    offset: int = 0,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    endpoint: Optional[str] = None,
+    q: Optional[str] = None,
+    user_id: Optional[int] = None,
+):
+    """
+    List Ask Consultant user questions (newest first). Optional filters: ``date_from``, ``date_to`` (ISO
+    ``YYYY-MM-DD``, UTC day bounds), ``endpoint`` (``sync`` | ``stream``), ``q`` (substring),
+    ``user_id`` (app user who asked).
+
+    Auth: ``X-Admin-Key`` **or** Bearer JWT for a user with role ``admin`` / ``super_admin``.
+    """
+    _consultant_analytics_access_or_raise(request, viewer)
+    try:
+        db = get_db()
+        fl = ConsultantQueryListFilters(
+            date_from=date_from,
+            date_to=date_to,
+            endpoint=endpoint,
+            q=q,
+            user_id=user_id,
+        )
+        items = list_consultant_queries(db, limit=limit, offset=offset, filters=fl)
+        total = count_consultant_queries(db, filters=fl)
+        return ConsultantQueryLogListResponse(
+            total=total,
+            items=[ConsultantQueryLogItem(**row) for row in items],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("admin consultant-queries failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/consultant-queries/{row_id:int}", response_model=ConsultantQueryDeleteResult)
+def admin_delete_consultant_query_row(
+    request: Request,
+    row_id: int,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+):
+    """Delete one logged query by id."""
+    _consultant_analytics_access_or_raise(request, viewer)
+    try:
+        db = get_db()
+        n = delete_consultant_query_by_id(db, row_id)
+        return ConsultantQueryDeleteResult(deleted=n)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("admin delete consultant-query failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/consultant-queries/bulk-delete", response_model=ConsultantQueryDeleteResult)
+def admin_bulk_delete_consultant_queries(
+    request: Request,
+    body: ConsultantQueryBulkDeleteRequest,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+):
+    """Delete up to 500 rows by id."""
+    _consultant_analytics_access_or_raise(request, viewer)
+    try:
+        db = get_db()
+        n = delete_consultant_queries_by_ids(db, body.ids)
+        return ConsultantQueryDeleteResult(deleted=n)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("admin bulk-delete consultant-queries failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/market-comparison")
 def market_comparison(req: MarketComparisonRequest):

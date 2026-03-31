@@ -21,6 +21,63 @@ PostgreSQL (listings, sales, aircraft, FAA) ──┬──► RAG Pipeline ─�
 - **Market comparison**: Query listings by model, age, hours, region
 - **Price estimate**: Heuristic from historical sales (extensible to ML)
 - **Resale advisory**: Plain-English guidance via RAG/LLM
+- **Dashboard auth**: `app_users` in PostgreSQL — `POST /api/auth/register` (**pending**; login only after **super admin** sets **active**), `POST /api/auth/login` (JWT), `GET /api/auth/me`. Roles: `user`, `admin`, `super_admin` (at most one). **Only `super_admin`** may PATCH `status` (activate/reject); admins may still edit names, roles (user/admin), reset passwords, delete. APIs: `GET/PATCH/POST/DELETE /api/admin/users`, `GET /api/super-admin/admins`. Set `JWT_SECRET` (≥16 chars). One-time super admin from env when none exists: `SUPER_ADMIN_EMAIL`, `SUPER_ADMIN_PASSWORD` (optional `SUPER_ADMIN_FULL_NAME`, `SUPER_ADMIN_COUNTRY`), or `BOOTSTRAP_*` aliases.
+
+## RAG internals & upgrades
+
+This section documents the **current module layout** and **operational upgrades** (consultant orchestration split, structured re-embed, Pinecone delete robustness). Env vars for Ask Consultant stay under [Setup → Ask Consultant](#ask-consultant-rag-pipeline).
+
+### Consultant pipeline (code layout)
+
+End-to-end flow is **entity detection → query router → SQL + Pinecone retrieval → semantic rerank → context builder → LLM** (draft and optional review).
+
+| Piece | Location | What it does |
+|--------|-----------|----------------|
+| Entity summary, router config, LLM context blocks | `rag/consultant_pipeline.py` | `summarize_consultant_entities`, `load_consultant_pipeline_config`, `build_consultant_llm_context` |
+| PhlyData / market SQL, Tavily, multi-query retrieval, gating | `rag/consultant_retrieval.py` | `run_consultant_retrieval_bundle` — main retrieval bundle |
+| Service façade | `rag/query_service.py` | `RAGQueryService` — embeddings, `retrieve`, professional/FAA short-circuits; `_consultant_retrieval_bundle` delegates to `run_consultant_retrieval_bundle` |
+
+Reranking uses `SemanticRerankerService` inside `RAGQueryService.retrieve` as before.
+
+### Structured aviation embeddings refresh
+
+**Entity-shaped** sources (listings, sales, FAA, AviaCost, **AircraftPost fleet** (`aircraftpost_fleet_aircraft`), etc.) share structured chunking and `rag/pinecone_metadata`. **PhlyData aircraft** vectors live in the Pinecone namespace `phlydata_aircraft`. **Document** embeddings (manuals, PDFs, long articles) are **not** part of this refresh — they keep multi-chunk document chunking.
+
+- **Constants:** `rag/structured_reembed_constants.py` — canonical list of structured `entity_type` values and the Phly namespace name.
+- **Runner:**
+
+```bash
+cd backend
+python runners/run_reembed_structured_aviation.py
+python runners/run_reembed_structured_aviation.py --limit 50
+python runners/run_reembed_structured_aviation.py --dry-run
+python runners/run_reembed_structured_aviation.py --verify
+```
+
+Useful flags (see script help for the full set): `--skip-pinecone-delete`, `--skip-metadata-delete`, `--skip-phly`, `--skip-default-ns`, plus batch tunables `--pinecone-batch`, `--record-batch`, `--embedding-api-batch`. Logs default to `logs/reembed_structured_log.txt`.
+
+### Pinecone: deleting an empty or missing namespace
+
+`vector_store/pinecone_client.py` — `PineconeClient.delete_all_in_namespace` treats **“namespace not found” / 404** (nothing ever upserted into that namespace) as **success**, so re-embed and cleanup scripts can run idempotently before the first batch of vectors exists.
+
+### Consultant query analytics (what users typed)
+
+**On by default** when PostgreSQL is configured: each call to **`POST /api/rag/answer`** and **`POST /api/rag/answer/stream`** appends one row to `consultant_query_log` (query text, endpoint `sync` / `stream`, prior-turn count, optional IP / User-Agent, optional `user_id`). On startup the API runs an idempotent migration for that table.
+
+- **`CONSULTANT_QUERY_ANALYTICS_ENABLED=0`** (or `false` / `no` / `off`) — stop inserting new rows; admin list/delete still works.
+- **`CONSULTANT_ANALYTICS_ADMIN_KEY`** — optional long random secret for **`X-Admin-Key`** on admin APIs; alternatively use a Bearer JWT for **`admin`** / **`super_admin`**.
+
+**List (with filters)** — `GET /api/admin/consultant-queries`
+
+Query parameters (all optional): `limit` (default 50, max 500), `offset`, `date_from`, `date_to` (ISO `YYYY-MM-DD`, UTC day bounds), `endpoint` (`sync` | `stream`), `q` (substring match on the question). **`total`** counts rows matching the same filters.
+
+**Delete** — `DELETE /api/admin/consultant-queries/{id}` → `{ "deleted": 0|1 }`
+
+**Bulk delete** — `POST /api/admin/consultant-queries/bulk-delete` with JSON body `{ "ids": [1,2,3] }` (max 500) → `{ "deleted": N }`
+
+**Frontend (optional):** deploy the Next app with the same `CONSULTANT_ANALYTICS_ADMIN_KEY` (server env **without** `NEXT_PUBLIC_`) and open **`/admin/queries`**. The page calls **`/api/admin/consultant-queries`** via a server proxy so the key is not bundled. Optionally set **`INTERNAL_API_URL`** to your private API URL (e.g. Render internal hostname).
+
+Treat stored text as **sensitive** (PII / secrets users might paste). Use retention and access controls appropriate for your deployment.
 
 ## Setup
 
@@ -122,6 +179,8 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | `/api/rag/answer` | Ask the Consultant (RAG over Hye Aero data) |
+| POST | `/api/rag/answer/stream` | Same consultant, SSE streamed tokens |
+| GET | `/api/admin/consultant-queries` | Recent user questions (requires `X-Admin-Key`; see [Consultant query analytics](#consultant-query-analytics-what-users-typed)) |
 | POST | `/api/market-comparison` | Compare aircraft by model, region, hours, year |
 | POST | `/api/price-estimate` | Predictive valuation from sale history |
 | POST | `/api/resale-advisory` | Plain-English resale guidance (RAG) |

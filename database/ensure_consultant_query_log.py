@@ -1,26 +1,23 @@
 """
-Apply ``ensure_embeddings_metadata.sql`` so PhlyData / RAG pipelines can use ``embeddings_metadata``.
+Apply ``ensure_consultant_query_log.sql`` on API startup when PostgreSQL is configured.
 
-Safe to call before ``run_embed_phlydata.py`` or ``rag_pipeline`` sync.
+Safe to call repeatedly; statements are idempotent.
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-
 from database.postgres_client import PostgresClient
 from database.split_sql import sql_statements
 
 logger = logging.getLogger(__name__)
 
-_MIGRATION = Path(__file__).resolve().parent / "migrations" / "ensure_embeddings_metadata.sql"
+_MIGRATION = Path(__file__).resolve().parent / "migrations" / "ensure_consultant_query_log.sql"
 
 
-def apply_embeddings_metadata_schema(db: PostgresClient) -> bool:
-    """
-    Create ``embeddings_metadata`` and indexes if missing; add ``entity_type`` / ``entity_id`` when absent.
-    """
+def apply_consultant_query_log_schema(db: PostgresClient) -> bool:
+    """Create ``consultant_query_log`` and indexes if missing."""
     if not _MIGRATION.is_file():
         logger.error("Migration file missing: %s", _MIGRATION)
         return False
@@ -36,5 +33,5 @@ def apply_embeddings_metadata_schema(db: PostgresClient) -> bool:
                 continue
             logger.error("Migration statement %s failed: %s\n%s", i, e, stmt[:200])
             return False
-    logger.info("embeddings_metadata schema ensured (%s statements)", len(statements))
+    logger.info("consultant_query_log schema ensured (%s statements)", len(statements))
     return True
