@@ -1,19 +1,42 @@
 """Consultant retrieval orchestration.
 
-Stages (see also :mod:`rag.consultant_pipeline`): SQL authority + market SQL, Pinecone
-retrieval (with rerank inside ``svc._retrieve_multi``), optional Tavily, context assembly, LLM payload.
+Stages: :mod:`rag.intent` → SQL (Phly / market / gated ``faa_master``) → Pinecone
+(``svc._retrieve_multi`` + rerank) → :mod:`rag.ranking` → Tavily → :mod:`rag.context`.
 
-Prompt helpers are imported lazily from :mod:`rag.query_service` to avoid circular imports.
+Router env/config: :mod:`rag.consultant_pipeline`. Prompt strings: :mod:`rag.query_service` (lazy).
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+
+def _fmt_q_preview(q: str, n: int = 72) -> str:
+    s = (q or "").strip().replace("\n", " ")
+    if not s:
+        return "(empty)"
+    if len(s) <= n:
+        return s
+    return s[: n - 1] + "…"
+
+
+def _counter_entity_mix(results: List[Any], limit: int = 8) -> str:
+    from collections import Counter
+
+    def _et(r: Any) -> str:
+        if isinstance(r, dict):
+            return str(r.get("entity_type") or "?")
+        return "?"
+
+    c = Counter(_et(r) for r in (results or []))
+    return ",".join(f"{k}:{v}" for k, v in c.most_common(limit))
 
 
 def _env_truthy(key: str) -> bool:
@@ -27,9 +50,41 @@ def run_consultant_retrieval_bundle(
     max_context_chars: int,
     score_threshold: Optional[float],
     history: Optional[List[Dict[str, str]]],
+    progress: Any = None,
 ) -> Tuple[str, Any]:
+    from rag.consultant_progress_log import new_progress_logger
+
+    progress = progress or new_progress_logger()
+    if progress:
+        progress.step(
+            "request_start",
+            path="consultant_retrieval",
+            q_len=len(query or ""),
+            q_preview=_fmt_q_preview(query),
+        )
+
+    from rag.consultant_small_talk import consultant_small_talk_reply
+
+    _small_talk = consultant_small_talk_reply(query)
+    if _small_talk:
+        if progress:
+            progress.step("path_small_talk", short_circuit=1)
+        return "small_talk", {
+            "answer": _small_talk,
+            "sources": [],
+            "data_used": {"consultant_small_talk": 1},
+            "aircraft_images": [],
+            "error": None,
+        }
+
+    _t_block = time.perf_counter()
     prof = svc._professional_search_answer(query)
     if prof:
+        if progress:
+            progress.step(
+                "path_professional_sql",
+                elapsed_ms=int((time.perf_counter() - _t_block) * 1000),
+            )
         logger.info("Professional search triggered (deterministic SQL) for query=%r", query)
         return "professional", prof
 
@@ -64,6 +119,7 @@ def run_consultant_retrieval_bundle(
         wants_consultant_aircraft_detail_context,
         wants_consultant_aircraft_images_in_answer,
         wants_consultant_explicit_photo_web,
+        wants_consultant_purchase_market_context,
     )
     from rag.consultant_tavily_gate import (
         empty_consultant_tavily_payload,
@@ -75,7 +131,21 @@ def run_consultant_retrieval_bundle(
         load_consultant_pipeline_config,
         summarize_consultant_entities,
     )
-    
+    from rag.context.intent_context_policy import (
+        SECTION_AIRCRAFT_SPECS,
+        SECTION_MARKET_DATA,
+        SECTION_REGISTRY_DATA,
+    )
+    from rag.answer import consultant_answer_style_suffix
+    from rag.intent import (
+        ConsultantIntent,
+        classify_consultant_intent,
+        pinecone_filter_for_intent,
+        registry_sql_enabled_for_intent,
+    )
+    from rag.intent.schemas import AviationIntent
+    from rag.ranking import apply_structured_first_rag_order
+
     hs = svc._consultant_history_snippet(history)
     hs_opt = hs.strip() or None
     
@@ -91,11 +161,34 @@ def run_consultant_retrieval_bundle(
     rag_max_chunks = pipe_cfg.rag_max_chunks
     tavily_timeout = pipe_cfg.tavily_timeout
     intent_model = pipe_cfg.intent_model
-    
-    def _run_image_gallery_intent() -> Tuple[bool, str]:
-        kwords = _env_truthy("CONSULTANT_IMAGE_INTENT_KEYWORDS_ONLY") or (
-            low_latency and not _env_truthy("CONSULTANT_IMAGE_INTENT_LLM_WHEN_FAST")
+
+    intent_classification = classify_consultant_intent(query, history)
+    registry_sql = registry_sql_enabled_for_intent(intent_classification, query, history)
+    pinecone_filt = pinecone_filter_for_intent(intent_classification.primary)
+    av_l = intent_classification.aviation_intent.value if intent_classification.aviation_intent else None
+    if progress:
+        progress.step(
+            "intent_classified",
+            aviation=av_l or "-",
+            primary=intent_classification.primary.value,
+            query_kind=intent_classification.query_kind.value,
+            intent_source=intent_classification.source,
+            confidence=intent_classification.confidence,
+            notes=_fmt_q_preview(intent_classification.notes, 160),
+            registry_sql=registry_sql,
+            pinecone_filter=_fmt_q_preview(str(pinecone_filt), 200),
         )
+    logger.info(
+        "Consultant intent: aviation=%s primary=%s source=%s registry_sql=%s",
+        av_l,
+        intent_classification.primary.value,
+        intent_classification.source,
+        registry_sql,
+    )
+
+    def _run_image_gallery_intent() -> Tuple[bool, str]:
+        # Gallery only when the user explicitly asks for photos/images (unless LLM gate is re-enabled).
+        kwords = not _env_truthy("CONSULTANT_IMAGE_INTENT_LLM")
         return resolve_aircraft_image_gallery_intent(
             query,
             history,
@@ -107,7 +200,9 @@ def run_consultant_retrieval_bundle(
     
     if skip_expand:
         def _run_phly() -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
-            return svc._phlydata_authority_block(query, history)
+            return svc._phlydata_authority_block(
+                query, history, registry_sql_enabled=registry_sql
+            )
     
         with ThreadPoolExecutor(max_workers=2) as pre_pool:
             f_phly = pre_pool.submit(_run_phly)
@@ -126,7 +221,9 @@ def run_consultant_retrieval_bundle(
         }
     else:
         def _run_phly() -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
-            return svc._phlydata_authority_block(query, history)
+            return svc._phlydata_authority_block(
+                query, history, registry_sql_enabled=registry_sql
+            )
     
         def _run_expand() -> Dict[str, Any]:
             return expand_consultant_research_queries(
@@ -148,14 +245,51 @@ def run_consultant_retrieval_bundle(
             )
             expanded = f_exp.result()
             user_wants_gallery, consultant_image_intent_src = f_int.result()
-    
+    if progress:
+        rqs_prev = expanded.get("rag_queries") if isinstance(expanded, dict) else None
+        rqs_prev = list(rqs_prev) if isinstance(rqs_prev, list) else []
+        tqv = ""
+        if isinstance(expanded, dict):
+            tqv = str(expanded.get("tavily_query") or "").strip()
+        if not tqv and not skip_expand:
+            tqv = (query or "").strip()[:400]
+        progress.step(
+            "prefetch_parallel_done",
+            skip_query_expand=skip_expand,
+            phly_authority_chars=len(phly_authority or ""),
+            phly_rows=len(phly_rows or []),
+            faa_lookup_tokens=len((phly_meta.get("faa_lookup_tokens") or []) if phly_meta else []),
+            gallery_intent=user_wants_gallery,
+            expanded_tavily_q=_fmt_q_preview(tqv, 260),
+            rag_variant_count=len(rqs_prev),
+            rag_queries_preview=_fmt_q_preview(" | ".join(rqs_prev[:5]), 320),
+        )
+        if rqs_prev:
+            progress.detail("pinecone_rag_queries_full", "\n".join(f"  [{i+1}] {q}" for i, q in enumerate(rqs_prev)))
+
+    skip_reg_market = not wants_consultant_purchase_market_context(query, history) and (
+        intent_classification.primary == ConsultantIntent.REGISTRATION_LOOKUP
+        or intent_classification.aviation_intent
+        in (
+            AviationIntent.SERIAL_LOOKUP,
+            AviationIntent.OPERATOR_LOOKUP,
+        )
+    )
     market_block, market_meta = build_consultant_market_authority_block(
         svc.db,
         query,
         history,
         phly_rows,
         strict_market_sql=strict_market_sql,
+        skip_for_registration_intent=skip_reg_market,
     )
+    if progress:
+        progress.step(
+            "internal_market_sql",
+            market_block_chars=len(market_block or ""),
+            skip_reg_market_sql=skip_reg_market,
+            strict_market_sql=strict_market_sql,
+        )
     rag_qs = enrich_rag_queries_for_purchase(
         list(expanded.get("rag_queries") or [query]),
         query,
@@ -167,7 +301,36 @@ def run_consultant_retrieval_bundle(
     consultant_lookup_tokens = consultant_merge_lookup_tokens(
         query, history, phly_meta.get("faa_lookup_tokens")
     )
-    entity_detection = summarize_consultant_entities(query, history, phly_meta, phly_rows)
+    entity_detection = summarize_consultant_entities(
+        query,
+        history,
+        phly_meta,
+        phly_rows,
+        intent_classification,
+        registry_sql_enabled=registry_sql,
+    )
+    if progress:
+        ed = entity_detection.asdict()
+        ae = ed.get("aviation_entities")
+        ae_s = "-"
+        if isinstance(ae, dict):
+            try:
+                ae_s = json.dumps(ae, ensure_ascii=False)
+            except (TypeError, ValueError):
+                ae_s = str(ae)
+        progress.step(
+            "entity_detection_bundle",
+            intent_primary=ed.get("intent_primary"),
+            aviation_intent=ed.get("aviation_intent"),
+            intent_source=ed.get("intent_source"),
+            registry_sql_enabled=ed.get("registry_sql_enabled"),
+            phlydata_row_count=ed.get("phlydata_row_count"),
+            lookup_tokens_n=len(ed.get("lookup_tokens") or []),
+            lookup_tokens_preview=_fmt_q_preview(" ".join(ed.get("lookup_tokens") or []), 220),
+            tail_candidates_preview=_fmt_q_preview(" ".join(ed.get("tail_candidates") or []), 140),
+            serial_model_preview=_fmt_q_preview(" ".join(ed.get("serial_or_model_tokens") or []), 160),
+            aviation_entities_json=_fmt_q_preview(ae_s, 240),
+        )
     tq = enrich_tavily_query_for_consultant(
         query,
         expanded.get("tavily_query") or query,
@@ -175,7 +338,18 @@ def run_consultant_retrieval_bundle(
         history_snippet=hs_opt,
         lookup_tokens=consultant_lookup_tokens,
     )
-    
+    if progress:
+        progress.step(
+            "consultant_queries_enriched",
+            rag_variants_after_purchase_enrich=len(rag_qs),
+            merged_lookup_tokens=len(consultant_lookup_tokens or []),
+            merged_lookup_preview=_fmt_q_preview(" ".join(consultant_lookup_tokens or []), 220),
+        )
+        progress.detail(
+            "pinecone_rag_queries_after_enrich",
+            "\n".join(f"  [{i+1}] {q}" for i, q in enumerate(rag_qs)),
+        )
+
     tdepth: Optional[str] = None
     if (os.getenv("CONSULTANT_TAVILY_ADVANCED") or "").strip().lower() in ("1", "true", "yes"):
         tdepth = "advanced"
@@ -200,6 +374,7 @@ def run_consultant_retrieval_bundle(
     img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
     
+    _t_vec = time.perf_counter()
     results = svc._retrieve_multi(
         rag_qs,
         top_k=top_k,
@@ -208,8 +383,22 @@ def run_consultant_retrieval_bundle(
         max_query_variants=max_rag_variants,
         skip_rerank=fast_retrieval or low_latency,
         rerank_anchor_query=query,
+        pinecone_filter=pinecone_filt,
     )
+    results = apply_structured_first_rag_order(results, intent_classification.primary)
     results = svc._filter_rag_results_for_phly_aircraft(results, phly_rows)
+    if progress:
+        progress.step(
+            "vector_db_retrieve",
+            ms=int((time.perf_counter() - _t_vec) * 1000),
+            chunks=len(results or []),
+            skip_rerank=bool(fast_retrieval or low_latency),
+            top_k=top_k,
+            score_threshold=score_threshold or "",
+            pinecone_filter=_fmt_q_preview(str(pinecone_filt), 200),
+            chunk_entity_mix=_counter_entity_mix(results),
+            rerank_anchor_preview=_fmt_q_preview(query, 120),
+        )
     
     sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
     force_tavily_always = _env_truthy("CONSULTANT_TAVILY_ALWAYS")
@@ -231,6 +420,14 @@ def run_consultant_retrieval_bundle(
         run_secondary = False
         merge_purchase = False
         run_image_pass = False
+        if progress:
+            progress.step(
+                "tavily_skipped",
+                reason=tavily_gate_reason,
+                sql_nonempty=sql_nonempty,
+                vector_hits=len(results or []),
+                would_primary_q=_fmt_q_preview(tq, 260),
+            )
         logger.info(
             "Consultant: Tavily skipped (internal SQL + vector sufficient, reason=%s)",
             tavily_gate_reason,
@@ -242,6 +439,19 @@ def run_consultant_retrieval_bundle(
             + (1 if merge_purchase else 0)
             + (1 if run_image_pass else 0)
         )
+        if progress:
+            progress.step(
+                "tavily_scheduled",
+                passes=tavily_passes,
+                reason=tavily_gate_reason,
+                secondary=run_secondary,
+                purchase_query=merge_purchase,
+                image_pass=run_image_pass,
+                primary_q=_fmt_q_preview(tq, 300),
+                owner_q=_fmt_q_preview(sq, 240) if run_secondary and sq else "",
+                listing_purchase_q=_fmt_q_preview(pq, 240) if merge_purchase and pq else "",
+                photo_q=_fmt_q_preview(img_q, 240) if run_image_pass and img_q else "",
+            )
         logger.debug("Consultant: Tavily run (fallback, reason=%s)", tavily_gate_reason)
     purchase_ctx = consultant_wants_internal_market_sql(
         query, history, strict=strict_market_sql
@@ -297,15 +507,17 @@ def run_consultant_retrieval_bundle(
     secondary: Optional[Dict[str, Any]] = None
     tertiary: Optional[Dict[str, Any]] = None
     quaternary: Optional[Dict[str, Any]] = None
+    _t_tv = time.perf_counter()
+    max_workers_tv = 0
     if run_tavily:
-        max_workers = (
+        max_workers_tv = (
             1
             + (1 if run_secondary else 0)
             + (1 if merge_purchase else 0)
             + (1 if run_image_pass else 0)
         )
-        max_workers = max(1, min(4, max_workers))
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        max_workers_tv = max(1, min(4, max_workers_tv))
+        with ThreadPoolExecutor(max_workers=max_workers_tv) as pool:
             f_pri = pool.submit(_fetch_pri)
             f_sec = pool.submit(_fetch_sec) if run_secondary else None
             f_pur = pool.submit(_fetch_pur) if merge_purchase else None
@@ -319,6 +531,13 @@ def run_consultant_retrieval_bundle(
                 quaternary = f_img.result()
     else:
         primary = empty_consultant_tavily_payload()
+    if progress:
+        progress.step(
+            "tavily_http_done",
+            ms=int((time.perf_counter() - _t_tv) * 1000),
+            run=run_tavily,
+            workers=max_workers_tv,
+        )
     tavily_payload = primary
     if run_secondary and secondary is not None:
         tavily_payload = merge_tavily_consultant_payloads(
@@ -346,7 +565,13 @@ def run_consultant_retrieval_bundle(
         if ph:
             tavily_block = f"{tavily_block}\n\n{ph}"
     tavily_hits = len(tavily_payload.get("results") or [])
-    
+    if progress:
+        progress.step(
+            "tavily_formatted_for_context",
+            hits=tavily_hits,
+            tavily_chars=len(tavily_block or ""),
+        )
+
     from services.consultant_aircraft_images import build_consultant_aircraft_images
     
     lr_img = market_meta.get("consultant_listing_rows_for_images") or []
@@ -413,26 +638,48 @@ def run_consultant_retrieval_bundle(
     has_rag = bool(results)
     has_tavily = tavily_hits > 0
     if not (has_phly or has_market or has_rag or has_tavily):
+        if progress:
+            progress.step(
+                "path_general_knowledge",
+                reason="no_phly_no_market_no_vector_no_tavily",
+            )
         logger.info(
             "Consultant: no PhlyData, no listing/sales block, no vector hits, no Tavily → general knowledge (len=%d)",
             len(query),
         )
         return "gk", None
     
-    context, _context_parts = build_consultant_llm_context(
+    context, _context_parts, ctx_meta = build_consultant_llm_context(
         phly_authority=phly_authority,
         market_block=market_block,
         tavily_block=tavily_block,
         rag_results=results,
         max_context_chars=max_context_chars,
+        intent_classification=intent_classification,
     )
+    included = set(ctx_meta.get("sections_included") or [])
     if not context.strip():
+        if progress:
+            progress.step("path_general_knowledge", reason="context_empty_after_assembly")
         logger.info(
             "RAG answer: no PhlyData, Tavily text, or Pinecone context; general knowledge (len=%d)",
             len(query),
         )
         return "gk", None
-    
+
+    if progress:
+        progress.step(
+            "llm_context_ready",
+            ctx_chars=len(context),
+            sections=",".join(sorted(included)),
+            tokens_est=ctx_meta.get("context_tokens_est"),
+            has_phly_sql=has_phly,
+            has_market_sql=has_market,
+            rag_chunks=len(results or []),
+            tavily_hits=tavily_hits,
+            gallery_images=len(aircraft_images),
+        )
+
     data_used: Dict[str, Any] = dict(phly_meta)
     for k, v in strip_market_meta_zeros(market_meta).items():
         data_used[k] = v
@@ -446,9 +693,19 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_tavily_single_pass"] = 1
     if strict_market_sql:
         data_used["consultant_market_sql_strict"] = 1
-    data_used["consultant_pipeline"] = "entity_router_sql_vector_rerank_context_llm_v1"
+    data_used["consultant_pipeline"] = "intent_entity_router_sql_vector_rerank_context_llm_v2"
     data_used["consultant_query_router"] = pipe_cfg.query_router_snapshot()
     data_used["consultant_entity_detection"] = entity_detection.asdict()
+    data_used["consultant_intent"] = intent_classification.asdict()
+    if progress:
+        data_used["consultant_progress_id"] = progress.request_id
+    data_used["consultant_context_sections"] = sorted(included)
+    data_used["consultant_context_tokens_est"] = ctx_meta.get("context_tokens_est")
+    data_used["consultant_context_char_budget"] = ctx_meta.get("context_char_budget")
+    data_used["consultant_context_legacy_flat"] = 1 if ctx_meta.get("legacy_flat") else 0
+    data_used["registry_sql_enabled"] = 1 if registry_sql else 0
+    if skip_reg_market:
+        data_used["consultant_market_sql_skipped_registration_intent"] = 1
     data_used["consultant_fast_mode"] = (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower() in (
         "1",
         "true",
@@ -492,35 +749,78 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_show_image_ui_context"] = 1
     data_used["consultant_image_intent_source"] = consultant_image_intent_src
     
-    system_prompt = CONSULTANT_SYSTEM_PROMPT
-    if phly_authority:
+    system_prompt = CONSULTANT_SYSTEM_PROMPT + consultant_answer_style_suffix(
+        intent_classification.primary,
+        intent_classification.aviation_intent,
+    )
+    if phly_authority and not ctx_meta.get("legacy_flat"):
         system_prompt += (
-            "\n\nThe context may begin with an AUTHORITATIVE **PhlyData (Hye Aero aircraft source) + FAA MASTER** block. "
-            "That block is Hye Aero's **canonical internal record**: identity, internal snapshot fields (status, ask-as-exported, programs, etc.), and legal U.S. registrant when present — **all override** web or vector for those fields. "
-            "Listing/market rows elsewhere are **not** PhlyData — use them as **supplemental** context after PhlyData; do not merge listing-ingest into registrant facts or replace PhlyData internal fields."
+            "\n\n**Context layout:** Retrieved facts are grouped into **AIRCRAFT_SPECS**, **OPERATIONAL_DATA**, "
+            "**MARKET_DATA**, and **REGISTRY_DATA**. Only subsections present in the user message apply. "
+            "**Mandatory verbatim** rules for Phly pricing/status or FAA registrant apply **only** when "
+            "**MARKET_DATA** or **REGISTRY_DATA** (respectively) appears in context for this turn."
         )
-        if "FOR USER REPLY — PhlyData (table phlydata_aircraft only) — MANDATORY VERBATIM" in phly_authority:
+    if phly_authority and not registry_sql:
+        system_prompt += (
+            "\n\n**Registry SQL:** For this turn, **faa_master** was not queried (non–registration_lookup intent). "
+            "If the user needs U.S. legal registrant facts and they are absent from PhlyData lines, use **Tavily/vector** "
+            "in context and label sources — do not imply an FAA block was omitted in error."
+        )
+    if phly_authority:
+        if ctx_meta.get("legacy_flat"):
+            system_prompt += (
+                "\n\nThe context may begin with an AUTHORITATIVE **PhlyData (Hye Aero aircraft source) + FAA MASTER** block. "
+                "That block is Hye Aero's **canonical internal record**: identity, internal snapshot fields (status, ask-as-exported, programs, etc.), and legal U.S. registrant when present — **all override** web or vector for those fields. "
+                "Listing/market rows elsewhere are **not** PhlyData — use them as **supplemental** context after PhlyData; do not merge listing-ingest into registrant facts or replace PhlyData internal fields."
+            )
+        else:
+            system_prompt += (
+                "\n\n**Internal SQL vs marketplace:** Lines sourced from **PhlyData** (`phlydata_aircraft`) and **FAA MASTER** "
+                "override web/vector for the same facts when those sections appear. **MARKET_DATA** listing ingests are not PhlyData — "
+                "label them separately and do not replace Phly internal snapshot fields."
+            )
+        if (
+            "FOR USER REPLY — PhlyData (table phlydata_aircraft only) — MANDATORY VERBATIM" in phly_authority
+            and SECTION_MARKET_DATA in included
+        ):
             system_prompt += (
                 "\n\nA **[FOR USER REPLY — PhlyData — MANDATORY VERBATIM]** subsection is present inside the Phly block: "
                 "treat those **aircraft_status** and **ask_price** lines exactly like the FAA-verbatim rule — the user expects "
                 "**phlydata_aircraft** values only, then optional **Separately, …** listing/web."
             )
-        if "FOR USER REPLY — public.aircraft — MANDATORY VERBATIM" in phly_authority:
+        if "FOR USER REPLY — public.aircraft — MANDATORY VERBATIM" in phly_authority and (
+            ctx_meta.get("legacy_flat") or SECTION_AIRCRAFT_SPECS in included
+        ):
             system_prompt += (
                 "\n\nA **[public.aircraft]** block is present (synced aircraft master table). For questions about **status in the aircraft table**, "
                 "lead with **aircraft_status** from that block — not PhlyData for a different tail from earlier chat turns."
             )
-        if "FOR USER REPLY — U.S. legal registrant (FAA MASTER)" in phly_authority:
+        if (
+            "FOR USER REPLY — U.S. legal registrant (FAA MASTER)" in phly_authority
+            and SECTION_REGISTRY_DATA in included
+        ):
             system_prompt += (
                 "\n\nA **[FOR USER REPLY — U.S. legal registrant (FAA MASTER)]** block is present: "
                 "you MUST repeat that registrant name and mailing address verbatim as the FAA legal registrant. "
                 "Tavily or vector text must not replace or contradict them."
             )
-        if "AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row" in phly_authority:
+        if (
+            "AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row" in phly_authority
+            and SECTION_REGISTRY_DATA in included
+        ):
             system_prompt += (
                 "\n\nAn **[AUTHORITATIVE — FAA MASTER — no PhlyData row]** block is present: lead the answer with "
                 "FAA aircraft identity and U.S. legal registrant lines from that block before Tavily or vector; "
                 "do not claim make/model, year, serial, or registrant are unknown when those lines are filled."
+            )
+        elif (
+            "AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row" in phly_authority
+            and SECTION_AIRCRAFT_SPECS in included
+            and SECTION_REGISTRY_DATA not in included
+        ):
+            system_prompt += (
+                "\n\n**FAA identity (no PhlyData row):** AIRCRAFT_SPECS may include FAA MASTER identity lines — use them for "
+                "type/year/serial when present; registrant lines were omitted from context for this intent."
             )
         if int((phly_meta or {}).get("faa_internal_snapshot_miss") or 0):
             system_prompt += (
@@ -528,7 +828,7 @@ def run_consultant_retrieval_bundle(
                 "`faa_master` table had no row — you MUST still use **Tavily** and vector excerpts in context for "
                 "public registry–class facts; do not answer as if all fields are unavailable when snippets name type, serial, or owner."
             )
-    if market_block:
+    if market_block and (ctx_meta.get("legacy_flat") or SECTION_MARKET_DATA in included):
         system_prompt += (
             "\n\nA **Hye Aero listing/sales** block may appear (synced marketplace/comps ingest — **not** PhlyData). "
             "Treat it as **supplemental** to PhlyData: after stating **Per PhlyData** (internal snapshot + identity), add **Separately, per Hye Aero listing records…** for asks/URLs/status from that block. Never label listing rows as PhlyData."
@@ -548,6 +848,12 @@ def run_consultant_retrieval_bundle(
         system_prompt += (
             "\n\nThe product may show a **separate image gallery** when URLs are available (web search + listing "
             "sources only). Do **not** invent image URLs; describe the aircraft in words when helpful."
+        )
+
+    if progress:
+        progress.step(
+            "retrieval_bundle_complete",
+            system_prompt_chars=len(system_prompt),
         )
     
     return "llm", {

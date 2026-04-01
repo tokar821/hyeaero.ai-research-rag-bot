@@ -18,3 +18,7 @@ CREATE INDEX IF NOT EXISTS consultant_query_log_endpoint_created_idx
     ON consultant_query_log (endpoint, created_at DESC);
 
 COMMENT ON TABLE consultant_query_log IS 'Opt-in log of user questions to /api/rag/answer and /api/rag/answer/stream';
+
+ALTER TABLE consultant_query_log ADD COLUMN IF NOT EXISTS user_email VARCHAR(320);
+ALTER TABLE consultant_query_log ADD COLUMN IF NOT EXISTS user_full_name VARCHAR(255);
+ALTER TABLE consultant_query_log ADD COLUMN IF NOT EXISTS answer_text TEXT;

@@ -55,6 +55,12 @@ class SemanticRerankerService:
         if self._model is not None:
             return
         try:
+            from api.logging_bootstrap import install_default_log_tuning
+
+            install_default_log_tuning()
+        except Exception:
+            pass
+        try:
             from sentence_transformers import CrossEncoder
         except ImportError as e:
             raise RuntimeError(

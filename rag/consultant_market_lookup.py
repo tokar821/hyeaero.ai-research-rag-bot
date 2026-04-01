@@ -223,37 +223,11 @@ def wants_consultant_aircraft_images_in_answer(
     user_query: str,
     history: Optional[List[Dict[str, str]]] = None,
 ) -> bool:
-    """True when the UI should show the aircraft image gallery — tall/research-only turns stay text-only.
+    """True when the UI should show the aircraft image gallery.
 
-    Triggers on explicit photo/image requests or detail/deep-dive phrasing (not bare tail, not price-only).
+    Product default: **only** explicit photo / image / picture / gallery language (not "describe the jet").
     """
-    if wants_consultant_explicit_photo_web(user_query, history):
-        return True
-    blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
-    if not blob.strip():
-        return False
-    if re.search(
-        r"\b(details?|in[-\s]depth|overview|describe|description|specifications?|specs|"
-        r"full briefing|background on|profile of|walk-?through)\b",
-        blob,
-    ):
-        return True
-    if re.search(r"\b(tell me (more )?about|more about|information about)\b", blob):
-        return True
-    if re.search(r"\b(please show|show me (some )?details?|show me detail|show (me )?(the )?aircraft)\b", blob):
-        return True
-    if re.search(r"\blet me know (more )?about\b", (user_query or "").lower()) and consultant_phly_lookup_token_list(
-        user_query, history
-    ):
-        return True
-    if re.search(
-        r"\b(any|some|do you have|have you|got)\s+(photos?|images?|pictures?)\b",
-        blob,
-    ):
-        return True
-    if re.search(r"\b(see (the )?(photos?|images?)|look at (the )?(photos?|images?))\b", blob):
-        return True
-    return False
+    return wants_consultant_explicit_photo_web(user_query, history)
 
 
 def wants_consultant_aircraft_detail_phrases(
@@ -617,6 +591,7 @@ def build_consultant_market_authority_block(
     phly_rows: List[Dict[str, Any]],
     *,
     strict_market_sql: bool = False,
+    skip_for_registration_intent: bool = False,
 ) -> Tuple[str, Dict[str, Any]]:
     """
     Returns ``(text_block, meta)`` for prepending to consultant context.
@@ -625,8 +600,13 @@ def build_consultant_market_authority_block(
     Skips listing SQL unless the user message(s) look market-related **or** PhlyData resolved an
     aircraft **or** the query looks like a detail/overview/tail question; set
     ``strict_market_sql=True`` (``CONSULTANT_MARKET_SQL_STRICT=1``) for a narrower purchase-only trigger.
+
+    When ``skip_for_registration_intent`` is True (ownership/registrant-focused turn without market
+    keywords), omit listing/comps SQL to keep context tight — Tavily still supplies public color.
     """
     meta: Dict[str, Any] = {"consultant_internal_listings": 0, "consultant_internal_sales_comps": 0}
+    if skip_for_registration_intent:
+        return "", meta
     if not consultant_wants_internal_listings_sql(
         query, history, phly_rows, strict=strict_market_sql
     ):

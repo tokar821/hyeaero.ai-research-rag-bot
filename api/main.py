@@ -26,6 +26,7 @@ from database.postgres_client import PostgresClient
 from database.ensure_consultant_query_log import apply_consultant_query_log_schema
 from database.ensure_app_users import apply_app_users_schema
 from api.runtime_db import register_postgres_client, get_registered_postgres_client
+from api.logging_bootstrap import install_default_log_tuning
 from api.auth_dependencies import get_current_user_optional
 from api.routers.auth_api import router as auth_api_router
 from api.routers.admin_users_api import router as admin_users_api_router
@@ -56,6 +57,7 @@ from services.consultant_query_analytics import (
     count_consultant_queries,
     delete_consultant_queries_by_ids,
     delete_consultant_query_by_id,
+    finalize_consultant_query_log_answer,
     list_consultant_queries,
     record_consultant_query,
 )
@@ -71,6 +73,7 @@ import logging
 from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
+install_default_log_tuning()
 
 # When content/word scoring is below this, try vector + LLM fallback to pick best match from ZoomInfo candidates.
 ZOOMINFO_SCORE_THRESHOLD_FOR_LLM_FALLBACK = 1.0
@@ -1088,6 +1091,21 @@ class ChatResponse(BaseModel):
     error: Optional[str] = None
 
 
+class AviationIntentResponse(BaseModel):
+    """Rule-based (optional LLM) aviation intent for Ask Consultant routing."""
+
+    intent: str
+    confidence: float
+
+
+class AviationEntitiesResponse(BaseModel):
+    """Structured aircraft models, registrations, and MSNs (model-first span resolution)."""
+
+    aircraft_models: List[str]
+    registrations: List[str]
+    serial_numbers: List[str]
+
+
 class ConsultantQueryLogItem(BaseModel):
     id: int
     created_at: str
@@ -1098,6 +1116,8 @@ class ConsultantQueryLogItem(BaseModel):
     user_agent: Optional[str] = None
     user_id: Optional[int] = None
     user_email: Optional[str] = None
+    user_full_name: Optional[str] = None
+    answer_text: Optional[str] = None
 
 
 class ConsultantQueryLogListResponse(BaseModel):
@@ -1186,14 +1206,17 @@ def _log_consultant_question(
     endpoint: str,
     history: Optional[List],
     viewer: Optional[dict] = None,
-) -> None:
+) -> Optional[int]:
+    """Insert a log row (question + user denorm). Returns row id or ``None``."""
     if not consultant_query_analytics_enabled():
-        return
+        return None
     try:
         db = get_db()
         ip, ua = _consultant_analytics_client_meta(request)
         uid = int(viewer["id"]) if viewer and viewer.get("id") is not None else None
-        record_consultant_query(
+        uem = str(viewer.get("email") or "").strip() or None if viewer else None
+        ufn = str(viewer.get("full_name") or "").strip() or None if viewer else None
+        return record_consultant_query(
             db,
             query=query,
             endpoint=endpoint,
@@ -1201,9 +1224,12 @@ def _log_consultant_question(
             client_ip=ip,
             user_agent=ua,
             user_id=uid,
+            user_email=uem,
+            user_full_name=ufn,
         )
     except Exception as e:
         logger.warning("consultant query analytics insert failed (non-fatal): %s", e)
+        return None
 
 
 @app.on_event("startup")
@@ -1396,6 +1422,40 @@ def price_estimate_models():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/api/rag/intent", response_model=AviationIntentResponse)
+def rag_classify_aviation_intent(req: ChatRequest):
+    """
+    Classify a user message into a fine aviation intent (registration, serial, market, mission, etc.).
+    Same rule order as the Ask Consultant pipeline; optional LLM refine via ``CONSULTANT_INTENT_LLM=1``.
+    """
+    from rag.intent import classify_aviation_intent_json
+
+    history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+    out = classify_aviation_intent_json(
+        req.query.strip(),
+        history_dicts if history_dicts else None,
+    )
+    return AviationIntentResponse(**out)
+
+
+@app.post("/api/rag/entities", response_model=AviationEntitiesResponse)
+def rag_detect_aviation_entities(req: ChatRequest):
+    """
+    Extract aircraft model phrases, tail registrations, and serial numbers from natural language.
+    Models take priority; hyphenated airliner variants (e.g. 737-800, A320-200, 601-3ER) never appear as serials.
+    """
+    from rag.entities import detect_aviation_entities
+
+    history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+    out = detect_aviation_entities(req.query.strip(), history_dicts if history_dicts else None)
+    return AviationEntitiesResponse(
+        aircraft_models=out["aircraft_models"],
+        registrations=out["registrations"],
+        serial_numbers=out["serial_numbers"],
+    )
+
+
 @app.post("/api/rag/answer", response_model=ChatResponse)
 def rag_answer(
     req: ChatRequest,
@@ -1403,13 +1463,23 @@ def rag_answer(
     viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
 ):
     """Ask the Consultant: natural language over Hye Aero's sale history + market feed (RAG)."""
+    history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
+    q_log_id = _log_consultant_question(request, req.query.strip(), "sync", history_dicts, viewer)
     try:
         rag = get_rag()
-        history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
-        _log_consultant_question(request, req.query.strip(), "sync", history_dicts, viewer)
         out = rag.answer(query=req.query.strip(), top_k=20, history=history_dicts if history_dicts else None)
         if out.get("error"):
+            try:
+                finalize_consultant_query_log_answer(
+                    get_db(), q_log_id, str(out.get("answer") or ""), str(out["error"])
+                )
+            except Exception as le:
+                logger.warning("consultant query log finalize failed (non-fatal): %s", le)
             raise HTTPException(status_code=500, detail=out["error"])
+        try:
+            finalize_consultant_query_log_answer(get_db(), q_log_id, str(out.get("answer") or ""))
+        except Exception as le:
+            logger.warning("consultant query log finalize failed (non-fatal): %s", le)
         return ChatResponse(
             answer=out["answer"],
             sources=out.get("sources", []),
@@ -1420,6 +1490,10 @@ def rag_answer(
     except HTTPException:
         raise
     except Exception as e:
+        try:
+            finalize_consultant_query_log_answer(get_db(), q_log_id, "", str(e))
+        except Exception as le:
+            logger.warning("consultant query log finalize failed (non-fatal): %s", le)
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1446,17 +1520,35 @@ def rag_answer_stream(
         raise HTTPException(status_code=503, detail=str(e))
 
     history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
-    _log_consultant_question(request, req.query.strip(), "stream", history_dicts, viewer)
+    stream_log_id = _log_consultant_question(request, req.query.strip(), "stream", history_dicts, viewer)
+    stream_q = req.query.strip()
 
     def event_iter():
+        buf: List[str] = []
         try:
             for ev in rag.answer_stream_events(
-                query=req.query.strip(),
+                query=stream_q,
                 top_k=20,
                 history=history_dicts if history_dicts else None,
             ):
+                et = ev.get("type")
+                if et == "delta":
+                    buf.append(ev.get("text") or "")
+                elif et == "done":
+                    ans = "".join(buf)
+                    err = ev.get("error")
+                    if stream_log_id:
+                        try:
+                            finalize_consultant_query_log_answer(get_db(), stream_log_id, ans, err)
+                        except Exception as le:
+                            logger.warning("consultant query log finalize failed (non-fatal): %s", le)
                 yield _rag_sse_event(ev)
         except Exception as e:
+            if stream_log_id:
+                try:
+                    finalize_consultant_query_log_answer(get_db(), stream_log_id, "".join(buf), str(e))
+                except Exception as le:
+                    logger.warning("consultant query log finalize failed (non-fatal): %s", le)
             yield _rag_sse_event({"type": "error", "message": str(e)})
             yield _rag_sse_event(
                 {"type": "done", "sources": [], "data_used": {}, "aircraft_images": [], "error": str(e)}

@@ -18,9 +18,9 @@ _IMAGE_INTENT_SYSTEM = """You classify user intent for Hye Aero Ask Consultant (
 
 Should this turn include a **gallery of real aircraft photo URLs** (web + marketplace scrape), shown next to the text answer?
 
-**true** — User wants visuals or a rich aircraft portrait: photos, images, pictures, exterior/cabin, paint scheme, "what does it look like", walkthrough, "tell me all about this jet", "describe this aircraft", open-ended detail where seeing the airframe helps. Short follow-ups ("yes", "interior too?", "any pics?") inherit topic from prior turns: if you were discussing a specific tail/serial, favor true when follow-up clearly continues that thread visually or with broad detail.
+**true** — User **explicitly** wants photos, images, pictures, a gallery, exterior/cabin shots, "what does it look like" in a visual sense, or short follow-ups that clearly mean "show me pics" in the same thread.
 
-**false** — Narrow non-visual facts only: price, ask, cost, valuation number, market comps as numbers, who owns / LLC name, listing status, hours/cycles alone, serial/date lookup, legal/regulatory, generic model questions with no instance, or a minimal fact with no implied interest in appearance.
+**false** — Specs, mission, price, ownership, comparison, "describe" or "tell me about" the aircraft **without** asking for photos, most operational questions, registry lookups, or general aviation knowledge without a visual request.
 
 Output only valid JSON: {"show_aircraft_images": true or false}"""
 

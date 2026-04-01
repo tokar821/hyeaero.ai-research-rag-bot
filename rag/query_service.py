@@ -6,6 +6,7 @@ import time
 import re
 from typing import List, Dict, Any, Optional, Iterator, Tuple
 
+from rag.answer.aviation_formatter import aviation_answer_format_contract_block
 from rag.embedding_service import EmbeddingService
 from rag.entity_extractors import EXTRACTORS
 from vector_store.pinecone_client import PineconeClient
@@ -33,11 +34,13 @@ def _consultant_faa_no_phly_user_directive(phly_meta: Optional[Dict[str, Any]]) 
     if not int(phly_meta.get("faa_master_owner_rows") or 0):
         return ""
     return (
-        "\n\n**Answer structure (mandatory):** PhlyData has no internal export row for this tail, but **FAA MASTER** "
-        "lines are in the context above. Open with FAA **registrant** and **mailing address** (verbatim where marked) "
-        "and FAA **aircraft identity** (reference model, year, serial, type) when present. "
-        "Do **not** state that make/model, year, or U.S. legal ownership are unknown or absent if those FAA lines are filled. "
-        "Then briefly note PhlyData has no row; then add Tavily/vector/listing supplements with source labels.\n"
+        "\n\n**Answer structure (internal guidance — client-facing wording):** Hye Aero's internal aircraft record has "
+        "no row for this tail, but **FAA MASTER** lines are in the context above. Open with FAA **registrant** and "
+        "**mailing address** (verbatim where marked) and FAA **aircraft identity** (reference model, year, serial, type) "
+        "when present. Do **not** state that make/model, year, or U.S. legal ownership are unknown or absent if those "
+        "FAA lines are filled. Then, in **plain client language**, note the aircraft isn't in Hye Aero's current "
+        "internal dataset if helpful; **never** say \"internal export row\" or similar jargon. Add Tavily/vector/listing "
+        "supplements with source labels.\n"
     )
 
 
@@ -51,11 +54,12 @@ def _consultant_no_phly_no_faa_snapshot_user_directive(phly_meta: Optional[Dict[
     if not int(phly_meta.get("faa_internal_snapshot_miss") or 0):
         return ""
     return (
-        "\n\n**Answer structure (mandatory):** PhlyData has no internal row, and **our ingested FAA MASTER snapshot** "
-        "has no row for this tail in the context above. **Lead with Tavily web results** (and vector excerpts if any) "
-        "for aircraft identity and U.S. registry/owner facts — cite snippet # and domain. "
+        "\n\n**Answer structure (internal guidance — client-facing wording):** Hye Aero's internal aircraft record and "
+        "ingested FAA snapshot have **no row** for this tail in this context. **Lead with Tavily web results** (and "
+        "vector excerpts if any) for aircraft identity and U.S. registry/owner facts — cite snippet # and domain. "
         "Do **not** conclude that make/model, year, or ownership are \"not available\" if any Tavily snippet provides "
-        "them. Avoid hollow closings (\"let me know if you have other queries\").\n"
+        "them. If internal data is thin, tell the client in natural language (e.g. not in our current dataset) — "
+        "**never** say \"internal export row\" or expose table names. Avoid hollow closings.\n"
     )
 
 
@@ -71,10 +75,11 @@ def _consultant_faa_no_phly_priority_prefix(phly_meta: Optional[Dict[str, Any]])
     if not int(phly_meta.get("faa_master_owner_rows") or 0):
         return ""
     return (
-        "[ANSWER ORDER — MANDATORY]\n"
+        "[ANSWER ORDER — FOR DRAFTER]\n"
         "1) If **AUTHORITATIVE — FAA MASTER** appears in this context, open with FAA registrant, mailing address, "
-        "and aircraft identity lines (reference model, year_mfr, serial, type) from that block — verbatim where MANDATORY.\n"
-        "2) Then briefly note that PhlyData (phlydata_aircraft) has no internal export row for this identifier.\n"
+        "and aircraft identity lines (reference model, year_mfr, serial, type) from that block — verbatim where required.\n"
+        "2) Then, in **client-facing** language only, note this aircraft is not in Hye Aero's current internal aircraft "
+        "dataset (do **not** mention export rows, `phlydata_aircraft`, or similar to the user).\n"
         "3) Then add Tavily / vector / listing supplements with clear source labels.\n\n"
     )
 
@@ -89,13 +94,14 @@ def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dic
     if not int(phly_meta.get("faa_internal_snapshot_miss") or 0):
         return ""
     return (
-        "[ANSWER ORDER — MANDATORY — INGESTED FAA SNAPSHOT MISS]\n"
-        "Our **internal** ``faa_master`` table did **not** return a row for this tail in this environment, but the user "
-        "may still expect **public** U.S. registry / aircraft facts. **Lead with substantive lines from Tavily web results "
-        "and vector excerpts** in this context (aircraft class, manufacturer/model family, year/serial if stated, "
+        "[ANSWER ORDER — FOR DRAFTER — INGESTED FAA SNAPSHOT MISS]\n"
+        "Our **internal** ``faa_master`` snapshot did **not** return a row for this tail in this environment, but the "
+        "user may still expect **public** U.S. registry / aircraft facts. **Lead with substantive lines from Tavily web "
+        "results and vector excerpts** in this context (aircraft class, manufacturer/model family, year/serial if stated, "
         "registrant or operator when snippets support them). Cite **snippet #** and domain.\n"
         "Do **not** claim make/model, year, serial, or ownership are \"not available in the data gathered\" when any "
-        "Tavily or vector line supports them. Briefly note PhlyData has no internal export row; avoid hollow closings.\n\n"
+        "Tavily or vector line supports them. If helpful, note in **plain language** the aircraft isn't in Hye Aero's "
+        "current internal dataset — **never** quote \"internal export row\" or system messages to the client.\n\n"
     )
 
 
@@ -103,8 +109,7 @@ def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dic
 DEFAULT_SCORE_THRESHOLD = 0.5
 
 CONSULTANT_SYSTEM_PROMPT = """You are Hye Aero's Aircraft Research & Valuation Consultant. You think like a senior broker and research lead: calm, precise, and trustworthy for business decisions. Consider the full conversation; answer the current question in context. Match the usefulness of a top-tier assistant (clear structure, plain language, no fluff) but **never trade accuracy for polish**.
-
-**Accuracy and source priority (internal):**
+""" + aviation_answer_format_contract_block() + """**Accuracy and source priority (internal):**
 - **Best-quality grounding:** When it appears in context, **PhlyData** (`phlydata_aircraft`) plus **FAA MASTER** (registrant/address in the same authority block) are Hye Aero's **primary** factual basis for identity, internal export fields, and U.S. legal registrant. Lead with and prioritize those over everything else when they apply.
 - **When PhlyData / FAA do not cover the aircraft** (no row, non-U.S. registry without FAA, or gaps): still deliver an **excellent, comprehensive** answer by **synthesizing** **Tavily (web)**, **vector DB** excerpts, **Hye Aero listing ingests** in context (e.g. **Controller**, **Aircraft Exchange**, **AircraftPost**, **AviaCost**, and other marketplace listing tables), and **public.aircraft** when present — plus careful **LLM reasoning** only where it connects evidence already in context. **Label every substantive claim by source** (web snippet #, listing row, vector chunk, etc.); do not present listing or web data as PhlyData.
 - **Serial numbers and registration (tail) numbers are unique as Hye Aero stores them** (Phly lookup: TRIM + UPPER only; **hyphens are literal**, so **LJ-1682** ≠ **LJ1682**, **525-0682** ≠ **5250682**). Illustrative examples only: **V-682** ≠ **682**; **XA-98723** ≠ **98723**; **0880** ≠ **880**. Never collapse hyphens, drop prefixes, or substitute a different spelling than the user or the Phly block shows.
@@ -180,6 +185,8 @@ CONSULTANT_REVIEW_SYSTEM_PROMPT = """You are a senior aviation research editor f
 
 Your job: produce the FINAL answer shown to the client — polished, natural, and **business-safe**: a broker-quality brief that sounds like a sharp human, with **zero overstatement** on listing availability.
 
+When the user's question is **performance, mission, range, ferry, or comparison**, keep the reply **natural and consultant-like** — no forced section titles (Short Answer / Operational Explanation / etc.); do **not** let unrelated registry or listing padding displace the operational core (still honor mandatory Phly/FAA blocks when they directly answer the question).
+
 Rules:
 - **[FOR USER REPLY — PhlyData (table phlydata_aircraft only) — MANDATORY VERBATIM]** blocks: the draft MUST match **aircraft_status** and **ask_price** (and identity) exactly as in that section — not marketplace listing status, not inferred web prices. Fix any draft that drifts.
 - Identity and **internal snapshot fields printed in the PhlyData block** (status, ask as in export, hours, programs, etc.): MUST align with PhlyData. Fix any draft that contradicts them using listing or web.
@@ -195,7 +202,8 @@ Rules:
 - Improve structure: **PhlyData-grounded lead** → FAA registrant → supplemental listing/web → operator/comps. Optional brief attribution ("Per PhlyData…" / "Separately, listing records…") — no long Sources footer.
 - **Listing URLs:** Never output a listing URL unless context proves it belongs to the **same** serial/tail as PhlyData/FAA. Strip wrong-jet URLs from the draft.
 - No markdown # or ** bold. Plain bullets (-) only when they add clarity.
-- Stay factual; do not fabricate URLs or companies not implied by context."""
+- Stay factual; do not fabricate URLs or companies not implied by context.
+- **Client-facing copy:** Never echo internal bracket tags, table names, or phrases like "internal export row" / "PhlyData has no row" verbatim engineering style — rephrase for the client (e.g. not in our current dataset; here is what we can still tell you)."""
 
 # Appended to user messages when the question is purchase / price / availability — forces deal-brief structure.
 CONSULTANT_PURCHASE_USER_DIRECTIVES = """
@@ -637,6 +645,7 @@ class RAGQueryService:
         max_query_variants: int = 5,
         skip_rerank: bool = False,
         rerank_anchor_query: Optional[str] = None,
+        pinecone_filter: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Run vector retrieval for several paraphrased queries.
@@ -673,6 +682,7 @@ class RAGQueryService:
                         score_threshold=score_threshold,
                         max_results=per_query_cap + 4,
                         skip_rerank=True,
+                        pinecone_filter=pinecone_filter,
                     )
                 except Exception as e:
                     logger.warning("retrieve_multi: skip q=%r: %s", q[:100], e)
@@ -710,6 +720,7 @@ class RAGQueryService:
                     score_threshold=score_threshold,
                     max_results=prefetch,
                     skip_rerank=True,
+                    pinecone_filter=pinecone_filter,
                 )
             except Exception as e:
                 logger.warning("retrieve_multi: skip q=%r: %s", q[:100], e)
@@ -809,10 +820,15 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         return "\n".join(parts)[:max_chars]
 
     def _phlydata_authority_block(
-        self, query: str, history: Optional[List[Dict[str, str]]] = None
+        self,
+        query: str,
+        history: Optional[List[Dict[str, str]]] = None,
+        *,
+        registry_sql_enabled: bool = True,
     ) -> tuple[str, Dict[str, int], List[Dict[str, Any]]]:
         """
-        Direct ``phlydata_aircraft`` (+ ``faa_master`` registrant) lookup for Ask Consultant.
+        Direct ``phlydata_aircraft`` lookup for Ask Consultant; optional ``faa_master`` when
+        ``registry_sql_enabled`` is True (see :func:`rag.intent.policies.registry_sql_enabled_for_intent`).
 
         Pinecone/RAG is built from listings/sales/FAA sync — **PhlyData (phlydata_aircraft) rows are often not embedded**,
         so vector search can miss them. This path queries Postgres on **serial, registration, manufacturer, model,
@@ -849,20 +865,31 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             phly_rows_out: List[Dict[str, Any]] = list(rows)
             authority_chunks: List[str] = []
 
-            phly_header = (
-                "[AUTHORITATIVE — PhlyData (Hye Aero aircraft source): phlydata_aircraft + FAA MASTER (faa_master)]\n"
-                "PhlyData is Hye Aero's canonical internal aircraft record. Use this block as Hye Aero's source of truth for: serial, tail, make/model, year, category, "
-                "and every internal snapshot field printed below (status, pricing-as-exported, hours, programs, brokers, csv_* columns, etc.). "
-                "Do not let listing-ingest tables or web override these values; other layers supplement only.\n"
-                "For legal registrant / owner: when FAA MASTER lists a registrant below, treat that as the U.S. record. "
-                "When FAA shows no row (common for non-U.S. primary registry, e.g. tails not starting with N-), "
-                "FAA is not the state of registry — you MUST use WEB SEARCH (Tavily) and vector context to name the "
-                "current registered owner/operator and attribute sources (titles/URLs). Do not invent registry names.\n\n"
-            )
+            if registry_sql_enabled:
+                phly_header = (
+                    "[AUTHORITATIVE — PhlyData (Hye Aero aircraft source): phlydata_aircraft + FAA MASTER (faa_master)]\n"
+                    "PhlyData is Hye Aero's canonical internal aircraft record. Use this block as Hye Aero's source of truth for: serial, tail, make/model, year, category, "
+                    "and every internal snapshot field printed below (status, pricing-as-exported, hours, programs, brokers, csv_* columns, etc.). "
+                    "Do not let listing-ingest tables or web override these values; other layers supplement only.\n"
+                    "For legal registrant / owner: when FAA MASTER lists a registrant below, treat that as the U.S. record. "
+                    "When FAA shows no row (common for non-U.S. primary registry, e.g. tails not starting with N-), "
+                    "FAA is not the state of registry — you MUST use WEB SEARCH (Tavily) and vector context to name the "
+                    "current registered owner/operator and attribute sources (titles/URLs). Do not invent registry names.\n\n"
+                )
+            else:
+                phly_header = (
+                    "[AUTHORITATIVE — PhlyData (Hye Aero aircraft source): phlydata_aircraft]\n"
+                    "PhlyData is Hye Aero's canonical internal aircraft record. **FAA MASTER (faa_master) registry SQL was not run** "
+                    "for this query type — do not assume U.S. legal registrant lines appear below. "
+                    "Use Tavily/vector for ownership or registry facts when needed.\n\n"
+                )
 
             if rows:
                 block, meta_out = format_phlydata_consultant_answer(
-                    self.db, rows, fetch_faa_master_owner_rows
+                    self.db,
+                    rows,
+                    fetch_faa_master_owner_rows,
+                    registry_sql_enabled=registry_sql_enabled,
                 )
                 authority_chunks.append(phly_header + block)
             else:
@@ -873,48 +900,54 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
 
             if not rows and faa_scan_tokens:
                 meta_out["phlydata_no_row_for_tokens"] = 1
-                # Union: consultant tokens + current-message extract + raw-query N-number scan so FAA tail lookup
-                # never misses tails like N448SJ when Phly SQL tokens differ or omit the registration.
-                faa_only_text, faa_only_meta, faa_fr = faa_master_standalone_authority_for_tokens(
-                    self.db, faa_scan_tokens, fetch_faa_master_owner_rows
-                )
-                if faa_only_text:
-                    # FAA MASTER must appear **before** the long Phly-gap instructions so the model
-                    # does not anchor on "no data" and skip verbatim registrant / identity lines.
-                    authority_chunks.append(faa_only_text)
-                    meta_out.update(faa_only_meta)
-                    if faa_fr and not phly_rows_out:
-                        from rag.phlydata_consultant_lookup import synthetic_phly_row_from_faa_master
+                if registry_sql_enabled:
+                    # Union: consultant tokens + current-message extract + raw-query N-number scan so FAA tail lookup
+                    # never misses tails like N448SJ when Phly SQL tokens differ or omit the registration.
+                    faa_only_text, faa_only_meta, faa_fr = faa_master_standalone_authority_for_tokens(
+                        self.db, faa_scan_tokens, fetch_faa_master_owner_rows
+                    )
+                    if faa_only_text:
+                        # FAA MASTER must appear **before** the long Phly-gap instructions so the model
+                        # does not anchor on "no data" and skip verbatim registrant / identity lines.
+                        authority_chunks.append(faa_only_text)
+                        meta_out.update(faa_only_meta)
+                        if faa_fr and not phly_rows_out:
+                            from rag.phlydata_consultant_lookup import synthetic_phly_row_from_faa_master
 
-                        phly_rows_out = [synthetic_phly_row_from_faa_master(faa_fr)]
+                            phly_rows_out = [synthetic_phly_row_from_faa_master(faa_fr)]
+                    else:
+                        # Ingested faa_master had no row; Tavily/public web may still have registry-class facts.
+                        meta_out["faa_internal_snapshot_miss"] = 1
+                        authority_chunks.append(faa_internal_miss_context_block(faa_scan_tokens))
                 else:
-                    # Ingested faa_master had no row; Tavily/public web may still have registry-class facts.
-                    meta_out["faa_internal_snapshot_miss"] = 1
-                    authority_chunks.append(faa_internal_miss_context_block(faa_scan_tokens))
+                    meta_out["faa_registry_sql_skipped"] = 1
 
                 phly_gap = (
-                    "[NO PHLYDATA ROW MATCH — phlydata_aircraft]\n"
+                    "[NO INTERNAL AIRCRAFT RECORD MATCH — operator context only]\n"
                     f"Search identifiers for this turn: {', '.join(str(x) for x in faa_scan_tokens[:16])}.\n"
-                    "There is **no matching row** in table **phlydata_aircraft** for these values. "
-                    "**Registration (tail) and serial numbers are unique as in Postgres**: matching uses TRIM + UPPER only — "
-                    "**hyphens are literal** (e.g. ``LJ-1682`` ≠ ``LJ1682``; ``525-0682`` ≠ ``5250682`` unless stored that way). "
-                    "**682** is not **V-682** or **BB-682**; **1682** is not **LJ-1682**; **98723** is not **XA-98723**; "
-                    "**0880** is not **880**; **11** is not **0011**. "
-                    "Never substitute a shorter or zero-stripped variant for the user's token.\n"
-                    "**Forbidden:** Do not invent a PhlyData aircraft block with placeholder 'Not listed' fields as if they came "
-                    "from Postgres — that will mislead the user.\n"
-                    "**Required:** State briefly that **PhlyData has no internal export row** for this identifier, then "
+                    "There is **no matching row** in Hye Aero's **internal aircraft** table for these values "
+                    "(matching uses TRIM + UPPER only — **hyphens are literal**; do not substitute shortened variants).\n"
+                    "**Forbidden:** Do not invent internal-aircraft fields or pretend they came from the database.\n"
+                    "**Required (client-facing):** Say naturally that this aircraft **isn't in our current dataset**, then "
                     "deliver the **best, most comprehensive** answer by combining **Tavily web results**, **vector database** "
                     "excerpts, **Hye Aero listing ingests** when present in context (e.g. Controller, Aircraft Exchange, AircraftPost, "
-                    "AviaCost), and **public.aircraft** if present — with clear source labels on each claim. "
-                    "Treat those layers as the factual basis when Phly is empty; use careful synthesis (no fabricated Phly fields).\n"
-                    "If an **[AUTHORITATIVE — FAA MASTER]** block appears **above** in this context (before this paragraph), "
-                    "you MUST lead your answer with that FAA data: use it **verbatim** for U.S. legal registrant and mailing address — "
-                    "do **not** say ownership is unknown or omit it. "
-                    "Use the **[FAA aircraft identity from MASTER]** lines (reference model, year_mfr, type_aircraft, serial) "
-                    "for aircraft type/year when present — do **not** claim make/model or registry identity are unavailable "
-                    "when those FAA lines are filled. Use Tavily/vector for operator, fleet, or market color when not in FAA lines.\n"
+                    "AviaCost), and **public.aircraft** if present — with clear source labels. "
+                    "**Never** use phrases like \"internal export row\" or raw table names in the user-visible answer.\n"
                 )
+                if registry_sql_enabled:
+                    phly_gap += (
+                        "If an **[AUTHORITATIVE — FAA MASTER]** block appears **above** in this context (before this paragraph), "
+                        "you MUST lead your answer with that FAA data: use it **verbatim** for U.S. legal registrant and mailing address — "
+                        "do **not** say ownership is unknown or omit it. "
+                        "Use the **[FAA aircraft identity from MASTER]** lines (reference model, year_mfr, type_aircraft, serial) "
+                        "for aircraft type/year when present — do **not** claim make/model or registry identity are unavailable "
+                        "when those FAA lines are filled. Use Tavily/vector for operator, fleet, or market color when not in FAA lines.\n"
+                    )
+                else:
+                    phly_gap += (
+                        "**No ingested FAA MASTER block was loaded for this turn** (registry SQL skipped for this intent). "
+                        "Rely on Tavily and vector excerpts for U.S. registry–class or ownership facts; label sources.\n"
+                    )
                 authority_chunks.append(phly_gap)
 
             # Include tails from history (faa_scan_tokens) when Phly has no row so follow-ups still resolve public.aircraft.
@@ -988,6 +1021,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         max_context_chars: int,
         score_threshold: Optional[float],
         history: Optional[List[Dict[str, str]]],
+        progress: Any = None,
     ) -> Tuple[str, Any]:
         """
         Delegates to :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle` (entity → router →
@@ -1001,7 +1035,13 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         from rag.consultant_retrieval import run_consultant_retrieval_bundle
 
         return run_consultant_retrieval_bundle(
-            self, query, top_k, max_context_chars, score_threshold, history
+            self,
+            query,
+            top_k,
+            max_context_chars,
+            score_threshold,
+            history,
+            progress=progress,
         )
 
     @staticmethod
@@ -1062,9 +1102,15 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         q = (query or "").strip()
         cacheable = rag_cache_enabled() and bool(q) and not history
 
+        from rag.consultant_progress_log import new_progress_logger
+
+        pr = new_progress_logger()
+
         if cacheable:
             hit = cache_get(q)
             if hit:
+                if pr:
+                    pr.step("path_cache_hit", short_circuit=1)
                 norm = normalize_answer_payload_for_cache(hit)
                 yield {"type": "status", "message": "Preparing answer…"}
                 for piece in self._iter_display_chunks(norm.get("answer") or ""):
@@ -1085,8 +1131,37 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 max_context_chars,
                 score_threshold,
                 history,
+                progress=pr,
             )
+            if kind == "small_talk":
+                if pr:
+                    pr.step("path_small_talk_stream", streaming=1)
+                yield {"type": "status", "message": "Preparing answer…"}
+                pl = payload if isinstance(payload, dict) else {}
+                ans = pl.get("answer") or ""
+                for piece in self._iter_display_chunks(ans):
+                    yield {"type": "delta", "text": piece}
+                norm = normalize_answer_payload_for_cache(pl)
+                written = bool(
+                    cacheable and not norm.get("error") and cache_set(q, norm)
+                )
+                du = dict(norm.get("data_used") or {})
+                if cacheable:
+                    du = apply_cache_miss_metadata(du)
+                    if written:
+                        du["rag_cache_write"] = 1
+                yield {
+                    "type": "done",
+                    "sources": pl.get("sources", []),
+                    "data_used": du,
+                    "aircraft_images": pl.get("aircraft_images") or [],
+                    "error": pl.get("error"),
+                }
+                return
+
             if kind == "professional":
+                if pr:
+                    pr.step("path_professional_brief", streaming=1)
                 yield {"type": "status", "message": "Preparing answer…"}
                 pl = payload if isinstance(payload, dict) else {}
                 ans = (pl.get("answer") or "") if isinstance(payload, dict) else ""
@@ -1111,6 +1186,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 return
 
             if kind == "gk":
+                if pr:
+                    pr.step("path_general_knowledge_stream", after="retrieval_empty")
                 yield {"type": "status", "message": "Gathering context…"}
                 yield {"type": "status", "message": "Generating answer…"}
                 messages = [{"role": "system", "content": CONSULTANT_FALLBACK_SYSTEM_PROMPT}]
@@ -1174,6 +1251,21 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
 
             yield {"type": "status", "message": "Searching sources and drafting…"}
 
+            review_disabled = (
+                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
+                in ("1", "true", "yes")
+                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
+                in ("1", "true", "yes")
+                or _env_truthy("CONSULTANT_LOW_LATENCY")
+            )
+            if pr:
+                pr.step(
+                    "llm_turn_start",
+                    model=self.chat_model,
+                    review_pass=not review_disabled,
+                    context_chars=len(context),
+                )
+
             messages = [{"role": "system", "content": b["system_prompt"]}]
             hist = b.get("history")
             if hist:
@@ -1197,14 +1289,6 @@ Current question: {b["query"]}
 Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
 
-            review_disabled = (
-                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
-                in ("1", "true", "yes")
-                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
-                in ("1", "true", "yes")
-                or _env_truthy("CONSULTANT_LOW_LATENCY")
-            )
-
             import openai
 
             sync_client = openai.OpenAI(api_key=self.openai_api_key, timeout=120.0)
@@ -1217,6 +1301,8 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
                     max_tokens=1536,
                 )
                 draft = (response.choices[0].message.content or "").strip()
+                if pr:
+                    pr.step("llm_draft_sync_done", draft_chars=len(draft))
                 yield {"type": "status", "message": "Polishing answer…"}
                 rev_messages = [
                     {"role": "system", "content": CONSULTANT_REVIEW_SYSTEM_PROMPT},
@@ -1248,9 +1334,23 @@ Produce the final client-facing answer.""",
                     stream_parts.append(d)
                     yield {"type": "delta", "text": d}
 
+            if pr:
+                pr.step(
+                    "llm_output_stream_done",
+                    answer_chars=len("".join(stream_parts)),
+                    review_used=not review_disabled,
+                )
+
             data_used["final_review_pass"] = not review_disabled
             sources = self._consultant_sources_list(phly_meta, tavily_hits, results)
             elapsed = time.perf_counter() - start
+            if pr:
+                pr.step(
+                    "consultant_stream_request_done",
+                    total_ms=int(elapsed * 1000),
+                    tavily_hits=tavily_hits,
+                    pinecone_chunks=len(results),
+                )
             logger.info(
                 "RAG stream: query_len=%d phly=%s tavily_hits=%d pinecone_sources=%d elapsed=%.2fs",
                 len(query),
@@ -1323,9 +1423,15 @@ Produce the final client-facing answer.""",
         q = (query or "").strip()
         cacheable = rag_cache_enabled() and bool(q) and not history
 
+        from rag.consultant_progress_log import new_progress_logger
+
+        pr = new_progress_logger()
+
         if cacheable:
             cached_hit = cache_get(q)
             if cached_hit:
+                if pr:
+                    pr.step("path_cache_hit", short_circuit=1)
                 norm = normalize_answer_payload_for_cache(cached_hit)
                 norm["data_used"] = apply_cache_hit_metadata(norm.get("data_used"))
                 return norm
@@ -1337,7 +1443,21 @@ Produce the final client-facing answer.""",
                 max_context_chars,
                 score_threshold,
                 history,
+                progress=pr,
             )
+            if kind == "small_talk":
+                pl = payload if isinstance(payload, dict) else {}
+                norm = normalize_answer_payload_for_cache(pl)
+                written = bool(
+                    cacheable and not norm.get("error") and cache_set(q, norm)
+                )
+                out = dict(norm)
+                if cacheable:
+                    out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
+                    if written:
+                        out["data_used"]["rag_cache_write"] = 1
+                return out
+
             if kind == "professional":
                 pl = payload if isinstance(payload, dict) else {}
                 norm = normalize_answer_payload_for_cache(pl)
@@ -1370,6 +1490,22 @@ Produce the final client-facing answer.""",
             tavily_hits = b["tavily_hits"]
             data_used: Dict[str, Any] = dict(b["data_used"])
 
+            review_disabled = (
+                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
+                in ("1", "true", "yes")
+                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
+                in ("1", "true", "yes")
+                or _env_truthy("CONSULTANT_LOW_LATENCY")
+            )
+            if pr:
+                pr.step(
+                    "llm_turn_start",
+                    model=self.chat_model,
+                    review_pass=not review_disabled,
+                    context_chars=len(context),
+                    path="sync",
+                )
+
             import openai
 
             client = openai.OpenAI(api_key=self.openai_api_key, timeout=90.0)
@@ -1400,14 +1536,9 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
                 max_tokens=1536,
             )
             draft = (response.choices[0].message.content or "").strip()
+            if pr:
+                pr.step("llm_draft_sync_done", draft_chars=len(draft))
 
-            review_disabled = (
-                (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
-                in ("1", "true", "yes")
-                or (os.getenv("CONSULTANT_REVIEW_DISABLED") or "").strip().lower()
-                in ("1", "true", "yes")
-                or _env_truthy("CONSULTANT_LOW_LATENCY")
-            )
             answer = draft
             if draft and not review_disabled:
                 try:
@@ -1439,7 +1570,21 @@ Produce the final client-facing answer.""",
                 except Exception as rev_e:
                     logger.warning("Consultant final review skipped: %s", rev_e)
 
+            if pr:
+                pr.step(
+                    "llm_sync_complete",
+                    answer_chars=len(answer or ""),
+                    final_review_applied=not review_disabled,
+                )
+
             elapsed = time.perf_counter() - start
+            if pr:
+                pr.step(
+                    "consultant_sync_request_done",
+                    total_ms=int(elapsed * 1000),
+                    tavily_hits=tavily_hits,
+                    pinecone_chunks=len(results),
+                )
             sources = self._consultant_sources_list(phly_meta, tavily_hits, results)
             data_used["final_review_pass"] = not review_disabled
 

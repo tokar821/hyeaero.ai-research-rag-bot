@@ -1,67 +1,35 @@
 """
-Ask Consultant pipeline — structured to match the intended RAG architecture::
+Ask Consultant pipeline — router config and **re-exports** for the layered RAG layout::
 
-    User Query
-         │
-    Entity Detection   ← :func:`summarize_consultant_entities`
-         │
-    Query Router       ← :func:`load_consultant_pipeline_config` + Tavily gate
-         │
-    SQL + Pinecone Retrieval   ← :mod:`rag.consultant_retrieval` (Phly/market SQL, ``_retrieve_multi``)
-         │
-    Reranker           ← ``SemanticRerankerService`` inside :meth:`RAGQueryService.retrieve`
-         │
-    Context Builder    ← :func:`build_consultant_llm_context`
-         │
-    LLM
-         │
-    Answer
+    User Query → :mod:`rag.intent` → :mod:`rag.entities` → router (this module's config)
+    → :mod:`rag.consultant_retrieval` (SQL + Pinecone + Tavily)
+    → :mod:`rag.ranking` → :mod:`rag.context` → LLM (+ :mod:`rag.answer`)
 
-End-to-end orchestration lives in :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle`.
-This module holds **router config**, **entity summary**, and **context assembly** helpers.
+End-to-end orchestration: :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle`.
 """
 
 from __future__ import annotations
 
 import os
-from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any, Dict, List
+
+# Re-exports (stable import paths for tests and callers)
+from rag.context import build_consultant_llm_context
+from rag.entities import ConsultantEntityDetection, summarize_consultant_entities
 
 
 def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
 
 
-@dataclass
-class ConsultantEntityDetection:
-    """Output of the entity-detection stage (tokens + counts for SQL / Tavily anchoring)."""
-
-    lookup_tokens: List[str]
-    phlydata_row_count: int
-    faa_lookup_token_count: int
-
-    def asdict(self) -> Dict[str, Any]:
-        d = asdict(self)
-        d["lookup_tokens"] = d["lookup_tokens"][:48]
-        return d
-
-
-def summarize_consultant_entities(
-    query: str,
-    history: Optional[List[Dict[str, str]]],
-    phly_meta: Dict[str, Any],
-    phly_rows: List[Dict[str, Any]],
-) -> ConsultantEntityDetection:
-    from rag.phlydata_consultant_lookup import consultant_merge_lookup_tokens
-
-    flt = phly_meta.get("faa_lookup_tokens")
-    flist = flt if isinstance(flt, list) else []
-    tokens = consultant_merge_lookup_tokens(query, history, flist)
-    return ConsultantEntityDetection(
-        lookup_tokens=list(tokens),
-        phlydata_row_count=len(phly_rows or []),
-        faa_lookup_token_count=len(flist),
-    )
+__all__ = [
+    "ConsultantEntityDetection",
+    "ConsultantPipelineConfig",
+    "build_consultant_llm_context",
+    "load_consultant_pipeline_config",
+    "summarize_consultant_entities",
+]
 
 
 @dataclass
@@ -158,51 +126,3 @@ def load_consultant_pipeline_config(default_chat_model: str) -> ConsultantPipeli
         tavily_timeout=tavily_timeout,
         intent_model=intent_model,
     )
-
-
-def build_consultant_llm_context(
-    *,
-    phly_authority: str,
-    market_block: str,
-    tavily_block: str,
-    rag_results: List[Dict[str, Any]],
-    max_context_chars: int,
-) -> Tuple[str, List[str]]:
-    """
-    Context-builder stage: **SQL / authority first**, then web (Tavily), then **reranked** Pinecone rows.
-    Order reduces hallucination risk vs. putting opaque chunks first.
-    """
-    parts: List[str] = []
-    total = 0
-    sep = 20
-
-    def append_block(text: str) -> None:
-        nonlocal total
-        chunk = (text or "").strip()
-        if not chunk:
-            return
-        if total + len(chunk) + sep > max_context_chars:
-            chunk = chunk[: max(0, max_context_chars - total - sep)]
-        if not chunk.strip():
-            return
-        parts.append(chunk)
-        total += len(chunk) + sep
-
-    append_block(phly_authority)
-    append_block(market_block)
-    append_block(tavily_block)
-
-    for r in rag_results:
-        text = (r.get("full_context") or r.get("chunk_text") or "").strip()
-        if not text:
-            continue
-        if total + len(text) + sep > max_context_chars:
-            text = text[: max(0, max_context_chars - total - sep)]
-        if text:
-            parts.append(text)
-            total += len(text) + sep
-        if total >= max_context_chars:
-            break
-
-    context = "\n\n---\n\n".join(parts) if parts else ""
-    return context, parts

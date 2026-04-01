@@ -4,8 +4,8 @@ Logging of user questions to Ask Consultant (PostgreSQL).
 On by default whenever the API uses Postgres. Set ``CONSULTANT_QUERY_ANALYTICS_ENABLED=0`` (or
 ``false`` / ``no`` / ``off``) to stop inserting new rows; admin list/delete APIs still work.
 
-Privacy: stores the raw ``query`` string and optional client hints; use a retention policy and
-appropriate notices to users if required in your jurisdiction.
+Privacy: stores the raw ``query``, optional **answer** snapshot, and denormalized user email/name
+when authenticated; use a retention policy and appropriate notices if required in your jurisdiction.
 """
 
 from __future__ import annotations
@@ -21,8 +21,11 @@ from database.postgres_client import PostgresClient
 logger = logging.getLogger(__name__)
 
 _MAX_QUERY_CHARS = 16000
+_MAX_ANSWER_CHARS = 100_000
 _MAX_UA_CHARS = 512
 _MAX_IP_CHARS = 200
+_MAX_USER_EMAIL_CHARS = 320
+_MAX_USER_NAME_CHARS = 255
 _MAX_SEARCH_CHARS = 500
 
 
@@ -93,8 +96,12 @@ def _where_clause_for_filters(filters: ConsultantQueryListFilters) -> Tuple[str,
     raw_q = (filters.q or "").strip()
     if raw_q:
         chunk = _escape_ilike_literal(raw_q[:_MAX_SEARCH_CHARS])
-        parts.append("l.query_text ILIKE %s ESCAPE '\\'")
-        params.append(f"%{chunk}%")
+        parts.append(
+            "(l.query_text ILIKE %s ESCAPE '\\' OR COALESCE(l.answer_text, '') ILIKE %s ESCAPE '\\')"
+        )
+        like = f"%{chunk}%"
+        params.append(like)
+        params.append(like)
 
     if filters.user_id is not None:
         try:
@@ -119,15 +126,19 @@ def record_consultant_query(
     client_ip: Optional[str] = None,
     user_agent: Optional[str] = None,
     user_id: Optional[int] = None,
-) -> None:
+    user_email: Optional[str] = None,
+    user_full_name: Optional[str] = None,
+) -> Optional[int]:
     """
-    Insert one row. Silently no-ops if analytics disabled via env. Raises only if caller should surface DB errors.
+    Insert one row (question only; answer filled later via :func:`update_consultant_query_log_answer`).
+
+    Returns the new row ``id``, or ``None`` if logging is disabled or ``query`` is empty.
     """
     if not consultant_query_analytics_enabled():
-        return
+        return None
     q = (query or "").strip()
     if not q:
-        return
+        return None
     q = q[:_MAX_QUERY_CHARS]
     ep = (endpoint or "unknown")[:16]
     ua = (user_agent or "")[:_MAX_UA_CHARS] or None
@@ -141,14 +152,57 @@ def record_consultant_query(
             uid = None
         if uid is not None and uid < 1:
             uid = None
-    db.execute_update(
+    uem = ((user_email or "").strip() or None) if user_email else None
+    if uem:
+        uem = uem[:_MAX_USER_EMAIL_CHARS]
+    ufn = ((user_full_name or "").strip() or None) if user_full_name else None
+    if ufn:
+        ufn = ufn[:_MAX_USER_NAME_CHARS]
+    rows = db.execute_query(
         """
         INSERT INTO consultant_query_log
-            (query_text, endpoint, history_turn_count, client_ip, user_agent, user_id)
-        VALUES (%s, %s, %s, %s, %s, %s)
+            (query_text, endpoint, history_turn_count, client_ip, user_agent, user_id, user_email, user_full_name)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
-        (q, ep, htc, ip, ua, uid),
+        (q, ep, htc, ip, ua, uid, uem, ufn),
     )
+    if not rows:
+        return None
+    return int(rows[0]["id"])
+
+
+def update_consultant_query_log_answer(
+    db: PostgresClient,
+    row_id: int,
+    answer_text: str,
+) -> None:
+    """Persist assistant reply (or error suffix); no-op if analytics disabled or ``row_id`` invalid."""
+    if not consultant_query_analytics_enabled():
+        return
+    rid = int(row_id)
+    if rid < 1:
+        return
+    at = (answer_text or "")[:_MAX_ANSWER_CHARS]
+    db.execute_update(
+        "UPDATE consultant_query_log SET answer_text = %s WHERE id = %s",
+        (at, rid),
+    )
+
+
+def finalize_consultant_query_log_answer(
+    db: PostgresClient,
+    row_id: Optional[int],
+    answer: str,
+    error: Optional[str] = None,
+) -> None:
+    """Append optional ``[Error]`` line and store under ``answer_text``."""
+    if not row_id:
+        return
+    body = (answer or "").strip()
+    if error:
+        body = (body + "\n\n" if body else "") + f"[Error] {error}"
+    update_consultant_query_log_answer(db, row_id, body)
 
 
 def list_consultant_queries(
@@ -165,7 +219,8 @@ def list_consultant_queries(
     where_sql, where_params = _where_clause_for_filters(fl)
     rows = db.execute_query(
         f"""
-        SELECT l.id, l.created_at, l.query_text, l.endpoint, l.history_turn_count, l.client_ip, l.user_agent
+        SELECT l.id, l.created_at, l.query_text, l.endpoint, l.history_turn_count, l.client_ip, l.user_agent,
+               l.user_id, l.user_email, l.user_full_name, l.answer_text
         FROM consultant_query_log l
         WHERE {where_sql}
         ORDER BY l.created_at DESC, l.id DESC

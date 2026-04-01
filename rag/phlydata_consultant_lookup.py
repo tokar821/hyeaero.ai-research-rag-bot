@@ -1123,12 +1123,13 @@ def faa_master_standalone_authority_for_tokens(
             loc = ", ".join(x for x in (city, st, z, ctry) if x)
 
             lines: List[str] = [
-                "[AUTHORITATIVE — FAA MASTER (faa_master) — no PhlyData row for this identifier]",
-                "PhlyData (**phlydata_aircraft**) has **no** internal export row for the user's search tokens. "
-                "The following lines are from our ingested **FAA MASTER** snapshot only (U.S. civil registry). "
+                "[AUTHORITATIVE — FAA MASTER (faa_master) — no internal aircraft record; FAA snapshot only]",
+                "Hye Aero's **internal aircraft record** has **no** row for this identifier; the following lines are from our "
+                "ingested **FAA MASTER** snapshot only (U.S. civil registry). "
                 "Use **every** non-empty FAA line below for your answer: aircraft identity (reference model, year, type) "
                 "and U.S. legal registrant — do **not** say make/model or ownership is unknown or not in the data when "
-                "those lines are present. Supplement with Tavily/vector only for operator, fleet, or market color not in MASTER.",
+                "those lines are present. Supplement with Tavily/vector only for operator, fleet, or market color not in MASTER. "
+                "In the **client-facing** answer, do **not** mention \"internal export row\" or similar engineering phrasing.",
                 "",
                 f"- Registration token matched: {reg_try} (from query token {raw!r})",
                 f"- FAA match kind: {kind or 'unknown'}",
@@ -1185,10 +1186,15 @@ def format_phlydata_consultant_answer(
     db: PostgresClient,
     rows: List[Dict[str, Any]],
     fetch_faa_master,
+    *,
+    registry_sql_enabled: bool = True,
 ) -> Tuple[str, Dict[str, Any]]:
     """
     Build plain-text answer and ``data_used`` summary.
     ``fetch_faa_master`` is ``services.faa_master_lookup.fetch_faa_master_owner_rows``.
+
+    When ``registry_sql_enabled`` is False, Phly identity/snapshot lines are still emitted but
+    **faa_master** is not queried (intent-gated registry path).
     """
     lines: List[str] = []
     lines.append(
@@ -1201,8 +1207,12 @@ def format_phlydata_consultant_answer(
         "Controller / exchanges / aircraft_listings / Tavily / vector DB are supplemental — never override PhlyData internal fields with them; "
         "if they disagree, state PhlyData first, then Separately, … for the other source. "
         "Snapshots can still be stale; for live availability and contracts, say verify with broker/platform. "
-        "Registered owner names are not in PhlyData — they appear only in the FAA MASTER line below when present; "
-        "otherwise use Tavily / vector context and label sources clearly."
+        + (
+            "Registered owner names are not in PhlyData — they appear only in the FAA MASTER line below when present; "
+            "otherwise use Tavily / vector context and label sources clearly."
+            if registry_sql_enabled
+            else "U.S. legal registrant lines from **faa_master** were not loaded for this query type — use Tavily/vector for ownership when needed and label sources."
+        )
     )
     faa_hits = 0
     for i, r in enumerate(rows, 1):
@@ -1234,16 +1244,18 @@ def format_phlydata_consultant_answer(
         serial = str(r.get("serial_number") or "").strip()
         reg_s = str(r.get("registration_number") or "").strip() or None
         mdl_q = str(r.get("model") or "").strip() or None
-        try:
-            faa_rows, _kind = fetch_faa_master(
-                db,
-                serial=serial or sn,
-                model=mdl_q,
-                registration=reg_s,
-            )
-        except Exception as e:
-            logger.debug("faa_master enrich for consultant: %s", e)
-            faa_rows = []
+        faa_rows: List[Dict[str, Any]] = []
+        if registry_sql_enabled:
+            try:
+                faa_rows, _kind = fetch_faa_master(
+                    db,
+                    serial=serial or sn,
+                    model=mdl_q,
+                    registration=reg_s,
+                )
+            except Exception as e:
+                logger.debug("faa_master enrich for consultant: %s", e)
+                faa_rows = []
         if faa_rows:
             faa_hits += 1
             fr = faa_rows[0]
@@ -1278,7 +1290,7 @@ def format_phlydata_consultant_answer(
                     lines.append(f"  Mailing street: {street_combined}")
                 if loc:
                     lines.append(f"  Mailing city/state/ZIP/country: {loc}")
-        else:
+        elif registry_sql_enabled:
             reg_u = (reg_s or "").strip().upper()
             non_us_hint = ""
             if reg_u and not reg_u.startswith("N") and len(reg_u) >= 2:
@@ -1294,6 +1306,11 @@ def format_phlydata_consultant_answer(
                 "company name(s) tied to this tail/serial (fleet, operator, AOC, or registry text). If snippets conflict, "
                 "state both and which sources support each. Do not invent database or portal names unless the exact phrase "
                 "appears in a snippet. Do not invent company names — only names that appear in context below."
+            )
+        else:
+            lines.append(
+                "  - FAA MASTER: not queried for this turn (registry SQL disabled for this intent). "
+                "Use Tavily/vector for U.S. legal registrant or operator context when relevant."
             )
 
     data_used = {
