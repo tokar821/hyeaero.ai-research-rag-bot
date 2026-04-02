@@ -38,8 +38,9 @@ def _consultant_faa_no_phly_user_directive(phly_meta: Optional[Dict[str, Any]]) 
         "no row for this tail, but **FAA MASTER** lines are in the context above. Open with FAA **registrant** and "
         "**mailing address** (verbatim where marked) and FAA **aircraft identity** (reference model, year, serial, type) "
         "when present. Do **not** state that make/model, year, or U.S. legal ownership are unknown or absent if those "
-        "FAA lines are filled. Then, in **plain client language**, note the aircraft isn't in Hye Aero's current "
-        "internal dataset if helpful; **never** say \"internal export row\" or similar jargon. Add Tavily/vector/listing "
+        "FAA lines are filled. Then, if the inventory record has no matching row, use **plain client language** only—"
+        "prefer **based on typical aircraft performance data** and the FAA/web context; **never** say "
+        "\"internal dataset\", \"not in our database\", or \"internal export row.\" Add Tavily/vector/listing "
         "supplements with source labels.\n"
     )
 
@@ -58,8 +59,9 @@ def _consultant_no_phly_no_faa_snapshot_user_directive(phly_meta: Optional[Dict[
         "ingested FAA snapshot have **no row** for this tail in this context. **Lead with Tavily web results** (and "
         "vector excerpts if any) for aircraft identity and U.S. registry/owner facts — cite snippet # and domain. "
         "Do **not** conclude that make/model, year, or ownership are \"not available\" if any Tavily snippet provides "
-        "them. If internal data is thin, tell the client in natural language (e.g. not in our current dataset) — "
-        "**never** say \"internal export row\" or expose table names. Avoid hollow closings.\n"
+        "them. If evidence in this context is thin, use natural broker language—**based on typical aircraft performance "
+        "data** and public sources—**never** say \"internal dataset\", \"not in our database\", or \"internal export row.\" "
+        "Avoid hollow closings.\n"
     )
 
 
@@ -78,8 +80,9 @@ def _consultant_faa_no_phly_priority_prefix(phly_meta: Optional[Dict[str, Any]])
         "[ANSWER ORDER — FOR DRAFTER]\n"
         "1) If **AUTHORITATIVE — FAA MASTER** appears in this context, open with FAA registrant, mailing address, "
         "and aircraft identity lines (reference model, year_mfr, serial, type) from that block — verbatim where required.\n"
-        "2) Then, in **client-facing** language only, note this aircraft is not in Hye Aero's current internal aircraft "
-        "dataset (do **not** mention export rows, `phlydata_aircraft`, or similar to the user).\n"
+        "2) Then, in **client-facing** language only, you may note the inventory record has no match for this tail—"
+        "frame follow-up using **based on typical aircraft performance data** and FAA lines above (do **not** mention "
+        "export rows, `phlydata_aircraft`, \"internal dataset,\" or \"not in our database\" to the user).\n"
         "3) Then add Tavily / vector / listing supplements with clear source labels.\n\n"
     )
 
@@ -100,15 +103,17 @@ def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dic
         "results and vector excerpts** in this context (aircraft class, manufacturer/model family, year/serial if stated, "
         "registrant or operator when snippets support them). Cite **snippet #** and domain.\n"
         "Do **not** claim make/model, year, serial, or ownership are \"not available in the data gathered\" when any "
-        "Tavily or vector line supports them. If helpful, note in **plain language** the aircraft isn't in Hye Aero's "
-        "current internal dataset — **never** quote \"internal export row\" or system messages to the client.\n\n"
+        "Tavily or vector line supports them. If helpful, use **plain language** and **based on typical aircraft performance "
+        "data**—**never** say \"internal dataset,\" \"not in our database,\" or \"internal export row\" to the client.\n\n"
     )
 
 
 # Minimum similarity score to include a Pinecone match (cosine: higher = more similar)
 DEFAULT_SCORE_THRESHOLD = 0.5
 
-CONSULTANT_SYSTEM_PROMPT = """You are Hye Aero's Aircraft Research & Valuation Consultant. You think like a senior broker and research lead: calm, precise, and trustworthy for business decisions. Consider the full conversation; answer the current question in context. Match the usefulness of a top-tier assistant (clear structure, plain language, no fluff) but **never trade accuracy for polish**.
+CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — the aviation intelligence assistant for **Hye Aero**. You represent the brand: speak as a **professional broker**, **mission planning advisor**, and **aviation market / intelligence analyst**. Hye Aero is an aviation intelligence platform that supports brokerage, data-driven aircraft market research, specifications, ownership intelligence, mission analysis, listings, comparison, and buyer advisory — you never claim ignorance of what Hye Aero is if asked.
+
+Consider the full conversation; answer the current question in context. Be calm, precise, and trustworthy for business decisions — never a generic chatbot. Plain language, no fluff; **never trade accuracy for polish**.
 """ + aviation_answer_format_contract_block() + """**Accuracy and source priority (internal):**
 - **Best-quality grounding:** When it appears in context, **PhlyData** (`phlydata_aircraft`) plus **FAA MASTER** (registrant/address in the same authority block) are Hye Aero's **primary** factual basis for identity, internal export fields, and U.S. legal registrant. Lead with and prioritize those over everything else when they apply.
 - **When PhlyData / FAA do not cover the aircraft** (no row, non-U.S. registry without FAA, or gaps): still deliver an **excellent, comprehensive** answer by **synthesizing** **Tavily (web)**, **vector DB** excerpts, **Hye Aero listing ingests** in context (e.g. **Controller**, **Aircraft Exchange**, **AircraftPost**, **AviaCost**, and other marketplace listing tables), and **public.aircraft** when present — plus careful **LLM reasoning** only where it connects evidence already in context. **Label every substantive claim by source** (web snippet #, listing row, vector chunk, etc.); do not present listing or web data as PhlyData.
@@ -161,6 +166,7 @@ Rules:
   - If a **[WEB — Dollar amounts spotted in Tavily snippet text]** section exists, tie amounts to snippet #; still do not over-claim availability.
   - If no price in PhlyData, listing, or web: say so clearly.
 - Voice: Confident, conversational, structured — like a trusted advisor briefing an exec. Complete sentences; light bullets when they clarify. No hollow closings ("feel free to ask", "let me know"). No fake enthusiasm. End with a concrete takeaway or verification step when useful.
+- **Consultant client copy:** Never say "Sources used," "web search," "internal dataset," "our database," "records not found," or "data not available." Integrate facts as expert guidance; prefer **based on typical operational performance for this aircraft or class…** when generalizing. Do not paste charter booking or promotional links; omit URL dumps unless a specific listing is material to verify.
 - **Listing URLs (critical):** Never cite a listing URL from Tavily or the vector DB unless that same snippet/chunk explicitly ties the URL to the **same** serial number and/or tail as the authoritative PhlyData + FAA block. If the only URLs in context are for a different aircraft (e.g. another Citation), say clearly that no matching listing link for **this** serial/tail appeared — do not paste unrelated listings.
 - Use clear bullets (-) when useful. Neutral, professional tone for brokers and clients. You may use tasteful emoji (e.g. ✈ 🧾) when it improves scanability.
 - Format: no markdown # headers or ** bold.
@@ -176,16 +182,18 @@ Context layers (how Hye Aero uses them):
 
 When the context includes **[NO PHLYDATA ROW MATCH]** (or there is clearly no Phly block for the identifier), **do not** pretend PhlyData contained the aircraft. If **[AUTHORITATIVE — FAA MASTER]** appears for this U.S. tail, treat **FAA as Tier 1** for legal registrant + aircraft identity (reference model, year, serial) — **lead with it** before Tavily/vector; never answer as if ownership and aircraft type are unknown when those FAA lines are filled. Otherwise build the **best** answer by combining **Tavily**, **vector DB**, **listing ingests** (Controller, Aircraft Exchange, AircraftPost, AviaCost, and any other marketplace rows in context), **public.aircraft** if present, and clear **LLM synthesis** tied only to that evidence. Label every claim by source."""
 
-CONSULTANT_REVIEW_SYSTEM_PROMPT = """You are a senior aviation research editor for Hye Aero. You receive:
+CONSULTANT_REVIEW_SYSTEM_PROMPT = """You are a senior output editor for **HyeAero.AI** (Hye Aero). You receive:
 - The user's question
 - A draft answer from an assistant
 - The same layered context (PhlyData + FAA block, Hye Aero listing/sales block if any, Tavily, vector DB)
 
-**Policy:** **PhlyData + FAA** are **Tier 1** when present — **canonical** for identity, internal snapshot lines, and U.S. legal registrant. **Listing rows** (Controller, Aircraft Exchange, AircraftPost, AviaCost, etc.) are **not** PhlyData. When Phly/FAA exist, the final answer must **not** let listing-ingest or web **override** PhlyData internal fields; if the draft inverted that order, **fix it**. **When Phly/FAA are absent**, the final answer should still be **excellent and comprehensive** by weaving **Tavily**, **vector DB**, and **listing ingests** with clear source labels — without inventing a Phly block.
+The client experience should feel like an **Aviation Intelligence Consultant** (broker + mission + market)—**not** templated support copy. Preserve operational realism (range vs mission, reserves, stops when relevant) and **no marketing fluff** in comparisons.
+
+**Policy:** **PhlyData + FAA** are **Tier 1** when present — **canonical** for identity, internal snapshot lines, and U.S. legal registrant. **Listing rows** (Controller, Aircraft Exchange, AircraftPost, AviaCost, etc.) are **not** PhlyData. When Phly/FAA exist, the final answer must **not** let listing-ingest or web **override** PhlyData internal fields; if the draft inverted that order, **fix it**. **When Phly/FAA are absent**, the final answer should still be **excellent and comprehensive** by weaving **Tavily**, **vector DB**, and **listing ingests** with clear source labels — without inventing a Phly block. When evidence is thin, client-safe phrasing like **"Based on typical operational data for this aircraft / class…"** is appropriate—**never** internal system or dataset jargon.
 
 Your job: produce the FINAL answer shown to the client — polished, natural, and **business-safe**: a broker-quality brief that sounds like a sharp human, with **zero overstatement** on listing availability.
 
-When the user's question is **performance, mission, range, ferry, or comparison**, keep the reply **natural and consultant-like** — no forced section titles (Short Answer / Operational Explanation / etc.); do **not** let unrelated registry or listing padding displace the operational core (still honor mandatory Phly/FAA blocks when they directly answer the question).
+When the question is **performance, mission, range, or ferry**, keep the reply **natural and consultant-like** — no forced generic templates (Short Answer / Operational Explanation / etc.); **mission-first** opening when the user is planning a trip or choosing aircraft (Mission → distance → practical range band → aircraft → why). For **explicit aircraft comparison** (two+ models), use the structured sections: **Range**, **Passengers**, **Cruise speed**, **Cabin characteristics**, **Mission strengths**. Do **not** let unrelated registry or listing padding displace the operational core (still honor mandatory Phly/FAA blocks when they directly answer the question).
 
 Rules:
 - **[FOR USER REPLY — PhlyData (table phlydata_aircraft only) — MANDATORY VERBATIM]** blocks: the draft MUST match **aircraft_status** and **ask_price** (and identity) exactly as in that section — not marketplace listing status, not inferred web prices. Fix any draft that drifts.
@@ -203,7 +211,7 @@ Rules:
 - **Listing URLs:** Never output a listing URL unless context proves it belongs to the **same** serial/tail as PhlyData/FAA. Strip wrong-jet URLs from the draft.
 - No markdown # or ** bold. Plain bullets (-) only when they add clarity.
 - Stay factual; do not fabricate URLs or companies not implied by context.
-- **Client-facing copy:** Never echo internal bracket tags, table names, or phrases like "internal export row" / "PhlyData has no row" verbatim engineering style — rephrase for the client (e.g. not in our current dataset; here is what we can still tell you)."""
+- **Client-facing copy:** Never echo internal bracket tags, table names, or engineering diagnostics. Never say "internal dataset," "our database," "records not found," "data not available," "Sources used," or "web search." Rephrase as a broker would — **based on typical operational performance…** when inferring. Do not add charter or promotional URLs. No bibliography footer."""
 
 # Appended to user messages when the question is purchase / price / availability — forces deal-brief structure.
 CONSULTANT_PURCHASE_USER_DIRECTIVES = """
@@ -231,14 +239,16 @@ def _consultant_phly_faa_user_directives_suffix(phly_meta: Optional[Dict[str, An
     )
 
 
-CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are Hye Aero's Aircraft Research & Valuation Consultant. We always search our Pinecone database first; for this question, no matching listings, sales, or FAA data were found. So you are answering from your own general knowledge. Think like a human expert: consider the full conversation, remember what you already said, and answer the current question in context. If the user asks a follow-up (e.g. "Is this all?", "What about X?"), interpret it in light of your previous answer and respond like a human.
+CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are Hye Aero's **Aviation Intelligence Consultant** (aircraft brokerage / market analytics mindset)—professional advisor and mission-planning expert, not a generic chatbot. We search our knowledge base first; for this turn, little or no matching structured data was found, so you answer chiefly from **general aviation knowledge** while staying **honest about uncertainty**.
 
-Your process:
-- Understand the question (conceptual? types of aircraft? how something works?).
-- Decide what would be most helpful: definitions, categories, examples, or step-by-step explanation.
-- Give a short disclaimer at the start that this is from general knowledge, not Hye Aero's database (e.g. "I didn't find this in our database; here's what I can tell you from general aviation knowledge:").
-- Then provide a complete, human-like answer. For flight-related questions—concepts, theory, types of flight/aircraft models, how things work—give detailed, professional answers. Use bullet points or short paragraphs. Be advisory and clear.
-- Format: Do not use markdown headers (# ## ###) or double asterisks (**) for bold. Use plain bullet points (-) and plain text. You may use professional symbols or emoji like ChatGPT (e.g. •, ✓, →, or tasteful emoji where they add clarity)."""
+**Behavior:** Match **mission feasibility**, **specs**, **comparison**, and **buyer-style** questions with concise, realistic guidance. Distinguish **max published range** vs **practical operational range**; avoid unrealistic claims. When giving class-level numbers, qualify assumptions (pax, winds, reserves). For thin data, prefer *"Based on typical operational data for this aircraft or class…"*—**do not** mention internal systems or dataset names.
+
+**Process:**
+- Understand the question; consider the **full conversation** and follow-ups.
+- Open briefly that this is **not** from Hye Aero's internal aircraft record for this query (plain language—no engineering jargon).
+- Then give a **complete, consultant-quality** answer: definitions, categories, examples, or steps as needed. For aviation topics, be detailed enough to be useful to a broker or buyer.
+- If the user is only **greeting or chatting**, respond **briefly and naturally**, then invite them to ask about missions, specs, ownership, or market.
+- Format: No markdown # headers or ** bold. Plain bullets (-) when helpful. Tasteful emoji only if they add clarity."""
 
 # Entity type → (table name, id column)
 ENTITY_TABLE = {
@@ -1112,7 +1122,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 if pr:
                     pr.step("path_cache_hit", short_circuit=1)
                 norm = normalize_answer_payload_for_cache(hit)
-                yield {"type": "status", "message": "Preparing answer…"}
+                yield {"type": "status", "message": "Retrieving your recent briefing…"}
                 for piece in self._iter_display_chunks(norm.get("answer") or ""):
                     yield {"type": "delta", "text": piece}
                 yield {
@@ -1136,7 +1146,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             if kind == "small_talk":
                 if pr:
                     pr.step("path_small_talk_stream", streaming=1)
-                yield {"type": "status", "message": "Preparing answer…"}
+                yield {"type": "status", "message": "Composing a concise reply…"}
                 pl = payload if isinstance(payload, dict) else {}
                 ans = pl.get("answer") or ""
                 for piece in self._iter_display_chunks(ans):
@@ -1162,7 +1172,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             if kind == "professional":
                 if pr:
                     pr.step("path_professional_brief", streaming=1)
-                yield {"type": "status", "message": "Preparing answer…"}
+                yield {"type": "status", "message": "Preparing your structured research brief…"}
                 pl = payload if isinstance(payload, dict) else {}
                 ans = (pl.get("answer") or "") if isinstance(payload, dict) else ""
                 for piece in self._iter_display_chunks(ans):
@@ -1188,8 +1198,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             if kind == "gk":
                 if pr:
                     pr.step("path_general_knowledge_stream", after="retrieval_empty")
-                yield {"type": "status", "message": "Gathering context…"}
-                yield {"type": "status", "message": "Generating answer…"}
+                yield {"type": "status", "message": "Assembling aviation context…"}
+                yield {"type": "status", "message": "Drafting your consultant response…"}
                 messages = [{"role": "system", "content": CONSULTANT_FALLBACK_SYSTEM_PROMPT}]
                 if history:
                     for h in history[-10:]:
@@ -1249,7 +1259,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             tavily_hits = b["tavily_hits"]
             data_used: Dict[str, Any] = dict(b["data_used"])
 
-            yield {"type": "status", "message": "Searching sources and drafting…"}
+            yield {"type": "status", "message": "Synthesizing sources into your briefing…"}
 
             review_disabled = (
                 (os.getenv("CONSULTANT_FAST_MODE") or "").strip().lower()
@@ -1276,9 +1286,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     content = (h.get("content") or "").strip()
                     if content:
                         messages.append({"role": role, "content": content})
-            user_content = f"""Consider the full conversation above and the layered context below: **PhlyData (Hye Aero aircraft source) + FAA MASTER** if present; **Hye Aero listing/sales** block if present (not PhlyData); Tavily; vector DB. If the user's message is a follow-up, interpret it in light of your previous answer.
+            user_content = f"""Consider the full conversation above and the layered context below (aircraft record, registration/registry lines, market/listing rows, and supporting aviation knowledge excerpts). If the user's message is a follow-up, interpret it in light of your previous answer.
 
-Synthesize a professional draft: **PhlyData + FAA** = Hye Aero's **canonical internal record** — ground truth for identity, **all internal snapshot fields in that block**, and legal U.S. registrant. If a **MANDATORY VERBATIM** Phly subsection exists, copy **aircraft_status** and **ask_price** from it faithfully before listing-ingest. **Listing rows** = supplemental marketplace ingest (never call them PhlyData). Web/vector = secondary; must not override PhlyData internal fields or registrant.
+Synthesize a professional draft: Treat structured aircraft/registry/market facts in the context as authoritative for identity, status, registrant, and pricing. Use neutral phrasing such as \"Based on aircraft registry and market data…\" — never mention internal datasets, pipelines, infrastructure, or tool names.
 
 Context:
 {context}
@@ -1286,14 +1296,17 @@ Context:
 Current question: {b["query"]}
 {_consultant_purchase_tail(b)}
 {_consultant_phly_faa_user_directives_suffix(phly_meta)}
-Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
+Provide a thorough client-facing answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
 
             import openai
 
+            # NOTE: We intentionally do NOT stream raw model tokens here. A final-answer sanitization
+            # layer removes internal system names; streaming partial tokens could leak them before
+            # sanitization. We compute the full answer, sanitize, then stream the sanitized text.
             sync_client = openai.OpenAI(api_key=self.openai_api_key, timeout=120.0)
             draft = ""
-            stream_parts: List[str] = []
+            final_text = ""
             if not review_disabled:
                 response = sync_client.chat.completions.create(
                     model=self.chat_model,
@@ -1303,7 +1316,7 @@ Provide a thorough draft answer. Plain text and bullet points (-). No ** or # he
                 draft = (response.choices[0].message.content or "").strip()
                 if pr:
                     pr.step("llm_draft_sync_done", draft_chars=len(draft))
-                yield {"type": "status", "message": "Polishing answer…"}
+                yield {"type": "status", "message": "Refining for accuracy and clarity…"}
                 rev_messages = [
                     {"role": "system", "content": CONSULTANT_REVIEW_SYSTEM_PROMPT},
                     {
@@ -1321,23 +1334,38 @@ Produce the final client-facing answer.""",
                     },
                 ]
                 try:
-                    for d in self._stream_chat_deltas(rev_messages, max_tokens=1536, temperature=0.2):
-                        stream_parts.append(d)
-                        yield {"type": "delta", "text": d}
+                    rev = sync_client.chat.completions.create(
+                        model=self.chat_model,
+                        messages=rev_messages,
+                        max_tokens=1536,
+                        temperature=0.2,
+                    )
+                    final_text = (rev.choices[0].message.content or "").strip() or draft
                 except Exception as rev_e:
-                    logger.warning("Consultant stream review failed, falling back to draft chunks: %s", rev_e)
-                    for piece in self._iter_display_chunks(draft):
-                        stream_parts.append(piece)
-                        yield {"type": "delta", "text": piece}
+                    logger.warning("Consultant stream review failed; using draft: %s", rev_e)
+                    final_text = draft
             else:
-                for d in self._stream_chat_deltas(messages, max_tokens=1536):
-                    stream_parts.append(d)
-                    yield {"type": "delta", "text": d}
+                resp1 = sync_client.chat.completions.create(
+                    model=self.chat_model,
+                    messages=messages,
+                    max_tokens=1536,
+                )
+                final_text = (resp1.choices[0].message.content or "").strip()
+
+            try:
+                from rag.response_safety import sanitize_user_facing_answer
+
+                final_text = sanitize_user_facing_answer(final_text or "")
+            except Exception as se:
+                logger.warning("stream answer sanitize skipped: %s", se)
+
+            for piece in self._iter_display_chunks(final_text):
+                yield {"type": "delta", "text": piece}
 
             if pr:
                 pr.step(
                     "llm_output_stream_done",
-                    answer_chars=len("".join(stream_parts)),
+                    answer_chars=len(final_text or ""),
                     review_used=not review_disabled,
                 )
 
@@ -1362,7 +1390,7 @@ Produce the final client-facing answer.""",
             imgs = b.get("aircraft_images")
             if not isinstance(imgs, list):
                 imgs = data_used.get("aircraft_images") if isinstance(data_used.get("aircraft_images"), list) else []
-            final_stream_answer = "".join(stream_parts)
+            final_stream_answer = final_text or ""
             llm_norm = normalize_answer_payload_for_cache(
                 {
                     "answer": final_stream_answer,
@@ -1519,16 +1547,16 @@ Produce the final client-facing answer.""",
                     content = (h.get("content") or "").strip()
                     if content:
                         messages.append({"role": role, "content": content})
-            user_content = f"""Consider the full conversation above and the layered context below: **PhlyData (Hye Aero aircraft source) + FAA MASTER** if present; **Hye Aero listing/sales** block if present (not PhlyData); Tavily; vector DB. If the user's message is a follow-up, interpret it in light of your previous answer.
+            user_content = f"""Consider the full conversation above and the layered context below (aircraft record, registration/registry lines, market/listing rows, and supporting aviation knowledge excerpts). If the user's message is a follow-up, interpret it in light of your previous answer.
 
-Synthesize a professional draft: **PhlyData + FAA** = Hye Aero's **canonical internal record** — ground truth for identity, **all internal snapshot fields in that block**, and legal U.S. registrant. If a **MANDATORY VERBATIM** Phly subsection exists, copy **aircraft_status** and **ask_price** from it faithfully before listing-ingest. **Listing rows** = supplemental marketplace ingest (never call them PhlyData). Web/vector = secondary; must not override PhlyData internal fields or registrant.
+Synthesize a professional draft: Treat structured aircraft/registry/market facts in the context as authoritative for identity, status, and registrant details. Use neutral phrasing such as \"Based on aircraft registry and market data…\" — never mention internal datasets, pipelines, infrastructure, or tool names.
 
 Context:
 {context}
 
 Current question: {b["query"]}
 {_consultant_purchase_tail(b)}
-Provide a thorough draft answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
+Provide a thorough client-facing answer. Plain text and bullet points (-). No ** or # headers. You may use • ✓ → sparingly."""
             messages.append({"role": "user", "content": user_content})
             response = client.chat.completions.create(
                 model=self.chat_model,
@@ -1569,6 +1597,14 @@ Produce the final client-facing answer.""",
                         answer = reviewed
                 except Exception as rev_e:
                     logger.warning("Consultant final review skipped: %s", rev_e)
+
+            # Last-mile safety: strip internal dataset/infrastructure naming from user-visible output.
+            try:
+                from rag.response_safety import sanitize_user_facing_answer
+
+                answer = sanitize_user_facing_answer(answer or "")
+            except Exception as se:
+                logger.warning("answer sanitize skipped: %s", se)
 
             if pr:
                 pr.step(

@@ -756,7 +756,7 @@ def build_consultant_market_authority_block(
                 f"status {st}",
             ]
             if ask_s and ask_s != "—":
-                parts.append(f"asking price {ask_s} USD (from our database)")
+                parts.append(f"asking price {ask_s} USD (per synced marketplace listing row)")
             elif phly_ask:
                 parts.append(
                     "marketplace-ingest ask_price NULL on this row — use PhlyData block above for Hye Aero internal ask; "
@@ -764,7 +764,7 @@ def build_consultant_market_authority_block(
                 )
             else:
                 parts.append(
-                    "asking price not stored in our database — tell the user to open the listing URL for current ask"
+                    "asking price null on listing-ingest row — advise checking the listing platform or broker for current ask"
                 )
             parts.append(f"seller {seller}")
             if brk:
@@ -809,7 +809,7 @@ def build_consultant_market_authority_block(
             lines.append(f"      {_availability_guidance_for_listing_status(st)}")
     else:
         lines.append("")
-        lines.append("(No matching rows in aircraft_listings for this serial/tail in our database.)")
+        lines.append("(No matching aircraft_listings rows for this serial/tail in synced ingest.)")
 
     # Comparable sales: same make/model from PhlyData when available
     mfr = ""

@@ -1,3 +1,9 @@
+from rag.aviation_tail import find_strict_tail_candidates
+from rag.consultant_fine_intent import (
+    ConsultantFineIntent,
+    ConsultantFineIntentResult,
+    build_consultant_tool_router,
+)
 from rag.intent import (
     ConsultantIntent,
     classify_consultant_intent,
@@ -30,7 +36,7 @@ def test_registry_sql_only_registration_or_env():
 def test_registry_sql_for_serial_lookup_and_n_tail():
     ic = classify_consultant_intent("History of 550-1234", None)
     assert ic.aviation_intent == AviationIntent.SERIAL_LOOKUP
-    assert registry_sql_enabled_for_intent(ic, "History of 550-1234", None) is True
+    assert registry_sql_enabled_for_intent(ic, "History of 550-1234", None) is False
 
     ic_loose = IntentClassification(
         primary=ConsultantIntent.GENERAL_AVIATION,
@@ -39,6 +45,29 @@ def test_registry_sql_for_serial_lookup_and_n_tail():
         query_kind=ConsultantQueryKind.GENERAL,
     )
     assert registry_sql_enabled_for_intent(ic_loose, "N98765", None) is True
+
+
+def test_tool_router_registry_sql_only_with_strict_tail():
+    """OEM/MSN-style tokens do not enable FAA registration SQL; civil marks do."""
+    q_serial = "who owns 550-1234"
+    st = find_strict_tail_candidates(q_serial, None)
+    assert st == []
+    router = build_consultant_tool_router(
+        ConsultantFineIntentResult(ConsultantFineIntent.OWNERSHIP_LOOKUP, 0.9, {}),
+        q_serial,
+        st,
+    )
+    assert router.registry_sql is False
+
+    q_tail = "Registrant for N98765"
+    st2 = find_strict_tail_candidates(q_tail, None)
+    assert st2
+    router2 = build_consultant_tool_router(
+        ConsultantFineIntentResult(ConsultantFineIntent.OWNERSHIP_LOOKUP, 0.9, {}),
+        q_tail,
+        st2,
+    )
+    assert router2.registry_sql is True
 
 
 def test_query_kind_on_classification():

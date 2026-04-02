@@ -1,0 +1,92 @@
+[
+  {
+    "aircraft_model": "Citation XLS+",
+    "max_range_nm": 2100,
+    "typical_passengers": 8,
+    "typical_market_price": 8000000,
+    "class": "midsize",
+    "cruise_speed_ktas": 441,
+    "cabin": "Flat-floor midsize cabin; stands ~5 ft 8 in.",
+    "typical_mission": "US transcon with tech stop in winter or full-payload headwinds; strong 3–4 pax nonstop East–West."
+  },
+  {
+    "aircraft_model": "Citation Sovereign+",
+    "max_range_nm": 2800,
+    "typical_passengers": 9,
+    "typical_market_price": 9500000,
+    "class": "super midsize",
+    "cruise_speed_ktas": 458,
+    "cabin": "Stand-up super-midsize cabin; coast-to-coast capable in many seasons.",
+    "typical_mission": "US transcon with full pax in favorable conditions; winter headwinds often drive fuel-stop planning."
+  },
+  {
+    "aircraft_model": "Citation Latitude",
+    "max_range_nm": 2700,
+    "typical_passengers": 9,
+    "typical_market_price": 11800000,
+    "class": "midsize",
+    "cruise_speed_ktas": 451,
+    "cabin": "Midsize stand-up cabin; solid dispatch reputation on domestic and transcon work.",
+    "typical_mission": "Efficient midsize for U.S. transcon with disciplined pax/load; strong owner-operators and charter lift."
+  },
+  {
+    "aircraft_model": "Hawker 900XP",
+    "max_range_nm": 2900,
+    "typical_passengers": 8,
+    "typical_market_price": 8750000,
+    "class": "midsize",
+    "cruise_speed_ktas": 447,
+    "cabin": "Midsize cabin; classic Honeywell power, proven in fleet and charter.",
+    "typical_mission": "Proven U.S. transcon-capable midsize; frequently traded on the secondary market."
+  },
+  {
+    "aircraft_model": "Challenger 300",
+    "max_range_nm": 3100,
+    "typical_passengers": 9,
+    "typical_market_price": 10000000,
+    "class": "super midsize",
+    "cruise_speed_ktas": 459,
+    "cabin": "Super midsize stand-up cabin; wider than lighter jets.",
+    "typical_mission": "Coast-to-coast US and Western Europe entry missions with comfortable pax loads."
+  },
+  {
+    "aircraft_model": "Falcon 2000",
+    "max_range_nm": 3800,
+    "typical_passengers": 10,
+    "typical_market_price": 12000000,
+    "class": "large cabin",
+    "cruise_speed_ktas": 459,
+    "cabin": "Large-cabin, twin aisle; long ferry but strong short-field pedigree (series-dependent).",
+    "typical_mission": "Transatlantic with reserves discipline; strong for multi-stop European or US hub missions."
+  },
+  {
+    "aircraft_model": "Phenom 300",
+    "max_range_nm": 2000,
+    "typical_passengers": 7,
+    "typical_market_price": 4500000,
+    "class": "light",
+    "cruise_speed_ktas": 453,
+    "cabin": "Light jet cabin; best for small groups.",
+    "typical_mission": "Regional US / short Europe sectors; thin routes with runway constraints."
+  },
+  {
+    "aircraft_model": "Gulfstream G650",
+    "max_range_nm": 7000,
+    "typical_passengers": 16,
+    "typical_market_price": 45000000,
+    "class": "ultra long range",
+    "cruise_speed_ktas": 488,
+    "cabin": "Ultra-long-range wide cabin; sleeps multiple.",
+    "typical_mission": "Nonstop global city pairs; flagship principal transport."
+  },
+  {
+    "aircraft_model": "Global 7500",
+    "max_range_nm": 7700,
+    "typical_passengers": 17,
+    "typical_market_price": 52000000,
+    "class": "ultra long range",
+    "cruise_speed_ktas": 488,
+    "cabin": "Four living areas; class-leading cabin length.",
+    "typical_mission": "Longest nonstop missions with large delegations."
+  }
+]

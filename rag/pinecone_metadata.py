@@ -30,11 +30,24 @@ SOURCE_TABLE_BY_ENTITY_TYPE: Dict[str, str] = {
     "phlydata_aircraft": "phlydata_aircraft",
 }
 
+# Logical bucket for intent-shaped retrieval (mirrors consultant ``doc_type`` filters).
+_ENTITY_TYPE_TO_DOC_TYPE: Dict[str, str] = {
+    "aircraft": "aircraft_model",
+    "aviacost_aircraft_detail": "aircraft_model",
+    "aircraftpost_fleet_aircraft": "aircraft_model",
+    "phlydata_aircraft": "aircraft_model",
+    "document": "document",
+    "aircraft_listing": "aircraft_listing",
+    "aircraft_sale": "market_data",
+    "faa_registration": "registry",
+}
+
 # Only these keys are written on new upserts (keeps payloads small and consistent).
 _PINECONE_UPSERT_ALLOWLIST = frozenset(
     {
         "entity_type",
         "entity_id",
+        "doc_type",
         "aircraft_model",
         "manufacturer",
         "serial_number",
@@ -181,6 +194,9 @@ def build_vector_metadata(
         "chunk_index": int(chunk_index),
         "total_chunks": int(total_chunks),
     }
+    doc_t = _ENTITY_TYPE_TO_DOC_TYPE.get(et)
+    if doc_t:
+        meta["doc_type"] = doc_t
 
     mfr = _pick_manufacturer(record, et)
     if mfr:

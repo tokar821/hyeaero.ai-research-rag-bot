@@ -27,15 +27,22 @@ _AVIATION_STYLE = {
         "\n\n**Answer shape (intent: specs):** Lead with operational relevance; prefer OEM-style performance facts from structured context, labeled by source — avoid spec lists with no mission tie-in."
     ),
     AviationIntent.MISSION_FEASIBILITY: (
-        "\n\n**Answer shape (intent: mission):** Natural prose — range, reserves, winds, tech stops, and feasibility; "
-        "tie route logic to evidence; say what is unknown or airport-specific. No rigid section headers."
+        "\n\n**Answer shape (intent: mission / recommendation):** **Mission-first:** open with mission framing, then "
+        "**distance estimate** (great-circle or stated), then **required operational range** (practical band with reserves, "
+        "e.g. transcon-class ~2,400–2,600 nm when appropriate), then **aircraft fit / recommendation** and **explanation**. "
+        "Consultant tone — not a data portal. Never say internal dataset, our database, records not found, or data not available; "
+        "use **based on typical operational performance for this aircraft or class…** when inferring."
     ),
     AviationIntent.AIRCRAFT_COMPARISON: (
-        "\n\n**Answer shape (intent: comparison):** Compare range (state assumptions), cabin, passengers, mission fit, "
-        "and operational differences in flowing prose — not a fixed rubric or titled blocks."
+        "\n\n**Answer shape (intent: comparison):** Start with a one-line comparison title (e.g. Falcon 2000 vs Challenger 604). "
+        "Then use these plain-text section headings (no markdown #): **Range** — **Passengers** — **Cruise speed** — "
+        "**Cabin characteristics** — **Mission strengths**. Under each, bullet both aircraft. "
+        "No promotional or charter booking links. Consultant tone only."
     ),
     AviationIntent.GENERAL_QUESTION: (
-        "\n\n**Answer shape (intent: general):** Clear definitions; do not invent registry or internal DB facts."
+        "\n\n**Answer shape (intent: general):** Clear, direct answers. Where facts are inferred, use "
+        "**based on typical operational performance for this aircraft or class…** — never "
+        "\"internal dataset,\" \"our database,\" \"records not found,\" or \"data not available.\""
     ),
 }
 

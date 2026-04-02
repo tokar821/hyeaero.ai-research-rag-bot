@@ -1,7 +1,11 @@
 """Consultant retrieval orchestration.
 
-Stages: :mod:`rag.intent` → SQL (Phly / market / gated ``faa_master``) → Pinecone
-(``svc._retrieve_multi`` + rerank) → :mod:`rag.ranking` → Tavily → :mod:`rag.context`.
+Pipeline: :mod:`rag.conversation_guard` → fine intent (:mod:`rag.consultant_fine_intent`) →
+:mod:`rag.hybrid_retrieval` (structured-first vs vector-primary) →
+**aviation tool router** (registry SQL, Pinecone metadata filters) →
+:mod:`rag.aviation_engines` + mission hints → **SQL** (``phlydata_aircraft``, ``faa_master``, listings) →
+optional **Pinecone** (suppressed when structured SQL already answered the turn) →
+Tavily → context builder → LLM answer.
 
 Router env/config: :mod:`rag.consultant_pipeline`. Prompt strings: :mod:`rag.query_service` (lazy).
 """
@@ -63,19 +67,164 @@ def run_consultant_retrieval_bundle(
             q_preview=_fmt_q_preview(query),
         )
 
-    from rag.consultant_small_talk import consultant_small_talk_reply
+    # 1) Rules: greetings, small talk, identity, arithmetic — no tools.
+    from rag.conversation_guard import ConversationMessageType, evaluate_conversation_guard
 
-    _small_talk = consultant_small_talk_reply(query)
-    if _small_talk:
+    _api_key = getattr(svc, "openai_api_key", "") or ""
+    _chat_model = (getattr(svc, "chat_model", "") or "").strip() or (
+        (os.getenv("OPENAI_CHAT_MODEL") or "gpt-4o-mini").strip()
+    )
+
+    _cg = evaluate_conversation_guard(
+        query,
+        history,
+        openai_api_key=_api_key,
+        chat_model=_chat_model,
+    )
+    if _cg.message_type != ConversationMessageType.AVIATION_QUERY:
         if progress:
-            progress.step("path_small_talk", short_circuit=1)
+            progress.step(
+                "path_conversation_guard",
+                short_circuit=1,
+                conversation_message_type=_cg.message_type.value,
+            )
+        _du: Dict[str, Any] = {
+            "consultant_conversation_guard": 1,
+            "conversation_message_type": _cg.message_type.value,
+        }
+        if _cg.message_type == ConversationMessageType.NON_AVIATION_GENERAL:
+            _du["consultant_non_aviation_general"] = 1
         return "small_talk", {
-            "answer": _small_talk,
+            "answer": _cg.reply or "",
             "sources": [],
-            "data_used": {"consultant_small_talk": 1},
+            "data_used": _du,
             "aircraft_images": [],
             "error": None,
         }
+
+    # 2) Fine intent (LLM JSON classifier or heuristic) → conversational / general short-circuits.
+    from rag.aviation_tail import find_strict_tail_candidates
+    from rag.consultant_fine_intent import (
+        ConsultantFineIntent,
+        apply_fine_intent_heuristics,
+        build_consultant_tool_router,
+        classify_consultant_fine_intent_llm,
+        fine_intent_confidence_threshold,
+        heuristic_fine_intent,
+        is_conversational_fine_intent,
+        llm_fine_intent_disabled,
+        map_fine_intent_to_legacy_classification,
+        should_run_aviation_tools,
+    )
+    from rag.consultant_llm_intent import generate_general_chat_reply_llm
+
+    _strict_tails = find_strict_tail_candidates(query, history)
+    _fi_thr = fine_intent_confidence_threshold()
+    if llm_fine_intent_disabled() or not (_api_key or "").strip():
+        _fine = apply_fine_intent_heuristics(
+            heuristic_fine_intent(query, _strict_tails),
+            query,
+            _strict_tails,
+        )
+        if progress:
+            progress.step(
+                "consultant_fine_intent",
+                intent=_fine.intent.value,
+                confidence=round(_fine.confidence, 4),
+                threshold=_fi_thr,
+                source="heuristic",
+            )
+    else:
+        _t_fi = time.perf_counter()
+        _fine = classify_consultant_fine_intent_llm(
+            query,
+            history,
+            api_key=_api_key,
+            model=_chat_model,
+        )
+        if progress:
+            progress.step(
+                "consultant_fine_intent",
+                intent=_fine.intent.value,
+                confidence=round(_fine.confidence, 4),
+                threshold=_fi_thr,
+                source="llm",
+                elapsed_ms=int((time.perf_counter() - _t_fi) * 1000),
+            )
+
+    if is_conversational_fine_intent(_fine):
+        if progress:
+            progress.step(
+                "path_fine_intent_conversational",
+                short_circuit=1,
+                intent=_fine.intent.value,
+            )
+        if (_api_key or "").strip():
+            _greply = generate_general_chat_reply_llm(
+                query,
+                history,
+                api_key=_api_key,
+                model=_chat_model,
+            )
+        else:
+            _greply = (
+                "Hello — I'm HyeAero.AI, the aviation intelligence assistant for Hye Aero.\n"
+                "I can help with aircraft missions, specifications, ownership research, and market insights."
+                if _fine.intent == ConsultantFineIntent.GREETING
+                else "Happy to help when you're ready — HyeAero.AI for Hye Aero, missions, specs, ownership, or market."
+            )
+        return "small_talk", {
+            "answer": _greply,
+            "sources": [],
+            "data_used": {
+                "consultant_fine_intent": _fine.intent.value,
+                "consultant_fine_intent_confidence": _fine.confidence,
+                "consultant_fine_intent_conversational": 1,
+            },
+            "aircraft_images": [],
+            "error": None,
+        }
+
+    if not should_run_aviation_tools(_fine, _fi_thr):
+        if progress:
+            progress.step(
+                "path_general_chat_llm",
+                short_circuit=1,
+                reason="low_confidence_or_non_tool_intent",
+                intent=_fine.intent.value,
+                confidence=_fine.confidence,
+            )
+        if (_api_key or "").strip():
+            _greply = generate_general_chat_reply_llm(
+                query,
+                history,
+                api_key=_api_key,
+                model=_chat_model,
+            )
+        else:
+            _greply = (
+                "I focus on business aviation — missions, specs, comparisons, and market context. "
+                "What would you like to explore?"
+            )
+        return "small_talk", {
+            "answer": _greply,
+            "sources": [],
+            "data_used": {
+                "consultant_fine_intent": _fine.intent.value,
+                "consultant_fine_intent_confidence": _fine.confidence,
+                "consultant_fine_intent_threshold": _fi_thr,
+                "consultant_fine_intent_general_chat": 1,
+            },
+            "aircraft_images": [],
+            "error": None,
+        }
+
+    _router = build_consultant_tool_router(_fine, query, _strict_tails)
+    _mission_hint = (_router.mission_reasoning_hint or "").strip()
+    _aviation_engines_ctx = (_router.aviation_engines_block or "").strip()
+    _consultant_aviation_prefix = "\n\n".join(
+        p for p in (_mission_hint, _aviation_engines_ctx) if p
+    ).strip()
 
     _t_block = time.perf_counter()
     prof = svc._professional_search_answer(query)
@@ -137,14 +286,14 @@ def run_consultant_retrieval_bundle(
         SECTION_REGISTRY_DATA,
     )
     from rag.answer import consultant_answer_style_suffix
-    from rag.intent import (
-        ConsultantIntent,
-        classify_consultant_intent,
-        pinecone_filter_for_intent,
-        registry_sql_enabled_for_intent,
-    )
+    from rag.intent import ConsultantIntent
     from rag.intent.schemas import AviationIntent
     from rag.ranking import apply_structured_first_rag_order
+    from rag.hybrid_retrieval import (
+        HybridRetrievalPlan,
+        classify_hybrid_retrieval,
+        prepend_hybrid_structured_context,
+    )
 
     hs = svc._consultant_history_snippet(history)
     hs_opt = hs.strip() or None
@@ -162,13 +311,20 @@ def run_consultant_retrieval_bundle(
     tavily_timeout = pipe_cfg.tavily_timeout
     intent_model = pipe_cfg.intent_model
 
-    intent_classification = classify_consultant_intent(query, history)
-    registry_sql = registry_sql_enabled_for_intent(intent_classification, query, history)
-    pinecone_filt = pinecone_filter_for_intent(intent_classification.primary)
+    intent_classification = map_fine_intent_to_legacy_classification(_fine.intent)
+    _registry_always = (os.getenv("CONSULTANT_REGISTRY_SQL_ALWAYS") or "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    registry_sql = bool(_router.registry_sql) or _registry_always
+    pinecone_filt = _router.pinecone_filter
     av_l = intent_classification.aviation_intent.value if intent_classification.aviation_intent else None
     if progress:
         progress.step(
             "intent_classified",
+            fine_intent=_fine.intent.value,
+            fine_confidence=_fine.confidence,
             aviation=av_l or "-",
             primary=intent_classification.primary.value,
             query_kind=intent_classification.query_kind.value,
@@ -209,7 +365,8 @@ def run_consultant_retrieval_bundle(
             f_int = pre_pool.submit(_run_image_gallery_intent)
             phly_authority, phly_meta, phly_rows = f_phly.result()
             phly_authority = (
-                _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
+                ((_consultant_aviation_prefix + "\n\n") if _consultant_aviation_prefix else "")
+                + _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
                 + _consultant_faa_no_phly_priority_prefix(phly_meta)
                 + (phly_authority or "")
             )
@@ -239,7 +396,8 @@ def run_consultant_retrieval_bundle(
             f_int = pre_pool.submit(_run_image_gallery_intent)
             phly_authority, phly_meta, phly_rows = f_phly.result()
             phly_authority = (
-                _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
+                ((_consultant_aviation_prefix + "\n\n") if _consultant_aviation_prefix else "")
+                + _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
                 + _consultant_faa_no_phly_priority_prefix(phly_meta)
                 + (phly_authority or "")
             )
@@ -283,7 +441,25 @@ def run_consultant_retrieval_bundle(
         strict_market_sql=strict_market_sql,
         skip_for_registration_intent=skip_reg_market,
     )
+
+    hybrid_plan: HybridRetrievalPlan = classify_hybrid_retrieval(query, _fine, _strict_tails)
+    sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
+    phly_authority = prepend_hybrid_structured_context(
+        phly_authority or "",
+        phly_rows,
+        hybrid_plan,
+    )
+    sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
+    vector_chunk_budget = hybrid_plan.max_vector_chunks(rag_max_chunks, sql_nonempty)
+
     if progress:
+        progress.step(
+            "hybrid_retrieval",
+            kind=hybrid_plan.kind.value,
+            vector_primary=1 if hybrid_plan.vector_primary else 0,
+            vector_chunk_budget=vector_chunk_budget,
+            sql_context_nonempty=1 if sql_nonempty else 0,
+        )
         progress.step(
             "internal_market_sql",
             market_block_chars=len(market_block or ""),
@@ -375,32 +551,41 @@ def run_consultant_retrieval_bundle(
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
     
     _t_vec = time.perf_counter()
-    results = svc._retrieve_multi(
-        rag_qs,
-        top_k=top_k,
-        score_threshold=score_threshold,
-        max_results_total=rag_max_chunks,
-        max_query_variants=max_rag_variants,
-        skip_rerank=fast_retrieval or low_latency,
-        rerank_anchor_query=query,
-        pinecone_filter=pinecone_filt,
-    )
-    results = apply_structured_first_rag_order(results, intent_classification.primary)
-    results = svc._filter_rag_results_for_phly_aircraft(results, phly_rows)
-    if progress:
-        progress.step(
-            "vector_db_retrieve",
-            ms=int((time.perf_counter() - _t_vec) * 1000),
-            chunks=len(results or []),
-            skip_rerank=bool(fast_retrieval or low_latency),
+    if vector_chunk_budget <= 0:
+        results = []
+        if progress:
+            progress.step(
+                "vector_db_retrieve_skipped",
+                reason="hybrid_structured_sql_only",
+                hybrid_kind=hybrid_plan.kind.value,
+                sql_nonempty=1 if sql_nonempty else 0,
+            )
+    else:
+        results = svc._retrieve_multi(
+            rag_qs,
             top_k=top_k,
-            score_threshold=score_threshold or "",
-            pinecone_filter=_fmt_q_preview(str(pinecone_filt), 200),
-            chunk_entity_mix=_counter_entity_mix(results),
-            rerank_anchor_preview=_fmt_q_preview(query, 120),
+            score_threshold=score_threshold,
+            max_results_total=vector_chunk_budget,
+            max_query_variants=max_rag_variants,
+            skip_rerank=fast_retrieval or low_latency,
+            rerank_anchor_query=query,
+            pinecone_filter=pinecone_filt,
         )
-    
-    sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
+        results = apply_structured_first_rag_order(results, intent_classification.primary)
+        results = svc._filter_rag_results_for_phly_aircraft(results, phly_rows)
+        if progress:
+            progress.step(
+                "vector_db_retrieve",
+                ms=int((time.perf_counter() - _t_vec) * 1000),
+                chunks=len(results or []),
+                skip_rerank=bool(fast_retrieval or low_latency),
+                top_k=top_k,
+                score_threshold=score_threshold or "",
+                pinecone_filter=_fmt_q_preview(str(pinecone_filt), 200),
+                chunk_entity_mix=_counter_entity_mix(results),
+                rerank_anchor_preview=_fmt_q_preview(query, 120),
+                hybrid_vector_budget=vector_chunk_budget,
+            )
     force_tavily_always = _env_truthy("CONSULTANT_TAVILY_ALWAYS")
     run_tavily, tavily_gate_reason = should_run_consultant_tavily_after_internal(
         vector_result_count=len(results),
@@ -693,10 +878,19 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_tavily_single_pass"] = 1
     if strict_market_sql:
         data_used["consultant_market_sql_strict"] = 1
-    data_used["consultant_pipeline"] = "intent_entity_router_sql_vector_rerank_context_llm_v2"
+    data_used["consultant_pipeline"] = "hybrid_sql_phly_vector_rag_tavily_context_llm_v3"
+    data_used["hybrid_retrieval_kind"] = hybrid_plan.kind.value
+    data_used["hybrid_vector_primary"] = 1 if hybrid_plan.vector_primary else 0
+    data_used["hybrid_vector_chunk_budget"] = vector_chunk_budget
     data_used["consultant_query_router"] = pipe_cfg.query_router_snapshot()
     data_used["consultant_entity_detection"] = entity_detection.asdict()
     data_used["consultant_intent"] = intent_classification.asdict()
+    data_used["consultant_fine_intent"] = _fine.intent.value
+    data_used["consultant_fine_intent_confidence"] = _fine.confidence
+    data_used["consultant_fine_pinecone_filter"] = _fmt_q_preview(str(pinecone_filt), 200)
+    if _aviation_engines_ctx:
+        data_used["consultant_aviation_engines_context"] = 1
+        data_used["consultant_aviation_engines_chars"] = len(_aviation_engines_ctx)
     if progress:
         data_used["consultant_progress_id"] = progress.request_id
     data_used["consultant_context_sections"] = sorted(included)
@@ -753,6 +947,39 @@ def run_consultant_retrieval_bundle(
         intent_classification.primary,
         intent_classification.aviation_intent,
     )
+    # User-facing safety: never expose internal datasets/pipelines; treat bracketed context tags as internal-only.
+    system_prompt += (
+        "\n\n**Client-facing safety (strict):** Never mention or imply internal systems, datasets, or infrastructure. "
+        "Do not say or reference: phlydata, internal database, internal snapshot, RAG, Pinecone, vector search, SQL, "
+        "faa_master table, Controller, Aircraft Exchange, scrapes, pipelines, or table names. "
+        "If the context contains bracketed tags (e.g. [AUTHORITATIVE ...], [FOR USER REPLY ...]), treat them as "
+        "internal labels and do not repeat them.\n"
+        "Use neutral phrasing instead, such as: \"Based on aircraft registry and market data…\", "
+        "\"aircraft registration records\", and \"current aircraft marketplace listings\".\n"
+    )
+
+    # Format requirement for structured retrieval responses (tail/serial/ownership/market).
+    if hybrid_plan.kind.value in (
+        "tail_number_lookup",
+        "serial_number_lookup",
+        "ownership_lookup",
+        "aircraft_price_lookup",
+        "aircraft_listing_query",
+    ):
+        system_prompt += (
+            "\n\n**Required output format (structured aircraft queries):**\n"
+            "Aircraft Record:\n"
+            "Tail Number: <NXXXX or (unknown)>\n"
+            "Aircraft Type: <make/model>\n"
+            "Year: <year or (unknown)>\n"
+            "Status: <for sale / not for sale / unknown>\n"
+            "\n"
+            "Registrant:\n"
+            "Name: <name or (unknown)>\n"
+            "Location: <city, state, country or (unknown)>\n"
+            "\n"
+            "If a listing is referenced, describe it as \"current aircraft marketplace listings\" without naming vendors.\n"
+        )
     if phly_authority and not ctx_meta.get("legacy_flat"):
         system_prompt += (
             "\n\n**Context layout:** Retrieved facts are grouped into **AIRCRAFT_SPECS**, **OPERATIONAL_DATA**, "
@@ -840,14 +1067,15 @@ def run_consultant_retrieval_bundle(
         )
     if aircraft_images:
         system_prompt += (
-            "\n\n**Aircraft images:** This response includes a curated gallery (real HTTPS URLs from web search, "
+            "\n\n**Aircraft images:** This response includes a curated gallery (HTTPS URLs from public pages, "
             "saved marketplace galleries, and listing previews). You may briefly note that images are shown in "
-            "the app and that the user should verify they match this tail/serial on the host site."
+            "the app and that the user should verify they match this tail/serial on the host site. Do **not** paste "
+            "promotional or charter-booking links in the answer text."
         )
     else:
         system_prompt += (
-            "\n\nThe product may show a **separate image gallery** when URLs are available (web search + listing "
-            "sources only). Do **not** invent image URLs; describe the aircraft in words when helpful."
+            "\n\nThe product may show a **separate image gallery** when URLs are available from public and listing "
+            "pages. Do **not** invent image URLs; describe the aircraft in words when helpful."
         )
 
     if progress:

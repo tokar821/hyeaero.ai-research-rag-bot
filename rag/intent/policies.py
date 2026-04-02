@@ -1,12 +1,11 @@
-"""Intent → retrieval policy (registry SQL, optional Pinecone filters)."""
+""" Intent → retrieval policy (registry SQL, optional Pinecone filters). """
 
 from __future__ import annotations
 
 import os
 from typing import Any, Dict, List, Optional
 
-from rag.intent.schemas import AviationIntent, ConsultantIntent, IntentClassification
-from rag.phlydata_consultant_lookup import extract_us_registration_tail_candidates
+from rag.intent.schemas import ConsultantIntent, IntentClassification
 
 
 def registry_sql_enabled_for_intent(
@@ -15,14 +14,16 @@ def registry_sql_enabled_for_intent(
     history: Optional[List[Dict[str, str]]] = None,
     *,
     force_always: Optional[bool] = None,
+    explicit_registry_sql: Optional[bool] = None,
 ) -> bool:
     """
-    Whether to query ``faa_master`` (registration / ownership database) for this turn.
+    Whether to run ingested **FAA MASTER** (registration) SQL for this turn.
 
-    Enabled when:
-    - Aviation intent is **registration_lookup** or **serial_lookup** (tail or MSN-style identity), or
-    - A U.S. **N-number** appears in the latest message or recent chat (e.g. N123AB, N1234, N98765), or
-    - Coarse intent is **registration_lookup** (legacy).
+    Default: enable only when **strict civil registration** patterns appear
+    (see :func:`rag.aviation_tail.find_strict_tail_candidates`). OEM / model tokens such as
+    ``601``, ``604``, or ``550-0123`` do **not** enable registry SQL.
+
+    ``explicit_registry_sql`` is set by :mod:`rag.consultant_fine_intent` tool router when present.
 
     ``CONSULTANT_REGISTRY_SQL_ALWAYS=1`` forces SQL on every turn.
     """
@@ -34,16 +35,13 @@ def registry_sql_enabled_for_intent(
         )
     if force_always:
         return True
-    if extract_us_registration_tail_candidates(query, history):
-        return True
-    if classification.aviation_intent in (
-        AviationIntent.REGISTRATION_LOOKUP,
-        AviationIntent.SERIAL_LOOKUP,
-    ):
-        return True
-    if classification.primary == ConsultantIntent.REGISTRATION_LOOKUP:
-        return True
-    return False
+    if explicit_registry_sql is not None:
+        return bool(explicit_registry_sql)
+
+    from rag.aviation_tail import find_strict_tail_candidates
+
+    strict_tails = find_strict_tail_candidates(query, history)
+    return bool(strict_tails)
 
 
 def pinecone_filter_for_intent(intent: ConsultantIntent) -> Optional[Dict[str, Any]]:

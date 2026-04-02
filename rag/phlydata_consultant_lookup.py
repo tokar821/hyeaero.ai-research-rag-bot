@@ -463,13 +463,11 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
     ):
         add(m.group(1))
 
-    # Tail / N-number (allow lowercase letters, e.g. n448sj → N448SJ)
-    for m in re.finditer(r"\b([Nn][-\s]?[A-Za-z0-9]{1,6})\b", q):
-        add(m.group(1).upper().replace(" ", ""))
+    # Strict civil registrations only (not model numbers like 601 without N/G-/etc.).
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
 
-    # International-style marks: V-682, XA-98723, G-CIVG — not MSN forms like 525-0444 (those start with a digit)
-    for m in re.finditer(r"\b([A-Za-z]{1,3}-[A-Za-z0-9]{2,16})\b", q):
-        add(m.group(1))
+    for t in find_strict_tail_candidates_in_text(q):
+        add(t)
 
     # Leading-zero MSNs: 0011 (4 chars) through 0000171 (7 chars) — was missing 0\d{4,6} minimum length
     for m in re.finditer(r"\b(0\d{2,6})\b", q):
@@ -486,7 +484,9 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
             continue
         add(s)
 
-    return out
+    from rag.phly_token_filter import filter_phly_lookup_tokens
+
+    return filter_phly_lookup_tokens(out, q)
 
 
 def extract_us_registration_tail_candidates(
@@ -502,33 +502,9 @@ def extract_us_registration_tail_candidates(
 
     History scan fixes gaps where the raw ``query`` string has no tail but the thread does.
     """
-    seen: set[str] = set()
-    out: List[str] = []
+    from rag.aviation_tail import find_strict_tail_candidates
 
-    def add(raw: str) -> None:
-        t = (raw or "").strip().upper().replace(" ", "")
-        if len(t) < 3 or len(t) > 10:
-            return
-        if t in seen:
-            return
-        seen.add(t)
-        out.append(t)
-
-    def scan_text(blob: str) -> None:
-        if not (blob or "").strip():
-            return
-        for m in re.finditer(r"\b([Nn][-\s]?[A-Za-z0-9]{1,6})\b", blob):
-            add(m.group(1))
-
-    scan_text(query or "")
-    if history:
-        for h in history[-16:]:
-            role = (h.get("role") or "").strip().lower()
-            if role not in ("user", "assistant"):
-                continue
-            scan_text(h.get("content") or "")
-
-    return out[:24]
+    return find_strict_tail_candidates(query, history, max_history_messages=16)
 
 
 def faa_internal_miss_context_block(tokens: List[str]) -> str:
@@ -789,8 +765,9 @@ def _token_matches_phly_row(r: Dict[str, Any], token: str) -> bool:
     tok_k = _phly_identity_key(t)
     u = re.sub(r"\s+", "", t.upper())
 
+    # N-number may appear in either column depending on Phly export / data entry.
     if _N_TAIL_TOKEN.fullmatch(u):
-        return reg_k == tok_k
+        return reg_k == tok_k or sn_k == tok_k
 
     if tok_k and (reg_k == tok_k or sn_k == tok_k):
         return True
@@ -924,7 +901,7 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
             tr = (raw or "").strip()
             trk = _phly_identity_key(tr)
             tu = re.sub(r"\s+", "", (tr or "").upper())
-            if _N_TAIL_TOKEN.fullmatch(tu) and reg == trk:
+            if _N_TAIL_TOKEN.fullmatch(tu) and (reg == trk or sn == trk):
                 tail_hit = 1
             elif _token_is_tail_registration(tr) and (reg == trk or sn == trk):
                 tail_hit = 1
