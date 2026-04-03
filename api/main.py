@@ -50,11 +50,16 @@ from services.zoominfo_client import (
     phones_match as zoominfo_phones_match,
 )
 from services.zoominfo_match_verify import verify_faa_zoominfo_company_match
-from services.app_user_service import bootstrap_super_admin_from_env
+from services.app_user_service import (
+    ROLE_ADMIN,
+    ROLE_SUPER,
+    bootstrap_super_admin_from_env,
+)
 from services.consultant_query_analytics import (
     ConsultantQueryListFilters,
     consultant_query_analytics_enabled,
     count_consultant_queries,
+    count_consultant_queries_since_midnight_utc,
     delete_consultant_queries_by_ids,
     delete_consultant_query_by_id,
     finalize_consultant_query_log_answer,
@@ -1186,6 +1191,55 @@ def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
 
 
+def _consultant_rate_limit_enabled() -> bool:
+    v = (os.getenv("CONSULTANT_RATE_LIMIT_ENABLED") or "1").strip().lower()
+    return v not in ("0", "false", "no", "off")
+
+
+def _consultant_daily_user_query_limit() -> int:
+    try:
+        n = int((os.getenv("CONSULTANT_DAILY_USER_QUERY_LIMIT") or "10").strip())
+        return max(1, min(500, n))
+    except ValueError:
+        return 10
+
+
+def _consultant_rate_limit_exempt(viewer: Optional[dict]) -> bool:
+    r = (viewer or {}).get("role")
+    return r in (ROLE_ADMIN, ROLE_SUPER)
+
+
+def _enforce_consultant_rate_limit(request: Request, viewer: Optional[dict]) -> None:
+    """429 when non-staff users exceed daily Ask Consultant quota (UTC day). Uses ``consultant_query_log``."""
+    if not _consultant_rate_limit_enabled():
+        return
+    if _consultant_rate_limit_exempt(viewer):
+        return
+    try:
+        db = get_db()
+    except Exception:
+        return
+    ip, _ua = _consultant_analytics_client_meta(request)
+    uid: Optional[int] = None
+    if viewer and viewer.get("id") is not None:
+        try:
+            uid = int(viewer["id"])
+        except (TypeError, ValueError):
+            uid = None
+        if uid is not None and uid < 1:
+            uid = None
+    used = count_consultant_queries_since_midnight_utc(db, user_id=uid, client_ip=ip if uid is None else None)
+    lim = _consultant_daily_user_query_limit()
+    if used >= lim:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                f"Daily Ask Consultant limit reached ({lim} questions per UTC day). "
+                "Try again tomorrow or contact an administrator."
+            ),
+        )
+
+
 def _consultant_analytics_client_meta(request: Request) -> Tuple[Optional[str], Optional[str]]:
     """Best-effort client IP (proxy-aware) and User-Agent for opt-in query logging."""
     xff = request.headers.get("x-forwarded-for") or request.headers.get("X-Forwarded-For")
@@ -1456,6 +1510,39 @@ def rag_detect_aviation_entities(req: ChatRequest):
     )
 
 
+@app.get("/api/rag/consultant-quota")
+def rag_consultant_quota(
+    request: Request,
+    viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
+):
+    """Daily Ask Consultant usage for the current viewer (UTC day). Staff roles are unlimited."""
+    if not _consultant_rate_limit_enabled():
+        return {"unlimited": True, "limit": None, "used": None, "remaining": None}
+    if _consultant_rate_limit_exempt(viewer):
+        return {"unlimited": True, "limit": None, "used": None, "remaining": None}
+    try:
+        db = get_db()
+    except Exception:
+        return {"unlimited": True, "limit": None, "used": None, "remaining": None}
+    ip, _ua = _consultant_analytics_client_meta(request)
+    uid: Optional[int] = None
+    if viewer and viewer.get("id") is not None:
+        try:
+            uid = int(viewer["id"])
+        except (TypeError, ValueError):
+            uid = None
+        if uid is not None and uid < 1:
+            uid = None
+    used = count_consultant_queries_since_midnight_utc(db, user_id=uid, client_ip=ip if uid is None else None)
+    lim = _consultant_daily_user_query_limit()
+    return {
+        "unlimited": False,
+        "limit": lim,
+        "used": used,
+        "remaining": max(0, lim - used),
+    }
+
+
 @app.post("/api/rag/answer", response_model=ChatResponse)
 def rag_answer(
     req: ChatRequest,
@@ -1463,6 +1550,7 @@ def rag_answer(
     viewer: Annotated[Optional[dict], Depends(get_current_user_optional)],
 ):
     """Ask the Consultant: natural language over Hye Aero's sale history + market feed (RAG)."""
+    _enforce_consultant_rate_limit(request, viewer)
     history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
     q_log_id = _log_consultant_question(request, req.query.strip(), "sync", history_dicts, viewer)
     try:
@@ -1519,6 +1607,7 @@ def rag_answer_stream(
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
 
+    _enforce_consultant_rate_limit(request, viewer)
     history_dicts = [{"role": m.role, "content": m.content} for m in (req.history or [])]
     stream_log_id = _log_consultant_question(request, req.query.strip(), "stream", history_dicts, viewer)
     stream_q = req.query.strip()

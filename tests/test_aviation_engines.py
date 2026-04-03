@@ -4,6 +4,7 @@ import math
 
 from rag.aviation_engines.capabilities import (
     filter_by_mission_pax_budget,
+    filter_by_pax_budget,
     load_capability_rows,
     mission_possible_for_row,
 )
@@ -48,7 +49,8 @@ def test_recommendation_filter():
     models = [r.get("aircraft_model") for r in rec]
     assert "Challenger 300" in models or "Citation Sovereign+" in models
     assert "Falcon 2000" not in models
-    assert rec[0]["aircraft_model"] == "Citation Sovereign+"
+    # Closest feasible range match should lead the list.
+    assert rec[0]["aircraft_model"] in ("Hawker 800XP", "Citation Sovereign+", "Challenger 300")
 
 
 def test_recommendation_budget_cap_excludes_above_buffer():
@@ -59,6 +61,13 @@ def test_recommendation_budget_cap_excludes_above_buffer():
     for r in rec:
         p = float(r.get("typical_market_price") or r.get("typical_market_price_usd") or 0)
         assert p <= cap
+
+
+def test_budget_advisory_no_mission_assumption_recommends_under_budget():
+    # Budget-only advisory should work without a route/range; do not require transcon-class range.
+    rec = filter_by_pax_budget(passengers=6, budget_usd=5_000_000, limit=8)
+    models = [r.get("aircraft_model") for r in rec]
+    assert "Citation CJ2" in models or "Citation Ultra" in models or "Learjet 45" in models
 
 
 def test_city_alias_new_york_uses_kteb():

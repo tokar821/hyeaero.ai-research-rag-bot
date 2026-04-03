@@ -1,7 +1,7 @@
 """
 Strict civil registration detection — avoids false positives from aircraft model numbers (601, 604, 2000).
 
-Valid examples: N123AB, N12345, G-ABCD, D-XXXX, VH-ABC (and similar hyphenated marks).
+Valid examples: N123AB, N12345, G-ABCD, PR-CCA, C-GUGU, TC-KEA, FL-1185, VH-ABC, etc.
 """
 
 from __future__ import annotations
@@ -13,10 +13,14 @@ from typing import List, Optional
 _US_N_NUMBER = re.compile(r"\bN[1-9A-Z][A-Z0-9]{1,5}\b", re.IGNORECASE)
 
 # International: hyphenated civil marks (not digit-leading MSN like 525-0444).
+# Includes Brazil (PR/PP/PT), Liechtenstein-style FL-, etc.; TC- (Turkey) and many others.
 _INTL_MARK = re.compile(
-    r"\b(?:G|D|F|I|OO|LX|TC|CN|HK|SX|9V|VH|XA|V|ZK|JA|ZS|HA|OE|YR|B|CF)-[A-Z0-9]{2,5}\b",
+    r"\b(?:G|D|F|I|OO|LX|TC|CN|HK|SX|9V|VH|XA|V|ZK|JA|ZS|HA|OE|YR|B|CF|PR|PP|PT|FL)-[A-Z0-9]{2,5}\b",
     re.IGNORECASE,
 )
+
+# Canadian civil marks C-F…, C-G…, C-I… — avoids treating "C-130" as a tail (digit after C-).
+_CANADIAN_CIVIL_MARK = re.compile(r"\bC-[FGI][A-Z0-9]{2,4}\b", re.IGNORECASE)
 
 
 def normalize_tail_token(raw: str) -> str:
@@ -43,6 +47,9 @@ def find_strict_tail_candidates_in_text(blob: str) -> List[str]:
         add(m.group(0).upper())
 
     for m in _INTL_MARK.finditer(blob):
+        add(m.group(0))
+
+    for m in _CANADIAN_CIVIL_MARK.finditer(blob):
         add(m.group(0))
 
     return out

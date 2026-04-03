@@ -257,6 +257,7 @@ def run_consultant_retrieval_bundle(
     )
     from rag.consultant_intent import resolve_aircraft_image_gallery_intent
     from rag.consultant_market_lookup import (
+        build_aircraft_model_photo_fallback_tavily_query,
         build_aircraft_photo_focus_tavily_query,
         build_consultant_market_authority_block,
         build_purchase_listing_tavily_query,
@@ -267,7 +268,6 @@ def run_consultant_retrieval_bundle(
         tavily_price_highlights_block,
         wants_consultant_aircraft_detail_context,
         wants_consultant_aircraft_images_in_answer,
-        wants_consultant_explicit_photo_web,
         wants_consultant_purchase_market_context,
     )
     from rag.consultant_tavily_gate import (
@@ -286,6 +286,11 @@ def run_consultant_retrieval_bundle(
         SECTION_REGISTRY_DATA,
     )
     from rag.answer import consultant_answer_style_suffix
+    from rag.consultant_response_depth import (
+        ResponseDepthKind,
+        classify_response_depth,
+        response_depth_prompt_suffix,
+    )
     from rag.intent import ConsultantIntent
     from rag.intent.schemas import AviationIntent
     from rag.ranking import apply_structured_first_rag_order
@@ -343,15 +348,14 @@ def run_consultant_retrieval_bundle(
     )
 
     def _run_image_gallery_intent() -> Tuple[bool, str]:
-        # Gallery only when the user explicitly asks for photos/images (unless LLM gate is re-enabled).
-        kwords = not _env_truthy("CONSULTANT_IMAGE_INTENT_LLM")
+        # Gallery only when strict keyword rules match (no LLM override — predictable client behavior).
         return resolve_aircraft_image_gallery_intent(
             query,
             history,
             api_key=svc.openai_api_key or "",
             model=intent_model or svc.chat_model,
-            keyword_fallback=lambda: wants_consultant_aircraft_images_in_answer(query, history),
-            keywords_only=kwords,
+            keyword_fallback=lambda: wants_consultant_aircraft_images_in_answer(query),
+            keywords_only=True,
         )
     
     if skip_expand:
@@ -592,13 +596,8 @@ def run_consultant_retrieval_bundle(
         sql_context_nonempty=sql_nonempty,
         force_always=force_tavily_always,
     )
-    run_image_pass = (
-        bool(run_tavily and img_q and not skip_img_pass and user_wants_gallery)
-        and (
-            not single_tavily_pass
-            or wants_consultant_explicit_photo_web(query, history)
-            or wants_consultant_aircraft_detail_context(query, history)
-        )
+    run_image_pass = bool(
+        run_tavily and img_q and not skip_img_pass and user_wants_gallery
     )
     if not run_tavily:
         tavily_passes = 0
@@ -768,12 +767,11 @@ def run_consultant_retrieval_bundle(
         if isinstance(r, dict) and (r.get("listing_url") or "").strip()
     ]
     # Photo-focused Tavily query uses quoted tail/serial; CDN URLs often omit registration in path —
-    # relax URL-level identity filter when we ran that pass or the user explicitly asked for photos.
-    trust_tail_tavily_imgs = user_wants_gallery and (
-        bool(run_image_pass) or wants_consultant_explicit_photo_web(query, history)
-    )
+    # relax URL-level identity matching when the user explicitly asked for a gallery.
+    trust_tail_tavily_imgs = bool(user_wants_gallery)
     aircraft_images: List[Dict[str, Any]] = []
     image_boost_used = 0
+    model_image_fallback_used = 0
     if user_wants_gallery:
         aircraft_images = build_consultant_aircraft_images(
             tavily_payload,
@@ -782,6 +780,40 @@ def run_consultant_retrieval_bundle(
             listing_rows=lr_img or None,
             trust_tail_biased_tavily_images=trust_tail_tavily_imgs,
         )
+    # Tail-specific shots are sparse on CDNs — second search by make/model for representative photos.
+    if (
+        user_wants_gallery
+        and len(aircraft_images) == 0
+        and run_tavily
+        and phly_rows
+    ):
+        mf_q = build_aircraft_model_photo_fallback_tavily_query(phly_rows)
+        if mf_q and mf_q.strip() != (img_q or "").strip():
+            try:
+                mf_boost = fetch_tavily_hints_for_query(
+                    mf_q,
+                    result_limit=tavily_per_pass,
+                    search_depth=tdepth,
+                    request_timeout=tavily_timeout,
+                    include_images=True,
+                )
+                merged_mf = merge_tavily_consultant_payloads(
+                    tavily_payload,
+                    mf_boost,
+                    max_results=20,
+                )
+                merged_mf = filter_tavily_results_for_phly_identity(merged_mf, phly_rows)
+                aircraft_images = build_consultant_aircraft_images(
+                    merged_mf,
+                    phly_rows,
+                    listing_urls=listing_urls_for_img or None,
+                    listing_rows=lr_img or None,
+                    trust_tail_biased_tavily_images=True,
+                )
+                if aircraft_images:
+                    model_image_fallback_used = 1
+            except Exception as mf_e:
+                logger.debug("Consultant model image fallback Tavily skipped: %s", mf_e)
     # One extra Tavily call when the merged payload still yielded no images but we have a photo-biased query.
     if (
         user_wants_gallery
@@ -789,7 +821,6 @@ def run_consultant_retrieval_bundle(
         and run_tavily
         and img_q
         and not skip_img_pass
-        and not run_image_pass
         and want_img_primary
     ):
         try:
@@ -911,6 +942,9 @@ def run_consultant_retrieval_bundle(
         data_used["tavily_image_focus_pass"] = 1
     if image_boost_used:
         data_used["tavily_image_boost_pass"] = 1
+    if model_image_fallback_used:
+        data_used["tavily_model_image_fallback_pass"] = 1
+        data_used["consultant_aircraft_images_representative"] = 1
     data_used["tavily_gate_reason"] = tavily_gate_reason
     if force_tavily_always:
         data_used["consultant_tavily_always"] = 1
@@ -937,12 +971,15 @@ def run_consultant_retrieval_bundle(
     data_used["consultant_aircraft_image_count"] = len(aircraft_images)
     # Internal join helper for image lookup — not needed by clients; keeps responses smaller.
     data_used.pop("consultant_listing_rows_for_images", None)
-    if wants_consultant_explicit_photo_web(query, history):
+    if wants_consultant_aircraft_images_in_answer(query):
         data_used["consultant_user_asked_photos"] = 1
     if user_wants_gallery:
         data_used["consultant_show_image_ui_context"] = 1
     data_used["consultant_image_intent_source"] = consultant_image_intent_src
-    
+
+    _response_depth_kind = classify_response_depth(query, history, _fine.intent)
+    data_used["consultant_response_depth"] = _response_depth_kind.value
+
     system_prompt = CONSULTANT_SYSTEM_PROMPT + consultant_answer_style_suffix(
         intent_classification.primary,
         intent_classification.aviation_intent,
@@ -950,13 +987,18 @@ def run_consultant_retrieval_bundle(
     # User-facing safety: never expose internal datasets/pipelines; treat bracketed context tags as internal-only.
     system_prompt += (
         "\n\n**Client-facing safety (strict):** Never mention or imply internal systems, datasets, or infrastructure. "
-        "Do not say or reference: phlydata, internal database, internal snapshot, RAG, Pinecone, vector search, SQL, "
-        "faa_master table, Controller, Aircraft Exchange, scrapes, pipelines, or table names. "
+        "Do not say or reference: phlydata, database, internal records, internal database, internal snapshot, RAG, Pinecone, "
+        "vector search, SQL, faa_master table, Controller, Aircraft Exchange, scrapes, pipelines, or table names. "
         "If the context contains bracketed tags (e.g. [AUTHORITATIVE ...], [FOR USER REPLY ...]), treat them as "
         "internal labels and do not repeat them.\n"
-        "Use neutral phrasing instead, such as: \"Based on aircraft registry and market data…\", "
-        "\"aircraft registration records\", and \"current aircraft marketplace listings\".\n"
+        "Prefer: \"based on available aircraft registry and market data\", aircraft registration lines in this brief, "
+        "and current marketplace listings—without dumping raw fields.\n"
+        "If this thread already had a short fallback reply, do not repeat the same stock wording—vary or shorten.\n"
+        "Recommendations: short conversational opening first—no essay or spec dump unless the user asks. "
+        "Avoid philosophical aviation one-liners. Do not list serials/regs as the main thrust unless detailed data was requested.\n"
     )
+
+    system_prompt += response_depth_prompt_suffix(_response_depth_kind)
 
     # Format requirement for structured retrieval responses (tail/serial/ownership/market).
     if hybrid_plan.kind.value in (
@@ -966,20 +1008,34 @@ def run_consultant_retrieval_bundle(
         "aircraft_price_lookup",
         "aircraft_listing_query",
     ):
-        system_prompt += (
-            "\n\n**Required output format (structured aircraft queries):**\n"
-            "Aircraft Record:\n"
-            "Tail Number: <NXXXX or (unknown)>\n"
-            "Aircraft Type: <make/model>\n"
-            "Year: <year or (unknown)>\n"
-            "Status: <for sale / not for sale / unknown>\n"
-            "\n"
-            "Registrant:\n"
-            "Name: <name or (unknown)>\n"
-            "Location: <city, state, country or (unknown)>\n"
-            "\n"
-            "If a listing is referenced, describe it as \"current aircraft marketplace listings\" without naming vendors.\n"
-        )
+        if _response_depth_kind == ResponseDepthKind.CONFIRMATION:
+            system_prompt += (
+                "\n\n**Structured format (this turn):** The user is confirming prior information — "
+                "answer briefly. **Do not** emit the full **Aircraft Record** template unless they explicitly ask for a full recap."
+            )
+        elif _response_depth_kind == ResponseDepthKind.AIRCRAFT_LOOKUP:
+            system_prompt += (
+                "\n\n**Required output format (structured aircraft queries):** "
+                "Use plain-text sections: **Aircraft Overview**, **Key Specs**, **Ownership** (and **Market** when listing/price is central). "
+                "Omit empty sections. Tight bullets. When context includes mandatory verbatim pricing/status or registrant lines, honor those within the sections — "
+                "describe them in plain language—do not bury them in a field dump.\n"
+                "If a listing is referenced, describe it as \"current aircraft marketplace listings\" without naming vendors.\n"
+            )
+        else:
+            system_prompt += (
+                "\n\n**Required output format (structured aircraft queries):**\n"
+                "Aircraft Record:\n"
+                "Tail Number: <NXXXX or (unknown)>\n"
+                "Aircraft Type: <make/model>\n"
+                "Year: <year or (unknown)>\n"
+                "Status: <for sale / not for sale / unknown>\n"
+                "\n"
+                "Registrant:\n"
+                "Name: <name or (unknown)>\n"
+                "Location: <city, state, country or (unknown)>\n"
+                "\n"
+                "If a listing is referenced, describe it as \"current aircraft marketplace listings\" without naming vendors.\n"
+            )
     if phly_authority and not ctx_meta.get("legacy_flat"):
         system_prompt += (
             "\n\n**Context layout:** Retrieved facts are grouped into **AIRCRAFT_SPECS**, **OPERATIONAL_DATA**, "
@@ -1066,16 +1122,24 @@ def run_consultant_retrieval_bundle(
             "**Lead with PhlyData** internal lines and [FOR USER REPLY] guidance in the PhlyData block when present; then use [FOR USER REPLY] lines in the **listing** block as marketplace-ingest supplement — not as a replacement for PhlyData internal fields."
         )
     if aircraft_images:
-        system_prompt += (
-            "\n\n**Aircraft images:** This response includes a curated gallery (HTTPS URLs from public pages, "
-            "saved marketplace galleries, and listing previews). You may briefly note that images are shown in "
-            "the app and that the user should verify they match this tail/serial on the host site. Do **not** paste "
-            "promotional or charter-booking links in the answer text."
-        )
+        if data_used.get("consultant_aircraft_images_representative"):
+            system_prompt += (
+                "\n\n**Aircraft images:** Representative photos of this aircraft **type** are shown in the app. "
+                "You may say briefly: *Here are representative images of the aircraft type.* "
+                "Do **not** mention internal databases, datasets, scraping, or that tail-specific photos were "
+                "unavailable. Do **not** paste promotional or charter-booking links in the answer text."
+            )
+        else:
+            system_prompt += (
+                "\n\n**Aircraft images:** This response includes a curated gallery (HTTPS URLs from public pages, "
+                "saved marketplace galleries, and listing previews). You may briefly note that images are shown in "
+                "the app and that the user should verify they match this tail/serial on the host site when relevant. "
+                "Do **not** paste promotional or charter-booking links in the answer text."
+            )
     else:
         system_prompt += (
-            "\n\nThe product may show a **separate image gallery** when URLs are available from public and listing "
-            "pages. Do **not** invent image URLs; describe the aircraft in words when helpful."
+            "\n\nDo **not** promise a photo gallery or invent image URLs unless the user explicitly asked for pictures "
+            "in this thread; describe the aircraft in words when helpful."
         )
 
     if progress:

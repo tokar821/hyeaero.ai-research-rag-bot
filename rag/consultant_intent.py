@@ -18,30 +18,18 @@ _IMAGE_INTENT_SYSTEM = """You classify user intent for Hye Aero Ask Consultant (
 
 Should this turn include a **gallery of real aircraft photo URLs** (web + marketplace scrape), shown next to the text answer?
 
-**true** — User **explicitly** wants photos, images, pictures, a gallery, exterior/cabin shots, "what does it look like" in a visual sense, or short follow-ups that clearly mean "show me pics" in the same thread.
+Classify using **only the latest user message** — do not infer image intent from earlier conversation turns.
 
-**false** — Specs, mission, price, ownership, comparison, "describe" or "tell me about" the aircraft **without** asking for photos, most operational questions, registry lookups, or general aviation knowledge without a visual request.
+**true** — The latest message **explicitly** asks for photos, images, pictures, a gallery, exterior/cabin shots, or clear visual "show me" language.
+
+**false** — Specs, mission, price, ownership, comparison, follow-ups that do not ask for pictures, "describe" or "tell me about" without a visual request, registry lookups, or general aviation knowledge without a visual request in this message.
 
 Output only valid JSON: {"show_aircraft_images": true or false}"""
 
 
-def _history_blob(history: Optional[List[Dict[str, str]]], *, max_messages: int = 10) -> str:
-    if not history:
-        return ""
-    lines: List[str] = []
-    for h in history[-max_messages:]:
-        role = (h.get("role") or "").strip().lower()
-        if role not in ("user", "assistant"):
-            continue
-        c = (h.get("content") or "").strip()
-        if c:
-            lines.append(f"{role}: {c}")
-    return "\n".join(lines)
-
-
 def consultant_wants_aircraft_images_semantic(
     query: str,
-    history: Optional[List[Dict[str, str]]],
+    _history: Optional[List[Dict[str, str]]],
     *,
     api_key: str,
     model: str,
@@ -55,10 +43,7 @@ def consultant_wants_aircraft_images_semantic(
     try:
         import openai
 
-        blob = _history_blob(history)
-        user_msg = (
-            f"Conversation (oldest last lines first):\n{blob}\n\n---\n\nLatest user message:\n{(query or '').strip()}"
-        )
+        user_msg = (query or "").strip()
         client = openai.OpenAI(api_key=api_key, timeout=timeout)
         resp = client.chat.completions.create(
             model=model,

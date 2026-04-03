@@ -202,7 +202,11 @@ def wants_consultant_explicit_photo_web(
     user_query: str,
     history: Optional[List[Dict[str, str]]] = None,
 ) -> bool:
-    """User asked for photos / images / gallery (web), not only narrative detail."""
+    """User mentioned photos / images / gallery somewhere in **user** turns (detail routing, not UI gallery).
+
+    Kept loose for :func:`wants_consultant_aircraft_detail_phrases` and similar. **Do not** use this alone
+    to attach the image gallery — use :func:`wants_consultant_aircraft_images_in_answer`.
+    """
     blob = f"{_user_only_history_blob(history)} {user_query or ''}".strip().lower()
     if not blob.strip():
         return False
@@ -219,15 +223,37 @@ def wants_consultant_explicit_photo_web(
     return any(k in blob for k in keys)
 
 
+# Explicit visual requests only — avoids firing on market/pricing/ownership/compare turns.
+# Image gallery intent is **current message only** (no sticky state from chat history).
+_EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
+    r"(?is)"
+    r"(?:"
+    r"\bshow\s+me\s+(?:the\s+)?(?:images?|photos?|pictures?|pics?|picture)\b"
+    r"|\bshow\s+me\s+more\s+(?:images?|photos?|pictures?|pics?)\b"
+    r"|\bshow\s+me\s+more\b"
+    r"|\bshow\s+me\s+the\s+gallery\b"
+    r"|\blet\s+me\s+see\s+(?:the\s+)?aircraft\b"
+    r"|\bgive\s+me\s+(?:some\s+)?(?:images?|photos?|pictures?|pics?)\b"
+    r"|\b(?:can|could)\s+i\s+see\s+(?:some\s+)?(?:images?|photos?|pictures?)\b"
+    r"|\bi\s+want\s+to\s+see\s+(?:some\s+)?(?:images?|photos?|pictures?)\b"
+    r"|\bshow\s+me\s+of\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"  # e.g. show me of N807JS
+    r"|\bshow\s+me\s+of\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"  # e.g. OY-JSW
+    r")",
+)
+
+
 def wants_consultant_aircraft_images_in_answer(
     user_query: str,
-    history: Optional[List[Dict[str, str]]] = None,
+    _history: Optional[List[Dict[str, str]]] = None,
 ) -> bool:
     """True when the UI should show the aircraft image gallery.
 
-    Product default: **only** explicit photo / image / picture / gallery language (not "describe the jet").
+    **Only** the latest user text is considered; prior turns are ignored so image intent does not stick across turns.
     """
-    return wants_consultant_explicit_photo_web(user_query, history)
+    q = (user_query or "").strip()
+    if not q:
+        return False
+    return bool(_EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS.search(q))
 
 
 def wants_consultant_aircraft_detail_phrases(
@@ -312,7 +338,17 @@ def build_aircraft_photo_focus_tavily_query(
     elif serial:
         parts.append(f'"{serial}"')
     else:
-        return None
+        mm = ""
+        for r in phly_rows[:4]:
+            man = (r.get("manufacturer") or "").strip()
+            mdl = (r.get("model") or "").strip()
+            if man or mdl:
+                mm = " ".join(x for x in (man, mdl) if x).strip()
+                break
+        if mm:
+            parts.append(mm)
+        else:
+            return None
     # Phrasing close to what users type in Google — bias toward planespotting / listings, not fashion/lifestyle.
     parts.extend(
         [
@@ -330,6 +366,36 @@ def build_aircraft_photo_focus_tavily_query(
     )
     q = " ".join(parts)
     return q[:420] if q else None
+
+
+def build_aircraft_model_photo_fallback_tavily_query(
+    phly_rows: List[Dict[str, Any]],
+) -> Optional[str]:
+    """
+    When a tail/serial-biased image search returns nothing, search by **make/model** for representative photos.
+
+    Query is distinct from :func:`build_aircraft_photo_focus_tavily_query` when a registration was used first.
+    """
+    for r in phly_rows[:4]:
+        man = (r.get("manufacturer") or "").strip()
+        mdl = (r.get("model") or "").strip()
+        core = " ".join(x for x in (man, mdl) if x).strip()
+        if len(core) < 2:
+            continue
+        parts = [
+            f'"{core}"',
+            "business jet",
+            "aircraft type",
+            "photos",
+            "exterior",
+            "cabin",
+            "JetPhotos",
+            "planespotter",
+            "aviation photography",
+        ]
+        q = " ".join(parts)
+        return q[:420] if q else None
+    return None
 
 
 def _listing_where_from_phly_rows(

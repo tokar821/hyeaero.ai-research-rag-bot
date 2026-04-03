@@ -24,14 +24,14 @@ _AVIATION_STYLE = {
         "\n\n**Answer shape (intent: market price):** Cite numbers from context; separate Phly internal ask from listing ask and web snippets."
     ),
     AviationIntent.AIRCRAFT_SPECS: (
-        "\n\n**Answer shape (intent: specs):** Lead with operational relevance; prefer OEM-style performance facts from structured context, labeled by source — avoid spec lists with no mission tie-in."
+        "\n\n**Answer shape (intent: specs):** Advisor tone—**short lead** (what it means for their mission), then **only** the specs that matter; avoid walls of numbers. Prefer facts from structured context, labeled by source. **~120–200 words** default unless they asked for full specs."
     ),
     AviationIntent.MISSION_FEASIBILITY: (
-        "\n\n**Answer shape (intent: mission / recommendation):** **Mission-first:** open with mission framing, then "
-        "**distance estimate** (great-circle or stated), then **required operational range** (practical band with reserves, "
-        "e.g. transcon-class ~2,400–2,600 nm when appropriate), then **aircraft fit / recommendation** and **explanation**. "
-        "Consultant tone — not a data portal. Never say internal dataset, our database, records not found, or data not available; "
-        "use **based on typical operational performance for this aircraft or class…** when inferring."
+        "\n\n**Answer shape (intent: mission / recommendation):** **Concise first:** short mission read, a few aircraft names that fit, **one** clarifying question—expand specs only if asked. "
+        "If **pax**, **route/distance**, or **mission type** are missing, ask **at least one** question before a long list. "
+        "No philosophical filler; no serial/N-number dumps unless user wants detail. "
+        "Budget bands: under ~$5M light; $5M–$10M light/entry midsize; $10M–$20M midsize/super-mid; $20M+ large cabin. "
+        "*Based on available aircraft registry and market data* / *typical operational performance…* — never database or internal-records wording."
     ),
     AviationIntent.AIRCRAFT_COMPARISON: (
         "\n\n**Answer shape (intent: comparison):** Start with a one-line comparison title (e.g. Falcon 2000 vs Challenger 604). "

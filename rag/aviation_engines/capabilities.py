@@ -159,3 +159,43 @@ def filter_by_mission_pax_budget(
         cand.append(r)
 
     return _rank_recommendations(cand, required_range_nm, pax_req, min_count=3, max_count=min(limit, 5))
+
+
+def filter_by_pax_budget(
+    passengers: Optional[int],
+    budget_usd: Optional[float],
+    *,
+    limit: int = 5,
+) -> List[Dict[str, Any]]:
+    """
+    Budget advisory (not mission analysis):
+    - typical_passengers >= requested (when requested > 0)
+    - typical_market_price <= budget_usd * 0.85 when budget given (never above buffer; missing price excluded)
+    Then rank by closest passenger fit, then lowest acquisition cost.
+    """
+    rows = load_capability_rows()
+    pax_req = int(passengers) if passengers is not None and int(passengers) > 0 else None
+    bud = float(budget_usd) if budget_usd is not None and float(budget_usd) > 0 else None
+    max_affordable = bud * _BUDGET_BUFFER if bud is not None else None
+
+    cand: List[Dict[str, Any]] = []
+    for r in rows:
+        tp = typical_passengers(r)
+        if pax_req is not None and tp < pax_req:
+            continue
+        price = typical_market_price_usd(r)
+        if max_affordable is not None:
+            if price <= 0:
+                continue
+            if price > max_affordable:
+                continue
+        cand.append(r)
+
+    def key(r: Dict[str, Any]) -> tuple:
+        tp = typical_passengers(r)
+        pax_dist = abs(tp - pax_req) if pax_req is not None and pax_req > 0 else 0
+        price = typical_market_price_usd(r)
+        return (pax_dist, price)
+
+    ordered = sorted(cand, key=key)
+    return ordered[: min(limit, 5)]

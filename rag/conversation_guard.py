@@ -25,28 +25,6 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Second paragraph after answering non-aviation questions — professional, no "database" / limitation language.
-_AVIATION_FOCUS_REMINDERS = [
-    (
-        "I'm HyeAero.AI — focused on aircraft intelligence and aviation consulting for Hye Aero.\n"
-        "If you need help with aircraft missions, specifications, ownership research, or market insights, I'm here to help."
-    ),
-    (
-        "I'm HyeAero.AI — your aviation intelligence assistant for Hye Aero.\n"
-        "Feel free to ask about aircraft missions, specifications, or market insights anytime."
-    ),
-    (
-        "I'm HyeAero.AI for Hye Aero — broker-grade support on missions, specs, registry intelligence, and the jet market.\n"
-        "Whenever you're ready to talk aircraft, I'm here."
-    ),
-]
-
-
-def _pick_aviation_reminder(query: str) -> str:
-    h = int(hashlib.md5((query or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
-    return _AVIATION_FOCUS_REMINDERS[h % len(_AVIATION_FOCUS_REMINDERS)]
-
-
 _JOKE_REQUEST_RE = re.compile(
     r"\b("
     r"tell\s+me\s+(a\s+)?joke|"
@@ -54,7 +32,10 @@ _JOKE_REQUEST_RE = re.compile(
     r"got\s+(a\s+)?joke|"
     r"any\s+jokes?|"
     r"dad\s+joke|"
-    r"funny\s+joke"
+    r"funny\s+joke|"
+    r"joke\s+me|"
+    r"pls\s+joke|"
+    r"please\s+joke"
     r")\b",
     re.I,
 )
@@ -86,7 +67,8 @@ def _try_joke_reply(raw: str) -> Optional[str]:
         return None
     h = int(hashlib.md5((raw or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
     joke = _AVIATION_JOKES[h % len(_AVIATION_JOKES)]
-    return f"{joke}\n\n{_pick_aviation_reminder(raw)}"
+    # Simple joke request: deliver the joke only—no forced aviation pivot (consultant, not script).
+    return joke
 
 
 class ConversationMessageType(str, Enum):
@@ -174,23 +156,11 @@ _GREETING_TIMEOFDAY = re.compile(
 _GREETING_MAX_LEN = 48
 
 _GREETING_REPLIES = [
-    (
-        "Hello — I'm HyeAero.AI, the aviation intelligence assistant for Hye Aero.\n"
-        "I can help with aircraft missions, specifications, ownership research, and market insights. What are you working on?"
-    ),
-    (
-        "HyeAero.AI — the aviation intelligence assistant for Hye Aero.\n"
-        "Ask me about missions, specs, registry, comparisons, or buyer advisory anytime."
-    ),
-    (
-        "Hi — I'm HyeAero.AI for Hye Aero. Whether it's range planning, market context, or ownership questions, I can steer you in the right direction."
-    ),
-    (
-        "Good to connect — HyeAero.AI here, your aviation intelligence assistant for Hye Aero. What would you like to explore?"
-    ),
-    (
-        "Hey — HyeAero.AI, the aviation intelligence assistant for Hye Aero. Tell me about the mission or aircraft you're thinking about."
-    ),
+    "Morning — what are you working on today?",
+    "Hey — good to connect. What's on your mind?",
+    "Hi there. If you have a route, aircraft, or market question, I can help you think it through.",
+    "Good to connect. Where would you like to start?",
+    "Hello — I'm here when you're ready with an aviation question.",
 ]
 
 # --- Small talk ---
@@ -209,18 +179,79 @@ _SMALL_TALK_EXACT = frozenset(
     }
 )
 _SMALL_TALK_PHRASES = [
-    (re.compile(r"^hi\s+good\b", re.I), "Hi there! What can I help you with today?"),
-    (re.compile(r"^how\s+are\s+you", re.I), "I'm doing well, thanks—and ready to help with aircraft research or market questions whenever you are."),
-    (re.compile(r"^what'?s\s+up\b", re.I), "Hey! What can I help you with today?"),
+    (re.compile(r"^hi\s+good\b", re.I), "Hi — good to hear it. What's on your mind?"),
+    (re.compile(r"^how\s+are\s+you", re.I), "Doing well — thanks. What are you working on in the jet space?"),
+    (re.compile(r"^what'?s\s+up\b", re.I), "Hey — what's the question?"),
 ]
 
+# Softer than product-pitching every time — casual chat should feel human first.
 _SMALL_TALK_GENERIC = [
-    "Happy to help — HyeAero.AI here for Hye Aero. What are you working on?",
-    "Glad we're chatting — I can dive into specs, ownership, missions, or market context whenever you're ready.",
-    "Sounds good. If you have an aviation question, I'm here.",
+    "Got it — I'm here when you want to pick up an aircraft or market topic.",
+    "Sounds good. Whenever you're ready to go deeper on something, just say the word.",
+    "Understood — talk soon.",
 ]
+
+_SMALL_TALK_WARM_SHORT = [
+    "Thanks — I appreciate it.",
+    "Noted. Same here.",
+    "Appreciate it.",
+]
+
+# Two-word well-wishes / cheer — not aviation greetings.
+_HAPPY_OR_CHEER_RE = re.compile(
+    r"^(happy\s+(today|birthday|monday|tuesday|wednesday|thursday|friday|weekend|holidays?)|"
+    r"have\s+a\s+(great|good|nice)\s+(day|week|weekend)|"
+    r"cheers\b|"
+    r"congrats|congratulations)\b",
+    re.I,
+)
+
+# Laughter / compliments — answer like a person, not a CRM form.
+_COMPLIMENT_OR_FUN_RE = re.compile(
+    r"\b("
+    r"you\s*(?:'|’)?re\s+funny|"
+    r"you\s+are\s+funny|"
+    r"you'?re\s+hilarious|"
+    r"that\s*(?:was\s*)?funny|"
+    r"\b(?:haha|hahaha|lol|lmao|rofl)\b|"
+    r"good\s+one|nice\s+one|"
+    r"love\s+it|"
+    r"you\s+crack\s+me\s+up"
+    r")\b",
+    re.I,
+)
+
+_WHAT_DO_YOU_MEAN_RE = re.compile(
+    r"^\s*(?:"
+    r"what'?s\s+mean|"
+    r"what\s+do\s+you\s+mean|"
+    r"what\s+does\s+that\s+mean|"
+    r"wdym|"
+    r"meaning"
+    r")\s*(?:bro|dude|man|mate|fam|lol)?\s*[?.!…]*\s*$",
+    re.I,
+)
+
+# Only these short lines get a **greeting-style** reply — not every 2–3 word message.
+_SHORT_GREETING_LIKE = re.compile(
+    r"^(hi|hello|hey|yo|sup|hiya|howdy)([\s,]+(there|bro|buddy|dude|mate|man|friend|pal|all))?(\s*[!?.…]*)?$",
+    re.I,
+)
 
 # --- Identity ---
+
+_LEADING_DISCOURSE_PREFIX_RE = re.compile(
+    r"^(?:(?:good|great|nice|awesome|cool|so|ok|okay|well|hey|hi|yeah|yep|thanks|thank\s+you|oh)(?:[!?.…,]\s*|\s+))+",
+    re.I,
+)
+
+
+def _normalize_for_identity_match(raw: str) -> str:
+    """Strip leading fillers like 'good, ' / 'so, ' so company/identity regexes still match."""
+    s = (raw or "").strip()
+    s = _LEADING_DISCOURSE_PREFIX_RE.sub("", s)
+    return s.strip()
+
 
 _IDENTITY = re.compile(
     r"^("
@@ -235,24 +266,126 @@ _HYEAERO_COMPANY = re.compile(
     r"what\s+is\s+hye\s*aero|what'?s\s+hye\s*aero|who\s+is\s+hye\s*aero|"
     r"tell\s+me\s+about\s+hye\s*aero|what\s+does\s+hye\s*aero\s+do|"
     r"what\s+is\s+hyeaero|what\s+does\s+hyeaero\s+do|tell\s+me\s+about\s+hyeaero|"
-    r"describe\s+hye\s*aero|about\s+hye\s*aero"
-    r")\b.*$",
+    r"describe\s+hye\s*aero|about\s+hye\s*aero|"
+    r"(?:how\s+about\s+)?(?:discuss(?:ing)?|talk(?:ing)?)\s+(?:about\s+){0,2}(?:hye\s*aero|hyeaero)\b|"
+    r"(?:discuss|talk)\s+about\s+(?:hye\s*aero|hyeaero)\b"
+    r")\s*[?.!…]*\s*$",
     re.I,
+)
+# Meta: what to ask the assistant — answer with examples, not the full identity brochure.
+_WHAT_CAN_I_ASK_RE = re.compile(
+    r"^("
+    r"what\s+can\s+i\s+ask|"
+    r"what\s+should\s+i\s+ask|"
+    r"what\s+do\s+i\s+ask"
+    r")\s*\??\s*$",
+    re.I,
+)
+
+# Follow-ups like "great! can I ask more?" — consultant, not customer-service bot.
+_CAN_I_ASK_MORE_RE = re.compile(
+    r"^("
+    r"can\s+i\s+ask\s+more|"
+    r"may\s+i\s+ask\s+more|"
+    r"can\s+i\s+keep\s+asking|"
+    r"can\s+i\s+ask\s+another|"
+    r"can\s+i\s+ask\s+something\s+else"
+    r")\s*[?.!…]*\s*$",
+    re.I,
+)
+
+_THANKS_AND_FAREWELL_RE = re.compile(
+    r"(?is)"
+    r"\b(?:thanks|thank\s+you|thx|ty)\b.{0,120}?\b"
+    r"(?:have\s+a\s+(?:great|good|nice)\s+(?:day|week|weekend)|"
+    r"(?:great|good|nice)\s+day)\b",
 )
 _IDENTITY_MAX_LEN = 400
 
-IDENTITY_REPLY = (
-    "I'm HyeAero.AI — the aviation intelligence assistant for Hye Aero.\n\n"
-    "I help you with aircraft missions, specifications, ownership research, market insights, comparisons, and buyer advisory — "
-    "the same topics Hye Aero supports as an aviation intelligence and brokerage-support platform."
-)
+_IDENTITY_REPLIES = [
+    (
+        "I'm HyeAero.AI — I work with Hye Aero as an aviation intelligence assistant. "
+        "I help people think through missions, specs, ownership, and market questions in plain language."
+    ),
+    (
+        "I'm HyeAero.AI for Hye Aero — basically a consultant-style assistant for aircraft and market topics. "
+        "What are you trying to figure out?"
+    ),
+    (
+        "HyeAero.AI here — I focus on business aviation: aircraft, trips, registry context, and market readouts for Hye Aero. "
+        "How can I help?"
+    ),
+]
 
 HYEAERO_COMPANY_REPLY = (
-    "Hye Aero is an aviation intelligence platform: it combines aircraft brokerage support, "
-    "data-driven market research, and tooling for specifications, ownership intelligence, "
-    "mission analysis, market listings, aircraft comparison, and buyer advisory.\n\n"
-    "I'm HyeAero.AI — I bring that expertise into the conversation so you get broker-grade, mission-aware answers in one place."
+    "Hye Aero is an aviation intelligence and brokerage support platform focused on aircraft research, "
+    "ownership intelligence, and market insights.\n\n"
+    "HyeAero.AI is the conversational side — concise, consultant-style answers, not a generic chatbot."
 )
+
+_BOT_OR_AI_QUESTION_RE = re.compile(
+    r"^\s*(are\s+you\s+(a\s+)?bot\b|are\s+you\s+an?\s+ai\b|you\s+a\s+chatgpt\b|"
+    r"is\s+this\s+a\s+bot)\??\s*$",
+    re.I,
+)
+
+_CONFUSED_USER_RE = re.compile(
+    r"\b(i'?m\s+confused|i\s+don'?t\s+get\s+it|this\s+is\s+confusing|"
+    r"that\s+confuses\s+me|i'?m\s+lost)\b",
+    re.I,
+)
+
+# Backward compatibility — first variant; actual replies rotate via _pick_identity_reply.
+IDENTITY_REPLY = _IDENTITY_REPLIES[0]
+
+
+def _pick_identity_reply(query: str) -> str:
+    h = int(hashlib.md5((query or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
+    return _IDENTITY_REPLIES[h % len(_IDENTITY_REPLIES)]
+
+
+_WHAT_CAN_I_ASK_REPLIES = [
+    (
+        "Anything in business aviation works: a registration, a trip you're planning, a model you're comparing, "
+        "or a buy/sell question — whatever's most useful to you right now."
+    ),
+    (
+        "You could start with something specific — a city pair, cabin size, budget band, or a tail you're curious about — "
+        "and I'll help you think it through."
+    ),
+    (
+        "Common threads are mission fit, specs, ownership context, or market color — pick what matters and we'll go from there."
+    ),
+]
+
+
+def _pick_what_can_i_ask_reply(query: str) -> str:
+    h = int(hashlib.md5((query or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
+    return _WHAT_CAN_I_ASK_REPLIES[h % len(_WHAT_CAN_I_ASK_REPLIES)]
+
+
+_CAN_I_ASK_MORE_REPLIES = [
+    "Of course — what's next on your list?",
+    "Sure — go ahead. What are you trying to pin down?",
+    "Anytime. What do you want to look at next?",
+]
+
+_FAREWELL_REPLIES = [
+    "You too — fly safe if you're heading out.",
+    "Likewise. Reach out when something aircraft-related is on deck.",
+    "Appreciate it — have a good one.",
+]
+
+
+def _pick_can_i_ask_more_reply(query: str) -> str:
+    h = int(hashlib.md5((query or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
+    return _CAN_I_ASK_MORE_REPLIES[h % len(_CAN_I_ASK_MORE_REPLIES)]
+
+
+def _pick_farewell_reply(query: str) -> str:
+    h = int(hashlib.md5((query or "").strip().lower().encode(), usedforsecurity=False).hexdigest(), 16)
+    return _FAREWELL_REPLIES[h % len(_FAREWELL_REPLIES)]
+
 
 # Exported for tests / stable branding line
 GREETING_REPLY = _GREETING_REPLIES[0]
@@ -286,7 +419,7 @@ def _op_symbol_word(op: str) -> str:
 
 
 def _try_arithmetic_reply(raw: str) -> Optional[str]:
-    """Simple integer arithmetic → formatted answer + HyeAero.AI aviation reminder (no tools)."""
+    """Simple arithmetic → numeric answer only (no aviation commentary)."""
     s0 = (raw or "").strip()
     if query_has_aviation_signals(s0):
         return None
@@ -314,8 +447,8 @@ def _try_arithmetic_reply(raw: str) -> Optional[str]:
                 val = int(val)
     except (ValueError, StopIteration):
         return None
-    line1 = f"{a} {sym} {b} = {val}."
-    return f"{line1}\n\n{_pick_aviation_reminder(s0)}"
+    # Minimal answer only, e.g. "13." for 5+8 — no extra sentences.
+    return f"{val}."
 
 
 def _non_aviation_llm_gate(query: str) -> bool:
@@ -324,6 +457,9 @@ def _non_aviation_llm_gate(query: str) -> bool:
     if not q or query_has_aviation_signals(q):
         return False
     if _TRIVIA_NON_AVIATION_HINT.search(q):
+        return True
+    # Clarification / "what did you mean" — allow LLM even when short (rules may still catch common typos).
+    if re.search(r"\b(wdym|what\s*(do\s+you|’?s)\s+mean|what\s+does\s+that\s+mean)\b", q, re.I):
         return True
     wc = _word_count(q)
     if wc < 4:
@@ -341,6 +477,55 @@ def _non_aviation_llm_enabled() -> bool:
     return v not in ("0", "false", "no", "off")
 
 
+def _is_hye_aero_company_query_exact(query: str) -> bool:
+    """Stable branding copy is handled by templates — skip LLM override."""
+    raw = (query or "").strip()
+    if len(raw) > _IDENTITY_MAX_LEN:
+        return False
+    return bool(_HYEAERO_COMPANY.match(_normalize_for_identity_match(raw)))
+
+
+def _non_aviation_llm_system_prompt(hint: Optional[ConversationMessageType]) -> str:
+    """Strong identity + role; hint steers tone for this turn (hybrid with keyword routing)."""
+    base = """You are **HyeAero.AI** — you represent **Hye Aero** as a professional **business-aviation** consultant assistant.
+**Who you are:** HyeAero.AI — the conversational front for Hye Aero.
+**What Hye Aero is:** aviation intelligence and brokerage support (aircraft research, ownership context, market insight, mission thinking).
+**Your main role:** help users with aircraft, missions, specs, registry/market questions, and buyer-style guidance — but **this specific message is not an aviation task**, so you respond like a sharp human, not a brochure.
+
+**Output rules (all modes):**
+1) Plain text only. No markdown # headers or ** bold.
+2) Do **not** add forced aviation commentary, metaphors, or tie-ins unless the user brought up flying. No philosophical filler ("Aviation is about precision", "like a well-planned flight").
+3) For **simple arithmetic** when they only want the result: reply with **just the number and a period** (e.g. "13.") — no extra sentences.
+4) NEVER mention: datasets, databases, internal records, scraping, Tavily, Pinecone, RAG, vector, SQL, tools, or "training data".
+5) Forbidden: "I'm here to help", "feel free", "just let me know", "if you're curious", "what would you like to know", "absolutely", "don't hesitate".
+6) Keep it concise unless the question truly needs more (cap ~180 words)."""
+
+    if hint == ConversationMessageType.GREETING:
+        return (
+            base
+            + "\n\n**This turn (greeting):** Respond warmly and briefly — like a colleague. **Do not** pitch aviation or list product capabilities unless they asked."
+        )
+    if hint == ConversationMessageType.SMALL_TALK:
+        return (
+            base
+            + "\n\n**This turn (small talk / thanks / cheer):** Match the user's tone in **one short reply**. No aviation pivot unless natural."
+        )
+    if hint == ConversationMessageType.IDENTITY_QUESTION:
+        return (
+            base
+            + "\n\n**This turn (who are you / what do you do):** Explain HyeAero.AI and Hye Aero in **2–4 short sentences** — consultant-like, not a feature list. Mention missions, specs, ownership, market naturally."
+        )
+    if hint == ConversationMessageType.NON_AVIATION_GENERAL:
+        return (
+            base
+            + "\n\n**This turn (general knowledge / joke / trivia):** Answer correctly and briefly. If a joke was requested, ONE short joke (aviation-themed is OK), then stop. For math, numeric-only when appropriate."
+        )
+    return (
+        base
+        + "\n\n**This turn:** Answer what they asked — briefly, naturally, consultant peer tone."
+    )
+
+
 def _non_aviation_llm_reply(
     query: str,
     history: Optional[List[dict]],
@@ -348,9 +533,10 @@ def _non_aviation_llm_reply(
     api_key: str,
     model: str,
     timeout: float = 22.0,
+    hint: Optional[ConversationMessageType] = None,
 ) -> Optional[str]:
     """
-    Brief, accurate non-aviation answer + aviation-specialization reminder.
+    Non-aviation reply via LLM — hybrid path with keyword routing (hint).
     Never mentions internal datasets, databases, or system limitations.
     """
     if not (api_key or "").strip() or not (query or "").strip():
@@ -366,16 +552,7 @@ def _non_aviation_llm_reply(
                 if c and role in ("user", "assistant"):
                     hist += f"{role}: {c}\n"
 
-        sys = """You are HyeAero.AI — the user-facing assistant for Hye Aero, an aviation intelligence and brokerage-support platform.
-
-The user asked something that is NOT about aviation (e.g. math, geography, general knowledge, science trivia).
-
-Output rules:
-1) Answer their question first — briefly, correctly, and directly (plain text). No markdown # headers or ** bold.
-2) Then one blank line, then a short friendly second paragraph reminding them you specialize in aviation intelligence for Hye Aero: missions, aircraft specifications, ownership research, and market insights. Sound like a knowledgeable aviation consultant, not a restricted chatbot.
-3) If they asked for a joke, tell ONE short friendly joke, preferably aviation-themed, before the reminder paragraph.
-4) NEVER say or imply: "internal dataset", "database records", "our database", "system limitations", "I can't access", or similar. Never refuse a normal general-knowledge question — answer it, then pivot to aviation.
-5) Keep the total response concise (under ~180 words). Friendly, professional, broker-adjacent tone."""
+        sys = _non_aviation_llm_system_prompt(hint)
 
         user = f"Recent conversation:\n{hist}\n\nUser message:\n{query.strip()}"
         client = openai.OpenAI(api_key=api_key, timeout=timeout)
@@ -399,6 +576,15 @@ Output rules:
             "system limitation",
             "i don't have access",
             "records not found",
+            "just let me know",
+            "if you're curious",
+            "if you are curious",
+            "feel free to",
+            "what would you like to know",
+            "don't hesitate",
+            "aviation is about precision",
+            "well-planned flight",
+            "while we're on the topic of jets",
         ):
             if bad in low:
                 logger.warning("non_aviation LLM reply contained disallowed phrase; falling back")
@@ -414,7 +600,7 @@ def _rules_classify_and_reply(query: str) -> ConversationGuardResult:
     if not raw:
         return ConversationGuardResult(
             ConversationMessageType.SMALL_TALK,
-            "HyeAero.AI — the aviation intelligence assistant for Hye Aero. What mission or market question can I help with?",
+            "I'm here when you're ready.",
         )
 
     jr = _try_joke_reply(raw)
@@ -425,11 +611,32 @@ def _rules_classify_and_reply(query: str) -> ConversationGuardResult:
     if ar:
         return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, ar)
 
-    if len(raw) <= _IDENTITY_MAX_LEN and _HYEAERO_COMPANY.match(raw.strip()):
+    if len(raw) <= 200 and not query_has_aviation_signals(raw) and _BOT_OR_AI_QUESTION_RE.match(raw.strip()):
+        return ConversationGuardResult(
+            ConversationMessageType.IDENTITY_QUESTION,
+            "I'm HyeAero.AI — an aviation intelligence assistant for Hye Aero, not a generic chatbot. "
+            "I help with missions, specs, ownership, and market questions in a consultant-style conversation.",
+        )
+
+    if len(raw) <= 320 and not query_has_aviation_signals(raw) and _CONFUSED_USER_RE.search(raw):
+        return ConversationGuardResult(
+            ConversationMessageType.SMALL_TALK,
+            "No problem — what part would you like me to clarify?",
+        )
+
+    _id_raw = raw.strip()
+    _id_norm = _normalize_for_identity_match(_id_raw)
+    if len(_id_raw) <= _IDENTITY_MAX_LEN and _HYEAERO_COMPANY.match(_id_norm):
         return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, HYEAERO_COMPANY_REPLY)
 
-    if len(raw) <= _IDENTITY_MAX_LEN and _IDENTITY.match(raw):
-        return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, IDENTITY_REPLY)
+    if len(_id_raw) <= _IDENTITY_MAX_LEN and _WHAT_CAN_I_ASK_RE.match(_id_norm):
+        return ConversationGuardResult(
+            ConversationMessageType.IDENTITY_QUESTION,
+            _pick_what_can_i_ask_reply(_id_raw),
+        )
+
+    if len(_id_raw) <= _IDENTITY_MAX_LEN and _IDENTITY.match(_id_norm):
+        return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, _pick_identity_reply(_id_raw))
 
     if _is_primary_greeting(raw):
         return ConversationGuardResult(ConversationMessageType.GREETING, _pick_greeting_reply(raw))
@@ -444,11 +651,38 @@ def _rules_classify_and_reply(query: str) -> ConversationGuardResult:
         if cre.match(low) or cre.match(raw.strip()):
             return ConversationGuardResult(ConversationMessageType.SMALL_TALK, rep)
 
-    wc = _word_count(raw)
-    if 1 <= wc <= 3 and not query_has_aviation_signals(raw):
+    stripped = raw.strip()
+    if _HAPPY_OR_CHEER_RE.match(stripped):
         return ConversationGuardResult(
             ConversationMessageType.SMALL_TALK,
-            _pick_greeting_reply(raw),
+            "Same to you — safe travels if you're flying.",
+        )
+    if _COMPLIMENT_OR_FUN_RE.search(raw):
+        return ConversationGuardResult(
+            ConversationMessageType.SMALL_TALK,
+            "Glad that landed. Happy to go deeper on aircraft, missions, or market when you want.",
+        )
+    if _WHAT_DO_YOU_MEAN_RE.match(stripped):
+        return ConversationGuardResult(
+            ConversationMessageType.SMALL_TALK,
+            "If you're asking what something meant — point me at which line or term and I'll clarify. "
+            "If it's aviation jargon (NM, reserves, MTOW, etc.), say the word and I'll explain in plain English.",
+        )
+
+    wc = _word_count(raw)
+    if 1 <= wc <= 3 and not query_has_aviation_signals(raw):
+        low = stripped.lower().rstrip("!?.… ")
+        # Do **not** treat arbitrary 2–3 word phrases as "hello" (e.g. "Happy today") — that reads robotic.
+        if _SHORT_GREETING_LIKE.match(stripped) or low in ("hi", "hey", "hello", "yo", "sup", "hiya", "howdy"):
+            return ConversationGuardResult(ConversationMessageType.GREETING, _pick_greeting_reply(raw))
+        if low in ("thanks", "thx", "ty", "ok", "okay", "k", "cool", "nice", "cheers", "gg"):
+            return ConversationGuardResult(
+                ConversationMessageType.SMALL_TALK,
+                random.choice(_SMALL_TALK_WARM_SHORT),
+            )
+        return ConversationGuardResult(
+            ConversationMessageType.SMALL_TALK,
+            random.choice(_SMALL_TALK_GENERIC),
         )
 
     return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
@@ -485,6 +719,7 @@ Allowed values:
 - non_aviation_general — general knowledge unrelated to aviation: math (beyond tiny fragments), geography, capitals, science trivia, history, jokes, "what is X" when X is not aircraft/missions/market/registry.
 - aviation_question — aircraft, tails, N-numbers, registrations, listings, range, payload, MTOW, specs, ownership lookup, broker market, comparisons, flight planning, charter operations on aircraft, etc.
 
+If the message is only a hello/thanks/small fragment with no aircraft or mission content, it is NOT aviation_question.
 Choose aviation_question if the message is about aircraft or business aviation even partly.
 Choose non_aviation_general when the user clearly wants a general (non-aviation) fact or joke."""
 
@@ -531,41 +766,122 @@ def evaluate_conversation_guard(
 
     General non-aviation questions get a direct answer first, then a gentle aviation-focus reminder.
     """
+    raw = (query or "").strip()
+    # Clarification follow-ups need the full consultant pipeline + history (e.g. "what's mean?" = explain prior reply).
+    if history and _WHAT_DO_YOU_MEAN_RE.match(raw):
+        return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
+
+    # Consultant-style closings / follow-ups — run before guard LLM so misclassification cannot
+    # send "thanks, have a great day" into the aircraft tool pipeline.
+    if not query_has_aviation_signals(raw):
+        _prio_norm = _normalize_for_identity_match(raw)
+        if _CAN_I_ASK_MORE_RE.match(_prio_norm):
+            return ConversationGuardResult(
+                ConversationMessageType.SMALL_TALK,
+                _pick_can_i_ask_more_reply(raw),
+            )
+        if _THANKS_AND_FAREWELL_RE.search(raw):
+            return ConversationGuardResult(
+                ConversationMessageType.SMALL_TALK,
+                _pick_farewell_reply(raw),
+            )
+        if len(raw) <= 200 and _BOT_OR_AI_QUESTION_RE.match(raw.strip()):
+            return ConversationGuardResult(
+                ConversationMessageType.IDENTITY_QUESTION,
+                "I'm HyeAero.AI — an aviation intelligence assistant for Hye Aero, not a generic chatbot. "
+                "I help with missions, specs, ownership, and market questions in a consultant-style conversation.",
+            )
+
+    # Deterministic tiny math — no LLM (avoids extra sentences).
+    _arith = _try_arithmetic_reply(raw)
+    if _arith:
+        return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, _arith)
+
     rules = _rules_classify_and_reply(query)
     key = (openai_api_key or "").strip()
     model = (chat_model or os.getenv("OPENAI_CHAT_MODEL") or "gpt-4o-mini").strip()
 
-    if _env_truthy("CONSULTANT_CONVERSATION_GUARD_LLM") and key:
+    # --- Hybrid (keywords + LLM): keyword router picks message type; LLM generates the reply when possible. ---
+    if (
+        rules.message_type != ConversationMessageType.AVIATION_QUERY
+        and key
+        and _non_aviation_llm_enabled()
+        and not _is_hye_aero_company_query_exact(raw)
+    ):
+        _hybrid = _non_aviation_llm_reply(
+            query, history, api_key=key, model=model, hint=rules.message_type
+        )
+        if _hybrid:
+            return ConversationGuardResult(rules.message_type, _hybrid)
+
+    # --- Classifier LLM when keyword router said aviation (fix intent misfires). ---
+    if (
+        rules.message_type == ConversationMessageType.AVIATION_QUERY
+        and _env_truthy("CONSULTANT_CONVERSATION_GUARD_LLM")
+        and key
+    ):
         llm_t = _llm_classify_message_type(query, history, api_key=key, model=model)
-        if llm_t is not None:
-            if llm_t == ConversationMessageType.AVIATION_QUERY:
-                return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
+        if llm_t is not None and llm_t != ConversationMessageType.AVIATION_QUERY:
             if llm_t == ConversationMessageType.NON_AVIATION_GENERAL:
-                reply = _non_aviation_llm_reply(query, history, api_key=key, model=model)
-                if reply:
-                    return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, reply)
-                jr = _try_joke_reply((query or "").strip())
+                if _non_aviation_llm_enabled():
+                    reply = _non_aviation_llm_reply(
+                        query,
+                        history,
+                        api_key=key,
+                        model=model,
+                        hint=ConversationMessageType.NON_AVIATION_GENERAL,
+                    )
+                    if reply:
+                        return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, reply)
+                jr = _try_joke_reply(raw)
                 if jr:
                     return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, jr)
-                ar = _try_arithmetic_reply((query or "").strip())
+                ar = _try_arithmetic_reply(raw)
                 if ar:
                     return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, ar)
                 return rules
             if llm_t == ConversationMessageType.IDENTITY_QUESTION:
-                qstrip = (query or "").strip()
-                if len(qstrip) <= _IDENTITY_MAX_LEN and _HYEAERO_COMPANY.match(qstrip):
+                qstrip = raw.strip()
+                qnorm = _normalize_for_identity_match(qstrip)
+                if len(qstrip) <= _IDENTITY_MAX_LEN and _HYEAERO_COMPANY.match(qnorm):
                     return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, HYEAERO_COMPANY_REPLY)
-                return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, IDENTITY_REPLY)
+                if len(qstrip) <= _IDENTITY_MAX_LEN and _WHAT_CAN_I_ASK_RE.match(qnorm):
+                    return ConversationGuardResult(
+                        ConversationMessageType.IDENTITY_QUESTION,
+                        _pick_what_can_i_ask_reply(qstrip),
+                    )
+                if _non_aviation_llm_enabled():
+                    reply = _non_aviation_llm_reply(
+                        query,
+                        history,
+                        api_key=key,
+                        model=model,
+                        hint=ConversationMessageType.IDENTITY_QUESTION,
+                    )
+                    if reply:
+                        return ConversationGuardResult(ConversationMessageType.IDENTITY_QUESTION, reply)
+                return ConversationGuardResult(
+                    ConversationMessageType.IDENTITY_QUESTION,
+                    _pick_identity_reply(qstrip),
+                )
             if llm_t == ConversationMessageType.GREETING:
+                if _non_aviation_llm_enabled():
+                    reply = _non_aviation_llm_reply(
+                        query, history, api_key=key, model=model, hint=ConversationMessageType.GREETING
+                    )
+                    if reply:
+                        return ConversationGuardResult(ConversationMessageType.GREETING, reply)
                 return ConversationGuardResult(ConversationMessageType.GREETING, _pick_greeting_reply(query))
             if llm_t == ConversationMessageType.SMALL_TALK:
-                ar = _try_arithmetic_reply((query or "").strip())
-                if ar:
-                    return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, ar)
-                jr = _try_joke_reply((query or "").strip())
+                jr = _try_joke_reply(raw)
                 if jr:
                     return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, jr)
-                raw = (query or "").strip()
+                if _non_aviation_llm_enabled():
+                    reply = _non_aviation_llm_reply(
+                        query, history, api_key=key, model=model, hint=ConversationMessageType.SMALL_TALK
+                    )
+                    if reply:
+                        return ConversationGuardResult(ConversationMessageType.SMALL_TALK, reply)
                 low = raw.lower()
                 if low in _SMALL_TALK_EXACT:
                     return ConversationGuardResult(
@@ -575,8 +891,14 @@ def evaluate_conversation_guard(
                 for cre, rep in _SMALL_TALK_PHRASES:
                     if cre.match(low):
                         return ConversationGuardResult(ConversationMessageType.SMALL_TALK, rep)
-                if _non_aviation_llm_enabled() and _non_aviation_llm_gate(raw):
-                    reply = _non_aviation_llm_reply(query, history, api_key=key, model=model)
+                if _non_aviation_llm_gate(raw):
+                    reply = _non_aviation_llm_reply(
+                        query,
+                        history,
+                        api_key=key,
+                        model=model,
+                        hint=ConversationMessageType.NON_AVIATION_GENERAL,
+                    )
                     if reply:
                         return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, reply)
                 return ConversationGuardResult(
@@ -584,13 +906,20 @@ def evaluate_conversation_guard(
                     random.choice(_SMALL_TALK_GENERIC),
                 )
 
+    # Keyword router said aviation but message is general knowledge / chat (classifier missed).
     if (
         rules.message_type == ConversationMessageType.AVIATION_QUERY
         and key
         and _non_aviation_llm_enabled()
         and _non_aviation_llm_gate(query)
     ):
-        reply = _non_aviation_llm_reply(query, history, api_key=key, model=model)
+        reply = _non_aviation_llm_reply(
+            query,
+            history,
+            api_key=key,
+            model=model,
+            hint=ConversationMessageType.NON_AVIATION_GENERAL,
+        )
         if reply:
             return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, reply)
 

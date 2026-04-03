@@ -260,6 +260,46 @@ def delete_consultant_query_by_id(db: PostgresClient, row_id: int) -> int:
     return db.execute_update("DELETE FROM consultant_query_log WHERE id = %s", (rid,))
 
 
+def count_consultant_queries_since_midnight_utc(
+    db: PostgresClient,
+    *,
+    user_id: Optional[int],
+    client_ip: Optional[str],
+) -> int:
+    """
+    Count ``consultant_query_log`` rows since **UTC midnight** for daily rate limits.
+
+    - Authenticated: match ``user_id`` (ignore IP).
+    - Unauthenticated: match ``user_id IS NULL`` and ``client_ip`` (best-effort).
+    """
+    start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    if user_id is not None:
+        try:
+            uid = int(user_id)
+        except (TypeError, ValueError):
+            uid = -1
+        if uid >= 1:
+            r = db.execute_query(
+                """
+                SELECT COUNT(*)::bigint AS c FROM consultant_query_log
+                WHERE created_at >= %s AND user_id = %s
+                """,
+                (start, uid),
+            )
+            return int(r[0]["c"]) if r else 0
+    ip = (client_ip or "").strip()[:_MAX_IP_CHARS] or ""
+    if not ip:
+        return 0
+    r = db.execute_query(
+        """
+        SELECT COUNT(*)::bigint AS c FROM consultant_query_log
+        WHERE created_at >= %s AND user_id IS NULL AND client_ip = %s
+        """,
+        (start, ip),
+    )
+    return int(r[0]["c"]) if r else 0
+
+
 def delete_consultant_queries_by_ids(db: PostgresClient, ids: List[int]) -> int:
     """Delete up to 500 rows; invalid ids skipped."""
     clean: List[int] = []

@@ -55,6 +55,8 @@ _REPLACEMENTS: Tuple[Tuple[re.Pattern, str], ...] = (
     (re.compile(r"\binternal\s+database\b", re.I), "available aviation data"),
     (re.compile(r"\bour\s+database\b", re.I), "available aviation data"),
     (re.compile(r"\binternal\s+snapshot\b", re.I), "current data snapshot"),
+    (re.compile(r"\btavily\b", re.I), "public sources"),
+    (re.compile(r"\bscraped\b", re.I), "published"),
 )
 
 

@@ -404,8 +404,11 @@ def extract_phlydata_tokens_with_history(
     max_history_messages: int = 14,
 ) -> List[str]:
     """
-    Collect serial/tail tokens from the current message and recent chat turns so follow-ups
+    Collect serial/tail tokens from the current message and recent **user** turns so follow-ups
     like "thanks" or "U" still resolve the same aircraft.
+
+    Assistant messages are **not** scanned — model-generated tails (e.g. wrong N-numbers) must not
+    pollute Phly / FAA token lists.
     """
     seen: set[str] = set()
     out: List[str] = []
@@ -422,10 +425,36 @@ def extract_phlydata_tokens_with_history(
         tail = history[-max_history_messages:]
         for h in tail:
             role = (h.get("role") or "").strip().lower()
-            if role not in ("user", "assistant"):
+            if role != "user":
                 continue
             add_from_text(h.get("content") or "")
     return out
+
+
+def _strict_tails_latest_from_user_thread(
+    query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+    *,
+    max_history_messages: int = 16,
+) -> List[str]:
+    """
+    Latest strict civil registration from the **current** message, else the **most recent user**
+    message that contains one. Used when the current line has no extractable tail (follow-ups).
+    """
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+    here = find_strict_tail_candidates_in_text(query or "")
+    if here:
+        return here
+    if not history:
+        return []
+    for h in reversed(history[-max_history_messages:]):
+        if (h.get("role") or "").strip().lower() != "user":
+            continue
+        found = find_strict_tail_candidates_in_text(h.get("content") or "")
+        if found:
+            return found
+    return []
 
 
 def extract_phlydata_lookup_tokens(query: str) -> List[str]:
@@ -545,10 +574,35 @@ def consultant_phly_lookup_token_list(
     Tokens for Phly SQL lookup: **current user message first**. If the user cites a new tail/serial,
     do not merge older thread tokens (prevents repeating N678PS when they ask about 000017).
     If the current message has no aircraft tokens, fall back to recent chat (e.g. "thanks", "and the hours?").
+
+    **Strict civil tails** from the current message are **prepended** to extracted tokens so casual phrasing
+    (e.g. "Have you N807JS now?") still resolves the registration even when tokenization would otherwise
+    pair noisy fragments with the tail.
     """
-    primary = extract_phlydata_lookup_tokens(query or "")
-    if primary:
-        return primary
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+    q = query or ""
+    strict_here = find_strict_tail_candidates_in_text(q)
+    primary = extract_phlydata_lookup_tokens(q)
+    merged: List[str] = []
+    seen: set[str] = set()
+    for t in strict_here + primary:
+        k = (t or "").strip().upper()
+        if len(k) < 2 or k in seen:
+            continue
+        seen.add(k)
+        merged.append((t or "").strip())
+    merged = _refine_phly_lookup_tokens(merged)
+    if merged:
+        return merged
+    # Follow-up lines often omit the tail; anchor on the last user-cited registration, not every
+    # token ever mentioned (AND-match would drop all rows).
+    anchor = _strict_tails_latest_from_user_thread(q, history)
+    primary_q = extract_phlydata_lookup_tokens(q)
+    if anchor:
+        merged2 = _refine_phly_lookup_tokens([*anchor, *primary_q])
+        if merged2:
+            return merged2
     return extract_phlydata_tokens_with_history(query, history)
 
 
@@ -593,10 +647,10 @@ def lookup_aircraft_master_rows(db: PostgresClient, tokens: List[str]) -> List[D
         t = (raw or "").strip()
         if not t:
             continue
-        tk = _phly_identity_key(t)
         if _token_is_tail_registration(t):
-            add_cond("reg", tk)
-            add_cond("sn", tk)
+            for tk in _equality_keys_for_phly_token(t):
+                add_cond("reg", tk)
+                add_cond("sn", tk)
             continue
         if re.search(r"\d", t) and len(t) >= 3:
             for vn in _serial_token_match_variants(t):
@@ -700,6 +754,32 @@ def format_aircraft_master_consultant_block(rows: List[Dict[str, Any]]) -> Tuple
 _N_TAIL_TOKEN = re.compile(r"^N[A-Z0-9]{1,6}$", re.IGNORECASE)
 
 
+def _refine_phly_lookup_tokens(tokens: List[str]) -> List[str]:
+    """
+    Remove short numeric tokens that are **embedded** in a cited U.S. N-number (e.g. ``807`` inside
+    ``N807JS``). Keeping both makes :func:`_phly_rows_match_consultant_tokens` require an impossible AND
+    match and can incorrectly show **no Phly row** even when the tail exists.
+    """
+    if not tokens:
+        return []
+    tails_compact: List[str] = []
+    for t in tokens:
+        u = re.sub(r"\s+", "", (t or "").strip().upper())
+        if _N_TAIL_TOKEN.fullmatch(u):
+            tails_compact.append(u)
+    out: List[str] = []
+    for t in tokens:
+        tt = (t or "").strip()
+        if not tt:
+            continue
+        tu = re.sub(r"\s+", "", tt.upper())
+        if tu.isdigit() and 3 <= len(tu) <= 4 and tails_compact:
+            if any(tu in tail and len(tail) > len(tu) for tail in tails_compact):
+                continue
+        out.append(tt)
+    return out
+
+
 def _phly_identity_key(value: Any) -> str:
     """Phly / aircraft **identity** compare: trim + uppercase only — **hyphens and digits are literal** (LJ-1682 ≠ LJ1682)."""
     return str(value if value is not None else "").strip().upper()
@@ -708,7 +788,8 @@ def _phly_identity_key(value: Any) -> str:
 def _token_is_tail_registration(raw: str) -> bool:
     """
     Shape heuristic for hyphenated / N-tail tokens (routing to text fallback when reg/sn do not match).
-    **Equality** always uses ``_phly_identity_key`` — never hyphen-stripped forms.
+    SQL and row matching use ``_phly_identity_key`` plus optional hyphen collapse for export quirks
+    (e.g. TC-KEA vs TCKEA) — see ``_equality_keys_for_phly_token`` / ``_token_matches_phly_row``.
     """
     t = (raw or "").strip()
     if not t:
@@ -730,6 +811,22 @@ def _serial_token_match_variants(raw: str) -> set[str]:
     """Single strict identity key for Phly token (hyphen-preserving)."""
     s = _phly_identity_key(raw or "")
     return {s} if s else set()
+
+
+def _equality_keys_for_phly_token(raw: str) -> List[str]:
+    """
+    TRIM+UPPER keys for SQL equality on registration_number / serial_number.
+    Phly exports sometimes omit hyphens on international marks (TC-KEA vs TCKEA).
+    """
+    s = _phly_identity_key(raw or "")
+    if not s:
+        return []
+    out: List[str] = [s]
+    if "-" in s and _token_is_tail_registration(raw):
+        c = s.replace("-", "")
+        if len(c) >= 4 and c not in out:
+            out.append(c)
+    return out
 
 
 def _phly_row_text_contains_token(r: Dict[str, Any], token: str) -> bool:
@@ -768,6 +865,14 @@ def _token_matches_phly_row(r: Dict[str, Any], token: str) -> bool:
     # N-number may appear in either column depending on Phly export / data entry.
     if _N_TAIL_TOKEN.fullmatch(u):
         return reg_k == tok_k or sn_k == tok_k
+
+    if _token_is_tail_registration(t):
+        if tok_k and (reg_k == tok_k or sn_k == tok_k):
+            return True
+        collapsed_tok = tok_k.replace("-", "")
+        if len(collapsed_tok) >= 4:
+            if reg_k.replace("-", "") == collapsed_tok or sn_k.replace("-", "") == collapsed_tok:
+                return True
 
     if tok_k and (reg_k == tok_k or sn_k == tok_k):
         return True
@@ -819,7 +924,8 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
         return []
     all_pats: List[str] = []
     for t in tokens:
-        all_pats.extend(ilike_patterns_for_token(t))
+        for k in _equality_keys_for_phly_token(t):
+            all_pats.extend(ilike_patterns_for_token(k))
     all_pats = list(dict.fromkeys(all_pats))[:28]
 
     _tu_sn = "TRIM(UPPER(COALESCE(serial_number,'')))"
@@ -828,7 +934,7 @@ def lookup_phlydata_aircraft_rows(db: PostgresClient, tokens: List[str]) -> List
     norm_params: List[Any] = []
     seen_n: set[str] = set()
     for t in tokens[:14]:
-        for v in _serial_token_match_variants(t):
+        for v in _equality_keys_for_phly_token(t):
             if len(v) < 2 or v in seen_n:
                 continue
             seen_n.add(v)

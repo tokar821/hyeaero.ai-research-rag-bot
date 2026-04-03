@@ -70,6 +70,46 @@
     "typical_mission": "Regional US / short Europe sectors; thin routes with runway constraints."
   },
   {
+    "aircraft_model": "Citation CJ2",
+    "max_range_nm": 1550,
+    "typical_passengers": 6,
+    "typical_market_price": 3000000,
+    "class": "light",
+    "cruise_speed_ktas": 405,
+    "cabin": "Light jet cabin; efficient owner-operator platform.",
+    "typical_mission": "Short-to-medium business sectors; strong economics for 4–6 pax."
+  },
+  {
+    "aircraft_model": "Learjet 45",
+    "max_range_nm": 1900,
+    "typical_passengers": 8,
+    "typical_market_price": 4000000,
+    "class": "light",
+    "cruise_speed_ktas": 465,
+    "cabin": "Light jet cabin; higher cruise speed classically associated with Learjets.",
+    "typical_mission": "Fast domestic sectors; good fit when speed matters more than cabin height."
+  },
+  {
+    "aircraft_model": "Hawker 800XP",
+    "max_range_nm": 2500,
+    "typical_passengers": 8,
+    "typical_market_price": 4000000,
+    "class": "midsize",
+    "cruise_speed_ktas": 447,
+    "cabin": "Midsize cabin; proven charter and corporate platform.",
+    "typical_mission": "Midrange missions with solid cabin comfort; frequently traded on the secondary market."
+  },
+  {
+    "aircraft_model": "Citation Ultra",
+    "max_range_nm": 1700,
+    "typical_passengers": 7,
+    "typical_market_price": 3000000,
+    "class": "light",
+    "cruise_speed_ktas": 430,
+    "cabin": "Light jet cabin; common in fleet and charter lift.",
+    "typical_mission": "Reliable short-to-mid missions with straightforward support ecosystem."
+  },
+  {
     "aircraft_model": "Gulfstream G650",
     "max_range_nm": 7000,
     "typical_passengers": 16,

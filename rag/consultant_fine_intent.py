@@ -106,7 +106,8 @@ Return JSON only:
 **Rules:**
 - "Challenger **601**" → **aircraft_specs** or **aircraft_comparison**, **not** ownership_lookup.
 - **greeting** if the message is **only** hello/hi with no aircraft content.
-- Use **aircraft_comparison** when "vs" compares two aircraft."""
+- Use **aircraft_comparison** when "vs" compares two aircraft.
+- **ownership_lookup** when the user asks whether you **have** information on a **tail** (e.g. "have you N807JS?", "do you have N123AB?") — interpret as registry / aircraft record lookup, not small talk."""
 
 
 def _normalize_intent_str(raw: str) -> ConsultantFineIntent:
@@ -150,7 +151,11 @@ def heuristic_fine_intent(
             ql,
         ):
             return ConsultantFineIntentResult(ConsultantFineIntent.AIRCRAFT_SPECS, 0.8, ent)
-        if re.search(r"\b(who\s+owns|ownership|registrant)\b", ql):
+        if re.search(
+            r"\b(who\s+owns|ownership|registrant|have\s+you|do\s+you\s+have|do\s+we\s+have|"
+            r"got\s+(any\s+)?info|any\s+information|lookup|details\s+on)\b",
+            ql,
+        ):
             return ConsultantFineIntentResult(ConsultantFineIntent.OWNERSHIP_LOOKUP, 0.88, ent)
         return ConsultantFineIntentResult(ConsultantFineIntent.OWNERSHIP_LOOKUP, 0.82, ent)
     if any(x in ql for x in ("for sale", "asking", "listing", "market value", "comps", "worth")):

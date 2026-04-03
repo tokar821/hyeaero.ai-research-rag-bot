@@ -10,6 +10,7 @@ import re
 from typing import Any, Dict, List, Optional
 
 from rag.aviation_engines.capabilities import (
+    filter_by_pax_budget,
     filter_by_mission_pax_budget,
     find_catalog_matches,
     mission_possible_for_row,
@@ -129,13 +130,54 @@ def build_aviation_engines_block(
     req_nm: Optional[float] = required_range_nm(mission_nm) if mission_nm is not None else None
     synthetic_recommendation_route = False
     if fi == ConsultantFineIntent.AIRCRAFT_RECOMMENDATION and req_nm is None:
-        synthetic_recommendation_route = True
-        req_nm = required_range_nm(2200.0)
-        lines.append(
-            "[CONSULTANT OUTPUT ORDER — still open with **Mission** (ask/clarify city pair if needed), then distance/range assumptions, then recommendations.]\n"
-            "[AVIATION REASONING — No city pair parsed; using a **transcon-class** reference mission (~2200 nm great-circle) "
-            "with ×1.15 margin for catalog filtering—confirm the actual city pair with the client.]"
-        )
+        # Budget advisory ≠ mission analysis: do not assume a transcon range unless the user asked for a route/range.
+        pax = _parse_passengers(q, ent.get("passengers"))
+        bud = _parse_budget_usd(q, ent.get("budget_usd"))
+        if pax is not None or bud is not None:
+            rec = filter_by_pax_budget(pax, bud, limit=5)
+            _bud_note = (
+                f", typical_market_price ≤ 85% of stated budget (${bud * 0.85:,.0f} cap on ${bud:,.0f} — no aircraft above that band)"
+                if bud
+                else ""
+            )
+            lines.append(
+                "[Budget advisory — no mission distance assumed]\n"
+                "The client gave a budget and/or passenger count, but no route/range requirement. "
+                "Do not invent a range assumption; recommend types that fit budget/cabin, then ask one mission question "
+                "(typical stage length / city pair / nonstop requirement) to refine."
+            )
+            lines.append(
+                "[Recommendation engine — ranked: closest passenger fit, then lowest acquisition cost]\n"
+                + (f"- Hard filter: typical_passengers ≥ {pax}" if pax else "- Hard filter: (none)")
+                + _bud_note
+                + "\n- Present 3–5 types in client answer under **Recommended aircraft:** using the four-line block per type below."
+            )
+            if rec:
+                for i, r in enumerate(rec, 1):
+                    why = (r.get("typical_mission") or r.get("class") or "").strip()
+                    price = typical_market_price_usd(r)
+                    tp = typical_passengers(r)
+                    lines.append(
+                        f"  {i}. {r.get('aircraft_model')}\n"
+                        f"     Range: ~{r.get('max_range_nm')} nm\n"
+                        f"     Passengers: up to {tp}\n"
+                        f"     Typical acquisition band: ≈ ${price:,.0f}\n"
+                        f"     Reason it fits: {why or '—'}"
+                    )
+            else:
+                lines.append(
+                    "  If no exact matches appear in the reference table, give a practical shortlist by class "
+                    "(light / super-light / midsize) that typically trades inside this budget, and ask 2–3 clarifying "
+                    "constraints (range, runway, baggage, operating economics)."
+                )
+        else:
+            synthetic_recommendation_route = True
+            req_nm = required_range_nm(2200.0)
+            lines.append(
+                "[CONSULTANT OUTPUT ORDER — still open with **Mission** (ask/clarify city pair if needed), then distance/range assumptions, then recommendations.]\n"
+                "[AVIATION REASONING — No city pair parsed; using a **transcon-class** reference mission (~2200 nm great-circle) "
+                "with ×1.15 margin for catalog filtering—confirm the actual city pair with the client.]"
+            )
     if req_nm is not None:
         _lbl = (
             "reference mission × 1.15 (placeholder route)"
