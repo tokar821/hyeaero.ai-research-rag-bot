@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from database.postgres_client import PostgresClient
 from rag.phlydata_aircraft_schema import phlydata_aircraft_select_sql
 from services.faa_master_lookup import registration_tail_canonical
+from services.tavily_owner_hint import clamp_tavily_query
 
 logger = logging.getLogger(__name__)
 
@@ -394,7 +395,7 @@ def build_owner_operator_focus_tavily_query(
             q = f"{quoted} {q}".strip()
     if len(q) < 8:
         return None
-    return q[:500]
+    return clamp_tavily_query(q)
 
 
 def extract_phlydata_tokens_with_history(
@@ -1455,7 +1456,7 @@ def enrich_tavily_query_for_consultant(
     )
     should_enrich = wants_owner or (not phly_rows and bool(rows_use))
     if not should_enrich or not rows_use:
-        return (base_tavily_query or user_query)[:500]
+        return clamp_tavily_query(base_tavily_query or user_query)
 
     parts: List[str] = [(base_tavily_query or user_query).strip()]
     for r in rows_use[:2]:
@@ -1475,4 +1476,4 @@ def enrich_tavily_query_for_consultant(
             parts.append(rh)
     parts.append("registered owner operator airline charter")
     merged = " ".join(x for x in parts if x)
-    return merged[:500]
+    return clamp_tavily_query(merged)

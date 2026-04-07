@@ -8,7 +8,10 @@ from rag.conversation_guard import (
     HYEAERO_COMPANY_REPLY,
     evaluate_conversation_guard,
 )
-from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
+from rag.consultant_market_lookup import (
+    build_aircraft_photo_focus_tavily_query,
+    wants_consultant_aircraft_images_in_answer,
+)
 
 
 def test_guard_greeting_and_casual():
@@ -116,6 +119,15 @@ def test_guard_arithmetic_no_tools():
     assert "\n\n" not in (r.reply or "").strip()
 
 
+def test_guard_calculus_integral_decline_no_main_consultant():
+    q = "Can you solve this calculus problem: ∫(x^2 e^x) dx ?"
+    r = evaluate_conversation_guard(q, None, openai_api_key="sk-test", chat_model="gpt-4o-mini")
+    assert r.message_type == ConversationMessageType.NON_AVIATION_GENERAL
+    body = (r.reply or "").lower()
+    assert "business aviation" in body or "aviation" in body
+    assert "e^x" not in body and "integration by parts" not in body and "x^2" not in body.replace("^", "")
+
+
 def test_guard_what_is_one_plus_one():
     r = evaluate_conversation_guard("What is 1 + 1?", None)
     assert r.message_type == ConversationMessageType.NON_AVIATION_GENERAL
@@ -165,6 +177,13 @@ def test_guard_not_triggered_for_comparison():
     assert r.message_type == ConversationMessageType.AVIATION_QUERY
 
 
+def test_guard_glued_tail_show_routes_to_aviation_not_small_talk():
+    """Regression: 'showN140NE' has no word boundary before N — must not hit 3-word small_talk."""
+    r = evaluate_conversation_guard("can you showN140NE?", None, openai_api_key="", chat_model="")
+    assert r.message_type == ConversationMessageType.AVIATION_QUERY
+    assert r.reply is None
+
+
 def test_images_only_when_explicit():
     assert wants_consultant_aircraft_images_in_answer("Tell me all about the Gulfstream G650") is False
     assert wants_consultant_aircraft_images_in_answer("Show me photos of the G650") is True
@@ -172,12 +191,33 @@ def test_images_only_when_explicit():
     assert wants_consultant_aircraft_images_in_answer("Compare Challenger 601 and Citation 650") is False
     assert wants_consultant_aircraft_images_in_answer("Who owns N12345?") is False
     assert wants_consultant_aircraft_images_in_answer("show me of N807JS") is True
+    assert wants_consultant_aircraft_images_in_answer("can you show me n807js?") is True
+    assert wants_consultant_aircraft_images_in_answer("show me N807JS") is True
+    assert wants_consultant_aircraft_images_in_answer(
+        "I've never actually seen a Falcon 2000 up close — can you show me what it looks like?"
+    ) is True
     assert wants_consultant_aircraft_images_in_answer("Let me see the aircraft") is True
     assert wants_consultant_aircraft_images_in_answer("show me images") is True
     assert wants_consultant_aircraft_images_in_answer("show me more") is True
+    assert wants_consultant_aircraft_images_in_answer("thanks, can I see N508JS?") is True
+    assert wants_consultant_aircraft_images_in_answer("can you showN140NE?") is True
+    assert wants_consultant_aircraft_images_in_answer("let me see N508JA") is True
+    assert wants_consultant_aircraft_images_in_answer("I wanna see N140NE") is True
     # Prior turns must not keep image mode on — only the current message counts.
     hist = [
         {"role": "user", "content": "Show me photos of N807JS"},
         {"role": "assistant", "content": "Here is what we know."},
     ]
     assert wants_consultant_aircraft_images_in_answer("What is the asking price?", hist) is False
+
+
+def test_photo_focus_tavily_query_infers_model_without_phly_row():
+    q = build_aircraft_photo_focus_tavily_query(
+        "I've never seen a Falcon 2000 — show me what it looks like",
+        [],
+        None,
+    )
+    assert q
+    low = q.lower()
+    assert "falcon" in low
+    assert "aircraft exterior" in low or "photo" in low or "jetphotos" in low

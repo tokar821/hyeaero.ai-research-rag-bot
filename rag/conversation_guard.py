@@ -3,8 +3,9 @@ Conversation guard — runs **before** the heavy consultant tool pipeline in
 :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle`.
 
 - **Greetings / small talk / identity** — short template replies.
-- **Non-aviation general** (math, trivia, geography, jokes) — brief correct answer, then an
-  aviation-specialization reminder (templates or LLM). Does not claim dataset or system limitations.
+- **Non-aviation general** (simple trivia, geography, jokes, tiny arithmetic) — brief answer via templates
+  or LLM. **Advanced academic** (calculus, proofs, homework-style STEM, medical/legal/programming problem
+  solving) — **deterministic polite decline**; no worked solutions.
 - **Aviation** — returns ``aviation_query`` so SQL / FAA / listings / Pinecone can run.
 
 Optional: ``CONSULTANT_CONVERSATION_GUARD_LLM=1`` refines classification via LLM.
@@ -119,12 +120,69 @@ _WH_GENERAL = re.compile(
     re.I,
 )
 
+# Calculus / advanced STEM / homework-style problem solving — block before main consultant LLM.
+_ACADEMIC_MATH_OR_STEM_RE = re.compile(
+    r"("
+    r"∫|∂|∑|\\int\b|\\sum\b|"
+    r"\bcalculus\b|\bintegral\s+of\b|\bindefinite\s+integral\b|\bdefinite\s+integral\b|"
+    r"\bantiderivative\b|\bdifferentiate\b|\bderivative\s+of\b|\bd/dx\b|\bpartial\s+derivative\b|"
+    r"\bTaylor\s+series\b|\bMaclaurin\b|\bL'H[oô]pital\b|\bRiemann\b|"
+    r"\bordinary\s+differential\s+equation\b|\bpartial\s+differential\s+equation\b|"
+    r"\bschr[oö]dinger\b|\bquantum\s+(field\s+)?theory\b"
+    r")",
+    re.I,
+)
+_SOLVE_STEM_PROBLEM_RE = re.compile(
+    r"\b(solve|prove|compute|evaluate|show\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?steps?)\b"
+    r".{0,180}?"
+    r"\b(integral|calculus|derivative|differential\s+equation|\bdx\b|physics\s+problem)\b",
+    re.I | re.DOTALL,
+)
+_ACADEMIC_MED_LEGAL_CODE_RE = re.compile(
+    r"("
+    r"\bdiagnos(e|is)\s+(this|my)\b|\bmedical\s+advice\b|\bshould\s+i\s+take\s+this\s+medication\b|"
+    r"\blegal\s+advice\b|\bam\s+i\s+liable\b|"
+    r"\bleetcode\b|\bcodeforces\b|\bdebug\s+this\s+(python|java|typescript|javascript|rust|c\+\+)\b|"
+    r"\bfix\s+this\s+(python|java|typescript|javascript|rust)\s+(code|script|function|class)\b|"
+    r"\bwrite\s+(a|the)\s+(full\s+)?(python|java|typescript)\s+(program|script)\s+to\b"
+    r")",
+    re.I,
+)
+
+_ADVANCED_ACADEMIC_DECLINE_TEXT = (
+    "That’s outside what I’m here for — I’m HyeAero.AI for business aviation: aircraft, missions, ownership, "
+    "charter, registry, and market topics.\n\n"
+    "I don’t work through advanced calculus, physics, medical, legal, or programming problems. "
+    "If you have a jet route, model comparison, tail lookup, or acquisition question, ask that and I’ll focus there."
+)
+
+
+def _try_advanced_academic_decline_reply(raw: str) -> Optional[str]:
+    """
+    Homework / advanced academic prompts should not reach the main consultant model.
+    Simple arithmetic stays in _try_arithmetic_reply; this catches ∫, calculus, ODEs, etc.
+    """
+    s = (raw or "").strip()
+    if not s or query_has_aviation_signals(s):
+        return None
+    if _ACADEMIC_MATH_OR_STEM_RE.search(s):
+        return _ADVANCED_ACADEMIC_DECLINE_TEXT
+    if _SOLVE_STEM_PROBLEM_RE.search(s):
+        return _ADVANCED_ACADEMIC_DECLINE_TEXT
+    if _ACADEMIC_MED_LEGAL_CODE_RE.search(s):
+        return _ADVANCED_ACADEMIC_DECLINE_TEXT
+    return None
+
 
 def query_has_aviation_signals(text: str) -> bool:
     """True if message likely needs aircraft DB / RAG (not pure chit-chat)."""
     if not (text or "").strip():
         return False
-    return bool(_AIRCRAFT_RE.search(text))
+    if _AIRCRAFT_RE.search(text):
+        return True
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+    return bool(find_strict_tail_candidates_in_text(text))
 
 
 # --- Greeting (incl. yo, sup, casual) ---
@@ -518,7 +576,9 @@ def _non_aviation_llm_system_prompt(hint: Optional[ConversationMessageType]) -> 
     if hint == ConversationMessageType.NON_AVIATION_GENERAL:
         return (
             base
-            + "\n\n**This turn (general knowledge / joke / trivia):** Answer correctly and briefly. If a joke was requested, ONE short joke (aviation-themed is OK), then stop. For math, numeric-only when appropriate."
+            + "\n\n**This turn (general knowledge / joke / trivia):** Answer correctly and briefly. If a joke was requested, ONE short joke (aviation-themed is OK), then stop. "
+            "**Simple arithmetic** only when it is clearly elementary (e.g. small integers): numeric-only when appropriate. "
+            "**Do not** solve advanced calculus (integrals, derivatives, proofs), multistep physics homework, medical or legal analysis, or programming/debugging tasks — politely decline and say your expertise is **business aviation**; offer to help with an aircraft or market question instead."
         )
     return (
         base
@@ -716,11 +776,12 @@ Allowed values:
 - greeting — hi, hello, hey, yo, sup, good morning, short casual hellos (no substantive question).
 - small_talk — thanks, ok, nice, cool, how are you, hi good, tiny non-aviation fragments under ~4 words that are not trivia questions.
 - identity_question — who are you, what do you do, what can you help with, what is Hye Aero.
-- non_aviation_general — general knowledge unrelated to aviation: math (beyond tiny fragments), geography, capitals, science trivia, history, jokes, "what is X" when X is not aircraft/missions/market/registry.
+- non_aviation_general — general knowledge unrelated to aviation: simple geography, capitals, science trivia, history, jokes, "what is X" when X is not aircraft/missions/market/registry. **Also use for homework / advanced math** (calculus integrals, derivatives, proofs), **physics problem sets**, **medical/legal advice**, **coding interview / debug** requests — do **not** label those aviation_question.
 - aviation_question — aircraft, tails, N-numbers, registrations, listings, range, payload, MTOW, specs, ownership lookup, broker market, comparisons, flight planning, charter operations on aircraft, etc.
 
 If the message is only a hello/thanks/small fragment with no aircraft or mission content, it is NOT aviation_question.
 Choose aviation_question if the message is about aircraft or business aviation even partly.
+Choose aviation_question when the user asks to **see** the aircraft ("can I see it/that?", "show me that one", "any photos?") and the conversation already mentions a tail (N-number), serial, or aircraft model — they mean that aircraft, not generic chit-chat.
 Choose non_aviation_general when the user clearly wants a general (non-aviation) fact or joke."""
 
         user = f"Conversation:\n{hist}\nLatest message:\n{query.strip()}"
@@ -771,6 +832,21 @@ def evaluate_conversation_guard(
     if history and _WHAT_DO_YOU_MEAN_RE.match(raw):
         return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
 
+    # Visual follow-ups ("can I see that?") must run the consultant + image pipeline; do not send to small-talk
+    # or non-aviation LLM (would refuse images / listings).
+    if history:
+        try:
+            from rag.consultant_image_intent import visual_followup_suggests_image_request
+
+            if visual_followup_suggests_image_request(raw, history):
+                return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
+        except Exception:
+            logger.debug("visual follow-up aviation shortcut skipped", exc_info=True)
+
+    _academic_decline = _try_advanced_academic_decline_reply(raw)
+    if _academic_decline is not None:
+        return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, _academic_decline)
+
     # Consultant-style closings / follow-ups — run before guard LLM so misclassification cannot
     # send "thanks, have a great day" into the aircraft tool pipeline.
     if not query_has_aviation_signals(raw):
@@ -820,7 +896,17 @@ def evaluate_conversation_guard(
         and _env_truthy("CONSULTANT_CONVERSATION_GUARD_LLM")
         and key
     ):
-        llm_t = _llm_classify_message_type(query, history, api_key=key, model=model)
+        llm_t = None
+        _skip_guard_llm = False
+        if history:
+            try:
+                from rag.consultant_image_intent import visual_followup_suggests_image_request
+
+                _skip_guard_llm = visual_followup_suggests_image_request(raw, history)
+            except Exception:
+                pass
+        if not _skip_guard_llm:
+            llm_t = _llm_classify_message_type(query, history, api_key=key, model=model)
         if llm_t is not None and llm_t != ConversationMessageType.AVIATION_QUERY:
             if llm_t == ConversationMessageType.NON_AVIATION_GENERAL:
                 if _non_aviation_llm_enabled():

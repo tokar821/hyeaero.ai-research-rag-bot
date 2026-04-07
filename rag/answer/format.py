@@ -28,10 +28,10 @@ _AVIATION_STYLE = {
     ),
     AviationIntent.MISSION_FEASIBILITY: (
         "\n\n**Answer shape (intent: mission / recommendation):** **Concise first:** short mission read, a few aircraft names that fit, **one** clarifying question—expand specs only if asked. "
-        "If **pax**, **route/distance**, or **mission type** are missing, ask **at least one** question before a long list. "
+        "If **pax**, **route/distance**, **longest leg**, **budget**, or **private vs charter** are missing on an **open-ended** buy ask, ask **1–2** questions **before** a model shortlist. "
         "No philosophical filler; no serial/N-number dumps unless user wants detail. "
         "Budget bands: under ~$5M light; $5M–$10M light/entry midsize; $10M–$20M midsize/super-mid; $20M+ large cabin. "
-        "*Based on available aircraft registry and market data* / *typical operational performance…* — never database or internal-records wording."
+        "Use *typical operational performance for this class* for general guidance; **do not** imply registry/market **data** unless context actually provides those facts—never database or internal-records wording."
     ),
     AviationIntent.AIRCRAFT_COMPARISON: (
         "\n\n**Answer shape (intent: comparison):** Start with a one-line comparison title (e.g. Falcon 2000 vs Challenger 604). "

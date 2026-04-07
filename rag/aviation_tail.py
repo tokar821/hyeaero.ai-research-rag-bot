@@ -11,6 +11,12 @@ from typing import List, Optional
 
 # U.S. civil: N + at least two characters; avoids bare "N" or "N1". Model numbers like "601" have no N prefix.
 _US_N_NUMBER = re.compile(r"\bN[1-9A-Z][A-Z0-9]{1,5}\b", re.IGNORECASE)
+# Same, glued to a preceding lowercase letter (e.g. "showN140NE") — \b does not sit between "w" and "N".
+# Require at least one digit in the mark (avoids "thanks" → nks, "France" → nce).
+_US_N_NUMBER_AFTER_LOWER = re.compile(
+    r"(?<=(?-i:[a-z]))N(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}\b",
+    re.IGNORECASE,
+)
 
 # International: hyphenated civil marks (not digit-leading MSN like 525-0444).
 # Includes Brazil (PR/PP/PT), Liechtenstein-style FL-, etc.; TC- (Turkey) and many others.
@@ -44,6 +50,9 @@ def find_strict_tail_candidates_in_text(blob: str) -> List[str]:
         out.append(u)
 
     for m in _US_N_NUMBER.finditer(blob):
+        add(m.group(0).upper())
+
+    for m in _US_N_NUMBER_AFTER_LOWER.finditer(blob):
         add(m.group(0).upper())
 
     for m in _INTL_MARK.finditer(blob):

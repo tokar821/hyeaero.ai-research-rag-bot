@@ -20,6 +20,22 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 TAVILY_SEARCH_URL = "https://api.tavily.com/search"
+# Tavily REST API rejects queries longer than this (error: "Query is too long").
+TAVILY_API_MAX_QUERY_LENGTH = 400
+
+
+def clamp_tavily_query(query: str, max_len: int = TAVILY_API_MAX_QUERY_LENGTH) -> str:
+    """Trim query to Tavily's max length; prefer breaking at last space before max_len."""
+    q = (query or "").strip()
+    if len(q) <= max_len:
+        return q
+    cut = q[:max_len]
+    sp = cut.rfind(" ")
+    if sp >= max_len // 2:
+        cut = cut[:sp]
+    return cut.rstrip()
+
+
 DISCLAIMER = (
     "Web search suggestions only — not verified. FAA registrant remains the legal record. "
     "Review sources before relying on names or URLs."
@@ -224,7 +240,8 @@ def fetch_tavily_hints_for_query(
 
     On failure, returns ``{"query", "disclaimer", "results": [], "error": "..."}``.
     """
-    if not query.strip():
+    raw_q = (query or "").strip()
+    if not raw_q:
         return {
             "query": None,
             "disclaimer": DISCLAIMER,
@@ -232,6 +249,10 @@ def fetch_tavily_hints_for_query(
             "images": [],
             "error": "empty_query",
         }
+
+    query = clamp_tavily_query(raw_q)
+    if len(query) < len(raw_q):
+        logger.debug("Tavily query clamped: %d -> %d chars", len(raw_q), len(query))
 
     if (os.getenv("TAVILY_DISABLED") or "").strip().lower() in ("1", "true", "yes"):
         return {

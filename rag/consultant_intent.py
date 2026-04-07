@@ -77,6 +77,8 @@ def resolve_aircraft_image_gallery_intent(
     keywords_only: bool,
 ) -> Tuple[bool, str]:
     """
+    Legacy 2-tuple resolver. Production uses ``rag.consultant_image_intent.resolve_hybrid_image_gallery_intent``.
+
     Returns (show_gallery, source) where source is ``llm``, ``keywords``, or ``keywords_fallback``.
     """
     if keywords_only or not (api_key or "").strip():

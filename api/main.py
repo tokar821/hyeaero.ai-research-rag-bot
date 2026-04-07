@@ -15,9 +15,9 @@ from functools import lru_cache
 # Backend root on path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 from typing import Annotated, List, Optional, Any, Tuple
 
@@ -1541,6 +1541,23 @@ def rag_consultant_quota(
         "used": used,
         "remaining": max(0, lim - used),
     }
+
+
+@app.get("/api/rag/consultant-report-image")
+def rag_consultant_report_image(url: str = Query(..., min_length=12, max_length=2048)):
+    """
+    Proxy-fetch a gallery image URL for client-side PDF generation.
+
+    Browser ``fetch(imageUrl)`` fails on JetPhotos/CDNs (no CORS); the report builder calls this
+    same-origin endpoint instead. URL must be https and host-allowlisted (SSRF guard).
+    """
+    from services.consultant_report_image_proxy import fetch_consultant_report_image
+
+    out = fetch_consultant_report_image(url.strip())
+    if not out:
+        raise HTTPException(status_code=400, detail="Image URL not allowed or fetch failed")
+    body, content_type = out
+    return Response(content=body, media_type=content_type)
 
 
 @app.post("/api/rag/answer", response_model=ChatResponse)

@@ -12,6 +12,8 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from services.tavily_owner_hint import clamp_tavily_query
+
 logger = logging.getLogger(__name__)
 
 # --- Manufacturers (substring or token match, lowercase) ---
@@ -233,7 +235,7 @@ def _build_tavily_query(
     if suffix:
         core = f"{core} {' '.join(suffix)}".strip()
 
-    return core[:500] if core else (user_query or "")[:500]
+    return clamp_tavily_query(core) if core else clamp_tavily_query(user_query or "")
 
 
 def _build_rag_queries(
@@ -306,7 +308,7 @@ def expand_consultant_research_queries(
     q = (user_query or "").strip()
     base_rag = [q] if q else []
     default: Dict[str, Any] = {
-        "tavily_query": q[:400] if q else "",
+        "tavily_query": clamp_tavily_query(q) if q else "",
         "rag_queries": base_rag or [""],
     }
     if not q:
@@ -342,7 +344,7 @@ def _expand_consultant_research_queries_rules(
     final_rag = (rag_list[:2] if rag_list else [q])[:2]
 
     return {
-        "tavily_query": (tq or q)[:500],
+        "tavily_query": clamp_tavily_query(tq or q),
         "rag_queries": final_rag,
     }
 
@@ -357,7 +359,7 @@ def _expand_consultant_research_queries_llm(
     q = (user_query or "").strip()
     base_rag = [q] if q else []
     default: Dict[str, Any] = {
-        "tavily_query": q[:400] if q else "",
+        "tavily_query": clamp_tavily_query(q) if q else "",
         "rag_queries": base_rag or [""],
     }
     if not openai_api_key or not q:
@@ -417,7 +419,7 @@ Keep strings under 200 characters each where possible."""
             rag_list.insert(0, q)
         if not rag_list:
             rag_list = [q]
-        return {"tavily_query": tq[:500], "rag_queries": rag_list[:6]}
+        return {"tavily_query": clamp_tavily_query(tq), "rag_queries": rag_list[:6]}
     except Exception as e:
         logger.warning("consultant LLM query expand failed, using rules: %s", e)
         return _expand_consultant_research_queries_rules(user_query, history_snippet)

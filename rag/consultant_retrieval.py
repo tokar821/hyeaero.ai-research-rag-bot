@@ -255,7 +255,8 @@ def run_consultant_retrieval_bundle(
         consultant_merge_lookup_tokens,
         enrich_tavily_query_for_consultant,
     )
-    from rag.consultant_intent import resolve_aircraft_image_gallery_intent
+    from rag.consultant_image_intent import resolve_hybrid_image_gallery_intent
+    from rag.consultant_suspicious_model import consultant_suspicious_aircraft_model_note
     from rag.consultant_market_lookup import (
         build_aircraft_model_photo_fallback_tavily_query,
         build_aircraft_photo_focus_tavily_query,
@@ -274,7 +275,7 @@ def run_consultant_retrieval_bundle(
         empty_consultant_tavily_payload,
         should_run_consultant_tavily_after_internal,
     )
-    from services.tavily_owner_hint import fetch_tavily_hints_for_query
+    from services.tavily_owner_hint import clamp_tavily_query, fetch_tavily_hints_for_query
     from rag.consultant_pipeline import (
         build_consultant_llm_context,
         load_consultant_pipeline_config,
@@ -347,17 +348,15 @@ def run_consultant_retrieval_bundle(
         registry_sql,
     )
 
-    def _run_image_gallery_intent() -> Tuple[bool, str]:
-        # Gallery only when strict keyword rules match (no LLM override — predictable client behavior).
-        return resolve_aircraft_image_gallery_intent(
+    def _run_image_gallery_intent() -> Tuple[bool, str, Optional[str]]:
+        return resolve_hybrid_image_gallery_intent(
             query,
             history,
             api_key=svc.openai_api_key or "",
             model=intent_model or svc.chat_model,
-            keyword_fallback=lambda: wants_consultant_aircraft_images_in_answer(query),
-            keywords_only=True,
         )
-    
+
+    consultant_image_llm_intent: Optional[str] = None
     if skip_expand:
         def _run_phly() -> Tuple[str, Dict[str, Any], List[Dict[str, Any]]]:
             return svc._phlydata_authority_block(
@@ -374,7 +373,9 @@ def run_consultant_retrieval_bundle(
                 + _consultant_faa_no_phly_priority_prefix(phly_meta)
                 + (phly_authority or "")
             )
-            user_wants_gallery, consultant_image_intent_src = f_int.result()
+            user_wants_gallery, consultant_image_intent_src, consultant_image_llm_intent = (
+                f_int.result()
+            )
         qstrip = (query or "").strip()
         expanded = {
             "tavily_query": qstrip[:400] if qstrip else "",
@@ -406,7 +407,9 @@ def run_consultant_retrieval_bundle(
                 + (phly_authority or "")
             )
             expanded = f_exp.result()
-            user_wants_gallery, consultant_image_intent_src = f_int.result()
+            user_wants_gallery, consultant_image_intent_src, consultant_image_llm_intent = (
+                f_int.result()
+            )
     if progress:
         rqs_prev = expanded.get("rag_queries") if isinstance(expanded, dict) else None
         rqs_prev = list(rqs_prev) if isinstance(rqs_prev, list) else []
@@ -553,6 +556,40 @@ def run_consultant_retrieval_bundle(
         merge_purchase = False
     img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
+    requested_tail_for_images: Optional[str] = None
+    strict_tail_image_request = False
+    if user_wants_gallery:
+        try:
+            from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+            tails_in_query = find_strict_tail_candidates_in_text(query or "")
+            if tails_in_query:
+                # Option B: tail requests require tail-verified images only (no model fallback).
+                requested_tail_for_images = tails_in_query[0]
+                strict_tail_image_request = True
+        except Exception:
+            pass
+    inferred_marketing_type_for_images: Optional[str] = None
+    if user_wants_gallery and not strict_tail_image_request and not phly_rows:
+        try:
+            from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+
+            blob = (query or "").strip()
+            mans = _detect_manufacturers(blob.lower())
+            mdls = _detect_models(blob)
+            mt = " ".join(x for x in [*mans[:1], *mdls[:1]] if x).strip()
+            inferred_marketing_type_for_images = mt or (mdls[0] if mdls else None)
+        except Exception:
+            inferred_marketing_type_for_images = None
+
+    if strict_tail_image_request and requested_tail_for_images:
+        # Tail-only image search query (explicit tail in the user message).
+        img_q = clamp_tavily_query(
+            f"\"{requested_tail_for_images}\" aircraft \"{requested_tail_for_images}\" jet "
+            f"\"{requested_tail_for_images}\" plane \"{requested_tail_for_images}\" tail number "
+            f"site:jetphotos.com {requested_tail_for_images} site:planespotters.net {requested_tail_for_images} "
+            f"site:airliners.net {requested_tail_for_images}"
+        )
     
     _t_vec = time.perf_counter()
     if vector_chunk_budget <= 0:
@@ -599,6 +636,7 @@ def run_consultant_retrieval_bundle(
     run_image_pass = bool(
         run_tavily and img_q and not skip_img_pass and user_wants_gallery
     )
+    gallery_tavily_forced = False
     if not run_tavily:
         tavily_passes = 0
         run_secondary = False
@@ -735,6 +773,32 @@ def run_consultant_retrieval_bundle(
         tavily_payload = merge_tavily_consultant_payloads(
             tavily_payload, quaternary, max_results=20
         )
+    # User asked for a gallery but Tavily was skipped (SQL + vector "sufficient") — still fetch images.
+    if (
+        not run_tavily
+        and user_wants_gallery
+        and (img_q or "").strip()
+        and not skip_img_pass
+    ):
+        try:
+            img_only = fetch_tavily_hints_for_query(
+                img_q,
+                result_limit=tavily_per_pass,
+                search_depth=tdepth,
+                request_timeout=tavily_timeout,
+                include_images=True,
+            )
+            tavily_payload = merge_tavily_consultant_payloads(
+                tavily_payload, img_only, max_results=20
+            )
+            gallery_tavily_forced = True
+            if progress:
+                progress.step(
+                    "tavily_gallery_forced",
+                    reason="user_wants_gallery_while_gate_skipped_web",
+                )
+        except Exception as _gfe:
+            logger.warning("Consultant: forced gallery-only Tavily failed: %s", _gfe)
     tavily_payload = filter_tavily_results_for_phly_identity(tavily_payload, phly_rows)
     
     purchase_tavily_merged = bool(
@@ -749,11 +813,14 @@ def run_consultant_retrieval_bundle(
         if ph:
             tavily_block = f"{tavily_block}\n\n{ph}"
     tavily_hits = len(tavily_payload.get("results") or [])
+    tavily_raw_imgs = tavily_payload.get("images") if isinstance(tavily_payload.get("images"), list) else []
+    tavily_image_n = len(tavily_raw_imgs)
     if progress:
         progress.step(
             "tavily_formatted_for_context",
             hits=tavily_hits,
             tavily_chars=len(tavily_block or ""),
+            tavily_image_candidates=tavily_image_n,
         )
 
     from services.consultant_aircraft_images import build_consultant_aircraft_images
@@ -779,13 +846,18 @@ def run_consultant_retrieval_bundle(
             listing_urls=listing_urls_for_img or None,
             listing_rows=lr_img or None,
             trust_tail_biased_tavily_images=trust_tail_tavily_imgs,
+            required_tail=requested_tail_for_images,
+            strict_tail_page_match=strict_tail_image_request,
+            required_marketing_type=inferred_marketing_type_for_images,
+            strict_model_title_alt_match=bool(inferred_marketing_type_for_images) and not strict_tail_image_request,
         )
     # Tail-specific shots are sparse on CDNs — second search by make/model for representative photos.
     if (
         user_wants_gallery
         and len(aircraft_images) == 0
-        and run_tavily
+        and (run_tavily or gallery_tavily_forced)
         and phly_rows
+        and not strict_tail_image_request
     ):
         mf_q = build_aircraft_model_photo_fallback_tavily_query(phly_rows)
         if mf_q and mf_q.strip() != (img_q or "").strip():
@@ -818,10 +890,11 @@ def run_consultant_retrieval_bundle(
     if (
         user_wants_gallery
         and len(aircraft_images) == 0
-        and run_tavily
+        and (run_tavily or gallery_tavily_forced)
         and img_q
         and not skip_img_pass
         and want_img_primary
+        and not strict_tail_image_request
     ):
         try:
             img_boost = fetch_tavily_hints_for_query(
@@ -852,7 +925,7 @@ def run_consultant_retrieval_bundle(
     has_phly = bool((phly_authority or "").strip())
     has_market = bool((market_block or "").strip())
     has_rag = bool(results)
-    has_tavily = tavily_hits > 0
+    has_tavily = tavily_hits > 0 or tavily_image_n > 0
     if not (has_phly or has_market or has_rag or has_tavily):
         if progress:
             progress.step(
@@ -950,6 +1023,8 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_tavily_always"] = 1
     if not run_tavily:
         data_used["tavily_skipped"] = 1
+    if gallery_tavily_forced:
+        data_used["consultant_tavily_gallery_forced"] = 1
     if purchase_tavily_merged:
         data_used["tavily_purchase_focus"] = 1
     data_used["tavily_error"] = tavily_payload.get("error")
@@ -976,6 +1051,8 @@ def run_consultant_retrieval_bundle(
     if user_wants_gallery:
         data_used["consultant_show_image_ui_context"] = 1
     data_used["consultant_image_intent_source"] = consultant_image_intent_src
+    if consultant_image_llm_intent is not None:
+        data_used["consultant_image_llm_intent"] = consultant_image_llm_intent
 
     _response_depth_kind = classify_response_depth(query, history, _fine.intent)
     data_used["consultant_response_depth"] = _response_depth_kind.value
@@ -991,14 +1068,44 @@ def run_consultant_retrieval_bundle(
         "vector search, SQL, faa_master table, Controller, Aircraft Exchange, scrapes, pipelines, or table names. "
         "If the context contains bracketed tags (e.g. [AUTHORITATIVE ...], [FOR USER REPLY ...]), treat them as "
         "internal labels and do not repeat them.\n"
-        "Prefer: \"based on available aircraft registry and market data\", aircraft registration lines in this brief, "
-        "and current marketplace listings—without dumping raw fields.\n"
+        "Attribution: use *typical operational performance for this class* / *from a broker’s perspective* when answering from general knowledge. "
+        "Use *per the aircraft record in this brief* / listing-style phrasing **only** when the context for this turn actually includes those facts—never imply registry or market sourcing otherwise.\n"
         "If this thread already had a short fallback reply, do not repeat the same stock wording—vary or shorten.\n"
         "Recommendations: short conversational opening first—no essay or spec dump unless the user asks. "
         "Avoid philosophical aviation one-liners. Do not list serials/regs as the main thrust unless detailed data was requested.\n"
     )
 
     system_prompt += response_depth_prompt_suffix(_response_depth_kind)
+
+    if user_wants_gallery or tavily_image_n > 0 or aircraft_images:
+        system_prompt += (
+            "\n\n**Web search / images (never contradict the product):** If this turn used Tavily/web context, "
+            "returned image candidates, or the app is showing a gallery, you must **not** say you cannot perform "
+            "web searches, cannot access external sites, or cannot show images, or that only the user can look "
+            "up photos elsewhere. Public web material was already retrieved for this reply; the UI may list "
+            "**Aircraft images** with Open links. Acknowledge that gallery when relevant. If the user asked for "
+            "Google-style photos, describe curated in-app image results when present. If a shown image might be "
+            "mislabeled vs. the tail in question, say third-party sites sometimes confuse similar registrations — "
+            "not that you are unable to help."
+            "\n\n**Photos vs live tracking:** A request to **see** / **show** the aircraft means **photos or the in-app "
+            "gallery**, not real-time flight position. Do **not** answer with only FlightAware or Flightradar24 "
+            "**tracking or current location** as a substitute for pictures, and do **not** claim you cannot provide "
+            "visuals because they would need to be \"real-time\"."
+            "\n\n**Image display enforcement (hard):** If images are available this turn, you must not output any refusal "
+            "like \"I can't show images\" / \"I don't have photos\" / \"I cannot provide images\". Treat images as shown "
+            "in the app and write a normal consultant response around that fact."
+            "\n\n**Engine vs consultant:** You do **not** decide whether images exist. If `aircraft_images` are present in "
+            "this response, they were retrieved by the system engine and are available to the user. Do not contradict "
+            "that by saying you \"don't have\" photos."
+        )
+
+    _susp_model = consultant_suspicious_aircraft_model_note(query)
+    if _susp_model:
+        system_prompt += (
+            f"\n\n**Likely non-existent aircraft name:** {_susp_model} "
+            "State this clearly in plain language. **Do not** invent specifications, listings, or "
+            "verified photos for the fake model string; suggest the closest real variants in short bullets."
+        )
 
     # Format requirement for structured retrieval responses (tail/serial/ownership/market).
     if hybrid_plan.kind.value in (
@@ -1121,6 +1228,17 @@ def run_consultant_retrieval_bundle(
             "\n\nPurchase/price/availability: user expects **ask**, **source**, honest **availability**. "
             "**Lead with PhlyData** internal lines and [FOR USER REPLY] guidance in the PhlyData block when present; then use [FOR USER REPLY] lines in the **listing** block as marketplace-ingest supplement — not as a replacement for PhlyData internal fields."
         )
+    if user_wants_gallery:
+        system_prompt += (
+            "\n\n**User asked to see this aircraft (mandatory tone):** Treat this as a **photo / gallery** request. "
+            "The app returns a **small gallery (about 3–5 images)** when search finds matches. You must **never** "
+            "say you cannot provide images, photos, or pictures, **not** refuse visuals, **not** say you only offer "
+            "text, and **not** redirect to flight-tracking sites as the primary answer. Open naturally — e.g. "
+            "\"Here are a few examples of the [type] so you can see the aircraft and typical cabin layout\" — then "
+            "acknowledge **photos in the app** when **Aircraft images** / gallery context exists; add brief "
+            "type-appropriate visual detail in prose (airframe class, typical exterior/cabin cues). "
+            "Write like a human aviation consultant: warm, concise, professional — not robotic disclaimers."
+        )
     if aircraft_images:
         if data_used.get("consultant_aircraft_images_representative"):
             system_prompt += (
@@ -1136,6 +1254,12 @@ def run_consultant_retrieval_bundle(
                 "the app and that the user should verify they match this tail/serial on the host site when relevant. "
                 "Do **not** paste promotional or charter-booking links in the answer text."
             )
+    elif user_wants_gallery:
+        system_prompt += (
+            "\n\n**Aircraft images:** No image URLs were attached this turn, but the user still asked for a **visual**. "
+            "Do **not** refuse or defer only to external websites; give a concise visual description from context "
+            "(type, era, typical configuration). Say the app may still load a gallery beside the reply when URLs exist."
+        )
     else:
         system_prompt += (
             "\n\nDo **not** promise a photo gallery or invent image URLs unless the user explicitly asked for pictures "

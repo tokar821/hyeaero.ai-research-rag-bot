@@ -12,6 +12,7 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from database.postgres_client import PostgresClient
+from services.tavily_owner_hint import clamp_tavily_query
 from rag.phlydata_consultant_lookup import (
     _N_TAIL_TOKEN,
     _phly_identity_key,
@@ -21,6 +22,29 @@ from rag.phlydata_consultant_lookup import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _photo_query_thread_blob(
+    query: str,
+    history: Optional[List[Dict[str, str]]],
+    *,
+    max_messages: int = 14,
+    max_chars_per_msg: int = 1200,
+) -> str:
+    """User + assistant excerpts so follow-ups like \"can I see it?\" inherit Falcon 2000 from thread."""
+    parts: List[str] = []
+    if history:
+        for h in history[-max_messages:]:
+            role = (h.get("role") or "").strip().lower()
+            if role not in ("user", "assistant"):
+                continue
+            c = (h.get("content") or "").strip()
+            if c:
+                parts.append(c[:max_chars_per_msg])
+    q = (query or "").strip()
+    if q:
+        parts.append(q)
+    return "\n".join(parts)
 
 
 def _user_only_history_blob(
@@ -236,8 +260,31 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     r"|\bgive\s+me\s+(?:some\s+)?(?:images?|photos?|pictures?|pics?)\b"
     r"|\b(?:can|could)\s+i\s+see\s+(?:some\s+)?(?:images?|photos?|pictures?)\b"
     r"|\bi\s+want\s+to\s+see\s+(?:some\s+)?(?:images?|photos?|pictures?)\b"
-    r"|\bshow\s+me\s+of\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"  # e.g. show me of N807JS
-    r"|\bshow\s+me\s+of\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"  # e.g. OY-JSW
+    # Visual "what does it look like" (common phrasing; still explicit visual intent).
+    r"|\bshow\s+me\s+what\s+it\s+looks\s+like\b"
+    r"|\bwhat\s+does\s+it\s+look\s+like\b"
+    r"|\bwhat\s+do\s+they\s+look\s+like\b"
+    r"|\bhow\s+does\s+it\s+look\b"
+    r"|\bdo\s+you\s+have\s+(?:any\s+)?(?:photos?|pictures?|images?|pics?)\b"
+    r"|\bi'?ve\s+never\s+(?:actually\s+)?seen\s+(?:one|it|this|that)\b"
+    r"|\bi'?m\s+curious\s+(?:what\s+)?(?:it|this|that)\s+looks\s+like\b"
+    r"|\bcurious\s+what\s+(?:it|this|that)\s+looks\s+like\b"
+    r"|\b(?:show|showing)\s+me\s+(?:the\s+)?(?:jet|plane|aircraft)\b"
+    # Tail / registration without requiring the word "of" (e.g. "can you show me N807JS").
+    r"|\bshow\s+me\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\bshow\s+me\s+of\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\bshow\s+me\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"  # e.g. OY-JSW (no "of")
+    r"|\bshow\s+me\s+of\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"
+    # "can I see N508JS?" / "let me see N508JA" (not only pronouns / not only "see photos").
+    r"|\b(?:can|could)\s+i\s+see\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\b(?:can|could)\s+you\s+show\s*N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\blet\s+me\s+see\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\bi\s+want\s+to\s+see\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\b(?:i\s+)?wanna\s+see\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\btry(?:ing)?\s+to\s+see\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\b(?:i\s+)?wanna\s+see\s+the\s+(?:aircraft|plane|jet)\b"
+    r"|\btry(?:ing)?\s+to\s+see\s+the\s+(?:aircraft|plane|jet)\b"
+    r"|\b(?:please|pls)\s+show\s+me\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
     r")",
 )
 
@@ -295,17 +342,43 @@ def consultant_wants_internal_listings_sql(
     return wants_consultant_aircraft_detail_context(user_query, history)
 
 
+def clamp_structured_aircraft_image_tavily_query(marketing_type: str) -> Optional[str]:
+    """
+    Single Tavily string with **structured facets** (exterior / cabin / private jet), not a generic
+    ``private jet images`` dump. ``marketing_type`` is usually ``"{Manufacturer} {Model}"``.
+    """
+    core = (marketing_type or "").strip()
+    if len(core) < 2:
+        return None
+    # Quoted facets mirror how users search image engines; keeps make/model anchored.
+    return clamp_tavily_query(
+        f'"{core} aircraft exterior" "{core} aircraft cabin" "{core} private jet" '
+        f"aviation photography airframe JetPhotos planespotter"
+    )
+
+
 def build_aircraft_photo_focus_tavily_query(
     query: str,
     phly_rows: List[Dict[str, Any]],
     history: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[str]:
     """
-    Second-pass Tavily string biased toward **image** search hits (use with ``include_images``).
+    Tavily string biased toward **image** search hits (use with ``include_images``).
 
-    CDN image URLs rarely contain the tail; pairing this query with a relaxed identity filter
-    improves recall vs. generic web search.
+    When Phly matched a row with make/model, search uses **marketing type** (e.g. Cessna Citation Excel)
+    with structured exterior/cabin/jet facets — not only the bare tail (CDN paths rarely include reg text).
+
+    **Tail workflow:** resolve type from registry/Phly first; image search is driven by that **model string**.
     """
+    for r in phly_rows[:4]:
+        man = (r.get("manufacturer") or "").strip()
+        mdl = (r.get("model") or "").strip()
+        mm = " ".join(x for x in (man, mdl) if x).strip()
+        if len(mm) >= 2:
+            out = clamp_structured_aircraft_image_tavily_query(mm)
+            if out:
+                return out
+
     reg = ""
     serial = ""
     for r in phly_rows[:4]:
@@ -321,51 +394,56 @@ def build_aircraft_photo_focus_tavily_query(
     if not reg:
         for t in consultant_phly_lookup_token_list(query, history):
             u = (t or "").strip().upper().replace(" ", "").replace("-", "")
-            if re.match(r"^N[A-Z0-9]{1,6}$", u):
+            # Require a digit so words like "never" (N+EVER) are not treated as N-numbers.
+            if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
                 reg = u
                 break
     if not serial:
         for t in consultant_phly_lookup_token_list(query, history):
             tv = (t or "").strip()
-            if tv and re.search(r"\d", tv) and len(tv) >= 4 and not re.match(
-                r"^N[A-Z0-9]{1,6}$", tv.upper().replace(" ", "").replace("-", "")
-            ):
-                serial = tv
-                break
+            if not tv or not re.search(r"\d", tv) or len(tv) < 4:
+                continue
+            compact = tv.upper().replace(" ", "").replace("-", "")
+            if re.match(r"^N[A-Z0-9]{1,6}$", compact):
+                continue
+            # Avoid model numbers like Falcon **2000**, 737, 650 picked up as "serial" tokens.
+            if re.fullmatch(r"\d{3,4}", compact):
+                continue
+            serial = tv
+            break
     parts: List[str] = []
     if reg:
         parts.append(f'"{reg}"')
     elif serial:
         parts.append(f'"{serial}"')
     else:
-        mm = ""
-        for r in phly_rows[:4]:
-            man = (r.get("manufacturer") or "").strip()
-            mdl = (r.get("model") or "").strip()
-            if man or mdl:
-                mm = " ".join(x for x in (man, mdl) if x).strip()
-                break
-        if mm:
-            parts.append(mm)
-        else:
+        blob = _photo_query_thread_blob(query, history)
+        blob_lc = blob.lower()
+        from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+
+        mans = _detect_manufacturers(blob_lc)
+        mdls = _detect_models(blob)
+        inferred = " ".join(x for x in [*mans[:1], *mdls[:3]] if x).strip()
+        if not inferred:
             return None
-    # Phrasing close to what users type in Google — bias toward planespotting / listings, not fashion/lifestyle.
+        parts.append(inferred)
+    if len(parts) == 1 and not parts[0].startswith('"'):
+        # Inferred marketing type only — same structured facets as Phly make/model path.
+        return clamp_structured_aircraft_image_tavily_query(parts[0])
     parts.extend(
         [
             "aircraft",
+            "exterior",
+            "cabin",
+            "private jet",
             "aviation",
-            "plane",
             "photos",
             "JetPhotos",
             "planespotter",
-            "airliner",
-            "exterior",
-            "cabin",
-            "interior",
         ]
     )
     q = " ".join(parts)
-    return q[:420] if q else None
+    return clamp_tavily_query(q) if q else None
 
 
 def build_aircraft_model_photo_fallback_tavily_query(
@@ -382,19 +460,7 @@ def build_aircraft_model_photo_fallback_tavily_query(
         core = " ".join(x for x in (man, mdl) if x).strip()
         if len(core) < 2:
             continue
-        parts = [
-            f'"{core}"',
-            "business jet",
-            "aircraft type",
-            "photos",
-            "exterior",
-            "cabin",
-            "JetPhotos",
-            "planespotter",
-            "aviation photography",
-        ]
-        q = " ".join(parts)
-        return q[:420] if q else None
+        return clamp_structured_aircraft_image_tavily_query(core)
     return None
 
 
@@ -1223,4 +1289,4 @@ def build_purchase_listing_tavily_query(
         parts.append(mm)
     parts.extend(["broker", "JetNet", "Controller", "AvPay", "AircraftExchange"])
     q = " ".join(x for x in parts if x).strip()
-    return q[:500] if len(q) >= 12 else None
+    return clamp_tavily_query(q) if len(q) >= 12 else None

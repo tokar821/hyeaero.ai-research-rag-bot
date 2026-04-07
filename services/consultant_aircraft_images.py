@@ -7,6 +7,7 @@ No user uploads, no AI image generation — only URLs from search / scraped list
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
@@ -20,6 +21,272 @@ from services.scrape_listing_image_lookup import (
 )
 
 logger = logging.getLogger(__name__)
+
+_TAIL_TOKEN_ALNUM = re.compile(r"[^A-Z0-9]+")
+
+
+def _norm_alnum_tokens(s: str) -> str:
+    """Uppercase string with non-alnum replaced by spaces (stable token boundaries)."""
+    return _TAIL_TOKEN_ALNUM.sub(" ", (s or "").upper()).strip()
+
+
+def _tail_token_present(text: str, tail: str) -> bool:
+    """
+    True if ``tail`` appears as its own token in text, rejecting near-matches.
+
+    Example: tail=N807JS → accept "... N807JS ..." but reject N807JT / N807JSX.
+    """
+    t = _norm_alnum_tokens(tail)
+    if not t or len(t) < 3:
+        return False
+    blob = _norm_alnum_tokens(text)
+    if not blob:
+        return False
+    # Token-boundary match in a normalized alnum space-separated string.
+    return re.search(rf"(?<![A-Z0-9]){re.escape(t)}(?![A-Z0-9])", blob) is not None
+
+
+_AVIATION_HOST_PRIORITY: List[tuple[str, int]] = [
+    ("jetphotos.", 100),
+    ("planespotters.", 90),
+    ("airliners.", 80),
+    ("airport-data.", 70),
+    ("aviation-safety.", 70),
+]
+
+
+def _host_priority_score(url: str) -> int:
+    host = ""
+    try:
+        host = (urlparse((url or "").strip()).netloc or "").lower()
+    except Exception:
+        host = ""
+    if not host:
+        return 0
+    for frag, score in _AVIATION_HOST_PRIORITY:
+        if frag in host:
+            return score
+    return 10
+
+
+def _derive_model_positive_tokens(marketing_type: str) -> List[str]:
+    """
+    Positive model tokens for strict model mode (title/alt/desc/url).
+    Includes common shorthand (e.g. Falcon 2000 → F2000).
+    """
+    mt = (marketing_type or "").strip()
+    if not mt:
+        return []
+    out: List[str] = []
+    out.append(mt)
+    # Also accept model-only token if marketing_type includes manufacturer.
+    parts = mt.split()
+    if len(parts) >= 2:
+        out.append(" ".join(parts[-2:]))  # last two words often "Falcon 2000", "Phenom 300"
+    low = mt.lower()
+    m = re.search(r"\bfalcon\s*(\d{3,4})\b", low)
+    if m:
+        out.append(f"F{m.group(1)}")
+    m = re.search(r"\bchallenger\s*(\d{3})\b", low)
+    if m:
+        out.append(f"CL{m.group(1)}")
+    m = re.search(r"\bglobal\s*(\d{4})\b", low)
+    if m:
+        out.append(f"Global {m.group(1)}")
+    m = re.search(r"\bg\s*[-.]?\s*(\d{3,4})\b", low)
+    if m and "gulfstream" in low:
+        out.append(f"G{m.group(1)}")
+    # Dedup normalized
+    seen: set[str] = set()
+    uniq: List[str] = []
+    for t in out:
+        t2 = t.strip()
+        if not t2:
+            continue
+        key = t2.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(t2)
+    return uniq
+
+
+def _derive_model_negative_tokens(marketing_type: str) -> List[str]:
+    """
+    Conservative negative tokens to prevent common family bleed.
+    Only implemented for the most confusion-prone families.
+    """
+    mt = (marketing_type or "").strip().lower()
+    if not mt:
+        return []
+    neg: List[str] = []
+    if "falcon" in mt:
+        if "2000" in mt:
+            neg += ["Falcon 900", "Falcon 7X", "Falcon 8X", "Falcon 6X", "Falcon 10X"]
+        if "900" in mt:
+            neg += ["Falcon 2000", "Falcon 7X", "Falcon 8X", "Falcon 6X", "Falcon 10X"]
+    if "phenom" in mt:
+        if "300" in mt:
+            neg += ["Phenom 100"]
+        if "100" in mt:
+            neg += ["Phenom 300"]
+    if "gulfstream" in mt and "650" in mt:
+        neg += ["G550", "G450", "G500", "G600"]
+    if "global" in mt and "7500" in mt:
+        neg += ["Global 5000", "Global 6000", "Global 6500", "Global 8000"]
+    if "challenger" in mt and "350" in mt:
+        neg += ["Challenger 300", "Challenger 650", "Challenger 600"]
+    # Unique and non-empty
+    seen: set[str] = set()
+    out: List[str] = []
+    for t in neg:
+        k = t.lower()
+        if k not in seen:
+            seen.add(k)
+            out.append(t)
+    return out
+
+
+def _model_tokens_match_strict(blob: str, marketing_type: str) -> bool:
+    """Strict model match: require positive token, reject any negative token."""
+    b = (blob or "")
+    b_l = b.lower()
+    pos = _derive_model_positive_tokens(marketing_type)
+    neg = _derive_model_negative_tokens(marketing_type)
+    if neg and any(n.lower() in b_l for n in neg):
+        return False
+    # Require at least one positive token as a substring (title/alt/url often includes it).
+    return any(p.lower() in b_l for p in pos if len(p) >= 4)
+
+
+def _iter_tavily_result_linked_images_for_model(
+    tavily_payload: Dict[str, Any],
+    *,
+    required_marketing_type: str,
+    cap_results: int = 20,
+    cap_images_per_result: int = 8,
+) -> List[Dict[str, Optional[str]]]:
+    """
+    Pull **source-linked** images from Tavily results whose page text matches the required model
+    (strict model tokens, Option B-style page verification).
+    """
+    out: List[Dict[str, Optional[str]]] = []
+    results = tavily_payload.get("results") if isinstance(tavily_payload, dict) else None
+    if not isinstance(results, list) or not (required_marketing_type or "").strip():
+        return out
+    mt = str(required_marketing_type).strip()
+    for r in results[:cap_results]:
+        if not isinstance(r, dict):
+            continue
+        page_url = str(r.get("url") or "").strip()
+        title = str(r.get("title") or "").strip()
+        content = str(r.get("content") or "").strip()
+        snippet = str(r.get("snippet") or "").strip()
+        raw = str(r.get("raw_content") or "").strip()
+        page_blob = " ".join(x for x in (page_url, title, snippet, content, raw) if x)
+        if not _model_tokens_match_strict(page_blob, mt):
+            continue
+        imgs = r.get("images")
+        if not isinstance(imgs, list):
+            continue
+        n = 0
+        for im in imgs:
+            if n >= cap_images_per_result:
+                break
+            norm = _normalize_tavily_image(im)
+            if not norm:
+                continue
+            u = (norm.get("url") or "").strip()
+            desc = norm.get("description") or ""
+            if not _safe_https_image_url(u):
+                continue
+            blob = f"{u} {desc} {page_url} {title}"
+            if _consultant_image_page_likely_fashion_editorial(u):
+                continue
+            if _tavily_image_blob_is_off_topic(blob):
+                continue
+            if _tavily_image_blob_human_fashion_tabloid_risk(blob):
+                continue
+            if _image_url_suspicious_for_gallery(u):
+                continue
+            if not _tavily_image_blob_has_aircraft_signal(blob):
+                continue
+            out.append(
+                {
+                    "url": u,
+                    "description": _sanitize_tavily_image_description(desc),
+                    "source": "tavily",
+                    "page_url": page_url or None,
+                }
+            )
+            n += 1
+    return out
+
+
+def _iter_tavily_result_linked_images(
+    tavily_payload: Dict[str, Any],
+    *,
+    required_tail: str,
+    cap_results: int = 20,
+    cap_images_per_result: int = 8,
+) -> List[Dict[str, Optional[str]]]:
+    """
+    Pull **source-linked** images from Tavily results whose page text mentions the required tail.
+    (Option B: tail must be present on the source page, not necessarily in the image asset URL.)
+    """
+    out: List[Dict[str, Optional[str]]] = []
+    results = tavily_payload.get("results") if isinstance(tavily_payload, dict) else None
+    if not isinstance(results, list) or not required_tail:
+        return out
+    for r in results[:cap_results]:
+        if not isinstance(r, dict):
+            continue
+        page_url = str(r.get("url") or "").strip()
+        title = str(r.get("title") or "").strip()
+        content = str(r.get("content") or "").strip()
+        snippet = str(r.get("snippet") or "").strip()
+        raw = str(r.get("raw_content") or "").strip()
+        page_blob = " ".join(x for x in (page_url, title, snippet, content, raw) if x)
+        if not _tail_token_present(page_blob, required_tail):
+            continue
+        imgs = r.get("images")
+        if not isinstance(imgs, list):
+            continue
+        n = 0
+        for im in imgs:
+            if n >= cap_images_per_result:
+                break
+            norm = _normalize_tavily_image(im)
+            if not norm:
+                continue
+            u = (norm.get("url") or "").strip()
+            desc = norm.get("description") or ""
+            if not _safe_https_image_url(u):
+                continue
+            blob = f"{u} {desc} {page_url} {title}"
+            if _consultant_image_page_likely_fashion_editorial(u):
+                continue
+            if _tavily_image_blob_is_off_topic(blob):
+                continue
+            if _tavily_image_blob_human_fashion_tabloid_risk(blob):
+                continue
+            if _image_url_suspicious_for_gallery(u):
+                continue
+            if not _tavily_image_blob_has_aircraft_signal(blob):
+                continue
+            # Reject CDN paths that explicitly embed a different N-number than the requested tail.
+            if _image_url_embeds_conflicting_us_tail(u, required_tail):
+                continue
+            out.append(
+                {
+                    "url": u,
+                    "description": _sanitize_tavily_image_description(desc),
+                    "source": "tavily",
+                    "page_url": page_url or None,
+                }
+            )
+            n += 1
+    return out
 
 # Reject obvious non-aviation image hits (Tavily image search is noisy next to fashion / lifestyle).
 _OFF_TOPIC_IMAGE_BLOB = re.compile(
@@ -171,7 +438,30 @@ _AV_PATH_OVERRIDE_RE = re.compile(
 
 _MAX_SCRAPE_IMAGES_PER_LISTING = 8
 _MAX_LISTINGS_FOR_SCRAPE_GALLERY = 4
-_MAX_SCRAPE_IMAGES_TOTAL = 12
+_MAX_SCRAPE_IMAGES_TOTAL = 24
+
+_GALLERY_CAP_MIN = 3
+_GALLERY_CAP_MAX = 48
+
+
+def consultant_gallery_image_cap(explicit_max: Optional[int] = None) -> int:
+    """
+    Max images returned in the consultant gallery (Tavily + listing sources).
+
+    Default **5** (typical 3–5 visible photos per reply). Override with
+    ``CONSULTANT_GALLERY_MAX_IMAGES`` (clamped ``_GALLERY_CAP_MIN``–``_GALLERY_CAP_MAX``).
+    """
+    if explicit_max is not None:
+        try:
+            return max(_GALLERY_CAP_MIN, min(_GALLERY_CAP_MAX, int(explicit_max)))
+        except (TypeError, ValueError):
+            pass
+    raw = (os.getenv("CONSULTANT_GALLERY_MAX_IMAGES") or "5").strip()
+    try:
+        n = int(raw)
+    except ValueError:
+        n = 5
+    return max(_GALLERY_CAP_MIN, min(_GALLERY_CAP_MAX, n))
 
 # Same marketplace hosts as Tavily filter — only fetch HTML from these (SSRF safety).
 _LISTING_IMAGE_HOST_MARKERS = (
@@ -415,6 +705,102 @@ def fetch_og_image_url(listing_page_url: str, *, timeout: float = 6.0) -> Option
     return img
 
 
+_US_TAIL_IN_TEXT = re.compile(r"\b(N[1-9A-Z][A-Z0-9]{1,5})\b", re.I)
+
+
+def _norm_us_tail(s: str) -> str:
+    return re.sub(r"[\s\-]+", "", (s or "").strip().upper())
+
+
+def _phly_primary_us_tail(phly_rows: List[Dict[str, Any]]) -> str:
+    for r in phly_rows[:4]:
+        reg = (r.get("registration_number") or "").strip()
+        u = _norm_us_tail(reg)
+        if u.startswith("N") and len(u) >= 4 and re.search(r"\d", u):
+            return u
+    return ""
+
+
+def _image_url_embeds_conflicting_us_tail(url: str, canonical_tail: str) -> bool:
+    """
+    True when the image URL text contains a different U.S. N-number than the resolved aircraft
+    (e.g. article path ``...N503EA...`` while answering ``N508JA``).
+    """
+    if not canonical_tail or not url:
+        return False
+    canon = _norm_us_tail(canonical_tail)
+    found = {m.group(1).upper() for m in _US_TAIL_IN_TEXT.finditer(url)}
+    if not found:
+        return False
+    return any(t != canon for t in found)
+
+
+_STOP_PHLY_MODEL_TOKENS = frozenset(
+    {
+        "the",
+        "inc",
+        "llc",
+        "corp",
+        "aircraft",
+        "jet",
+        "jets",
+        "plane",
+        "model",
+        "series",
+        "type",
+    }
+)
+
+
+def _phly_rows_have_marketing_make_model(phly_rows: List[Dict[str, Any]]) -> bool:
+    for r in phly_rows[:4]:
+        if (r.get("manufacturer") or "").strip() and (r.get("model") or "").strip():
+            return True
+    return False
+
+
+def _phly_model_or_type_in_blob(blob: str, phly_rows: List[Dict[str, Any]]) -> bool:
+    """
+    True when image URL/description text overlaps Phly **manufacturer + model** tokens.
+
+    Reduces wrong-type jets when Tavily returns generic planespotter hits.
+    """
+    if not blob or not phly_rows:
+        return False
+    low = blob.lower()
+    compact = re.sub(r"[^a-z0-9]+", "", low)
+    for r in phly_rows[:4]:
+        man = (r.get("manufacturer") or "").strip()
+        mdl = (r.get("model") or "").strip()
+        if not man and not mdl:
+            continue
+        tokens: List[str] = []
+        for chunk in (man.lower(), mdl.lower()):
+            for w in re.split(r"[\s/\-]+", chunk):
+                w = w.strip()
+                if len(w) >= 3 and w not in _STOP_PHLY_MODEL_TOKENS:
+                    tokens.append(w)
+        if not tokens:
+            continue
+        seen_t: set[str] = set()
+        uniq: List[str] = []
+        for t in tokens:
+            if t not in seen_t:
+                seen_t.add(t)
+                uniq.append(t)
+        hits = sum(1 for t in uniq if t in low)
+        hits += sum(1 for t in uniq if len(t) >= 5 and t in compact)
+        if hits >= 2:
+            return True
+        long_toks = [t for t in uniq if len(t) >= 5]
+        if any(t in low for t in long_toks):
+            return True
+        combined = f"{man} {mdl}".strip().lower()
+        if len(combined) >= 8 and combined in low:
+            return True
+    return False
+
+
 def _normalize_tavily_image(item: Any) -> Optional[Dict[str, Optional[str]]]:
     if isinstance(item, str):
         u = item.strip()
@@ -479,6 +865,9 @@ def filter_tavily_images_for_phly(
         desc = norm.get("description") or ""
         if not _safe_https_image_url(url):
             continue
+        canon_us = _phly_primary_us_tail(phly_rows)
+        if canon_us and _image_url_embeds_conflicting_us_tail(url, canon_us):
+            continue
         blob = f"{url} {desc}"
         low = blob.lower()
         if _tavily_image_blob_is_off_topic(blob):
@@ -486,6 +875,8 @@ def filter_tavily_images_for_phly(
         id_match = _blob_matches_phly_aircraft_identity(blob, phly_rows)
         if _tavily_image_blob_human_fashion_tabloid_risk(blob) and not id_match:
             continue
+        restrict_by_mm = trust_tail_biased_search and _phly_rows_have_marketing_make_model(phly_rows)
+
         if trust_tail_biased_search:
             if _image_url_suspicious_for_gallery(url) and not id_match:
                 continue
@@ -494,12 +885,16 @@ def filter_tavily_images_for_phly(
                 desc_out = _sanitize_tavily_image_description(desc) or "Aircraft (web search)"
                 out.append({"url": url, "description": desc_out, "source": "tavily"})
             elif trusted_host and _tavily_image_blob_has_aircraft_signal(blob):
+                if restrict_by_mm and not _phly_model_or_type_in_blob(blob, phly_rows):
+                    continue
                 # Opaque CDN paths on planespotter / listing hosts only — no tail-in-URL guesses from lifestyle CDNs.
                 desc_out = _sanitize_tavily_image_description(desc) or "Aircraft (web search)"
                 out.append({"url": url, "description": desc_out, "source": "tavily"})
             elif _tavily_image_blob_has_aircraft_signal(blob) and not _consultant_image_page_likely_fashion_editorial(
                 url
             ):
+                if restrict_by_mm and not _phly_model_or_type_in_blob(blob, phly_rows):
+                    continue
                 # Photo-focused Tavily query already quoted the tail — allow any host with strong aviation cues
                 # (still blocked by off_topic + fashion_tabloid_risk above).
                 desc_out = _sanitize_tavily_image_description(desc) or "Aircraft (web search)"
@@ -521,8 +916,13 @@ def build_consultant_aircraft_images(
     listing_rows: Optional[List[Dict[str, Any]]] = None,
     *,
     trust_tail_biased_tavily_images: bool = False,
-    max_listing_og_fetches: int = 3,
+    required_tail: Optional[str] = None,
+    strict_tail_page_match: bool = False,
+    required_marketing_type: Optional[str] = None,
+    strict_model_title_alt_match: bool = False,
+    max_listing_og_fetches: int = 6,
     og_timeout: float = 6.0,
+    max_gallery_images: Optional[int] = None,
 ) -> List[Dict[str, Any]]:
     """
     Deduped list for API/UI: {url, source: tavily|scrape_gallery|listing_og, page_url?, description?, lookup_key?}.
@@ -533,20 +933,97 @@ def build_consultant_aircraft_images(
     ``trust_tail_biased_tavily_images``: set True when Tavily was run with a **photo-focused query**
     that already included the quoted tail/serial (see :func:`build_aircraft_photo_focus_tavily_query`);
     CDN URLs often omit the registration in the path, so identity matching on URL alone would drop them.
+
+    ``max_gallery_images``: optional cap; if omitted, uses :func:`consultant_gallery_image_cap` (env
+    ``CONSULTANT_GALLERY_MAX_IMAGES``, default 5, max 48).
     """
     seen: set[str] = set()
     final: List[Dict[str, Any]] = []
 
+    cap = consultant_gallery_image_cap(max_gallery_images)
+
+    # Strict tail mode (Option B): only accept images that are linked to pages mentioning the tail token.
+    if strict_tail_page_match and (required_tail or "").strip():
+        for row in _iter_tavily_result_linked_images(
+            tavily_payload,
+            required_tail=str(required_tail).strip(),
+        ):
+            u = (row.get("url") or "").strip()
+            if not u or u in seen:
+                continue
+            seen.add(u)
+            final.append(
+                {
+                    "url": u,
+                    "source": row.get("source") or "tavily",
+                    "description": row.get("description"),
+                    # Source-linked: the UI "Open" link should go to the result page, not the raw CDN image.
+                    "page_url": row.get("page_url"),
+                    "lookup_key": None,
+                }
+            )
+            if len(final) >= cap:
+                return final[:cap]
+        # No tail-verified images found → do not fall back to model/listing imagery in strict-tail mode.
+        return final[:cap]
+
+    # Strict model mode (Option B-like): try page-verified source-linked images first (URLs/alt often omit the model).
+    if strict_model_title_alt_match and (required_marketing_type or "").strip():
+        mt = str(required_marketing_type).strip()
+        rows = _iter_tavily_result_linked_images_for_model(
+            tavily_payload,
+            required_marketing_type=mt,
+        )
+        rows = sorted(rows, key=lambda r: _host_priority_score((r.get("url") or "").strip()), reverse=True)
+        for row in rows:
+            u = (row.get("url") or "").strip()
+            if not u or u in seen:
+                continue
+            seen.add(u)
+            final.append(
+                {
+                    "url": u,
+                    "source": row.get("source") or "tavily",
+                    "description": row.get("description"),
+                    "page_url": row.get("page_url"),
+                    "lookup_key": None,
+                }
+            )
+            if len(final) >= cap:
+                return final[:cap]
+
     raw_imgs = tavily_payload.get("images") if isinstance(tavily_payload, dict) else None
     if not isinstance(raw_imgs, list):
         raw_imgs = []
-    tavily_cap = 14 if trust_tail_biased_tavily_images else 10
-    for row in filter_tavily_images_for_phly(
+    # Pull enough Tavily candidates so filtering can still fill ``cap`` after drops.
+    tavily_cap = min(max(cap, 10), 32 if trust_tail_biased_tavily_images else 24)
+    tavily_rows = filter_tavily_images_for_phly(
         raw_imgs,
         phly_rows,
         max_out=tavily_cap,
         trust_tail_biased_search=trust_tail_biased_tavily_images,
-    ):
+    )
+    # Strict model mode: enforce title/alt/url contains the model token, reject common confusables.
+    if strict_model_title_alt_match and (required_marketing_type or "").strip():
+        mt = str(required_marketing_type).strip()
+        filtered: List[Dict[str, Optional[str]]] = []
+        for row in tavily_rows:
+            u = (row.get("url") or "").strip()
+            d = row.get("description") or ""
+            blob = f"{u} {d}"
+            if not _model_tokens_match_strict(blob, mt):
+                continue
+            filtered.append(row)
+        tavily_rows = filtered
+
+    # Rank by aviation host priority first, then keep stable order.
+    tavily_rows = sorted(
+        tavily_rows,
+        key=lambda r: _host_priority_score((r.get("url") or "").strip()),
+        reverse=True,
+    )
+
+    for row in tavily_rows:
         u = (row.get("url") or "").strip()
         if not u or u in seen:
             continue
@@ -560,9 +1037,14 @@ def build_consultant_aircraft_images(
                 "lookup_key": None,
             }
         )
+        if len(final) >= cap:
+            return final[:cap]
 
     # Pre-scraped gallery URLs (Controller / AircraftExchange) keyed by marketplace listing id.
     n_scrape = 0
+    if strict_model_title_alt_match or strict_tail_page_match:
+        # When user asked for strict-tail or strict-model matching, do not substitute listing-gallery images.
+        listing_rows = None
     if listing_rows:
         for lr in listing_rows[:_MAX_LISTINGS_FOR_SCRAPE_GALLERY]:
             if not isinstance(lr, dict):
@@ -593,6 +1075,8 @@ def build_consultant_aircraft_images(
                 per += 1
 
     # URLs come from aircraft_listings rows already joined to this tail/serial — safe to scrape og:image.
+    if strict_model_title_alt_match or strict_tail_page_match:
+        listing_urls = None
     if listing_urls:
         n = 0
         for page in listing_urls:
@@ -616,4 +1100,4 @@ def build_consultant_aircraft_images(
                 }
             )
 
-    return final[:16]
+    return final[:cap]
