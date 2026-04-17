@@ -1,5 +1,6 @@
 """
-Aircraft-matched images for Ask Consultant: Tavily image search + optional listing-page og:image.
+Aircraft-matched images for Ask Consultant: SearchAPI (Bing Images) when ``SEARCHAPI_API_KEY``
+is set, otherwise Tavily image blobs + optional listing-page og:image.
 
 No user uploads, no AI image generation — only URLs from search / scraped listing pages.
 """
@@ -122,7 +123,14 @@ def _derive_model_negative_tokens(marketing_type: str) -> List[str]:
     neg: List[str] = []
     if "falcon" in mt:
         if "2000" in mt:
-            neg += ["Falcon 900", "Falcon 7X", "Falcon 8X", "Falcon 6X", "Falcon 10X"]
+            neg += [
+                "Falcon 900",
+                "Falcon 50",
+                "Falcon 7X",
+                "Falcon 8X",
+                "Falcon 6X",
+                "Falcon 10X",
+            ]
         if "900" in mt:
             neg += ["Falcon 2000", "Falcon 7X", "Falcon 8X", "Falcon 6X", "Falcon 10X"]
     if "phenom" in mt:
@@ -135,7 +143,7 @@ def _derive_model_negative_tokens(marketing_type: str) -> List[str]:
     if "global" in mt and "7500" in mt:
         neg += ["Global 5000", "Global 6000", "Global 6500", "Global 8000"]
     if "challenger" in mt and "350" in mt:
-        neg += ["Challenger 300", "Challenger 650", "Challenger 600"]
+        neg += ["Challenger 300", "Challenger 650", "Challenger 600", "Challenger 605", "Challenger 604"]
     # Unique and non-empty
     seen: set[str] = set()
     out: List[str] = []
@@ -923,6 +931,9 @@ def build_consultant_aircraft_images(
     max_listing_og_fetches: int = 6,
     og_timeout: float = 6.0,
     max_gallery_images: Optional[int] = None,
+    user_query: str = "",
+    history: Optional[List[Dict[str, str]]] = None,
+    gallery_meta_out: Optional[Dict[str, Any]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Deduped list for API/UI: {url, source: tavily|scrape_gallery|listing_og, page_url?, description?, lookup_key?}.
@@ -936,11 +947,80 @@ def build_consultant_aircraft_images(
 
     ``max_gallery_images``: optional cap; if omitted, uses :func:`consultant_gallery_image_cap` (env
     ``CONSULTANT_GALLERY_MAX_IMAGES``, default 5, max 48).
+
+    ``user_query`` / ``history``: optional thread text for SearchAPI query fan-out when ``SEARCHAPI_API_KEY`` is set
+    (image search only; Tavily web snippets stay elsewhere).
     """
     seen: set[str] = set()
     final: List[Dict[str, Any]] = []
 
     cap = consultant_gallery_image_cap(max_gallery_images)
+
+    # --- SearchAPI (Bing Images) replaces Tavily *image* hits when configured ---
+    try:
+        from services.searchapi_aircraft_images import (
+            fetch_ranked_searchapi_aircraft_images,
+            resolve_queries_for_consultant_gallery,
+            searchapi_aircraft_images_enabled,
+        )
+
+        if searchapi_aircraft_images_enabled():
+            strict_tail = bool(strict_tail_page_match and (required_tail or "").strip())
+            rt = str(required_tail).strip() if required_tail else None
+            queries, canon_tail, mm_for_score = resolve_queries_for_consultant_gallery(
+                user_query=user_query or "",
+                phly_rows=phly_rows,
+                required_tail=rt,
+                strict_tail_mode=strict_tail,
+                required_marketing_type=(required_marketing_type or None),
+                strict_model_mode=bool(
+                    strict_model_title_alt_match and (required_marketing_type or "").strip()
+                ),
+            )
+            if queries:
+                _sea_meta: Dict[str, Any] = gallery_meta_out if gallery_meta_out is not None else {}
+                sea, _ = fetch_ranked_searchapi_aircraft_images(
+                    queries=queries,
+                    canonical_tail=canon_tail if strict_tail else None,
+                    strict_tail_mode=strict_tail,
+                    marketing_type_for_model_match=(
+                        (required_marketing_type or mm_for_score or "").strip()
+                        if not strict_tail
+                        else None
+                    ),
+                    max_out=cap,
+                    user_query=user_query or "",
+                    gallery_meta=_sea_meta,
+                )
+                if strict_model_title_alt_match and (required_marketing_type or "").strip():
+                    mt = str(required_marketing_type).strip()
+                    sea = [
+                        r
+                        for r in sea
+                        if _model_tokens_match_strict(
+                            f"{(r.get('url') or '')} {(r.get('description') or '')}",
+                            mt,
+                        )
+                    ]
+                # Strict tail: SearchAPI-only, no listing/model substitution (Part 3).
+                if strict_tail:
+                    return sea[:cap]
+                # Strict model: no listing galleries mixed in (same policy as Tavily strict-model path).
+                if strict_model_title_alt_match and (required_marketing_type or "").strip():
+                    return sea[:cap]
+                for r in sea:
+                    u = (r.get("url") or "").strip()
+                    if not u or u in seen:
+                        continue
+                    seen.add(u)
+                    final.append(r)
+                if len(final) >= cap:
+                    return final[:cap]
+                # Fall through: append listing scrape + og:image using the same dedupe rules as Tavily mode.
+                tavily_payload = dict(tavily_payload or {})
+                tavily_payload["images"] = []
+    except Exception as _sea_e:
+        logger.debug("SearchAPI gallery path skipped: %s", _sea_e)
 
     # Strict tail mode (Option B): only accept images that are linked to pages mentioning the tail token.
     if strict_tail_page_match and (required_tail or "").strip():

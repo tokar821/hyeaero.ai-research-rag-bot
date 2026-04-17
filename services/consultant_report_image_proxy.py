@@ -74,6 +74,12 @@ _ALLOWED_HOST_MARKERS = (
     "aviationweek.com",
     "ainonline.com",
     "flightglobal.com",
+    # Bing / SearchAPI image CDN hosts (Bing Images proxy results).
+    "th.bing.com",
+    "thf.bing.com",
+    "thfvnext.bing.com",
+    "mm.bing.net",
+    "bing.com",
     # Common “aircraft guide / news / operator” pages that Tavily often returns as image hosts.
     "globalmilitary.net",
     "businessworld.in",

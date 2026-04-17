@@ -7,6 +7,85 @@ from database.postgres_client import PostgresClient
 
 logger = logging.getLogger(__name__)
 
+
+def _build_comparison_consultant_summary(
+    *,
+    rows: List[Dict[str, Any]],
+    models: List[str],
+    region: str,
+) -> str:
+    """
+    Human-style market snapshot (Part 6): lead with a verdict, then mission fit / tradeoffs / usage —
+    not a raw spec dump. Numbers come only from ``rows`` (no invented pricing).
+    """
+    if not rows:
+        return "No comparable listings matched these filters — widen region, year band, or model selection."
+
+    n = len(rows)
+    model_lbl = ", ".join(m.strip() for m in models if (m or "").strip()) or "selected models"
+    asks: List[float] = []
+    years: List[int] = []
+    hours: List[float] = []
+    for r in rows:
+        ap = r.get("ask_price")
+        if ap is not None:
+            try:
+                asks.append(float(ap))
+            except (TypeError, ValueError):
+                pass
+        y = r.get("manufacturer_year")
+        if y is not None:
+            try:
+                years.append(int(y))
+            except (TypeError, ValueError):
+                pass
+        h = r.get("airframe_total_time")
+        if h is not None:
+            try:
+                hours.append(float(h))
+            except (TypeError, ValueError):
+                pass
+
+    verdict = (
+        f"Across {n} current listing snapshot(s) for **{model_lbl}** in **{region}**, the market shows a spread of "
+        f"asking levels and equipment — useful for a quick sanity check, not a final bid."
+    )
+    parts = [verdict]
+
+    if asks:
+        lo, hi = min(asks), max(asks)
+        parts.append(
+            f"**Asking range (synced listings only):** about **${lo:,.0f}** to **${hi:,.0f}** USD — verify each ad; "
+            "status and equipment differ, and some rows may omit ask while still being instructive for positioning."
+        )
+    else:
+        parts.append(
+            "**Asking prices:** many rows have no stored ask in this ingest — treat pricing as **unknown** unless "
+            "you open the individual listing."
+        )
+
+    if years:
+        parts.append(
+            f"**Vintage spread:** roughly **{min(years)}–{max(years)}** delivery years in this slice — newer metal "
+            "usually trades mission flexibility (range/payload) against capital cost; older units can be strong buys "
+            "when programs and documentation are tight."
+        )
+
+    if hours:
+        parts.append(
+            f"**Time on airframe:** about **{min(hours):,.0f}–{max(hours):,.0f}** hours among these rows — higher-time "
+            "jets often imply different operating economics (reserves, upcoming checks); lower-time examples skew to "
+            "premium pricing if pedigree is clean."
+        )
+
+    parts.append(
+        "**How to read this:** use the table for *mission fit* (range/cabin class implied by model), *tradeoffs* "
+        "(year vs price vs hours), and *real-world usage* (typical missions for the class). Follow up with a broker "
+        "on specific serials before committing."
+    )
+    return " ".join(parts)
+
+
 # Region dropdown value -> search terms for location/based_at/country (e.g. "Europe" includes UK, England, London)
 REGION_SEARCH_TERMS: Dict[str, List[str]] = {
     "europe": [
@@ -131,7 +210,11 @@ def run_comparison(
                     except (TypeError, ValueError):
                         pass
             out.append(row)
-        summary = f"Found {len(out)} comparable listings."
+        summary = _build_comparison_consultant_summary(
+            rows=out,
+            models=models,
+            region=region or "Global",
+        )
         return {"rows": out, "summary": summary, "error": None}
     except Exception as e:
         logger.exception("Market comparison query failed")

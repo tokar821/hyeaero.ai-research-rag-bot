@@ -24,6 +24,102 @@ from rag.phlydata_consultant_lookup import (
 logger = logging.getLogger(__name__)
 
 
+def _listing_platform_priority_rank(platform: str) -> int:
+    """Lower sorts first: Controller / Aircraft Exchange preferred; AvBuyer deprioritized (Part 5)."""
+    pl = (platform or "").strip().lower()
+    if pl == "controller":
+        return 0
+    if pl in ("aircraftexchange", "aircraft_exchange"):
+        return 1
+    if "avbuyer" in pl:
+        return 40
+    return 20
+
+
+def _listing_row_completeness_score(row: Dict[str, Any]) -> int:
+    s = 0
+    if row.get("ask_price") is not None:
+        s += 3
+    if row.get("sold_price") is not None:
+        s += 1
+    if (row.get("listing_url") or "").strip():
+        s += 2
+    if (row.get("seller") or "").strip() or (row.get("seller_broker") or "").strip():
+        s += 1
+    if (row.get("location") or "").strip():
+        s += 1
+    return s
+
+
+def _listing_recency_ts(row: Dict[str, Any]) -> float:
+    """Best-effort timestamp for freshness (newer = larger)."""
+    from datetime import datetime
+
+    for k in ("updated_at", "created_at", "date_listed"):
+        v = row.get(k)
+        if v is None:
+            continue
+        if hasattr(v, "timestamp"):
+            try:
+                return float(v.timestamp())
+            except Exception:
+                continue
+        if isinstance(v, str) and len(v) >= 10:
+            try:
+                return datetime.fromisoformat(v[:19].replace("Z", "+00:00")).timestamp()
+            except Exception:
+                continue
+    return 0.0
+
+
+def prioritize_and_deduplicate_listing_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Deduplicate marketplace rows (same URL or same platform+listing id) and prefer:
+    Controller / Aircraft Exchange over AvBuyer; fresher and more complete rows over sparse ones.
+    """
+    if not rows:
+        return rows
+
+    def dedupe_key(r: Dict[str, Any]) -> str:
+        url = (r.get("listing_url") or "").strip()
+        if url:
+            return f"url:{url.lower()}"
+        plat = (r.get("source_platform") or "").strip().lower()
+        lid = str(r.get("source_listing_id") or "").strip()
+        return f"id:{plat}:{lid}"
+
+    best: Dict[str, Dict[str, Any]] = {}
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        k = dedupe_key(r)
+        cur = best.get(k)
+        if cur is None:
+            best[k] = r
+            continue
+        # Prefer higher platform priority, then completeness, then recency (string compare works for ISO dates).
+        def sort_tuple(row: Dict[str, Any]) -> Tuple[int, int, float]:
+            plat = str(row.get("source_platform") or "")
+            return (
+                _listing_platform_priority_rank(plat),
+                -_listing_row_completeness_score(row),
+                -_listing_recency_ts(row),
+            )
+
+        if sort_tuple(r) < sort_tuple(cur):
+            best[k] = r
+
+    out = list(best.values())
+    out.sort(
+        key=lambda row: (
+            _listing_platform_priority_rank(str(row.get("source_platform") or "")),
+            -_listing_row_completeness_score(row),
+            -_listing_recency_ts(row),
+        )
+    )
+    return out
+
+
 def _photo_query_thread_blob(
     query: str,
     history: Optional[List[Dict[str, str]]],
@@ -849,6 +945,9 @@ def build_consultant_market_authority_block(
                 "consultant_market_lookup: all %s listing candidates dropped after Phly identity filter",
                 before,
             )
+
+    if listings_out:
+        listings_out = prioritize_and_deduplicate_listing_rows(listings_out)
 
     if listings_out:
         meta["consultant_internal_listings"] = len(listings_out)

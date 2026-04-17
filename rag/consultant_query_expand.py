@@ -55,16 +55,42 @@ _MANUFACTURER_KEYS: Tuple[Tuple[str, str], ...] = (
     ("diamond", "Diamond"),
 )
 
-# Regex (pattern, canonical label) for models / families
+# Regex (pattern, canonical label) for models / families — **more specific patterns first**
+# so ``Challenger 350`` beats bare ``Challenger``, and ``Falcon 2000`` beats ``Falcon``.
 _MODEL_REGEX: Tuple[Tuple[re.Pattern, str], ...] = tuple(
     (re.compile(p, re.IGNORECASE), label)
     for p, label in (
+        # Gulfstream G-* (word or letter G before size)
+        (r"\bgulfstream\s*g\s*[-.]?\s*650(?:\s*er)?\b", "Gulfstream G650"),
+        (r"\bgulfstream\s*g\s*[-.]?\s*550\b", "Gulfstream G550"),
+        (r"\bgulfstream\s*g\s*[-.]?\s*500\b", "Gulfstream G500"),
+        (r"\bgulfstream\s*g\s*[-.]?\s*280\b", "Gulfstream G280"),
+        (r"\bgulfstream\s*g\s*[-.]?\s*400\b", "Gulfstream G400"),
         (r"\bg\s*[-.]?\s*650(?:\s*er)?\b", "G650"),
         (r"\bg\s*[-.]?\s*550\b", "G550"),
         (r"\bg\s*[-.]?\s*500\b", "G500"),
         (r"\bg\s*[-.]?\s*280\b", "G280"),
         (r"\bg\s*[-.]?\s*400\b", "G400"),
         (r"\bgvi\b", "G650"),
+        # Bombardier Challenger (full word + numeric — fixes ``Challenger 350 exterior``)
+        (r"\bchallenger\s*350\b", "Challenger 350"),
+        (r"\bchallenger\s*300\b", "Challenger 300"),
+        (r"\bchallenger\s*650\b", "Challenger 650"),
+        (r"\bchallenger\s*604\b", "Challenger 604"),
+        (r"\bchallenger\s*605\b", "Challenger 605"),
+        (r"\bcl\s*350\b", "Challenger 350"),
+        (r"\bcl\s*300\b", "Challenger 300"),
+        (r"\bcl\s*600\b", "Challenger 600"),
+        (r"\bcl\s*650\b", "Challenger 650"),
+        # Dassault Falcon family
+        (r"\bfalcon\s*10x\b", "Falcon 10X"),
+        (r"\bfalcon\s*6x\b", "Falcon 6X"),
+        (r"\bfalcon\s*8x\b", "Falcon 8X"),
+        (r"\bfalcon\s*7x\b", "Falcon 7X"),
+        (r"\bfalcon\s*900\b", "Falcon 900"),
+        (r"\bfalcon\s*2000\b", "Falcon 2000"),
+        (r"\bfalcon\s*50\b", "Falcon 50"),
+        (r"\bfalcon\s*20\b", "Falcon 20"),
         (r"\bcitation\s+latitude\b", "Citation Latitude"),
         (r"\bcitation\s+longitude\b", "Citation Longitude"),
         (r"\bcitation\s+x\b", "Citation X"),
@@ -72,14 +98,6 @@ _MODEL_REGEX: Tuple[Tuple[re.Pattern, str], ...] = tuple(
         (r"\bcitation\s+m2\b", "Citation M2"),
         (r"\bphenom\s*100\b", "Phenom 100"),
         (r"\bphenom\s*300\b", "Phenom 300"),
-        (r"\bcl\s*300\b", "Challenger 300"),
-        (r"\bcl\s*350\b", "Challenger 350"),
-        (r"\bcl\s*600\b", "Challenger 600"),
-        (r"\bcl\s*650\b", "Challenger 650"),
-        (r"\bfalcon\s*8x\b", "Falcon 8X"),
-        (r"\bfalcon\s*7x\b", "Falcon 7X"),
-        (r"\bfalcon\s*900\b", "Falcon 900"),
-        (r"\bfalcon\s*2000\b", "Falcon 2000"),
         (r"\bprae?tor\s*500\b", "Praetor 500"),
         (r"\bprae?tor\s*600\b", "Praetor 600"),
         (r"\blegacy\s*500\b", "Legacy 500"),

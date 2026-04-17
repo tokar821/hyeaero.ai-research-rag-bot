@@ -556,13 +556,16 @@ def run_consultant_retrieval_bundle(
         merge_purchase = False
     img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
+    from services.searchapi_aircraft_images import searchapi_aircraft_images_enabled
+
+    _searchapi_images = searchapi_aircraft_images_enabled()
     requested_tail_for_images: Optional[str] = None
     strict_tail_image_request = False
     if user_wants_gallery:
         try:
-            from rag.aviation_tail import find_strict_tail_candidates_in_text
+            from rag.aviation_tail import find_visual_gallery_tail_candidates
 
-            tails_in_query = find_strict_tail_candidates_in_text(query or "")
+            tails_in_query = find_visual_gallery_tail_candidates(query or "", history)
             if tails_in_query:
                 # Option B: tail requests require tail-verified images only (no model fallback).
                 requested_tail_for_images = tails_in_query[0]
@@ -573,12 +576,21 @@ def run_consultant_retrieval_bundle(
     if user_wants_gallery and not strict_tail_image_request and not phly_rows:
         try:
             from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+            from services.searchapi_aircraft_images import (
+                compose_manufacturer_model_phrase,
+                normalize_aircraft_name,
+            )
 
             blob = (query or "").strip()
             mans = _detect_manufacturers(blob.lower())
             mdls = _detect_models(blob)
-            mt = " ".join(x for x in [*mans[:1], *mdls[:1]] if x).strip()
-            inferred_marketing_type_for_images = mt or (mdls[0] if mdls else None)
+            mt = compose_manufacturer_model_phrase(
+                mans[0] if mans else "",
+                mdls[0] if mdls else "",
+            ).strip()
+            inferred_marketing_type_for_images = mt or (
+                normalize_aircraft_name(mdls[0]) if mdls else None
+            )
         except Exception:
             inferred_marketing_type_for_images = None
 
@@ -634,7 +646,7 @@ def run_consultant_retrieval_bundle(
         force_always=force_tavily_always,
     )
     run_image_pass = bool(
-        run_tavily and img_q and not skip_img_pass and user_wants_gallery
+        run_tavily and img_q and not skip_img_pass and user_wants_gallery and not _searchapi_images
     )
     gallery_tavily_forced = False
     if not run_tavily:
@@ -680,18 +692,19 @@ def run_consultant_retrieval_bundle(
     )
     tavily_max_items = 20 if (purchase_ctx or run_image_pass) else 14
     tavily_body_chars = 2200 if purchase_ctx else 1600
-    
-    want_img_primary = user_wants_gallery
-    
+
+    # When SearchAPI handles Bing Images, do not ask Tavily for parallel image blobs (text snippets only).
+    tavily_include_images = bool(user_wants_gallery and not _searchapi_images)
+
     def _fetch_pri() -> Dict[str, Any]:
         return fetch_tavily_hints_for_query(
             tq,
             result_limit=tavily_per_pass,
             search_depth=tdepth,
             request_timeout=tavily_timeout,
-            include_images=want_img_primary,
+            include_images=tavily_include_images,
         )
-    
+
     def _fetch_sec() -> Optional[Dict[str, Any]]:
         if not run_secondary or not sq:
             return None
@@ -700,9 +713,9 @@ def run_consultant_retrieval_bundle(
             result_limit=tavily_per_pass,
             search_depth=tdepth,
             request_timeout=tavily_timeout,
-            include_images=want_img_primary,
+            include_images=tavily_include_images,
         )
-    
+
     def _fetch_pur() -> Optional[Dict[str, Any]]:
         if not merge_purchase or not pq:
             return None
@@ -711,9 +724,9 @@ def run_consultant_retrieval_bundle(
             result_limit=tavily_per_pass,
             search_depth=tdepth,
             request_timeout=tavily_timeout,
-            include_images=want_img_primary,
+            include_images=tavily_include_images,
         )
-    
+
     def _fetch_img() -> Optional[Dict[str, Any]]:
         if not run_image_pass or not img_q:
             return None
@@ -722,7 +735,7 @@ def run_consultant_retrieval_bundle(
             result_limit=tavily_per_pass,
             search_depth=tdepth,
             request_timeout=tavily_timeout,
-            include_images=True,
+            include_images=tavily_include_images,
         )
     
     primary: Dict[str, Any] = {}
@@ -779,6 +792,7 @@ def run_consultant_retrieval_bundle(
         and user_wants_gallery
         and (img_q or "").strip()
         and not skip_img_pass
+        and not _searchapi_images
     ):
         try:
             img_only = fetch_tavily_hints_for_query(
@@ -786,7 +800,7 @@ def run_consultant_retrieval_bundle(
                 result_limit=tavily_per_pass,
                 search_depth=tdepth,
                 request_timeout=tavily_timeout,
-                include_images=True,
+                include_images=tavily_include_images,
             )
             tavily_payload = merge_tavily_consultant_payloads(
                 tavily_payload, img_only, max_results=20
@@ -839,6 +853,7 @@ def run_consultant_retrieval_bundle(
     aircraft_images: List[Dict[str, Any]] = []
     image_boost_used = 0
     model_image_fallback_used = 0
+    searchapi_gallery_meta: Dict[str, Any] = {}
     if user_wants_gallery:
         aircraft_images = build_consultant_aircraft_images(
             tavily_payload,
@@ -850,6 +865,9 @@ def run_consultant_retrieval_bundle(
             strict_tail_page_match=strict_tail_image_request,
             required_marketing_type=inferred_marketing_type_for_images,
             strict_model_title_alt_match=bool(inferred_marketing_type_for_images) and not strict_tail_image_request,
+            user_query=query,
+            history=history,
+            gallery_meta_out=searchapi_gallery_meta,
         )
     # Tail-specific shots are sparse on CDNs — second search by make/model for representative photos.
     if (
@@ -858,6 +876,7 @@ def run_consultant_retrieval_bundle(
         and (run_tavily or gallery_tavily_forced)
         and phly_rows
         and not strict_tail_image_request
+        and not _searchapi_images
     ):
         mf_q = build_aircraft_model_photo_fallback_tavily_query(phly_rows)
         if mf_q and mf_q.strip() != (img_q or "").strip():
@@ -867,7 +886,7 @@ def run_consultant_retrieval_bundle(
                     result_limit=tavily_per_pass,
                     search_depth=tdepth,
                     request_timeout=tavily_timeout,
-                    include_images=True,
+                    include_images=tavily_include_images,
                 )
                 merged_mf = merge_tavily_consultant_payloads(
                     tavily_payload,
@@ -881,6 +900,9 @@ def run_consultant_retrieval_bundle(
                     listing_urls=listing_urls_for_img or None,
                     listing_rows=lr_img or None,
                     trust_tail_biased_tavily_images=True,
+                    user_query=query,
+                    history=history,
+                    gallery_meta_out=searchapi_gallery_meta,
                 )
                 if aircraft_images:
                     model_image_fallback_used = 1
@@ -893,8 +915,9 @@ def run_consultant_retrieval_bundle(
         and (run_tavily or gallery_tavily_forced)
         and img_q
         and not skip_img_pass
-        and want_img_primary
+        and tavily_include_images
         and not strict_tail_image_request
+        and not _searchapi_images
     ):
         try:
             img_boost = fetch_tavily_hints_for_query(
@@ -902,7 +925,7 @@ def run_consultant_retrieval_bundle(
                 result_limit=tavily_per_pass,
                 search_depth=tdepth,
                 request_timeout=tavily_timeout,
-                include_images=True,
+                include_images=tavily_include_images,
             )
             merged_boost = merge_tavily_consultant_payloads(
                 tavily_payload,
@@ -916,6 +939,9 @@ def run_consultant_retrieval_bundle(
                 listing_urls=listing_urls_for_img or None,
                 listing_rows=lr_img or None,
                 trust_tail_biased_tavily_images=True,
+                user_query=query,
+                history=history,
+                gallery_meta_out=searchapi_gallery_meta,
             )
             if aircraft_images:
                 image_boost_used = 1
@@ -925,7 +951,8 @@ def run_consultant_retrieval_bundle(
     has_phly = bool((phly_authority or "").strip())
     has_market = bool((market_block or "").strip())
     has_rag = bool(results)
-    has_tavily = tavily_hits > 0 or tavily_image_n > 0
+    # SearchAPI/Bing gallery images are not Tavily hits — still count as retrievable web media for gating.
+    has_tavily = tavily_hits > 0 or tavily_image_n > 0 or bool(aircraft_images)
     if not (has_phly or has_market or has_rag or has_tavily):
         if progress:
             progress.step(
@@ -1044,6 +1071,20 @@ def run_consultant_retrieval_bundle(
     
     data_used["aircraft_images"] = aircraft_images
     data_used["consultant_aircraft_image_count"] = len(aircraft_images)
+    if searchapi_gallery_meta:
+        for _gk, _gv in searchapi_gallery_meta.items():
+            if _gv is not None:
+                data_used[_gk] = _gv
+    if (
+        user_wants_gallery
+        and strict_tail_image_request
+        and _searchapi_images
+        and not aircraft_images
+    ):
+        # Part 3: strict tail + SearchAPI produced no title/URL-confirmed matches for that exact mark.
+        data_used["consultant_strict_tail_no_confirmed_searchapi_images"] = 1
+    if _searchapi_images:
+        data_used["consultant_searchapi_bing_images_enabled"] = 1
     # Internal join helper for image lookup — not needed by clients; keeps responses smaller.
     data_used.pop("consultant_listing_rows_for_images", None)
     if wants_consultant_aircraft_images_in_answer(query):
@@ -1254,6 +1295,28 @@ def run_consultant_retrieval_bundle(
                 "the app and that the user should verify they match this tail/serial on the host site when relevant. "
                 "Do **not** paste promotional or charter-booking links in the answer text."
             )
+        if data_used.get("consultant_gallery_tail_confidence") == "probable":
+            _tn = (data_used.get("consultant_gallery_tail_note") or "").strip()
+            if _tn:
+                system_prompt += (
+                    f"\n\n**Aircraft images (tail confidence):** {_tn} "
+                    "Ask the user to confirm the registration on the host page before assuming identity."
+                )
+    elif user_wants_gallery and (
+        data_used.get("consultant_strict_tail_no_confirmed_searchapi_images")
+        or data_used.get("consultant_gallery_empty")
+    ):
+        _gm = (data_used.get("consultant_gallery_message") or "").strip()
+        _gs = data_used.get("consultant_gallery_suggestions")
+        _sug = ""
+        if isinstance(_gs, list) and _gs:
+            _sug = " Suggestions: " + "; ".join(str(x) for x in _gs[:4]) + "."
+        system_prompt += (
+            "\n\n**Aircraft images (strict tail):** Image search did not return verified matches for this tail. "
+            f"Tell the user clearly: **{_gm or 'No verified images found for this aircraft.'}** "
+            "(Do not substitute generic type photos or a different tail.)"
+            f"{_sug} You may still describe the aircraft type from registry/context if present."
+        )
     elif user_wants_gallery:
         system_prompt += (
             "\n\n**Aircraft images:** No image URLs were attached this turn, but the user still asked for a **visual**. "

@@ -28,6 +28,9 @@ _INTL_MARK = re.compile(
 # Canadian civil marks C-F…, C-G…, C-I… — avoids treating "C-130" as a tail (digit after C-).
 _CANADIAN_CIVIL_MARK = re.compile(r"\bC-[FGI][A-Z0-9]{2,4}\b", re.IGNORECASE)
 
+# Gallery-only: any plausible U.S. ``N`` mark with ≥1 digit (includes marks that fail stricter airborne rules).
+_US_N_GALLERY_LOOSE = re.compile(r"\bN(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}\b", re.IGNORECASE)
+
 
 def normalize_tail_token(raw: str) -> str:
     return (raw or "").strip().upper().replace(" ", "")
@@ -62,6 +65,57 @@ def find_strict_tail_candidates_in_text(blob: str) -> List[str]:
         add(m.group(0))
 
     return out
+
+
+def find_loose_us_n_tail_tokens_in_text(blob: str) -> List[str]:
+    """
+    U.S. ``N`` marks for **visual / gallery** routing only — requires at least one digit in the mark
+    so hostnames like ``planespotters.net`` do not yield a fake ``NET`` tail.
+    """
+    if not (blob or "").strip():
+        return []
+    seen: set[str] = set()
+    out: List[str] = []
+
+    def add(raw: str) -> None:
+        u = normalize_tail_token(raw)
+        if len(u) < 3 or len(u) > 8:
+            return
+        if u in seen:
+            return
+        seen.add(u)
+        out.append(u)
+
+    for m in _US_N_GALLERY_LOOSE.finditer(blob):
+        add(m.group(0))
+    return out
+
+
+def find_visual_gallery_tail_candidates(
+    query: str,
+    history: Optional[List[dict]] = None,
+    *,
+    max_history_messages: int = 16,
+) -> List[str]:
+    """
+    Tails that should trigger **strict gallery** image matching: strict civil marks first; else any
+    plausible ``N``+digit mark on the latest **user** text (then recent user history).
+    """
+    strict = find_strict_tail_candidates(query, history)
+    if strict:
+        return strict
+    q = (query or "").strip()
+    loose = find_loose_us_n_tail_tokens_in_text(q)
+    if loose:
+        return loose
+    if history:
+        for h in reversed(history[-max_history_messages:]):
+            if (h.get("role") or "").strip().lower() != "user":
+                continue
+            loose_h = find_loose_us_n_tail_tokens_in_text(h.get("content") or "")
+            if loose_h:
+                return loose_h
+    return []
 
 
 def find_strict_tail_candidates(
