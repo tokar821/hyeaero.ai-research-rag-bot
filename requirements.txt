@@ -1,4 +1,10 @@
 # HyeAero Backend - RAG Pipeline + API
+#
+# PyTorch: pin CPU wheels *before* sentence-transformers so pip does not pull the default
+# Linux CUDA stack (multi‑GB nvidia-* / triton) from PyPI — faster Render builds and less disk/RAM.
+# Bump the version here when you intentionally upgrade torch (keep +cpu suffix).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.9.0+cpu
 
 # API
 fastapi>=0.115.0

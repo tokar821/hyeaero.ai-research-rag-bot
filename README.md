@@ -87,6 +87,11 @@ Treat stored text as **sensitive** (PII / secrets users might paste). Use retent
 - **Local:** Use the same major/minor as `runtime.txt` (see `backend/.python-version` for pyenv-style pins). That avoids **Windows PyTorch DLL failures** (for example `c10.dll` / WinError 1114) that show up on **unsupported** interpreters while keeping **`RAG_RERANK_ENABLED` on** (default).
 - **Memory on Render:** Semantic rerank loads a BGE cross-encoder via PyTorch (`sentence-transformers`). The large model can need **~1GB+** RAM on top of the app. On **small plans**, set **`RAG_RERANK_LIGHT=1`** (or **`auto`**, which turns on when **`RENDER=true`**, as in `render.yaml`) to use **`BAAI/bge-reranker-base`** with smaller default batch, `max_length`, and passage caps — **rerank still runs**, only footprint shrinks. You can still override **`RAG_RERANKER_MODEL`**, **`RAG_RERANKER_BATCH_SIZE`**, etc. The **3.14 DLL issue on your laptop** is separate from Render memory.
 
+### Render: build failures (hashes / huge PyTorch downloads)
+
+- **`ERROR: THESE PACKAGES DO NOT MATCH THE HASHES`** — pip is verifying wheel hashes (from a **`--hash=sha256:...`** line in a requirements file, or from **`PIP_REQUIRE_HASHES=1`** with a generated lock). Fix: use the repo’s plain **`requirements.txt`** (no per-line hashes) **or** regenerate your lockfile (`pip-compile --generate-hashes`); on Render **Dashboard → Environment**, remove **`PIP_REQUIRE_HASHES`** unless you maintain a full hash-pinned file. Stale **pip cache** is rarely the cause; wrong/outdated hashes in a copied lockfile are common.
+- **`requirements.txt`** pins **`torch==2.9.0+cpu`** via the official **CPU** index so builds do not download the full **CUDA** PyTorch dependency tree (nvidia\_*, triton, …), which is unnecessary on Render’s CPU hosts and can blow disk/time limits.
+
 1. Install dependencies:
 ```bash
 cd backend
