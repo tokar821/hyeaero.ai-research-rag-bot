@@ -81,6 +81,12 @@ Treat stored text as **sensitive** (PII / secrets users might paste). Use retent
 
 ## Setup
 
+### Python version (local dev, Render, rerank)
+
+- **Canonical version:** `runtime.txt` at the repo root of the backend app (e.g. `python-3.11.7`). [Render](https://render.com) uses this file to select the runtime; **production is not using Python 3.14**.
+- **Local:** Use the same major/minor as `runtime.txt` (see `backend/.python-version` for pyenv-style pins). That avoids **Windows PyTorch DLL failures** (for example `c10.dll` / WinError 1114) that show up on **unsupported** interpreters while keeping **`RAG_RERANK_ENABLED` on** (default).
+- **Memory on Render:** Semantic rerank loads **`BAAI/bge-reranker-large`** via PyTorch (`sentence-transformers`). Expect **hundreds of MB to ~1GB+** of RAM for the model plus your app, DB drivers, and request spikes. If the service **OOM-restarts** after deploy, upgrade the Render instance RAM and/or tune `RAG_RERANKER_BATCH_SIZE` (lower uses less peak memory). The **3.14 DLL issue on your laptop** is separate from Render memory.
+
 1. Install dependencies:
 ```bash
 cd backend

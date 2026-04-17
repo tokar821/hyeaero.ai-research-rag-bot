@@ -460,6 +460,21 @@ def run_consultant_retrieval_bundle(
     sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
     vector_chunk_budget = hybrid_plan.max_vector_chunks(rag_max_chunks, sql_nonempty)
 
+    # --- Tool usage / retrieval discipline overrides (policy enforcement) ---
+    # Tail lookup must not fall back to vector DB when the user provided a tail.
+    # Aircraft lookup should keep retrieved docs minimal (cap at 3).
+    try:
+        from rag.aviation_tail import find_visual_gallery_tail_candidates
+        from rag.consultant_fine_intent import ConsultantFineIntent
+
+        has_tail_for_policy = bool(find_visual_gallery_tail_candidates(query or "", history))
+        if has_tail_for_policy and _fine.intent in (ConsultantFineIntent.OWNERSHIP_LOOKUP,):
+            vector_chunk_budget = 0
+        if _fine.intent in (ConsultantFineIntent.AIRCRAFT_SPECS,) and not has_tail_for_policy:
+            vector_chunk_budget = max(0, min(int(vector_chunk_budget or 0), 3))
+    except Exception:
+        pass
+
     if progress:
         progress.step(
             "hybrid_retrieval",
