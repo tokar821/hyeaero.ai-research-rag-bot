@@ -1431,9 +1431,14 @@ Produce the final client-facing answer.""",
                 final_text = (resp1.choices[0].message.content or "").strip()
 
             try:
-                from rag.response_safety import sanitize_user_facing_answer
+                from rag.response_safety import enforce_consultant_quality, sanitize_user_facing_answer
 
                 final_text = sanitize_user_facing_answer(final_text or "")
+                final_text = enforce_consultant_quality(
+                    final_text or "",
+                    query=b.get("query") or "",
+                    data_used=data_used,
+                )
             except Exception as se:
                 logger.warning("stream answer sanitize skipped: %s", se)
 
@@ -1678,9 +1683,10 @@ Produce the final client-facing answer.""",
 
             # Last-mile safety: strip internal dataset/infrastructure naming from user-visible output.
             try:
-                from rag.response_safety import sanitize_user_facing_answer
+                from rag.response_safety import enforce_consultant_quality, sanitize_user_facing_answer
 
                 answer = sanitize_user_facing_answer(answer or "")
+                answer = enforce_consultant_quality(answer or "", query=b.get("query") or "", data_used=data_used)
             except Exception as se:
                 logger.warning("answer sanitize skipped: %s", se)
 

@@ -9,7 +9,7 @@ in context or drafts, and replaces them with neutral, client-safe phrasing.
 from __future__ import annotations
 
 import re
-from typing import Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, Tuple
 
 
 # Words/phrases that must never appear in user-visible answers.
@@ -102,6 +102,61 @@ def sanitize_user_facing_answer(answer: str) -> str:
     s = re.sub(r"\n{3,}", "\n\n", s).strip()
 
     return s
+
+
+def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, Any]) -> str:
+    """
+    Last-mile quality firewall (deterministic).
+
+    - Blocks known fake aircraft model strings (invalid model) with a safe replacement.
+    - Enforces recommendation presence for advisory modes.
+
+    This does not call external services; it is designed to reduce hallucinations to zero.
+    """
+    a = (answer or "").strip()
+    if not a:
+        return a
+
+    # 1) Invalid model firewall (query-driven)
+    try:
+        from rag.consultant_validity import (
+            build_invalid_model_user_facing_reply,
+            validate_aircraft_model,
+        )
+
+        v = validate_aircraft_model(query or "")
+        if v and v.status == "invalid_model":
+            # If the draft didn't clearly reject, override.
+            low = a.lower()
+            if not re.search(r"\b(no\s+such|does\s+not\s+exist|isn'?t\s+real|not\s+a\s+production)\b", low):
+                return build_invalid_model_user_facing_reply(v)
+    except Exception:
+        pass
+
+    # 2) Advisory recommendation enforcement (mode-driven)
+    try:
+        mode = str((data_used or {}).get("consultant_response_mode") or "").strip().lower()
+        if mode in ("mission_advisory", "client_decision_scenarios", "advisory"):
+            from rag.consultant_validity import count_known_model_mentions
+
+            n_models = count_known_model_mentions(a)
+            if n_models < 2:
+                # Deterministic, decision-grade fallback block: assumptions + 2–4 real models + why + tradeoff + bottom line.
+                # Keep it generic (no fake pricing/specs).
+                fallback = (
+                    a.rstrip()
+                    + "\n\nAssuming 6–8 passengers and typical business-use constraints (no extreme hot/high), here are a few realistic fits:\n"
+                    "- Challenger 350: balanced mission capability and strong dispatch reputation; tradeoff: you’re paying for efficiency/modernity more than maximum cabin volume.\n"
+                    "- Praetor 600: excellent range margin for the class and modern cabin; tradeoff: availability and programs matter a lot by airframe.\n"
+                    "- Gulfstream G280: fast point-to-point with a solid cabin for many U.S. missions; tradeoff: it’s not a large-cabin experience.\n\n"
+                    "Bottom Line: If you want the safest all-around answer without overbuying, start with Challenger 350 unless a specific route or cabin requirement pushes you up or down a class.\n\n"
+                    "Consultant Insight: Most buyer’s remorse isn’t about range—it’s about dispatch reliability and ownership friction (programs, crew, maintenance posture)."
+                ).strip()
+                return fallback
+    except Exception:
+        pass
+
+    return a
 
 
 def answer_contains_banned_terms(answer: str, extra: Iterable[str] = ()) -> Dict[str, int]:

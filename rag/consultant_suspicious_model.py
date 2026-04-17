@@ -14,6 +14,7 @@ _FALCON_NUM = re.compile(r"\bfalcon\s*(\d{3,5})\b", re.I)
 _VALID_FALCON_SERIES_NUMS = frozenset({"10", "20", "50", "100", "200", "900", "2000"})
 
 _G6500 = re.compile(r"\bg\s*[-.]?\s*6500\b", re.I)
+_G750 = re.compile(r"\bgulfstream\s*g\s*[-.]?\s*750\b|\bg\s*[-.]?\s*750\b", re.I)
 _GLOBAL_10000 = re.compile(r"\bglobal\s*10000\b", re.I)
 
 
@@ -31,6 +32,11 @@ def consultant_suspicious_aircraft_model_note(query: str) -> Optional[str]:
     if _G6500.search(q):
         return (
             "There is no **Gulfstream G6500**. The user likely means **G650** or **G650ER**."
+        )
+
+    if _G750.search(q):
+        return (
+            "There is no **Gulfstream G750**. The user likely means **G700**, **G650ER**, or **G800**."
         )
 
     if _GLOBAL_10000.search(q):

@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
@@ -1147,6 +1148,44 @@ def run_consultant_retrieval_bundle(
             "State this clearly in plain language. **Do not** invent specifications, listings, or "
             "verified photos for the fake model string; suggest the closest real variants in short bullets."
         )
+
+    # --- Reasoning / response-mode router (does not affect retrieval) ---
+    try:
+        from rag.aviation_tail import find_visual_gallery_tail_candidates
+        from rag.consultant_response_mode import (
+            ConsultantResponseMode,
+            classify_consultant_response_mode,
+            response_mode_prompt_suffix,
+        )
+        from rag.consultant_validity import validate_aircraft_model
+
+        has_tail = bool(find_visual_gallery_tail_candidates(query or "", history))
+        # Use "visual" phrasing as a signal even when gallery intent routing was not triggered upstream.
+        has_visual_intent = bool(re.search(r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look)\b", (query or ""), re.I))
+        v = validate_aircraft_model(query or "")
+        mode: ConsultantResponseMode = classify_consultant_response_mode(
+            query=query or "",
+            fine_intent=str(getattr(_fine.intent, "value", _fine.intent)),
+            has_tail=has_tail,
+            has_visual_intent=bool(user_wants_gallery or has_visual_intent),
+            suspicious_model_note=_susp_model or (v.message if v else None),
+        )
+        data_used["consultant_response_mode"] = mode.value
+        system_prompt += response_mode_prompt_suffix(mode)
+
+        # Internal confidence tag (not user-facing UI): high when tail + authoritative record, else medium/low.
+        conf = "low"
+        if has_tail:
+            if bool(phly_authority) or int((phly_meta or {}).get("faa_master_owner_rows") or 0):
+                conf = "high"
+            else:
+                conf = "medium"
+        else:
+            if mode in (ConsultantResponseMode.COMPARISON, ConsultantResponseMode.MISSION_ADVISORY, ConsultantResponseMode.STRATEGIC_OWNERSHIP):
+                conf = "medium"
+        data_used["consultant_confidence"] = conf
+    except Exception:
+        pass
 
     # Format requirement for structured retrieval responses (tail/serial/ownership/market).
     if hybrid_plan.kind.value in (

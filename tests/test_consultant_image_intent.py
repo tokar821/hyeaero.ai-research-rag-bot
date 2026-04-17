@@ -187,14 +187,16 @@ def test_strict_tail_mode_requires_tail_on_source_page_option_b():
             "gallery_image_urls": ["https://controller.example/cdn/1.jpg"],
         }
     ]
-    out = build_consultant_aircraft_images(
-        tav,
-        [],
-        listing_rows=listing_rows,
-        required_tail="N807JS",
-        strict_tail_page_match=True,
-        max_gallery_images=5,
-    )
+    # Force Tavily path for this unit test (SearchAPI is covered elsewhere).
+    with patch.dict("os.environ", {"SEARCHAPI_API_KEY": ""}):
+        out = build_consultant_aircraft_images(
+            tav,
+            [],
+            listing_rows=listing_rows,
+            required_tail="N807JS",
+            strict_tail_page_match=True,
+            max_gallery_images=5,
+        )
     assert out
     assert all("cdn.example.com" in (r.get("url") or "") for r in out)
     assert all(r.get("page_url") == "https://example.com/spotting/n807js-cessna-citation-excel" for r in out)
@@ -218,13 +220,15 @@ def test_strict_model_mode_filters_and_ranks_by_host_priority():
             {"url": "https://example.com/img/other.jpg", "description": "Falcon 900 on ramp"},
         ],
     }
-    out = build_consultant_aircraft_images(
-        tav,
-        [],
-        required_marketing_type="Dassault Falcon 2000",
-        strict_model_title_alt_match=True,
-        max_gallery_images=5,
-    )
+    # Force Tavily path for this unit test (SearchAPI is covered elsewhere).
+    with patch.dict("os.environ", {"SEARCHAPI_API_KEY": ""}):
+        out = build_consultant_aircraft_images(
+            tav,
+            [],
+            required_marketing_type="Dassault Falcon 2000",
+            strict_model_title_alt_match=True,
+            max_gallery_images=5,
+        )
     assert len(out) == 2
     assert "jetphotos" in (out[0].get("url") or "").lower()
 
