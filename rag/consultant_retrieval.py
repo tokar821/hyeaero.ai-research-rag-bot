@@ -20,6 +20,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
 
+from rag.semantic_reranker import effective_reranker_model_name_from_env
+
 logger = logging.getLogger(__name__)
 
 
@@ -1074,9 +1076,7 @@ def run_consultant_retrieval_bundle(
     data_used["rag_query_variants"] = len(rag_qs)
     if svc._rerank_enabled_globally() and not (fast_retrieval or low_latency):
         data_used["rag_semantic_rerank"] = 1
-        data_used["rag_rerank_model"] = (
-            (os.getenv("RAG_RERANKER_MODEL") or "BAAI/bge-reranker-large").strip()
-        )
+        data_used["rag_rerank_model"] = effective_reranker_model_name_from_env()
         if results and any(r.get("rerank_score") is not None for r in results):
             data_used["rag_rerank_applied"] = 1
     else:

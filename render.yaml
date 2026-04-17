@@ -9,6 +9,9 @@ services:
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
     startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
+      # Smaller BGE + tighter caps — same rerank API, lower RAM (starter Render). Use 0/false to force full large model.
+      - key: RAG_RERANK_LIGHT
+        value: auto
       - key: POSTGRES_CONNECTION_STRING
         sync: false
       - key: CORS_ORIGINS

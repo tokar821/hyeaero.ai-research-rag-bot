@@ -85,7 +85,7 @@ Treat stored text as **sensitive** (PII / secrets users might paste). Use retent
 
 - **Canonical version:** `runtime.txt` at the repo root of the backend app (e.g. `python-3.11.7`). [Render](https://render.com) uses this file to select the runtime; **production is not using Python 3.14**.
 - **Local:** Use the same major/minor as `runtime.txt` (see `backend/.python-version` for pyenv-style pins). That avoids **Windows PyTorch DLL failures** (for example `c10.dll` / WinError 1114) that show up on **unsupported** interpreters while keeping **`RAG_RERANK_ENABLED` on** (default).
-- **Memory on Render:** Semantic rerank loads **`BAAI/bge-reranker-large`** via PyTorch (`sentence-transformers`). Expect **hundreds of MB to ~1GB+** of RAM for the model plus your app, DB drivers, and request spikes. If the service **OOM-restarts** after deploy, upgrade the Render instance RAM and/or tune `RAG_RERANKER_BATCH_SIZE` (lower uses less peak memory). The **3.14 DLL issue on your laptop** is separate from Render memory.
+- **Memory on Render:** Semantic rerank loads a BGE cross-encoder via PyTorch (`sentence-transformers`). The large model can need **~1GB+** RAM on top of the app. On **small plans**, set **`RAG_RERANK_LIGHT=1`** (or **`auto`**, which turns on when **`RENDER=true`**, as in `render.yaml`) to use **`BAAI/bge-reranker-base`** with smaller default batch, `max_length`, and passage caps — **rerank still runs**, only footprint shrinks. You can still override **`RAG_RERANKER_MODEL`**, **`RAG_RERANKER_BATCH_SIZE`**, etc. The **3.14 DLL issue on your laptop** is separate from Render memory.
 
 1. Install dependencies:
 ```bash
