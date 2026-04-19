@@ -13,11 +13,40 @@ from rag.consultant_market_lookup import (
     build_aircraft_photo_focus_tavily_query,
     wants_consultant_aircraft_images_in_answer,
 )
+from services.consultant_image_search_orchestrator import classify_premium_aviation_intent
 from services.consultant_aircraft_images import (
     build_consultant_aircraft_images,
     filter_tavily_images_for_phly,
 )
+from services.consultant_aircraft_images import (
+    _consultant_gallery_row_is_residential_or_editorial_junk,
+    _model_tokens_match_searchapi_relaxed,
+    _model_tokens_match_strict,
+)
 from services.consultant_report_image_proxy import consultant_report_image_url_allowed
+
+
+def test_classify_premium_invalid_placeholder_tail():
+    intent = classify_premium_aviation_intent(
+        "show me N00000 cockpit",
+        required_tail=None,
+        required_marketing_type=None,
+        phly_rows=[],
+    )
+    assert intent.get("type") == "INVALID"
+    assert intent.get("suppress_image_search") is True
+    assert intent.get("invalid_registration") is True
+
+
+def test_resolve_hybrid_rejects_placeholder_tail():
+    show, src, _ = resolve_hybrid_image_gallery_intent(
+        "show me N00000 cockpit",
+        None,
+        api_key="",
+        model="gpt-4o-mini",
+    )
+    assert show is False
+    assert src == "invalid_placeholder_tail"
 
 
 def test_broad_keyword_image_phrases():
@@ -138,6 +167,66 @@ def test_pdf_proxy_allows_bjtonline_and_cirrus():
     assert (
         consultant_report_image_url_allowed(
             "https://cirrusaircraft.com/wp-content/uploads/2026/01/2026-cirrus-aircraft-sr-series-g7-interior-1-1024x576.jpeg"
+        )
+        is True
+    )
+
+
+def test_g700_shorthand_gets_compact_g_token_for_matching():
+    from services.consultant_aircraft_images import _derive_model_positive_tokens
+    from services.searchapi_aircraft_images import normalize_aircraft_name
+
+    mt = normalize_aircraft_name("G700")
+    assert "G700" in _derive_model_positive_tokens(mt)
+
+
+def test_cj4_uses_token_boundary_not_substring():
+    from services.consultant_aircraft_images import _model_tokens_match_strict
+
+    assert _model_tokens_match_strict("https://x.com/foo/cj4-cabin.jpg", "Citation CJ4") is True
+    assert _model_tokens_match_strict("https://x.com/foo/acj400.jpg", "Citation CJ4") is False
+
+
+def test_g650_token_does_not_match_amazon_isbn_substring():
+    """Regression: model strict match must not accept unrelated ``650`` digit runs as ``G650``."""
+    blob = "https://www.amazon.com/Interior-Design-Not-Decoration-Other/dp/1529431557"
+    assert _model_tokens_match_strict(blob, "Gulfstream G650") is False
+
+
+def test_residential_interior_host_patterns_are_dropped():
+    row = {
+        "url": "https://i.redd.it/abc.png",
+        "title": "there is no right way",
+        "page_url": "https://www.reddit.com/r/InteriorDesign/comments/1sk30kj/x/",
+    }
+    assert _consultant_gallery_row_is_residential_or_editorial_junk(row) is True
+
+
+def test_pdf_proxy_allows_youtube_instagram_pinterest_for_gallery_export():
+    assert (
+        consultant_report_image_url_allowed("https://i.ytimg.com/vi/abc123/maxresdefault.jpg") is True
+    )
+    assert (
+        consultant_report_image_url_allowed(
+            "https://scontent.cdninstagram.com/v/t51.29350-15/123_n.jpg"
+        )
+        is True
+    )
+    assert consultant_report_image_url_allowed("https://i.pinimg.com/originals/ab/cd/ef.jpg") is True
+
+
+def test_pdf_proxy_allows_nytimes_and_reddit_preview_cdn():
+    assert (
+        consultant_report_image_url_allowed(
+            "https://static01.nyt.com/images/2013/10/18/t-magazine/18well-not-vital-slide-FCB1/"
+            "18well-not-vital-slide-FCB1-superJumbo.jpg"
+        )
+        is True
+    )
+    assert (
+        consultant_report_image_url_allowed(
+            "https://preview.redd.it/there-is-no-right-way-to-do-it-there-is-not-v0-gc7g80yxlwug1.png"
+            "?width=640&crop=smart&auto=webp&s=c2b822ad13f65627490284092a3d74a56ebba7fd"
         )
         is True
     )
@@ -331,3 +420,13 @@ def test_resolve_hybrid_do_you_have_photos():
     )
     assert show is True
     assert src == "keywords_strict"
+
+
+def test_searchapi_relaxed_model_still_rejects_negative_tokens():
+    blob = "https://x.example/falcon-900-cabin.jpg title Dassault Falcon 900"
+    assert _model_tokens_match_searchapi_relaxed(blob, "Falcon 2000") is False
+
+
+def test_searchapi_relaxed_model_accepts_long_phrase_substring():
+    blob = "https://cdn.example/media/bombardier-challenger-350-interior-wide.jpg"
+    assert _model_tokens_match_searchapi_relaxed(blob, "Challenger 350") is True

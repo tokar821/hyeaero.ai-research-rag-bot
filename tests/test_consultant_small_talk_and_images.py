@@ -203,6 +203,9 @@ def test_images_only_when_explicit():
     assert wants_consultant_aircraft_images_in_answer("can you showN140NE?") is True
     assert wants_consultant_aircraft_images_in_answer("let me see N508JA") is True
     assert wants_consultant_aircraft_images_in_answer("I wanna see N140NE") is True
+    assert wants_consultant_aircraft_images_in_answer(
+        "What is the best private jet cabin for long-range comfort?"
+    ) is True
     # Prior turns must not keep image mode on — only the current message counts.
     hist = [
         {"role": "user", "content": "Show me photos of N807JS"},

@@ -94,9 +94,30 @@ def _derive_model_positive_tokens(marketing_type: str) -> List[str]:
     m = re.search(r"\bglobal\s*(\d{4})\b", low)
     if m:
         out.append(f"Global {m.group(1)}")
-    m = re.search(r"\bg\s*[-.]?\s*(\d{3,4})\b", low)
-    if m and "gulfstream" in low:
+    # Gulfstream G### shorthand (``G650``) — always emit; do not require ``gulfstream`` in the
+    # marketing string (e.g. normalized ``G700`` / user shorthand ``G 700``).
+    m = re.search(r"\bg\s*[-.]?\s*(\d{3,4})(?:\s*er)?\b", low)
+    if m:
         out.append(f"G{m.group(1)}")
+    m = re.search(r"\bcj\s*(\d+[a-z]?)\b", low)
+    if m:
+        out.append(f"CJ{m.group(1).upper()}")
+    m = re.search(r"\bphenom\s*(100|300|500)\b", low)
+    if m:
+        out.append(f"Phenom {m.group(1)}")
+    m = re.search(r"\blearjet\s*(\d{2,3})\b", low)
+    if m:
+        out.append(f"Learjet {m.group(1)}")
+    m = re.search(r"\bking\s*air\s*([a-z]?\d{2,4})\b", low)
+    if m:
+        out.append(f"King Air {m.group(1)}")
+    m = re.search(r"\bpc[\s-]?(12|24)\b", low)
+    if m:
+        out.append(f"PC-{m.group(1)}")
+        out.append(f"PC{m.group(1)}")
+    m = re.search(r"\bvision\s*jet\b", low)
+    if m:
+        out.append("Vision Jet")
     # Dedup normalized
     seen: set[str] = set()
     uniq: List[str] = []
@@ -155,6 +176,173 @@ def _derive_model_negative_tokens(marketing_type: str) -> List[str]:
     return out
 
 
+_NON_AVIATION_INTERIOR_SPAM = re.compile(
+    r"(?i)\b(?:interior\s+design|houzz|archdaily|not\s+decoration|george\s+street|georgestreet|"
+    r"furniture\s+store|living\s+room\s+design|home\s+decor|reception\s+seating|wedding\s+reception)\b"
+)
+
+# Known SearchAPI / Tavily paths that are almost always residential or editorial “interior”, not bizjet cabins.
+_RESIDENTIAL_OR_EDITORIAL_GALLERY_JUNK = re.compile(
+    r"(?i)(?:reddit\.com/r/interiordesign|reddit\.com/r/home(?:decor|design)|"
+    r"georgestreetphoto\.|nytimes\.com/[^?\s]+/t-magazine/)"
+)
+
+# If any of these appear, a row on a “residential interior” host may still be real aircraft content.
+_AIRFRAME_OR_TAIL_QUICK_HINT = re.compile(
+    r"(?i)(?:"
+    r"\bn\d{1,5}[a-z]{0,2}\b|"
+    r"(?<![a-z0-9])g\d{3,4}(?:er)?(?![a-z0-9])|"
+    r"(?<![a-z0-9])cl\d{3}(?![a-z0-9])|"
+    r"(?<![a-z0-9])f\d{3,4}(?![a-z0-9])|"
+    r"(?<![a-z0-9])cj\d+[a-z]?(?![a-z0-9])|"
+    r"(?<![a-z0-9])pc[\s-]?\d{2,4}(?![a-z0-9])|"
+    r"\b(?:phenom|learjet|citation|challenger|falcon|king\s*air|global\s*\d{4}|"
+    r"vision\s*jet|praetor|legacy\s*500|legacy\s*600)\b|"
+    r"\b(?:gulfstream|cessna|bombardier|embraer|dassault|pilatus|beechcraft|mitsubishi|honda\s*jet)\b|"
+    r"\b(?:737|787|a220|a320|crj|erj|e175|e190)\b"
+    r")"
+)
+
+
+def _infer_consultant_gallery_marketing_type(user_query: str, phly_rows: List[Dict[str, Any]]) -> str:
+    """Same inference priority as ``consultant_retrieval`` so SearchAPI filtering never runs unanchored."""
+    try:
+        from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+        from services.searchapi_aircraft_images import compose_manufacturer_model_phrase, normalize_aircraft_name
+
+        blob = (user_query or "").strip()
+        mans = _detect_manufacturers(blob.lower())
+        mdls = _detect_models(blob)
+        mt_q = compose_manufacturer_model_phrase(
+            mans[0] if mans else "",
+            mdls[0] if mdls else "",
+        ).strip()
+        mt_q = normalize_aircraft_name(mt_q) if mt_q else ""
+        if not mt_q and mdls:
+            mt_q = normalize_aircraft_name(mdls[0]) if mdls[0] else ""
+        if mt_q and len(mt_q) >= 3:
+            return mt_q
+        for r in (phly_rows or [])[:4]:
+            if not isinstance(r, dict):
+                continue
+            man = (r.get("manufacturer") or "").strip()
+            mdl = (r.get("model") or "").strip()
+            mm = compose_manufacturer_model_phrase(man, mdl).strip()
+            mm = normalize_aircraft_name(mm) if mm else ""
+            if mm and len(mm) >= 3:
+                return mm
+    except Exception:
+        pass
+    return ""
+
+
+def _gallery_row_combined_blob(row: Dict[str, Any]) -> str:
+    return " ".join(
+        str(row.get(k) or "")
+        for k in ("url", "title", "description", "page_url", "_source_page", "source")
+    )
+
+
+def _consultant_gallery_row_is_residential_or_editorial_junk(row: Dict[str, Any]) -> bool:
+    """
+    Drop obvious non-aviation interior hits (NYT design features, r/InteriorDesign, wedding blogs,
+    Amazon interior-design books) that sometimes appear when ``interior`` is in the SearchAPI query.
+    """
+    blob = _gallery_row_combined_blob(row).lower()
+    if _tavily_image_blob_has_aircraft_signal(blob):
+        return False
+    if _RESIDENTIAL_OR_EDITORIAL_GALLERY_JUNK.search(blob):
+        if _AIRFRAME_OR_TAIL_QUICK_HINT.search(blob):
+            return False
+        return True
+    if "amazon.com" in blob and "/dp/" in blob:
+        if any(
+            x in blob
+            for x in (
+                "interior-design",
+                "interior_design",
+                "decoration",
+                "not-decoration",
+                "not_decoration",
+            )
+        ):
+            return True
+    return False
+
+
+def _non_aviation_interior_spam_row(row: Dict[str, Any]) -> bool:
+    """Generic residential / editorial interior hits that lack any aviation anchor."""
+    blob = _gallery_row_combined_blob(row).lower()
+    if not _NON_AVIATION_INTERIOR_SPAM.search(blob):
+        return False
+    if any(
+        x in blob
+        for x in (
+            "gulfstream",
+            "cessna",
+            "bombardier",
+            "embraer",
+            "dassault",
+            "learjet",
+            "jetphotos",
+            "planespotters",
+            "airliners",
+            "bizjet",
+            "airframe",
+            "cockpit",
+            "citation",
+            "falcon",
+            "challenger",
+            "global ",
+            "phenom",
+            "learjet",
+            "king air",
+            "pilatus",
+            "praetor",
+            "vision jet",
+            "737",
+            "787",
+            "a220",
+            "a320",
+            "crj",
+            "erj",
+        )
+    ):
+        return False
+    return True
+
+
+def _model_positive_token_matches_blob(blob: str, token: str) -> bool:
+    """
+    Match a marketing token against URL/title text.
+
+    Compact OEM codes (``G650``, ``CL350``, ``F900``, ``CJ4``, ``PC12``) use **token boundaries**
+    so unrelated hosts cannot satisfy the check via accidental digit substrings (ISBNs, ids, …).
+    """
+    raw = (token or "").strip()
+    if len(raw) < 3:
+        return False
+    low = raw.lower()
+    bl = (blob or "").lower()
+    compact = re.sub(r"[\s\-]+", "", low)
+    # Gulfstream-style G### / G###ER
+    if re.fullmatch(r"g\d{3,4}(?:er)?", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    if re.fullmatch(r"cl\d{3}", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    if re.fullmatch(r"f\d{3,4}", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    if re.fullmatch(r"cj\d+[a-z]?", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    if re.fullmatch(r"pc\d{2,4}", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    # Other tight alnum codes (e.g. ``BD700`` for Globals in some slugs).
+    if re.fullmatch(r"bd\d{3}", compact):
+        return re.search(rf"(?<![a-z0-9]){re.escape(compact)}(?![a-z0-9])", bl) is not None
+    # Phrases: allow substring (e.g. ``gulfstream g650``, ``citation latitude``).
+    return low in bl
+
+
 def _model_tokens_match_strict(blob: str, marketing_type: str) -> bool:
     """Strict model match: require positive token, reject any negative token."""
     b = (blob or "")
@@ -163,8 +351,33 @@ def _model_tokens_match_strict(blob: str, marketing_type: str) -> bool:
     neg = _derive_model_negative_tokens(marketing_type)
     if neg and any(n.lower() in b_l for n in neg):
         return False
-    # Require at least one positive token as a substring (title/alt/url often includes it).
-    return any(p.lower() in b_l for p in pos if len(p) >= 4)
+    if not pos:
+        return False
+    return any(_model_positive_token_matches_blob(b, p) for p in pos if len(p) >= 3)
+
+
+def _model_tokens_match_searchapi_relaxed(blob: str, marketing_type: str) -> bool:
+    """
+    SearchAPI gallery filter: always reject negative tokens; positive side prefers strict tokens,
+    then allows **substring** hits for longer phrases (≥6 chars) so Google/CDN slugs still pass.
+    """
+    b = blob or ""
+    b_l = b.lower()
+    neg = _derive_model_negative_tokens(marketing_type)
+    if neg and any(n.lower() in b_l for n in neg):
+        return False
+    if _model_tokens_match_strict(b, marketing_type):
+        return True
+    pos = _derive_model_positive_tokens(marketing_type)
+    compact_blob = re.sub(r"[\s/_-]+", "", b_l)
+    for p in pos:
+        pl = p.lower()
+        if len(pl) >= 6 and pl in b_l:
+            return True
+        compact_p = re.sub(r"\s+", "", pl)
+        if len(compact_p) >= 6 and compact_p in compact_blob:
+            return True
+    return False
 
 
 def _iter_tavily_result_linked_images_for_model(
@@ -956,18 +1169,19 @@ def build_consultant_aircraft_images(
 
     cap = consultant_gallery_image_cap(max_gallery_images)
 
-    # --- SearchAPI (Bing Images) replaces Tavily *image* hits when configured ---
+    # --- SearchAPI (Google Images / Light or Bing) replaces Tavily *image* hits when configured ---
     try:
         from services.searchapi_aircraft_images import (
             fetch_ranked_searchapi_aircraft_images,
             resolve_queries_for_consultant_gallery,
             searchapi_aircraft_images_enabled,
+            searchapi_literal_user_query_mode,
         )
 
         if searchapi_aircraft_images_enabled():
             strict_tail = bool(strict_tail_page_match and (required_tail or "").strip())
             rt = str(required_tail).strip() if required_tail else None
-            queries, canon_tail, mm_for_score = resolve_queries_for_consultant_gallery(
+            queries, canon_tail, mm_for_score, premium_intent = resolve_queries_for_consultant_gallery(
                 user_query=user_query or "",
                 phly_rows=phly_rows,
                 required_tail=rt,
@@ -977,31 +1191,46 @@ def build_consultant_aircraft_images(
                     strict_model_title_alt_match and (required_marketing_type or "").strip()
                 ),
             )
+            gallery_mt = (required_marketing_type or mm_for_score or "").strip()
+            if not gallery_mt:
+                gallery_mt = _infer_consultant_gallery_marketing_type(user_query or "", phly_rows)
+            _sea_meta: Dict[str, Any] = gallery_meta_out if gallery_meta_out is not None else {}
+            _sea_meta["consultant_premium_intent"] = premium_intent
+            _sea_meta["consultant_gallery_marketing_anchor"] = gallery_mt or None
+            _eng = premium_intent.get("image_query_engine")
+            if isinstance(_eng, dict) and _eng:
+                _sea_meta["image_query_engine"] = dict(_eng)
+                if _eng.get("suppress_gallery"):
+                    _sea_meta["consultant_image_query_engine_suppressed"] = True
+                    queries = []
             if queries:
-                _sea_meta: Dict[str, Any] = gallery_meta_out if gallery_meta_out is not None else {}
                 sea, _ = fetch_ranked_searchapi_aircraft_images(
                     queries=queries,
                     canonical_tail=canon_tail if strict_tail else None,
                     strict_tail_mode=strict_tail,
-                    marketing_type_for_model_match=(
-                        (required_marketing_type or mm_for_score or "").strip()
-                        if not strict_tail
-                        else None
-                    ),
+                    marketing_type_for_model_match=(gallery_mt if not strict_tail else None),
                     max_out=cap,
                     user_query=user_query or "",
                     gallery_meta=_sea_meta,
+                    premium_intent=premium_intent,
                 )
-                if strict_model_title_alt_match and (required_marketing_type or "").strip():
-                    mt = str(required_marketing_type).strip()
-                    sea = [
-                        r
-                        for r in sea
-                        if _model_tokens_match_strict(
-                            f"{(r.get('url') or '')} {(r.get('description') or '')}",
-                            mt,
-                        )
-                    ]
+                if not strict_tail:
+                    if gallery_mt:
+                        sea = [
+                            r
+                            for r in sea
+                            if _model_tokens_match_strict(_gallery_row_combined_blob(r), gallery_mt)
+                            and not _non_aviation_interior_spam_row(r)
+                            and not _consultant_gallery_row_is_residential_or_editorial_junk(r)
+                        ]
+                    else:
+                        sea = [
+                            r
+                            for r in sea
+                            if not _non_aviation_interior_spam_row(r)
+                            and not _consultant_gallery_row_is_residential_or_editorial_junk(r)
+                            and _tavily_image_blob_has_aircraft_signal(_gallery_row_combined_blob(r))
+                        ]
                 # Strict tail: SearchAPI-only, no listing/model substitution (Part 3).
                 if strict_tail:
                     return sea[:cap]

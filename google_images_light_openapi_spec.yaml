@@ -1,0 +1,354 @@
+openapi: 3.0.0
+info:
+  title: Google Images Light API
+  description: |
+    The Google Images Light API provides lightweight access to Google Images search results with reduced data transfer and faster response times.
+    
+    This API is optimized for mobile and performance-critical applications where you need quick access to image results without the full HTML response.
+    
+    **Note**: This API does not provide HTML results, only JSON responses.
+  version: 1.0.0
+servers:
+  - url: https://www.searchapi.io/api/v1
+paths:
+  /search:
+    get:
+      summary: Google Images Light Search
+      security:
+        - ApiKeyAuth: []
+        - ApiKeyQuery: []
+      parameters:
+        - name: engine
+          in: query
+          required: true
+          description: Engine to use for the search. Must be set to `google_images_light`.
+          schema:
+            type: string
+            enum: ["google_images_light"]
+        - name: q
+          in: query
+          required: true
+          description: Search query term
+          schema:
+            type: string
+        - name: device
+          in: query
+          required: false
+          description: Device type for the search
+          schema:
+            type: string
+            enum: ["desktop", "mobile", "tablet"]
+            default: "desktop"
+        - name: location
+          in: query
+          required: false
+          description: Geographic location for localized search results
+          schema:
+            type: string
+        - name: uule
+          in: query
+          required: false
+          description: Google's encoded location parameter
+          schema:
+            type: string
+        - name: hl
+          in: query
+          required: false
+          description: Language for the search interface
+          schema:
+            type: string
+            default: "en"
+        - name: gl
+          in: query
+          required: false
+          description: Country code for search results
+          schema:
+            type: string
+            default: "us"
+        - name: cr
+          in: query
+          required: false
+          description: Country restriction for search results
+          schema:
+            type: string
+        - name: nfpr
+          in: query
+          required: false
+          description: Control auto-correction behavior
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: filter
+          in: query
+          required: false
+          description: Control duplicate content and host crowding filters
+          schema:
+            type: integer
+            enum: [0, 1]
+        - name: safe
+          in: query
+          required: false
+          description: SafeSearch filtering level
+          schema:
+            type: string
+            enum: ["active", "blur", "off"]
+            default: "blur"
+        - name: page
+          in: query
+          required: false
+          description: Page number for pagination (1-based)
+          schema:
+            type: integer
+            minimum: 1
+        - name: tbs
+          in: query
+          required: false
+          description: Advanced search parameters encoded in Google's TBS format
+          schema:
+            type: string
+        - name: size
+          in: query
+          required: false
+          description: Filter images by size
+          schema:
+            type: string
+            enum: ["large", "medium", "icon", "larger_than_400x300", "larger_than_640x480", "larger_than_800x600", "larger_than_1024x768", "larger_than_2mp", "larger_than_4mp", "larger_than_6mp", "larger_than_8mp", "larger_than_12mp", "larger_than_15mp", "larger_than_20mp", "larger_than_40mp", "larger_than_70mp"]
+        - name: color
+          in: query
+          required: false
+          description: Filter images by color
+          schema:
+            type: string
+            enum: ["black_and_white", "color", "transparent", "red", "orange", "yellow", "green", "teal", "blue", "purple", "pink", "white", "gray", "black", "brown"]
+        - name: image_type
+          in: query
+          required: false
+          description: Filter images by type
+          schema:
+            type: string
+            enum: ["clipart", "line_drawing", "gif", "face", "photo"]
+        - name: time_period
+          in: query
+          required: false
+          description: Filter images by time period
+          schema:
+            type: string
+            enum: ["last_hour", "last_day", "last_week", "last_month", "last_year"]
+        - name: usage_rights
+          in: query
+          required: false
+          description: Filter images by usage rights
+          schema:
+            type: string
+            enum: ["creative_commons_licenses", "commercial_or_other_licenses"]
+        - name: aspect_ratio
+          in: query
+          required: false
+          description: Filter images by aspect ratio
+          schema:
+            type: string
+            enum: ["square", "wide", "tall", "panoramic"]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Validation Error. There is an issue with query parameters, such as missing required parameters or invalid values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication Error. The API key is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate Limit Exceeded. The number of allowed requests has been exceeded. Consider upgrading your plan or waiting for the limit to reset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server Error. Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Timeout. We could not retrieve results in 90 seconds.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: 'Use Bearer authentication. Format: "Bearer YOUR_API_KEY"'
+    ApiKeyQuery:
+      type: apiKey
+      in: query
+      name: api_key
+      description: Pass API key as query parameter
+  schemas:
+    SearchResponse:
+      type: object
+      properties:
+        search_metadata:
+          $ref: '#/components/schemas/SearchMetadata'
+        search_parameters:
+          $ref: '#/components/schemas/SearchParameters'
+        images:
+          type: array
+          description: Array of image search results
+          items:
+            $ref: '#/components/schemas/Image'
+        error:
+          type: string
+          description: Error message if no results were found
+    SearchMetadata:
+      type: object
+      required: [id, status, created_at]
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the search request
+        status:
+          type: string
+          description: Status of the search request
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when the search was created
+        request_time_taken:
+          type: number
+          description: Time taken to make the request in seconds
+        parsing_time_taken:
+          type: number
+          description: Time taken to parse the results in seconds
+        total_time_taken:
+          type: number
+          description: Total time taken for the search in seconds
+        request_url:
+          type: string
+          description: Google Images URL for this search
+        html_url:
+          type: string
+          description: URL to view HTML results
+        json_url:
+          type: string
+          description: URL to view JSON results
+    SearchParameters:
+      type: object
+      properties:
+        engine:
+          type: string
+          description: Engine used for the search
+        q:
+          type: string
+          description: Search query term
+        device:
+          type: string
+          description: Device type used for the search
+        uule:
+          type: string
+          description: Encoded location parameter
+        location:
+          type: string
+          description: Geographic location
+        location_used:
+          type: string
+          description: Canonical location name that was used
+        hl:
+          type: string
+          description: Language for the search interface
+        gl:
+          type: string
+          description: Country code for search results
+        cr:
+          type: string
+          description: Country restriction for search results
+        nfpr:
+          type: string
+          description: Auto-correction setting
+        filter:
+          type: string
+          description: Filter setting
+        safe:
+          type: string
+          description: SafeSearch setting
+        page:
+          type: integer
+          description: Current page number
+        tbs:
+          type: string
+          description: Advanced search parameters
+        size:
+          type: string
+          description: Image size filter
+        color:
+          type: string
+          description: Color filter
+        image_type:
+          type: string
+          description: Image type filter
+        time_period:
+          type: string
+          description: Time period filter
+        usage_rights:
+          type: string
+          description: Usage rights filter
+        aspect_ratio:
+          type: string
+          description: Aspect ratio filter
+    Image:
+      type: object
+      properties:
+        position:
+          type: integer
+          description: Position of the image in search results
+        title:
+          type: string
+          description: Title of the page containing the image
+        source:
+          $ref: '#/components/schemas/ImageSource'
+        original:
+          $ref: '#/components/schemas/OriginalImage'
+        thumbnail:
+          type: string
+          description: URL of the thumbnail image
+    ImageSource:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the source website
+        link:
+          type: string
+          description: URL of the page containing the image
+    OriginalImage:
+      type: object
+      properties:
+        link:
+          type: string
+          description: URL of the original image
+        width:
+          type: integer
+          description: Width of the original image in pixels
+        height:
+          type: integer
+          description: Height of the original image in pixels
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong

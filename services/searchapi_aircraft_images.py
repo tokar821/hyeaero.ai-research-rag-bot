@@ -1,7 +1,11 @@
 """
-Bing Images aircraft gallery via SearchAPI.io (replaces Tavily *image* retrieval only).
+Aircraft image gallery via SearchAPI.io (replaces Tavily *image* retrieval only).
+
+Default engine is **Google Images Light** (`google_images_light`) — same `images[]` shape as
+`google_images` per SearchAPI docs; override with ``SEARCHAPI_IMAGE_ENGINE``.
 
 Web snippet search remains on Tavily elsewhere; this module is scoped to image URLs only.
+Optional Tavily **domain** hints (``SEARCHAPI_TAVILY_DOMAIN_VERIFY``) add authority for unknown hosts.
 """
 
 from __future__ import annotations
@@ -48,6 +52,57 @@ _IGNORED_TAIL_LIKE_TOKENS = frozenset(
 
 SEARCHAPI_SEARCH_URL = "https://www.searchapi.io/api/v1/search"
 
+
+def searchapi_image_engine() -> str:
+    """``SEARCHAPI_IMAGE_ENGINE``: ``google_images_light`` (default), ``google_images``, or ``bing_images``."""
+    v = (os.getenv("SEARCHAPI_IMAGE_ENGINE") or "google_images_light").strip().lower()
+    if v in ("google_images", "google_images_light", "bing_images"):
+        return v
+    logger.warning("Unknown SEARCHAPI_IMAGE_ENGINE=%r; using google_images_light", v)
+    return "google_images_light"
+
+
+def searchapi_literal_user_query_mode() -> bool:
+    """
+    When true (default), consultant SearchAPI uses **one** ``q`` string taken from the user question
+    (trimmed / whitespace-collapsed), not multi-query fan-out or marketing-type rewrites.
+    Set ``SEARCHAPI_LITERAL_USER_QUERY=0`` to restore legacy Bing-style query fan-out.
+    """
+    return (os.getenv("SEARCHAPI_LITERAL_USER_QUERY") or "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def searchapi_gallery_source_label() -> str:
+    e = searchapi_image_engine()
+    if e.startswith("google"):
+        return "searchapi_google_images"
+    return "searchapi_bing_images"
+
+
+def build_searchapi_image_request_params(*, q: str, num_results: int) -> Optional[Dict[str, Any]]:
+    """Query params for GET ``/api/v1/search`` (Bing vs Google engines differ on safe-search keys)."""
+    raw_q = " ".join((q or "").strip().split())
+    if len(raw_q) < 1:
+        return None
+    api_key = (os.getenv("SEARCHAPI_API_KEY") or "").strip()
+    if not api_key:
+        return None
+    engine = searchapi_image_engine()
+    n = max(8, min(20, int(num_results)))
+    params: Dict[str, Any] = {"engine": engine, "q": raw_q[:200], "api_key": api_key, "num": n}
+    if engine == "bing_images":
+        params["safe_search"] = "moderate"
+    else:
+        params["safe"] = (os.getenv("SEARCHAPI_IMAGE_SAFE") or "blur").strip() or "blur"
+        params["gl"] = (os.getenv("SEARCHAPI_IMAGE_GL") or "us").strip() or "us"
+        params["hl"] = (os.getenv("SEARCHAPI_IMAGE_HL") or "en").strip() or "en"
+    return params
+
+
 # Buyer-oriented tail gallery: listings first, then spotter sites.
 _DOMAIN_SCORES_TAIL: Tuple[Tuple[str, int], ...] = (
     ("controller.com", 1000),
@@ -57,7 +112,8 @@ _DOMAIN_SCORES_TAIL: Tuple[Tuple[str, int], ...] = (
     ("globalair.", 700),
     ("avbuyer.", 200),
 )
-# Visual / type browsing: spotters first.
+# Visual / type browsing: spotters first; then cabin/interior-rich hosts Google Images often returns
+# (YouTube, Instagram, Reddit, Pinterest, charter/marketing sites) so they are not buried at score 0.
 _DOMAIN_SCORES_MODEL: Tuple[Tuple[str, int], ...] = (
     ("jetphotos.", 1000),
     ("planespotters.", 950),
@@ -65,12 +121,55 @@ _DOMAIN_SCORES_MODEL: Tuple[Tuple[str, int], ...] = (
     ("aircraftexchange", 750),
     ("globalair.", 700),
     ("avbuyer.", 300),
+    # Charter / OEM / news (interior marketing pages).
+    ("aircharterservice.com", 720),
+    ("privatejetcardcomparisons.com", 710),
+    ("flexjet.com", 710),
+    ("claylacy.com", 710),
+    ("wingaviation", 700),
+    ("skybirdaviation", 700),
+    ("duncanaviation.com", 700),
+    ("globalcharter.com", 700),
+    ("pacmin.com", 700),
+    ("simpleflying.com", 680),
+    ("simpleflyingimages.com", 680),
+    # Social / video thumbnails (common for cabin walkthroughs).
+    ("ytimg.com", 700),
+    ("youtube.com", 690),
+    ("youtu.be", 690),
+    ("cdninstagram.com", 690),
+    ("instagram.com", 690),
+    ("fbcdn.net", 680),
+    ("facebook.com", 680),
+    ("pinimg.com", 690),
+    ("pinterest.com", 680),
+    ("pinterest.", 680),
+    ("redditmedia.com", 680),
+    ("redditstatic.com", 670),
+    ("redd.it", 680),
+    ("reddit.com", 660),
+    # OEM / manufacturer / aviation press (image may be on CDN; source page often carries the signal).
+    ("dassault-aviation.com", 880),
+    ("dassaultfalcon.com", 880),
+    ("dassaultfalcon.", 880),
+    ("falconjet.com", 870),
+    ("gulfstream.com", 880),
+    ("bombardier.com", 870),
+    ("embraer.com", 860),
+    ("bjtonline.com", 760),
+    ("ainonline.com", 760),
+    ("aviationweek.com", 740),
+    ("flightglobal.com", 730),
+    ("corporatejetinvestor.com", 720),
+    ("flycorporate.com", 710),
 )
 
 # Longer keys first so ``G650ER`` wins over ``G650``.
 NORMALIZATION_MAP: Tuple[Tuple[str, str], ...] = (
     ("G650ER", "Gulfstream G650ER"),
     ("G650", "Gulfstream G650"),
+    ("G800", "Gulfstream G800"),
+    ("G700", "Gulfstream G700"),
     ("G550", "Gulfstream G550"),
     ("G500", "Gulfstream G500"),
     ("G600", "Gulfstream G600"),
@@ -92,7 +191,95 @@ INTENT_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "exterior": ("exterior",),
 }
 
-MAX_PER_DOMAIN = 2
+# Legacy default when env unset (tail galleries stay tight on duplicate CDNs).
+_MAX_PER_DOMAIN_TAIL_DEFAULT = 2
+_MAX_PER_DOMAIN_MODEL_DEFAULT = 48
+
+
+def searchapi_preserve_google_image_rank_order() -> bool:
+    """
+    When true (default), **model-mode** gallery ranking follows SearchAPI / Google ``images[].position``
+    (per query, in query order) after strict verification — not a rebuilt sort from our host priors.
+
+    Within the first ``SEARCHAPI_AVIATION_RANKUP_WINDOW`` positions (per merged ``_api_rank``),
+    results are **re-ordered by aviation-domain authority** while keeping Google order as the
+    backbone (see :func:`searchapi_aviation_rankup_window`).
+
+    Set ``SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER=0`` to restore domain-heavy ordering.
+    """
+    return (os.getenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER") or "1").strip().lower() not in (
+        "0",
+        "false",
+        "no",
+        "off",
+    )
+
+
+def searchapi_image_relax_model_match() -> bool:
+    """
+    When true, SearchAPI model-mode gallery uses :func:`_model_tokens_match_searchapi_relaxed`
+    instead of strict token boundaries (still rejects negative model tokens).
+
+    Set ``SEARCHAPI_IMAGE_RELAX_MODEL_MATCH=1``.
+    """
+    return (os.getenv("SEARCHAPI_IMAGE_RELAX_MODEL_MATCH") or "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def searchapi_skip_premium_image_validation() -> bool:
+    """When true, skip :func:`apply_premium_image_validation` for SearchAPI merged rows."""
+    return (os.getenv("SEARCHAPI_SKIP_PREMIUM_IMAGE_VALIDATION") or "0").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    )
+
+
+def _searchapi_tavily_domain_timeout_s() -> float:
+    try:
+        return max(4.0, min(30.0, float((os.getenv("SEARCHAPI_TAVILY_DOMAIN_TIMEOUT") or "9").strip())))
+    except ValueError:
+        return 9.0
+
+
+def searchapi_aviation_rankup_window() -> int:
+    """
+    When preserve-Google rank is on, merge consecutive Google ranks into buckets of this size;
+    within each bucket, **higher** aviation / OEM / spotter authority sorts **earlier**.
+
+    Set ``SEARCHAPI_AVIATION_RANKUP_WINDOW=0`` to keep strict API position order (no rank-up).
+    Default ``8`` — typical first screen of Google Images.
+    """
+    try:
+        v = (os.getenv("SEARCHAPI_AVIATION_RANKUP_WINDOW") or "8").strip()
+        if v.lower() in ("0", "off", "false", "no"):
+            return 0
+        return max(1, min(50, int(v)))
+    except ValueError:
+        return 8
+
+
+def searchapi_max_images_per_domain(*, mode: str) -> int:
+    """
+    Max images kept per image **host** when building the gallery (dedupe spam CDNs).
+
+    - ``SEARCHAPI_MAX_PER_IMAGE_DOMAIN``: single override for both modes (clamped 1–80).
+    - Otherwise: ``2`` for strict tail mode, ``48`` for model mode (trust diverse Google results).
+    """
+    raw = (os.getenv("SEARCHAPI_MAX_PER_IMAGE_DOMAIN") or "").strip()
+    if raw:
+        try:
+            return max(1, min(80, int(raw)))
+        except ValueError:
+            pass
+    return _MAX_PER_DOMAIN_TAIL_DEFAULT if mode == "tail" else _MAX_PER_DOMAIN_MODEL_DEFAULT
+
+
 # Minimum tail match score (V3) before a row enters ranking / gallery output.
 MIN_TAIL_MATCH_SCORE = 80
 # User V3 conflict regex on domain-stripped text (US-style marks).
@@ -172,8 +359,7 @@ def apply_intent_boost(score: float, result: Dict[str, Any], intent: Optional[st
     return score
 
 
-def _domain_score_for_query_mode(url: str, mode: str) -> int:
-    low = (url or "").lower()
+def _domain_score_on_lowercase_blob(low: str, mode: str) -> int:
     table = _DOMAIN_SCORES_TAIL if mode == "tail" else _DOMAIN_SCORES_MODEL
     best = 0
     for frag, sc in table:
@@ -182,47 +368,97 @@ def _domain_score_for_query_mode(url: str, mode: str) -> int:
     return best
 
 
+def _domain_score_for_query_mode(url: str, mode: str) -> int:
+    return _domain_score_on_lowercase_blob((url or "").lower(), mode)
+
+
+def _off_topic_image_rankup_penalty(low: str) -> int:
+    """
+    Reduce aviation authority for obvious non-aviation hosts/pages so Google junk (parks, weddings)
+    does not rank above OEM / trade press within the same rank-up window.
+    """
+    if not low:
+        return 0
+    pen = 0
+    if ("park" in low or "parks." in low) and any(
+        x in low for x in ("county", "state", "city.", "municipal", "recreation", "trail", "campground")
+    ):
+        pen += 520
+    if any(x in low for x in ("wedding", "bridal", "engagement", "zillow", "realtor", "apartment", "condo listing")):
+        pen += 480
+    if "stockphoto" in low or "shutterstock" in low or "gettyimages" in low or "istockphoto" in low:
+        pen += 350
+    return min(pen, 900)
+
+
+def aviation_rankup_authority_score(
+    url: str,
+    page: str,
+    source: str,
+    title: str,
+    *,
+    mode: str,
+    tavily_host_boosts: Optional[Dict[str, int]] = None,
+) -> int:
+    """
+    Single score for rank-up: best domain-table hit across image URL, source page, source label,
+    and title, minus off-topic penalties, plus optional Tavily-derived boost for unknown domains.
+    """
+    low = f"{url} {page} {source} {title}".lower()
+    base = _domain_score_on_lowercase_blob(low, mode)
+    core = max(0, int(base) - int(_off_topic_image_rankup_penalty(low)))
+    extra = 0
+    if tavily_host_boosts:
+        from services.tavily_aviation_domain_boost import normalize_source_host
+
+        ph = normalize_source_host(extract_domain(page))
+        uh = normalize_source_host(extract_domain(url))
+        extra = max(int(tavily_host_boosts.get(ph, 0)), int(tavily_host_boosts.get(uh, 0)))
+    return core + min(500, int(extra))
+
+
 def searchapi_aircraft_images_enabled() -> bool:
     return bool((os.getenv("SEARCHAPI_API_KEY") or "").strip())
 
 
 def search_aircraft_images(query: str, *, num_results: int = 15, timeout: float = 28.0) -> List[Dict[str, str]]:
     """
-    Reusable Bing Images search via SearchAPI.io.
+    Reusable image search via SearchAPI.io (Google Images / Light or Bing per ``SEARCHAPI_IMAGE_ENGINE``).
 
-    Returns normalized rows: ``{"url": str, "title": str, "source": str}``.
-    ``source`` is a human-readable site label (SearchAPI ``source.name`` or host).
+    Returns normalized rows aligned with SearchAPI ``images[]``:
+
+    - ``url``: ``original.link`` (HTTPS image asset)
+    - ``title``: image title
+    - ``source``: ``source.name`` (fallback: image host)
+    - ``_source_page``: ``source.link`` (result / listing page — used for strict matching)
+    - ``_position``: 1-based ``position`` from the API (used to preserve Google rank order)
     """
     raw_q = (query or "").strip()
     if not raw_q:
         return []
-    api_key = (os.getenv("SEARCHAPI_API_KEY") or "").strip()
-    if not api_key:
+    params = build_searchapi_image_request_params(q=raw_q, num_results=num_results)
+    if not params:
         return []
-    n = max(10, min(20, int(num_results)))
-    params = {
-        "engine": "bing_images",
-        "q": raw_q,
-        "api_key": api_key,
-        "safe_search": "moderate",
-    }
-    # SearchAPI supports pagination; request enough images in one page when available.
-    if n != 15:
-        params["num"] = n
     try:
         r = requests.get(SEARCHAPI_SEARCH_URL, params=params, timeout=timeout)
         r.raise_for_status()
         data = r.json()
     except Exception as e:
-        logger.warning("SearchAPI Bing Images request failed: %s", e)
+        logger.warning("SearchAPI %s image request failed: %s", params.get("engine"), e)
         return []
 
     images = data.get("images") if isinstance(data, dict) else None
     if not isinstance(images, list):
         return []
 
+    try:
+        limit = int(params.get("num") or 15)
+    except (TypeError, ValueError):
+        limit = 15
+    limit = max(1, min(50, limit))
+
     out: List[Dict[str, str]] = []
-    for item in images[:n]:
+    for bi, item in enumerate(images[:limit]):
         if not isinstance(item, dict):
             continue
         title = str(item.get("title") or "").strip()
@@ -239,6 +475,11 @@ def search_aircraft_images(query: str, *, num_results: int = 15, timeout: float 
         except Exception:
             host = ""
         source_label = src_name or host or "web"
+        pos_raw = item.get("position")
+        try:
+            pos_i = int(pos_raw) if pos_raw is not None and str(pos_raw).strip() != "" else bi + 1
+        except (TypeError, ValueError):
+            pos_i = bi + 1
         # ``_source_page`` is used only for strict tail verification (title/url/source page text).
         out.append(
             {
@@ -246,6 +487,7 @@ def search_aircraft_images(query: str, *, num_results: int = 15, timeout: float 
                 "title": title,
                 "source": source_label,
                 "_source_page": src_link,
+                "_position": str(pos_i),
             }
         )
     return out
@@ -400,7 +642,18 @@ def build_aircraft_image_search_queries(
     mm = normalize_aircraft_name(mm) if mm else ""
     if len(mm) < 2:
         return []
-    return [
+    # Compact ``G650 interior``-style strings first (high recall on Google Images), then legacy fan-out.
+    try:
+        from services.image_query_decision_engine import _prepend_searchapi_high_recall_queries
+
+        pre = (
+            _prepend_searchapi_high_recall_queries(mm, "cabin")
+            + _prepend_searchapi_high_recall_queries(mm, "exterior")
+            + _prepend_searchapi_high_recall_queries(mm, "cockpit")
+        )
+    except Exception:
+        pre = []
+    body = [
         f"{mm} aircraft exterior",
         f"{mm} cabin",
         f"{mm} private jet",
@@ -408,6 +661,15 @@ def build_aircraft_image_search_queries(
         f"{mm} interior",
         f"{mm} walkaround",
     ]
+    out: List[str] = []
+    seen: set[str] = set()
+    for q in pre + body:
+        k = (q or "").strip().lower()
+        if not k or k in seen:
+            continue
+        seen.add(k)
+        out.append(q.strip())
+    return out
 
 
 def _domain_priority_score(url: str, *, mode: str = "model") -> int:
@@ -418,6 +680,27 @@ def _domain_priority_score(url: str, *, mode: str = "model") -> int:
 def _avbuyer_penalty(url: str, source: str) -> int:
     blob = f"{url} {source}".lower()
     return -400 if "avbuyer" in blob else 0
+
+
+def _generic_stock_image_penalty(url: str, title: str, source: str) -> float:
+    """Down-rank obvious stock / AI / logistics spam that Bing/Google sometimes surface for jet queries."""
+    blob = f"{url} {title} {source}".lower()
+    needles = (
+        "freepik",
+        "shutterstock",
+        "dreamstime",
+        "adobe stock",
+        "123rf",
+        "istockphoto",
+        "stock photo",
+        "generative ai",
+        "generative ia",
+        "ai image",
+        "needs a load aircraft",
+        "mounting needs",
+        "logistics mounting",
+    )
+    return -650.0 if any(x in blob for x in needles) else 0.0
 
 
 def _other_tails_in_blob(canonical_tail: str, blob: str) -> List[str]:
@@ -471,6 +754,60 @@ def _dedupe_rows_by_url(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return out
 
 
+def _marketing_type_for_scoring(
+    user_query: str,
+    phly_rows: List[Dict[str, Any]],
+    required_marketing_type: Optional[str],
+) -> Optional[str]:
+    """Canonical marketing string for **ranking boosts** only (not used as SearchAPI ``q`` in literal mode)."""
+    if (required_marketing_type or "").strip():
+        return normalize_aircraft_name(str(required_marketing_type).strip())
+    for r in (phly_rows or [])[:4]:
+        man = (r.get("manufacturer") or "").strip()
+        mdl = (r.get("model") or "").strip()
+        if man or mdl:
+            mm = compose_manufacturer_model_phrase(man, mdl)
+            mm = normalize_aircraft_name(mm)
+            return mm or None
+    try:
+        from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+
+        blob = (user_query or "").strip()
+        mans = _detect_manufacturers(blob.lower())
+        mdls = _detect_models(blob)
+        man = mans[0] if mans else ""
+        mdl = mdls[0] if mdls else ""
+        if man or mdl:
+            mm = compose_manufacturer_model_phrase(man, mdl)
+            return normalize_aircraft_name(mm) if mm else None
+    except Exception:
+        pass
+    return None
+
+
+def _literal_single_search_q(
+    user_query: str,
+    *,
+    strict_tail_mode: bool,
+    required_tail: Optional[str],
+    strict_model_mode: bool,
+    required_marketing_type: Optional[str],
+    mm_fallback: Optional[str],
+) -> Optional[str]:
+    """Single ``q`` for SearchAPI: user text as-typed (spacing normalized), else tail / model fallbacks."""
+    q = " ".join((user_query or "").strip().split())
+    if len(q) >= 3:
+        return q[:200]
+    tail = normalize_tail_token(required_tail or "")
+    if strict_tail_mode and tail:
+        return tail[:200]
+    if strict_model_mode and (required_marketing_type or "").strip():
+        return str(required_marketing_type).strip()[:200]
+    if mm_fallback and len(mm_fallback.strip()) >= 3:
+        return mm_fallback.strip()[:200]
+    return None
+
+
 def fetch_ranked_searchapi_aircraft_images(
     *,
     queries: List[str],
@@ -481,32 +818,58 @@ def fetch_ranked_searchapi_aircraft_images(
     max_out: int = 5,
     user_query: str = "",
     gallery_meta: Optional[Dict[str, Any]] = None,
+    premium_intent: Optional[Dict[str, Any]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
-    Run Bing image queries, score (tail confidence or model match), rank, cap per-domain, return gallery rows.
+    Run SearchAPI image search (Google or Bing), score, rank, cap per-domain, return gallery rows.
+
+    Model mode (default): after strict verification on **image URL, title, source name, and source page
+    link**, ordering follows Google’s ``position`` in **buckets** (see ``SEARCHAPI_AVIATION_RANKUP_WINDOW``):
+    within each bucket, **aviation / OEM / trade-press** hosts rank above obvious off-topic pages while
+    keeping overall API order. Set ``SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER=0`` for legacy host-heavy
+    scoring. Set ``SEARCHAPI_AVIATION_RANKUP_WINDOW=0`` to disable rank-up inside preserve mode.
+
+    Optional **image rank & filter** pass (``SEARCHAPI_IMAGE_RANK_FILTER_ENGINE=1``): deterministic
+    broker-style filter on titles/URLs (houses/hotels, wrong section, weak aircraft match). Requires
+    at least **two** surviving images or returns an **empty** gallery (precision over filler). Meta
+    may include ``image_rank_filter_engine``.
 
     Returns ``(images, meta)`` where ``meta`` may include empty-state UX and tail confidence notes.
     """
-    meta_out: Dict[str, Any] = {}
+    meta_out: Dict[str, Any] = {"consultant_searchapi_image_engine": searchapi_image_engine()}
     mode = "tail" if (strict_tail_mode and (canonical_tail or "").strip()) else "model"
     intent = detect_query_image_intent(user_query)
+    preserve_google = (
+        searchapi_preserve_google_image_rank_order()
+        and not strict_tail_mode
+        and bool((marketing_type_for_model_match or "").strip())
+    )
+    meta_out["searchapi_preserve_google_rank_order"] = bool(preserve_google)
+    rankup_w = searchapi_aviation_rankup_window() if preserve_google else 0
+    meta_out["searchapi_aviation_rankup_window"] = int(rankup_w)
+    meta_out["searchapi_max_per_image_domain"] = searchapi_max_images_per_domain(mode=mode)
 
     merged: List[Dict[str, Any]] = []
-    for q in queries:
+    for qi, q in enumerate(queries):
         q = (q or "").strip()
         if not q:
             continue
         batch = search_aircraft_images(q, num_results=per_query_results)
-        for b in batch:
+        for bi, b in enumerate(batch):
             url = b.get("url") or ""
             title = b.get("title") or ""
             source = b.get("source") or ""
             page = (b.get("_source_page") or "").strip() if isinstance(b, dict) else ""
+            try:
+                pos_i = int(str((b or {}).get("_position") or (bi + 1)).strip())
+            except ValueError:
+                pos_i = bi + 1
             row = {
                 "url": url,
                 "title": title,
                 "source": source,
                 "_source_page": page,
+                "_api_rank": qi * 10_000 + pos_i,
             }
             if strict_tail_mode and canonical_tail:
                 ts = compute_tail_match_score(row, str(canonical_tail).strip())
@@ -518,9 +881,11 @@ def fetch_ranked_searchapi_aircraft_images(
                 row["_tail_match_score"] = ts
                 row["_tail_confidence"] = conf
             elif (marketing_type_for_model_match or "").strip():
+                # Model alignment: strict tokens by default; optional relaxed match (still rejects negatives).
                 blob_chk = f"{url} {title} {source} {page}"
                 from services.consultant_aircraft_images import (
                     _derive_model_negative_tokens,
+                    _model_tokens_match_searchapi_relaxed,
                     _model_tokens_match_strict,
                 )
 
@@ -529,11 +894,63 @@ def fetch_ranked_searchapi_aircraft_images(
                 neg = _derive_model_negative_tokens(mt)
                 if neg and any(n.lower() in low_bc for n in neg):
                     continue
-                if not _model_tokens_match_strict(blob_chk, mt):
+                _match_fn = (
+                    _model_tokens_match_searchapi_relaxed
+                    if searchapi_image_relax_model_match()
+                    else _model_tokens_match_strict
+                )
+                if not _match_fn(blob_chk, mt):
                     continue
             merged.append(row)
 
     merged = _dedupe_rows_by_url(merged)
+
+    from services.consultant_image_search_orchestrator import (
+        PREMIUM_VERIFIED_IMAGE_FAILURE,
+        apply_premium_image_validation,
+    )
+
+    pre_validation_n = len(merged)
+    pi = premium_intent or {}
+    if searchapi_skip_premium_image_validation():
+        _applied_premium = False
+    else:
+        merged, _applied_premium = apply_premium_image_validation(merged, pi)
+    premium_stripped_all = bool(
+        pi.get("validate_images") and pre_validation_n > 0 and len(merged) == 0
+    )
+
+    tavily_host_boosts: Dict[str, int] = {}
+    meta_out["searchapi_tavily_domain_verify"] = False
+    if preserve_google:
+        from services.tavily_aviation_domain_boost import (
+            prefetch_tavily_domain_boosts,
+            searchapi_tavily_domain_max_lookups,
+            searchapi_tavily_domain_verify_enabled,
+        )
+
+        if searchapi_tavily_domain_verify_enabled():
+            meta_out["searchapi_tavily_domain_verify"] = True
+            host_order: List[str] = []
+            for r in merged:
+                page_u = str(r.get("_source_page") or "")
+                url_u = str(r.get("url") or "")
+                tab = _domain_score_on_lowercase_blob(f"{page_u} {url_u}".lower(), mode)
+                if tab >= 550:
+                    continue
+                dom = extract_domain(page_u) or extract_domain(url_u)
+                if dom:
+                    host_order.append(dom)
+            tavily_host_boosts = prefetch_tavily_domain_boosts(
+                host_order,
+                max_lookups=searchapi_tavily_domain_max_lookups(),
+                timeout_per_host=_searchapi_tavily_domain_timeout_s(),
+            )
+            meta_out["searchapi_tavily_domain_hosts_scored"] = len(tavily_host_boosts)
+
+    _norm_host = None
+    if tavily_host_boosts:
+        from services.tavily_aviation_domain_boost import normalize_source_host as _norm_host
 
     canon_tail = (
         normalize_tail_token(str(canonical_tail).strip())
@@ -561,29 +978,65 @@ def fetch_ranked_searchapi_aircraft_images(
         source = str(row.get("source") or "")
         page = str(row.get("_source_page") or "")
         blob = f"{url} {title} {source} {page}"
-        score = float(_domain_score_for_query_mode(url, mode))
-        score += float(_avbuyer_penalty(url, source))
-        if strict_tail_mode and canonical_tail:
-            ts = int(row.get("_tail_match_score") or compute_tail_match_score(row, str(canonical_tail).strip()))
-            score += float(ts) * 0.35
-            score += agreement_boost
-        elif (marketing_type_for_model_match or "").strip():
-            score += float(_model_match_score(blob, marketing_type_for_model_match))
+        if preserve_google:
+            api_r = int(row.get("_api_rank") or 9_999_999)
+            score = 5_000_000.0 - float(api_r)
+            score += float(_model_match_score(blob, str(marketing_type_for_model_match).strip())) * 2.0
+            score += float(_domain_score_for_query_mode(url, mode)) * 0.0001
+            score += float(_avbuyer_penalty(url, source)) * 0.15
+            score += _generic_stock_image_penalty(url, title, source)
+            tw = 0
+            if tavily_host_boosts and _norm_host is not None:
+                tw = max(
+                    int(tavily_host_boosts.get(_norm_host(extract_domain(page)), 0)),
+                    int(tavily_host_boosts.get(_norm_host(extract_domain(url)), 0)),
+                )
+            score += float(tw) * 0.06
+        else:
+            score = float(_domain_score_for_query_mode(url, mode))
+            score += float(_avbuyer_penalty(url, source))
+            score += _generic_stock_image_penalty(url, title, source)
+            if strict_tail_mode and canonical_tail:
+                ts = int(row.get("_tail_match_score") or compute_tail_match_score(row, str(canonical_tail).strip()))
+                score += float(ts) * 0.35
+                score += agreement_boost
+            elif (marketing_type_for_model_match or "").strip():
+                score += float(_model_match_score(blob, marketing_type_for_model_match))
         score = apply_intent_boost(score, row, intent)
         scored.append((score, row))
 
-    scored.sort(key=lambda t: t[0], reverse=True)
+    if preserve_google and rankup_w > 0:
+
+        def _preserve_google_rankup_sort_key(t: Tuple[float, Dict[str, Any]]) -> Tuple[int, int, float]:
+            s, row = t
+            api_r = int(row.get("_api_rank") or 9_999_999)
+            ar = aviation_rankup_authority_score(
+                str(row.get("url") or ""),
+                str(row.get("_source_page") or ""),
+                str(row.get("source") or ""),
+                str(row.get("title") or ""),
+                mode=mode,
+                tavily_host_boosts=tavily_host_boosts or None,
+            )
+            bucket = api_r // rankup_w
+            # Ascending: smaller bucket first; within bucket higher aviation first; then higher composite.
+            return (bucket, -ar, -s)
+
+        scored.sort(key=_preserve_google_rankup_sort_key)
+    else:
+        scored.sort(key=lambda t: t[0], reverse=True)
 
     def _row_is_avbuyer(row: Dict[str, Any]) -> bool:
         return "avbuyer" in f"{row.get('url', '')}{row.get('source', '')}".lower()
 
-    non_ab = [(s, r) for s, r in scored if not _row_is_avbuyer(r)]
-    high_floor = 750 if mode == "model" else 700
-    high_tier = sum(
-        1 for s, r in non_ab if _domain_score_for_query_mode(str(r.get("url") or ""), mode) >= high_floor
-    )
-    if high_tier >= 3:
-        scored = [(s, r) for s, r in scored if not _row_is_avbuyer(r)]
+    if not preserve_google:
+        non_ab = [(s, r) for s, r in scored if not _row_is_avbuyer(r)]
+        high_floor = 750 if mode == "model" else 700
+        high_tier = sum(
+            1 for s, r in non_ab if _domain_score_for_query_mode(str(r.get("url") or ""), mode) >= high_floor
+        )
+        if high_tier >= 3:
+            scored = [(s, r) for s, r in scored if not _row_is_avbuyer(r)]
 
     # Tail: if any ``confirmed`` tier exists, drop ``probable``-only rows for the final list.
     if strict_tail_mode and canonical_tail:
@@ -600,12 +1053,13 @@ def fetch_ranked_searchapi_aircraft_images(
         if not url:
             continue
         dom = extract_domain(url) or "_unknown"
-        if domain_counts.get(dom, 0) >= MAX_PER_DOMAIN:
+        max_per_dom = searchapi_max_images_per_domain(mode=mode)
+        if domain_counts.get(dom, 0) >= max_per_dom:
             continue
         page_u = str(row.get("_source_page") or "").strip() or None
         item: Dict[str, Any] = {
             "url": url,
-            "source": "searchapi_bing_images",
+            "source": searchapi_gallery_source_label(),
             "description": (str(row.get("title") or "").strip() or None),
             "page_url": page_u,
             "lookup_key": None,
@@ -617,11 +1071,40 @@ def fetch_ranked_searchapi_aircraft_images(
         if len(out) >= max_out:
             break
 
+    if out and (marketing_type_for_model_match or canonical_tail or "").strip():
+        from services.aviation_image_rank_filter_engine import (
+            apply_rank_filter_to_gallery_items,
+            searchapi_image_rank_filter_engine_enabled,
+        )
+
+        if searchapi_image_rank_filter_engine_enabled():
+            _sec = intent or (premium_intent or {}).get("image_type") or "interior"
+            _qi = {
+                "aircraft": (marketing_type_for_model_match or canonical_tail or "").strip(),
+                "section": str(_sec).strip() or "interior",
+                "type": str((premium_intent or {}).get("image_type") or _sec or "interior"),
+            }
+            _prev_n = len(out)
+            out = apply_rank_filter_to_gallery_items(
+                gallery_items=out,
+                query_intent=_qi,
+                max_out=max_out,
+                gallery_meta=gallery_meta,
+            )
+            if _prev_n and not out:
+                meta_out["consultant_gallery_empty"] = True
+                meta_out["consultant_gallery_message"] = (
+                    "No verified images met quality and relevance thresholds."
+                )
+
     meta_out["consultant_searchapi_gallery_mode"] = mode
     if strict_tail_mode and canonical_tail:
         if not out:
             meta_out["consultant_gallery_empty"] = True
-            meta_out["consultant_gallery_message"] = "No verified images found for this aircraft."
+            if premium_stripped_all:
+                meta_out["consultant_gallery_message"] = PREMIUM_VERIFIED_IMAGE_FAILURE
+            else:
+                meta_out["consultant_gallery_message"] = "No verified images found for this aircraft."
             meta_out["consultant_gallery_suggestions"] = [
                 "View similar aircraft by model",
                 "Broaden search scope",
@@ -631,6 +1114,9 @@ def fetch_ranked_searchapi_aircraft_images(
             meta_out["consultant_gallery_tail_note"] = (
                 "Images may not exactly match this tail number"
             )
+    elif not out and premium_stripped_all:
+        meta_out["consultant_gallery_empty"] = True
+        meta_out["consultant_gallery_message"] = PREMIUM_VERIFIED_IMAGE_FAILURE
 
     if gallery_meta is not None:
         gallery_meta.update(meta_out)
@@ -645,33 +1131,97 @@ def resolve_queries_for_consultant_gallery(
     strict_tail_mode: bool,
     required_marketing_type: Optional[str],
     strict_model_mode: bool,
-) -> Tuple[List[str], Optional[str], Optional[str]]:
+) -> Tuple[List[str], Optional[str], Optional[str], Dict[str, Any]]:
     """
-    Returns (queries, canonical_tail_for_strict_filter, marketing_type_for_scoring).
+    Returns (queries, canonical_tail_for_strict_filter, marketing_type_for_scoring, premium_intent).
+
+    Default literal mode with **``SEARCHAPI_PRECISION_QUERIES``** on (default): 3–5 short orchestrated
+    queries from classified intent (HyeAero-style). Set ``SEARCHAPI_PRECISION_QUERIES=0`` for a
+    single spacing-normalized user-string ``q``.
 
     ``canonical_tail`` is set when strict tail gallery mode is active (user message contained tail).
     """
+    from services.consultant_image_search_orchestrator import (
+        build_precision_image_search_queries,
+        classify_premium_aviation_intent,
+        searchapi_precision_queries_enabled,
+    )
+
     tail = normalize_tail_token(required_tail or "")
+    mm_score = _marketing_type_for_scoring(user_query, phly_rows, required_marketing_type)
+    intent = classify_premium_aviation_intent(
+        user_query,
+        required_tail=required_tail,
+        required_marketing_type=required_marketing_type,
+        phly_rows=phly_rows,
+    )
+
+    if searchapi_literal_user_query_mode():
+        if searchapi_precision_queries_enabled():
+            qs, _iq_meta = build_precision_image_search_queries(
+                intent,
+                user_query=user_query,
+                strict_tail_mode=strict_tail_mode,
+                required_tail=required_tail,
+                required_marketing_type=required_marketing_type,
+                phly_rows=phly_rows,
+                mm_for_scoring=mm_score,
+            )
+            if _iq_meta.get("image_query_engine"):
+                intent["image_query_engine"] = _iq_meta["image_query_engine"]
+            if not qs:
+                # Decision engine intentionally returned no queries (INVALID model, buying-only, …).
+                if intent.get("suppress_image_search") or intent.get("type") == "INVALID":
+                    qs = []
+                else:
+                    sq = _literal_single_search_q(
+                        user_query,
+                        strict_tail_mode=strict_tail_mode,
+                        required_tail=required_tail,
+                        strict_model_mode=strict_model_mode,
+                        required_marketing_type=required_marketing_type,
+                        mm_fallback=mm_score,
+                    )
+                    qs = [sq] if sq else []
+            tail_out = tail if strict_tail_mode and tail else None
+            return qs, tail_out, mm_score, intent
+
+        sq = _literal_single_search_q(
+            user_query,
+            strict_tail_mode=strict_tail_mode,
+            required_tail=required_tail,
+            strict_model_mode=strict_model_mode,
+            required_marketing_type=required_marketing_type,
+            mm_fallback=mm_score,
+        )
+        if not sq:
+            return [], None, mm_score, intent
+        tail_out = tail if strict_tail_mode and tail else None
+        return [sq], tail_out, mm_score, intent
+
+    # Legacy: multi-query fan-out (``SEARCHAPI_LITERAL_USER_QUERY=0``).
     if strict_tail_mode and tail:
-        return build_aircraft_image_search_queries(canonical_tail=tail, manufacturer=None, model=None), tail, None
+        return (
+            build_aircraft_image_search_queries(canonical_tail=tail, manufacturer=None, model=None),
+            tail,
+            None,
+            intent,
+        )
 
     if strict_model_mode and (required_marketing_type or "").strip():
         mm = normalize_aircraft_name(str(required_marketing_type).strip())
-        # Use the full marketing string for all facets (manufacturer/model may be one token).
         qs = build_aircraft_image_search_queries(canonical_tail=None, manufacturer="", model=mm)
-        return qs, None, mm
+        return qs, None, mm, intent
 
-    # Prefer Phly make/model when present (registry-resolved type for tail workflows).
-    for r in phly_rows[:4]:
+    for r in (phly_rows or [])[:4]:
         man = (r.get("manufacturer") or "").strip()
         mdl = (r.get("model") or "").strip()
         if man or mdl:
             mm = compose_manufacturer_model_phrase(man, mdl)
             mm = normalize_aircraft_name(mm)
             qs = build_aircraft_image_search_queries(canonical_tail=None, manufacturer="", model=mm)
-            return qs, None, mm or None
+            return qs, None, mm or None, intent
 
-    # Last resort: infer manufacturer/model tokens from user text only (no tail → no strict tail mode here).
     try:
         from rag.consultant_query_expand import _detect_manufacturers, _detect_models
 
@@ -684,12 +1234,11 @@ def resolve_queries_for_consultant_gallery(
             mm = compose_manufacturer_model_phrase(man, mdl)
             mm = normalize_aircraft_name(mm)
             qs = build_aircraft_image_search_queries(canonical_tail=None, manufacturer="", model=mm)
-            return qs, None, mm or None
+            return qs, None, mm or None, intent
     except Exception:
         pass
 
-    # Ultra-generic fallback (still avoids inventing a tail).
     q = (user_query or "").strip()
     if len(q) >= 3:
-        return [f"{q[:120]} aircraft exterior"], None, None
-    return [], None, None
+        return [f"{q[:120]} aircraft exterior"], None, None, intent
+    return [], None, None, intent

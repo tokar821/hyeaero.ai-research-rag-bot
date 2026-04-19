@@ -20,6 +20,7 @@ import os
 import re
 from typing import List, Optional, Tuple
 
+from rag.aviation_tail import is_invalid_placeholder_us_n_tail
 from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
 from rag.phlydata_consultant_lookup import consultant_phly_lookup_token_list
 
@@ -252,6 +253,10 @@ def resolve_hybrid_image_gallery_intent(
     q = (query or "").strip()
     if not q:
         return False, "off", None
+
+    for _m in re.finditer(r"\bN(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}\b", q, re.I):
+        if is_invalid_placeholder_us_n_tail(_m.group(0)):
+            return False, "invalid_placeholder_tail", None
 
     if wants_consultant_aircraft_images_in_answer(q):
         return True, "keywords_strict", None

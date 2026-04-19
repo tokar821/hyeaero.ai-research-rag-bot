@@ -3,9 +3,10 @@
 Pipeline: :mod:`rag.conversation_guard` → fine intent (:mod:`rag.consultant_fine_intent`) →
 :mod:`rag.hybrid_retrieval` (structured-first vs vector-primary) →
 **aviation tool router** (registry SQL, Pinecone metadata filters) →
-:mod:`rag.aviation_engines` + mission hints → **SQL** (``phlydata_aircraft``, ``faa_master``, listings) →
+:mod:`rag.aviation_engines` + mission hints → **buyer psychology** (:mod:`services.buyer_psychology_engine`) →
+**SQL** (``phlydata_aircraft``, ``faa_master``, listings) → **deal killer** (:mod:`services.deal_killer_engine`) when listing/Phly signals exist →
 optional **Pinecone** (suppressed when structured SQL already answered the turn) →
-Tavily → context builder → LLM answer.
+Tavily → image stack → context builder → LLM answer.
 
 Router env/config: :mod:`rag.consultant_pipeline`. Prompt strings: :mod:`rag.query_service` (lazy).
 """
@@ -224,6 +225,7 @@ def run_consultant_retrieval_bundle(
 
     _router = build_consultant_tool_router(_fine, query, _strict_tails)
     _mission_hint = (_router.mission_reasoning_hint or "").strip()
+    buyer_psychology_result: Optional[Dict[str, Any]] = None
     _aviation_engines_ctx = (_router.aviation_engines_block or "").strip()
     _consultant_aviation_prefix = "\n\n".join(
         p for p in (_mission_hint, _aviation_engines_ctx) if p
@@ -532,6 +534,25 @@ def run_consultant_retrieval_bundle(
             serial_model_preview=_fmt_q_preview(" ".join(ed.get("serial_or_model_tokens") or []), 160),
             aviation_entities_json=_fmt_q_preview(ae_s, 240),
         )
+    try:
+        from services.buyer_psychology_engine import (
+            consultant_buyer_psychology_enabled,
+            run_buyer_psychology_engine,
+        )
+
+        if consultant_buyer_psychology_enabled():
+            ae0 = entity_detection.aviation_entities or {}
+            mlist0 = list(ae0.get("aircraft_models") or []) if isinstance(ae0, dict) else []
+            buyer_psychology_result = run_buyer_psychology_engine(
+                latest_query=query,
+                conversation_history=history,
+                detected_aircraft_interest=mlist0,
+                budget_hint=None,
+                mission_hint=_mission_hint or None,
+                phly_rows=phly_rows,
+            )
+    except Exception as _bpe:
+        logger.debug("buyer_psychology_engine skipped: %s", _bpe)
     tq = enrich_tavily_query_for_consultant(
         query,
         expanded.get("tavily_query") or query,
@@ -574,7 +595,7 @@ def run_consultant_retrieval_bundle(
         merge_purchase = False
     img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
-    from services.searchapi_aircraft_images import searchapi_aircraft_images_enabled
+    from services.searchapi_aircraft_images import searchapi_aircraft_images_enabled, searchapi_image_engine
 
     _searchapi_images = searchapi_aircraft_images_enabled()
     requested_tail_for_images: Optional[str] = None
@@ -591,7 +612,7 @@ def run_consultant_retrieval_bundle(
         except Exception:
             pass
     inferred_marketing_type_for_images: Optional[str] = None
-    if user_wants_gallery and not strict_tail_image_request and not phly_rows:
+    if user_wants_gallery and not strict_tail_image_request:
         try:
             from rag.consultant_query_expand import _detect_manufacturers, _detect_models
             from services.searchapi_aircraft_images import (
@@ -602,13 +623,33 @@ def run_consultant_retrieval_bundle(
             blob = (query or "").strip()
             mans = _detect_manufacturers(blob.lower())
             mdls = _detect_models(blob)
-            mt = compose_manufacturer_model_phrase(
+            mt_q = compose_manufacturer_model_phrase(
                 mans[0] if mans else "",
                 mdls[0] if mdls else "",
             ).strip()
-            inferred_marketing_type_for_images = mt or (
-                normalize_aircraft_name(mdls[0]) if mdls else None
-            )
+            mt_q = normalize_aircraft_name(mt_q) if mt_q else ""
+            if not mt_q and mdls:
+                mt_q = normalize_aircraft_name(mdls[0]) if mdls[0] else ""
+
+            mt_phly = ""
+            for r in phly_rows or []:
+                if not isinstance(r, dict):
+                    continue
+                man = (r.get("manufacturer") or "").strip()
+                mdl = (r.get("model") or "").strip()
+                mm = compose_manufacturer_model_phrase(man, mdl).strip()
+                if len(mm) >= 3:
+                    mt_phly = normalize_aircraft_name(mm)
+                    break
+
+            # Prefer an explicit model mention in the **current** user text over unrelated Phly context
+            # (stale rows or weak joins) so gallery SearchAPI queries stay on-type.
+            if mt_q and len(mt_q) >= 3:
+                inferred_marketing_type_for_images = mt_q
+            elif mt_phly and len(mt_phly) >= 3:
+                inferred_marketing_type_for_images = mt_phly
+            else:
+                inferred_marketing_type_for_images = None
         except Exception:
             inferred_marketing_type_for_images = None
 
@@ -1100,13 +1141,87 @@ def run_consultant_retrieval_bundle(
         # Part 3: strict tail + SearchAPI produced no title/URL-confirmed matches for that exact mark.
         data_used["consultant_strict_tail_no_confirmed_searchapi_images"] = 1
     if _searchapi_images:
-        data_used["consultant_searchapi_bing_images_enabled"] = 1
+        data_used["consultant_searchapi_images_enabled"] = 1
+        data_used["consultant_searchapi_image_engine"] = searchapi_image_engine()
     # Internal join helper for image lookup — not needed by clients; keeps responses smaller.
     data_used.pop("consultant_listing_rows_for_images", None)
     if wants_consultant_aircraft_images_in_answer(query):
         data_used["consultant_user_asked_photos"] = 1
     if user_wants_gallery:
         data_used["consultant_show_image_ui_context"] = 1
+        try:
+            from services.aviation_intelligence_protocol import build_aviation_intelligence_envelope
+
+            data_used["aviation_intelligence_envelope"] = build_aviation_intelligence_envelope(
+                user_query=query,
+                user_wants_gallery=True,
+                phly_rows=phly_rows,
+                aircraft_images=aircraft_images,
+            )
+        except Exception as _env_e:
+            logger.debug("aviation_intelligence_envelope skipped: %s", _env_e)
+    try:
+        from services.image_answer_alignment_engine import (
+            build_image_answer_alignment_plan,
+            consultant_image_answer_alignment_enabled,
+            format_alignment_block_for_layered_context,
+        )
+
+        if consultant_image_answer_alignment_enabled() and user_wants_gallery and aircraft_images:
+            _gm_align = {
+                k: data_used[k]
+                for k in (
+                    "consultant_premium_intent",
+                    "image_query_engine",
+                    "image_rank_filter_engine",
+                )
+                if data_used.get(k) not in (None, "", False, {})
+            }
+            _plan = build_image_answer_alignment_plan(
+                user_query=query,
+                aircraft_images=aircraft_images,
+                phly_rows=phly_rows,
+                gallery_meta=_gm_align,
+                marketing_type_hint=inferred_marketing_type_for_images,
+            )
+            data_used["image_answer_alignment"] = _plan
+            _align_ctx = format_alignment_block_for_layered_context(_plan)
+            if _align_ctx:
+                context = f"{(context or '').rstrip()}\n\n---\n\n**[IMAGE ANSWER ALIGNMENT CONTEXT]**\n\n{_align_ctx}".strip()
+    except Exception as _ial_e:
+        logger.debug("image_answer_alignment skipped: %s", _ial_e)
+    if buyer_psychology_result is not None:
+        data_used["buyer_psychology"] = buyer_psychology_result
+    try:
+        from services.deal_killer_engine import (
+            consultant_deal_killer_enabled,
+            run_deal_killer_from_consultant_context,
+        )
+
+        if consultant_deal_killer_enabled():
+            _dk = run_deal_killer_from_consultant_context(
+                phly_rows=phly_rows,
+                primary_listing=data_used.get("consultant_primary_listing_for_deal_review"),
+                query=query,
+                buyer_psychology=data_used.get("buyer_psychology"),
+                db=svc.db,
+            )
+            if _dk:
+                data_used["deal_killer"] = _dk
+    except Exception as _dke:
+        logger.debug("deal_killer_engine skipped: %s", _dke)
+    try:
+        from services.aircraft_decision_engine import (
+            consultant_query_requests_aircraft_decision,
+            public_decision_payload,
+            run_aircraft_decision_engine,
+        )
+
+        if consultant_query_requests_aircraft_decision(query):
+            _dec = run_aircraft_decision_engine(query, db=svc.db)
+            data_used["aircraft_decision"] = public_decision_payload(_dec)
+    except Exception as _dec_e:
+        logger.debug("aircraft_decision skipped: %s", _dec_e)
     data_used["consultant_image_intent_source"] = consultant_image_intent_src
     if consultant_image_llm_intent is not None:
         data_used["consultant_image_llm_intent"] = consultant_image_llm_intent
@@ -1323,18 +1438,81 @@ def run_consultant_retrieval_bundle(
             "\n\nPurchase/price/availability: user expects **ask**, **source**, honest **availability**. "
             "**Lead with PhlyData** internal lines and [FOR USER REPLY] guidance in the PhlyData block when present; then use [FOR USER REPLY] lines in the **listing** block as marketplace-ingest supplement — not as a replacement for PhlyData internal fields."
         )
+    if consultant_image_intent_src == "invalid_placeholder_tail":
+        system_prompt += (
+            "\n\n**Invalid / placeholder registration (mandatory):** The user cited a tail that is not a "
+            "credible U.S. civil mark (for example **all zeros** after **N**). Do **not** describe photos, "
+            "specs, or ownership. State plainly the registration is invalid or a placeholder and ask for the "
+            "correct tail or aircraft type in one short line."
+        )
     if user_wants_gallery:
+        _pi = data_used.get("consultant_premium_intent")
+        if isinstance(_pi, dict) and _pi:
+            _compact = {
+                k: _pi.get(k)
+                for k in (
+                    "type",
+                    "aircraft",
+                    "tail_number",
+                    "image_type",
+                    "image_facets",
+                    "priority",
+                    "suppress_image_search",
+                    "validate_images",
+                )
+                if _pi.get(k) not in (None, "", [], {})
+            }
+            system_prompt += (
+                "\n\n**Premium image intent (mandatory alignment):** The retrieval engine classified this visual turn as: "
+                f"{json.dumps(_compact, ensure_ascii=False)}. "
+                "Treat this JSON as authoritative for tail/model and visual facet (cockpit vs cabin vs exterior). "
+                "Do not contradict it in prose (for example, do not describe or imply a different registration than "
+                "`tail_number` when that field is set). If `type` is INVALID, the user likely named a non-existent model, "
+                "a placeholder tail (e.g. all zeros after **N**), or an unsupported label — state that plainly; do not "
+                "invent specs, pricing, or verified photos. "
+                "If `suppress_image_search` is true, the engine intentionally did not run a broad image fan-out for this "
+                "message; do not imply a large verified gallery exists unless **Aircraft images** are actually attached."
+            )
+        _aie = data_used.get("aviation_intelligence_envelope")
+        if isinstance(_aie, dict) and _aie:
+            _slim = {
+                k: _aie[k]
+                for k in ("status", "reason_code", "aircraft", "tail_number", "image_pipeline_executed")
+                if _aie.get(k) not in (None, "", False)
+            }
+            for _b in _aie.get("blocks") or []:
+                if isinstance(_b, dict) and _b.get("type") == "verified_images":
+                    _slim["verified_image_count"] = _b.get("count")
+            system_prompt += (
+                "\n\n**Aviation intelligence envelope (mandatory — overrides chatty defaults for this visual outcome):**\n"
+                f"{json.dumps(_slim, ensure_ascii=False)}\n"
+                "Operate as **aviation intelligence**, not a conversational assistant, for this outcome: "
+                "**no** generic explanations, **no** filler, **no** long apologies. "
+                "The **first sentence** of your reply must reflect ``status`` in plain language "
+                "(INVALID / AMBIGUOUS / OK / RETRIEVAL_FAILED / NO_VISUAL). "
+                "Never contradict ``status``; never claim verified gallery images when ``verified_image_count`` is 0 or missing. "
+                "If status is OK and ``verified_image_count`` > 0, add **at most one** additional short sentence on what the images show — then stop."
+            )
+        _ial = data_used.get("image_answer_alignment")
+        if isinstance(_ial, dict) and (_ial.get("llm_directives") or "").strip():
+            try:
+                from services.image_answer_alignment_engine import consultant_image_answer_alignment_enabled
+
+                if consultant_image_answer_alignment_enabled():
+                    system_prompt += "\n\n" + str(_ial["llm_directives"]).strip()
+            except Exception:
+                pass
+    if aircraft_images:
         system_prompt += (
             "\n\n**User asked to see this aircraft (mandatory tone):** Treat this as a **photo / gallery** request. "
-            "The app returns a **small gallery (about 3–5 images)** when search finds matches. You must **never** "
+            "The app is showing a **small gallery (about 3–5 images)** from search. You must **never** "
             "say you cannot provide images, photos, or pictures, **not** refuse visuals, **not** say you only offer "
             "text, and **not** redirect to flight-tracking sites as the primary answer. Open naturally — e.g. "
             "\"Here are a few examples of the [type] so you can see the aircraft and typical cabin layout\" — then "
-            "acknowledge **photos in the app** when **Aircraft images** / gallery context exists; add brief "
-            "type-appropriate visual detail in prose (airframe class, typical exterior/cabin cues). "
+            "acknowledge **photos in the app**. Add brief type-appropriate visual detail in prose (airframe class, "
+            "typical exterior/cabin cues). "
             "Write like a human aviation consultant: warm, concise, professional — not robotic disclaimers."
         )
-    if aircraft_images:
         if data_used.get("consultant_aircraft_images_representative"):
             system_prompt += (
                 "\n\n**Aircraft images:** Representative photos of this aircraft **type** are shown in the app. "
@@ -1366,9 +1544,10 @@ def run_consultant_retrieval_bundle(
         if isinstance(_gs, list) and _gs:
             _sug = " Suggestions: " + "; ".join(str(x) for x in _gs[:4]) + "."
         system_prompt += (
-            "\n\n**Aircraft images (strict tail):** Image search did not return verified matches for this tail. "
-            f"Tell the user clearly: **{_gm or 'No verified images found for this aircraft.'}** "
-            "(Do not substitute generic type photos or a different tail.)"
+            "\n\n**Aircraft images (no verified matches):** Search and post-validation did not yield images that "
+            "meet the engine’s verification bar for this request (exact tail / model / visual facet when applicable). "
+            f"Lead with this user-facing line verbatim: **{_gm or 'No verified images found for this aircraft.'}** "
+            "(Do not substitute generic stock photos, a different tail, or a different model.)"
             f"{_sug} You may still describe the aircraft type from registry/context if present."
         )
     elif user_wants_gallery:
@@ -1382,6 +1561,44 @@ def run_consultant_retrieval_bundle(
             "\n\nDo **not** promise a photo gallery or invent image URLs unless the user explicitly asked for pictures "
             "in this thread; describe the aircraft in words when helpful."
         )
+
+    _ad = data_used.get("aircraft_decision")
+    if isinstance(_ad, dict) and _ad:
+        system_prompt += (
+            "\n\n**Aircraft Decision Engine (mandatory — surface in the reply):** Structured evaluation for this "
+            "acquisition question. Summarize **verdict**, **fit_score**, **deal_score**, **risk_score** "
+            "(higher risk_score = fewer blind spots in the engine’s read), **alternatives**, "
+            "and one line from **insight** — tight prose, no spec table.\n"
+            f"{json.dumps(_ad, ensure_ascii=False)}"
+        )
+    _bpsy = data_used.get("buyer_psychology")
+    if isinstance(_bpsy, dict) and _bpsy.get("response_guidance"):
+        try:
+            from services.buyer_psychology_engine import (
+                consultant_buyer_psychology_enabled,
+                format_buyer_psychology_for_system_prompt,
+            )
+
+            if consultant_buyer_psychology_enabled():
+                _bp_block = format_buyer_psychology_for_system_prompt(_bpsy)
+                if _bp_block:
+                    system_prompt += "\n\n" + _bp_block
+        except Exception:
+            pass
+    _dk_sys = data_used.get("deal_killer")
+    if isinstance(_dk_sys, dict) and _dk_sys.get("verdict"):
+        try:
+            from services.deal_killer_engine import (
+                consultant_deal_killer_enabled,
+                format_deal_killer_for_system_prompt,
+            )
+
+            if consultant_deal_killer_enabled():
+                _dk_block = format_deal_killer_for_system_prompt(_dk_sys)
+                if _dk_block:
+                    system_prompt += "\n\n" + _dk_block
+        except Exception:
+            pass
 
     if progress:
         progress.step(

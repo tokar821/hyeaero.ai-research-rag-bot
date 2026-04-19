@@ -1,4 +1,4 @@
-"""SearchAPI Bing Images helpers — query fan-out, strict tail filter, ranking."""
+"""SearchAPI image helpers — query resolution, strict tail filter, ranking."""
 
 from __future__ import annotations
 
@@ -162,7 +162,9 @@ def test_avbuyer_dropped_when_three_high_tier_strict_tail():
     assert all("avbuyer" not in (r.get("url") or "").lower() for r in out)
 
 
-def test_falcon_900_rejected_when_marketing_is_falcon_2000():
+def test_falcon_900_rejected_when_marketing_is_falcon_2000(monkeypatch):
+    monkeypatch.setenv("SEARCHAPI_LITERAL_USER_QUERY", "0")
+
     def fake_search(_q: str, **kwargs):
         return [
             {
@@ -202,8 +204,9 @@ def test_normalize_cl350_alias():
     assert normalize_aircraft_name("Bombardier CL350 exterior") == "Challenger 350"
 
 
-def test_resolve_queries_phly_row_normalizes_model_token():
-    qs, _, mm = resolve_queries_for_consultant_gallery(
+def test_resolve_queries_phly_row_normalizes_model_token(monkeypatch):
+    monkeypatch.setenv("SEARCHAPI_LITERAL_USER_QUERY", "0")
+    qs, _, mm, _intent = resolve_queries_for_consultant_gallery(
         user_query="show photos",
         phly_rows=[{"manufacturer": "Bombardier", "model": "CL350"}],
         required_tail=None,
@@ -213,6 +216,23 @@ def test_resolve_queries_phly_row_normalizes_model_token():
     )
     assert mm and "Challenger" in mm
     assert any("Challenger 350" in q for q in qs)
+
+
+def test_resolve_literal_uses_user_text_as_single_query(monkeypatch):
+    monkeypatch.setenv("SEARCHAPI_LITERAL_USER_QUERY", "1")
+    monkeypatch.setenv("SEARCHAPI_PRECISION_QUERIES", "0")
+    qs, tail, mm, _intent = resolve_queries_for_consultant_gallery(
+        user_query="  falcon2000   cabin  ",
+        phly_rows=[],
+        required_tail=None,
+        strict_tail_mode=False,
+        required_marketing_type=None,
+        strict_model_mode=False,
+    )
+    assert qs == ["falcon2000 cabin"]
+    assert tail is None
+    # Third value is marketing-type hint for ranking only; detector may infer Falcon from tokens.
+    assert mm is None or "falcon" in (mm or "").lower()
 
 
 def test_tail_query_ranks_controller_above_jetphotos():
@@ -331,6 +351,146 @@ def test_max_per_domain_limits_repetition():
         )
     assert len(out) == 2
     assert all("jetphotos" in (r.get("url") or "").lower() for r in out)
+
+
+def test_resolve_precision_returns_multiple_short_queries(monkeypatch):
+    monkeypatch.setenv("SEARCHAPI_LITERAL_USER_QUERY", "1")
+    monkeypatch.setenv("SEARCHAPI_PRECISION_QUERIES", "1")
+    qs, tail, _mm, intent = resolve_queries_for_consultant_gallery(
+        user_query="show me N807JS cabin photos",
+        phly_rows=[],
+        required_tail="N807JS",
+        strict_tail_mode=True,
+        required_marketing_type=None,
+        strict_model_mode=False,
+    )
+    assert tail == "N807JS"
+    assert intent.get("image_type") == "cabin"
+    assert 2 <= len(qs) <= 5
+    assert all(len(q.split()) <= 5 for q in qs)
+    assert all("N807JS" in q for q in qs)
+
+
+def test_premium_cabin_validation_strips_irrelevant_strict_tail_message():
+    from services.consultant_image_search_orchestrator import (
+        PREMIUM_VERIFIED_IMAGE_FAILURE,
+        classify_premium_aviation_intent,
+    )
+
+    intent = classify_premium_aviation_intent(
+        "N807JS cabin interior",
+        required_tail="N807JS",
+        required_marketing_type=None,
+        phly_rows=None,
+    )
+
+    def fake_search(_q: str, **kwargs):
+        return [
+            {
+                "url": "https://cdn.jetphotos.com/a.jpg",
+                "title": "N807JS ramp exterior",
+                "source": "jp",
+                "_source_page": "https://jetphotos.com/1",
+            }
+        ]
+
+    meta: dict = {}
+    with patch("services.searchapi_aircraft_images.search_aircraft_images", side_effect=fake_search):
+        out, _ = fetch_ranked_searchapi_aircraft_images(
+            queries=["N807JS cabin"],
+            canonical_tail="N807JS",
+            strict_tail_mode=True,
+            marketing_type_for_model_match=None,
+            max_out=5,
+            gallery_meta=meta,
+            premium_intent=intent,
+        )
+    assert out == []
+    assert meta.get("consultant_gallery_message") == PREMIUM_VERIFIED_IMAGE_FAILURE
+
+
+def test_model_gallery_order_prefers_aviation_host_within_google_window(monkeypatch):
+    """Preserve-Google + rank-up: within the first window, higher aviation authority beats a generic #1 CDN."""
+
+    monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
+    monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+
+    def fake_search(_q: str, **kwargs):
+        return [
+            {
+                "url": "https://obscure-img-cdn.example.com/f900-a.jpg",
+                "title": "Dassault Falcon 900 interior cabin",
+                "source": "RareHost",
+                "_source_page": "https://rare.example.com/article",
+                "_position": "1",
+            },
+            {
+                "url": "https://cdn.jetphotos.com/f900-b.jpg",
+                "title": "Dassault Falcon 900",
+                "source": "JetPhotos",
+                "_source_page": "https://jetphotos.com/2",
+                "_position": "2",
+            },
+        ]
+
+    with patch("services.searchapi_aircraft_images.search_aircraft_images", side_effect=fake_search):
+        out, meta = fetch_ranked_searchapi_aircraft_images(
+            queries=["Falcon 900 cabin"],
+            canonical_tail=None,
+            strict_tail_mode=False,
+            marketing_type_for_model_match="Falcon 900",
+            max_out=5,
+            user_query="Falcon 900 cabin interior",
+        )
+    assert meta.get("searchapi_preserve_google_rank_order") is True
+    assert int(meta.get("searchapi_aviation_rankup_window") or 0) >= 1
+    assert "cdn.jetphotos.com" in (out[0].get("url") or "")
+
+
+def test_model_gallery_aviation_rankup_orders_oem_bjt_above_county_parks(monkeypatch):
+    """User scenario: Google #1 OEM, #2 off-topic parks, #3 trade press → gallery 1,3,2."""
+
+    monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
+    monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+
+    def fake_search(_q: str, **kwargs):
+        return [
+            {
+                "url": "https://cdn.dassault-aviation.com/p/f900-cockpit.jpg",
+                "title": "Dassault Falcon 900 cockpit",
+                "source": "Dassault",
+                "_source_page": "https://www.dassault-aviation.com/en/defense/falcon/",
+                "_position": "1",
+            },
+            {
+                "url": "https://img.iowacounty.example/falcon900-picnic.jpg",
+                "title": "Dassault Falcon 900 at county park event",
+                "source": "Iowa County Parks",
+                "_source_page": "https://parks.iowacounty.example/shelters",
+                "_position": "2",
+            },
+            {
+                "url": "https://images.bjtonline.com/f900-cabin.jpg",
+                "title": "Falcon 900 cabin",
+                "source": "Business Jet Traveler",
+                "_source_page": "https://www.bjtonline.com/features/falcon-900",
+                "_position": "3",
+            },
+        ]
+
+    with patch("services.searchapi_aircraft_images.search_aircraft_images", side_effect=fake_search):
+        out, _ = fetch_ranked_searchapi_aircraft_images(
+            queries=["Falcon 900 cabin"],
+            canonical_tail=None,
+            strict_tail_mode=False,
+            marketing_type_for_model_match="Falcon 900",
+            max_out=5,
+            user_query="Falcon 900 cabin interior",
+        )
+    assert len(out) == 3
+    assert "dassault-aviation.com" in (out[0].get("url") or "")
+    assert "bjtonline.com" in (out[1].get("url") or "")
+    assert "iowacounty.example" in (out[2].get("url") or "")
 
 
 def test_prioritize_listings_orders_controller_before_avbuyer():

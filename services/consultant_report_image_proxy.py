@@ -93,6 +93,20 @@ _ALLOWED_HOST_MARKERS = (
     "fbcdn.net",
     "digitaloceanspaces.com",
     "r2.cloudflarestorage.com",
+    # News / social CDNs sometimes appear in Tavily image results (PDF export proxy).
+    "nyt.com",
+    "reddit.com",
+    "redd.it",
+    "redditmedia.com",
+    "redditstatic.com",
+    "youtube.com",
+    "youtu.be",
+    "ytimg.com",
+    "googlevideo.com",
+    "instagram.com",
+    "facebook.com",
+    "pinterest.com",
+    "pinimg.com",
 )
 
 

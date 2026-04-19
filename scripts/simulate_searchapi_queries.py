@@ -171,7 +171,7 @@ def run_case(label: str, user_query: str) -> None:
         except Exception:
             inferred_mm = None
 
-    queries, canon_tail, mm_for_score = resolve_queries_for_consultant_gallery(
+    queries, canon_tail, mm_for_score, _premium_intent = resolve_queries_for_consultant_gallery(
         user_query=user_query,
         phly_rows=[],
         required_tail=required_tail,

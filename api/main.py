@@ -37,6 +37,8 @@ from rag.phlydata_aircraft_schema import phlydata_aircraft_api_null_payload, phl
 from vector_store.pinecone_client import PineconeClient
 from services.market_comparison import run_comparison
 from services.price_estimate import estimate_value, estimate_value_hybrid
+from services.aircraft_decision_engine import public_decision_payload, run_aircraft_decision_engine
+from services.hye_aero_intelligence_engine import run_hye_aero_aircraft_intelligence
 from services.aviacost_lookup import lookup_aviacost
 from services.aircraftpost_lookup import lookup_aircraftpost_fleet
 from services.faa_master_lookup import fetch_faa_master_owner_rows
@@ -1161,6 +1163,29 @@ class ResaleAdvisoryRequest(BaseModel):
     model: Optional[str] = None
     year: Optional[int] = None
 
+
+class AircraftDecisionRequest(BaseModel):
+    """Natural-language buy decision: mission hints + model/tail; optional region for comps."""
+
+    query: str = Field(..., min_length=4, max_length=8000)
+    region: Optional[str] = None
+
+
+class AircraftIntelligenceRequest(BaseModel):
+    """
+    HyeAero intelligence engine — structured JSON only (registry, market, valuation, visuals, acquisition).
+
+    ``subject`` is a single line or short paragraph (tail, model, mission hints). No chat transcript.
+    """
+
+    subject: str = Field(..., min_length=2, max_length=4000)
+    region: Optional[str] = Field(None, description="Region label for listing comparison (e.g. North America).")
+    include_visual_intel: bool = True
+    include_market: bool = True
+    include_valuation: bool = True
+    include_acquisition_scores: bool = True
+
+
 # --- App ---
 app = FastAPI(
     title="HyeAero.AI API",
@@ -1784,6 +1809,58 @@ def market_comparison(req: MarketComparisonRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/aircraft-intelligence")
+def aircraft_intelligence(req: AircraftIntelligenceRequest):
+    """
+    **Intelligence engine** (not chat): one JSON bundle with identity, FAA snapshot (when ingested),
+    market slice, hybrid valuation, strict visual intelligence, and acquisition scores.
+    """
+    try:
+        db = get_db()
+        emb, pc = get_embedding_and_pinecone()
+        return run_hye_aero_aircraft_intelligence(
+            req.subject,
+            db=db,
+            region=req.region,
+            embedding_service=emb,
+            pinecone_client=pc,
+            include_visual_intel=req.include_visual_intel,
+            include_market=req.include_market,
+            include_valuation=req.include_valuation,
+            include_acquisition_scores=req.include_acquisition_scores,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("aircraft-intelligence failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/aircraft-decision")
+def aircraft_decision(req: AircraftDecisionRequest):
+    """
+    Aircraft Decision Engine: fit / deal / risk scores and BUY | CONDITIONAL BUY | PASS verdict.
+    Uses internal listing and sale comps when the database is available; states uncertainty when not.
+    """
+    try:
+        db = get_db()
+        emb, pc = get_embedding_and_pinecone()
+        out = run_aircraft_decision_engine(
+            req.query,
+            db=db,
+            region=req.region,
+            embedding_service=emb,
+            pinecone_client=pc,
+        )
+        return public_decision_payload(out)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("aircraft-decision failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/price-estimate")
 def price_estimate(req: PriceEstimateRequest):

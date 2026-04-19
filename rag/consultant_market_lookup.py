@@ -381,6 +381,9 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     r"|\b(?:i\s+)?wanna\s+see\s+the\s+(?:aircraft|plane|jet)\b"
     r"|\btry(?:ing)?\s+to\s+see\s+the\s+(?:aircraft|plane|jet)\b"
     r"|\b(?:please|pls)\s+show\s+me\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    # Superlative cabin browse (no explicit "photos" — still a visual shopping ask).
+    r"|\b(?:best|top|nicest|finest|ultimate)\b.+\b(?:cabin|interior)\b"
+    r"|\b(?:best|top)\s+(?:private\s+)?jets?\s+cabin\b"
     r")",
 )
 
@@ -959,6 +962,33 @@ def build_consultant_market_authority_block(
             }
             for r in listings_out
         ]
+        try:
+            r0 = listings_out[0]
+            if isinstance(r0, dict) and any(
+                r0.get(k) not in (None, "")
+                for k in (
+                    "ask_price",
+                    "airframe_total_time",
+                    "manufacturer",
+                    "model",
+                    "manufacturer_year",
+                    "listing_status",
+                )
+            ):
+                meta["consultant_primary_listing_for_deal_review"] = {
+                    "ask_price": r0.get("ask_price"),
+                    "listing_status": r0.get("listing_status"),
+                    "location": r0.get("location"),
+                    "airframe_total_time": r0.get("airframe_total_time"),
+                    "manufacturer": r0.get("manufacturer"),
+                    "model": r0.get("model"),
+                    "manufacturer_year": r0.get("manufacturer_year"),
+                    "serial_number": r0.get("serial_number"),
+                    "registration_number": r0.get("registration_number"),
+                    "source_platform": r0.get("source_platform"),
+                }
+        except Exception:
+            pass
         lines.append("")
         lines.append(
             "[FOR USER REPLY — Market / pricing (place near the top of your answer; keep exact dollar amounts and URLs):]"

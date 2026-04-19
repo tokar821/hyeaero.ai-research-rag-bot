@@ -23,11 +23,13 @@ from urllib.parse import urlparse
 
 import requests
 
-from services.searchapi_aircraft_images import normalize_aircraft_name
+from services.searchapi_aircraft_images import (
+    SEARCHAPI_SEARCH_URL,
+    build_searchapi_image_request_params,
+    normalize_aircraft_name,
+)
 
 logger = logging.getLogger(__name__)
-
-SEARCHAPI_SEARCH_URL = "https://www.searchapi.io/api/v1/search"
 
 ImageView = Literal["exterior", "cabin", "cockpit", "interior", "bedroom"]
 
@@ -243,23 +245,15 @@ def build_image_query(intent: ImageIntent) -> str:
 
 def search_images(query: str) -> List[ImageHit]:
     """
-    SearchAPI Bing Images. Returns at most 8 minimal hits.
+    SearchAPI image search (Google Images / Light or Bing). Returns at most 8 minimal hits.
     """
-    api_key = (os.getenv("SEARCHAPI_API_KEY") or "").strip()
-    if not api_key:
-        return []
-
     q = (query or "").strip()
     if not q:
         return []
 
-    params = {
-        "engine": "bing_images",
-        "q": q,
-        "api_key": api_key,
-        "safe_search": "moderate",
-        "num": "8",
-    }
+    params = build_searchapi_image_request_params(q=q, num_results=8)
+    if not params:
+        return []
     try:
         r = requests.get(SEARCHAPI_SEARCH_URL, params=params, timeout=28.0)
         r.raise_for_status()
@@ -272,8 +266,14 @@ def search_images(query: str) -> List[ImageHit]:
     if not isinstance(images, list):
         return []
 
+    try:
+        limit = int(params.get("num") or 8)
+    except (TypeError, ValueError):
+        limit = 8
+    limit = max(1, min(20, limit))
+
     out: List[ImageHit] = []
-    for item in images[:8]:
+    for item in images[:limit]:
         if not isinstance(item, dict):
             continue
         title = str(item.get("title") or "").strip()
