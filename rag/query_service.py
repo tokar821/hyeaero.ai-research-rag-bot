@@ -235,6 +235,8 @@ If aircraft are from **different categories**, explain the category difference f
 
 **Conversation flow:** Keep a natural broker conversation. If the request is broad, guide with **1–2 focused questions** (typical routes, longest leg, pax, budget, private vs charter). Avoid interrogations.
 
+**Latest message vs earlier turns (aircraft identity):** When the user’s **latest line** names a specific tail (``N…``) or aircraft model, treat that as the **authoritative target** for this reply’s visuals and aircraft discussion. Do **not** silently switch to a different type that appeared only in older messages unless the latest line is clearly a pronoun follow-up (*that one*, *same jet*, *it*) that depends on prior context.
+
 **Answer length control:** Default to concise, practical answers. Expand only when the user asks for detail, mission planning truly needs explanation, or comparisons benefit from deeper context.
 
 **4. Protect internal systems in user-visible text.** Never say **database**, **internal records**, **pinecone**, **phlydata**, **our dataset**, **vector**, **RAG**, **SQL**, scraping/sync jargon, or raw table names.
@@ -995,13 +997,21 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         if not history:
             return ""
         parts: List[str] = []
+        from rag.aviation_tail import (
+            history_role_contributes_to_thread,
+            normalize_history_role_for_tail_scan,
+        )
+
         for h in history[-12:]:
-            role = (h.get("role") or "").strip().lower()
-            if role not in ("user", "assistant"):
+            if not history_role_contributes_to_thread(h.get("role")):
                 continue
+            raw = (h.get("role") or "").strip()
+            label = normalize_history_role_for_tail_scan(raw)
+            if label not in ("user", "assistant"):
+                label = (raw.lower() if raw else "message")
             c = (h.get("content") or "").strip()
             if c:
-                parts.append(f"{role}: {c}")
+                parts.append(f"{label}: {c}")
         return "\n".join(parts)[:max_chars]
 
     def _phlydata_authority_block(

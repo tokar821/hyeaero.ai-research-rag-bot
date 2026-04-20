@@ -113,6 +113,21 @@ def test_consultant_toggle_off(monkeypatch):
     assert iae.consultant_image_answer_alignment_enabled() is False
 
 
+def test_marketing_hint_leads_candidates_over_phly():
+    phly = [{"manufacturer": "Bombardier", "model": "Challenger 300"}]
+    plan = iae.build_image_answer_alignment_plan(
+        user_query="G650 interior",
+        aircraft_images=[
+            {"url": "https://x.com/1.jpg", "description": "Gulfstream G650 cabin", "page_url": ""},
+        ],
+        phly_rows=phly,
+        gallery_meta={},
+        marketing_type_hint="Gulfstream G650",
+    )
+    cand0 = (plan.get("aircraft_candidates") or [{}])[0].get("model", "")
+    assert "650" in cand0 or "Gulfstream" in cand0
+
+
 def test_format_layered_block_truncates():
     plan = {
         "llm_directives": "x" * 100,

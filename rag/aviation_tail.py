@@ -36,6 +36,40 @@ def normalize_tail_token(raw: str) -> str:
     return (raw or "").strip().upper().replace(" ", "")
 
 
+def normalize_history_role_for_tail_scan(role: Optional[str]) -> str:
+    """
+    Map a few **fixed** transcript labels (``You``, ``Consultant``) to ``user`` / ``assistant``.
+
+    Other client-specific role strings are returned **unchanged** (lowercased); callers that need
+    every human/assistant line should use :func:`history_role_contributes_to_thread` instead of
+    assuming only ``user`` / ``assistant`` exist.
+    """
+    r = (role or "").strip().lower()
+    if r in ("you",):
+        return "user"
+    if r in ("consultant", "bot", "ai"):
+        return "assistant"
+    return r
+
+
+_THREAD_ROLES_EXCLUDED = frozenset({"system", "tool", "function"})
+
+
+def history_role_contributes_to_thread(role: Optional[str]) -> bool:
+    """
+    True for any message that should participate in thread-wide tail / entity scans.
+
+    Excludes only obvious non-conversational pipeline roles — **does not** rename custom labels
+    (e.g. ``U``) to ``user``; those lines are still included when this returns true.
+    """
+    r = (role or "").strip().lower()
+    return r not in _THREAD_ROLES_EXCLUDED
+
+
+def _role_eligible_for_tail_scan(role: Optional[str]) -> bool:
+    return history_role_contributes_to_thread(role)
+
+
 def find_strict_tail_candidates_in_text(blob: str) -> List[str]:
     """Return unique registration strings found in ``blob``."""
     if not (blob or "").strip():
@@ -110,9 +144,13 @@ def find_visual_gallery_tail_candidates(
         return loose
     if history:
         for h in reversed(history[-max_history_messages:]):
-            if (h.get("role") or "").strip().lower() != "user":
+            if not _role_eligible_for_tail_scan(h.get("role")):
                 continue
-            loose_h = find_loose_us_n_tail_tokens_in_text(h.get("content") or "")
+            c = h.get("content") or ""
+            strict_h = find_strict_tail_candidates_in_text(c)
+            if strict_h:
+                return strict_h
+            loose_h = find_loose_us_n_tail_tokens_in_text(c)
             if loose_h:
                 return loose_h
     return []
@@ -178,8 +216,7 @@ def find_strict_tail_candidates(
     consume(query or "")
     if history:
         for h in history[-max_history_messages:]:
-            role = (h.get("role") or "").strip().lower()
-            if role not in ("user", "assistant"):
+            if not _role_eligible_for_tail_scan(h.get("role")):
                 continue
             consume(h.get("content") or "")
     return ordered[:24]

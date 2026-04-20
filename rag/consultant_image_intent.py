@@ -87,9 +87,10 @@ def _thread_text_for_entity_resolution(
 ) -> str:
     parts: List[str] = []
     if history:
+        from rag.aviation_tail import history_role_contributes_to_thread
+
         for h in history[-max_messages:]:
-            role = (h.get("role") or "").strip().lower()
-            if role not in ("user", "assistant"):
+            if not history_role_contributes_to_thread(h.get("role")):
                 continue
             c = (h.get("content") or "").strip()
             if c:

@@ -785,6 +785,22 @@ def _marketing_type_for_scoring(
     return None
 
 
+def _facet_addon_words_from_user_query(user_query: str, tail: str) -> List[str]:
+    """Up to two allowed visual tokens from the user line when they also typed the registration."""
+    tail_c = tail.replace(" ", "").upper()
+    compact = re.sub(r"\s+", "", (user_query or "").upper())
+    if not tail_c or tail_c not in compact:
+        return []
+    low = (user_query or "").lower()
+    out: List[str] = []
+    for w in ("exterior", "cockpit", "cabin", "interior", "galley", "ramp", "walkaround"):
+        if w in low and w not in out:
+            out.append(w)
+        if len(out) >= 2:
+            break
+    return out
+
+
 def _literal_single_search_q(
     user_query: str,
     *,
@@ -794,13 +810,23 @@ def _literal_single_search_q(
     required_marketing_type: Optional[str],
     mm_fallback: Optional[str],
 ) -> Optional[str]:
-    """Single ``q`` for SearchAPI: user text as-typed (spacing normalized), else tail / model fallbacks."""
+    """
+    Single ``q`` for SearchAPI (literal / fallback paths).
+
+    When ``required_tail`` resolves to a registration, **never** use vague English alone
+    (*\"can I see that\"*) as ``q`` — image search is anchored on the tail (optionally plus
+    facet words copied from the user line when they also typed the mark).
+    """
     q = " ".join((user_query or "").strip().split())
+    tail = normalize_tail_token(required_tail or "")
+    if tail:
+        addons = _facet_addon_words_from_user_query(q, tail)
+        if addons:
+            return f"{tail} {' '.join(addons)}".strip()[:200]
+        # Registration-only: avoids unrelated Google Image hits from conversational text.
+        return tail[:200]
     if len(q) >= 3:
         return q[:200]
-    tail = normalize_tail_token(required_tail or "")
-    if strict_tail_mode and tail:
-        return tail[:200]
     if strict_model_mode and (required_marketing_type or "").strip():
         return str(required_marketing_type).strip()[:200]
     if mm_fallback and len(mm_fallback.strip()) >= 3:
@@ -1148,6 +1174,9 @@ def resolve_queries_for_consultant_gallery(
     )
 
     tail = normalize_tail_token(required_tail or "")
+    # Whenever the pipeline knows a registration, image ``q`` strings must be tail-led even if
+    # ``strict_tail_page_match`` was not set (defensive — avoids "can I see that" as SearchAPI ``q``).
+    strict_for_queries = bool(strict_tail_mode or tail)
     mm_score = _marketing_type_for_scoring(user_query, phly_rows, required_marketing_type)
     intent = classify_premium_aviation_intent(
         user_query,
@@ -1161,7 +1190,7 @@ def resolve_queries_for_consultant_gallery(
             qs, _iq_meta = build_precision_image_search_queries(
                 intent,
                 user_query=user_query,
-                strict_tail_mode=strict_tail_mode,
+                strict_tail_mode=strict_for_queries,
                 required_tail=required_tail,
                 required_marketing_type=required_marketing_type,
                 phly_rows=phly_rows,
@@ -1176,19 +1205,19 @@ def resolve_queries_for_consultant_gallery(
                 else:
                     sq = _literal_single_search_q(
                         user_query,
-                        strict_tail_mode=strict_tail_mode,
+                        strict_tail_mode=strict_for_queries,
                         required_tail=required_tail,
                         strict_model_mode=strict_model_mode,
                         required_marketing_type=required_marketing_type,
                         mm_fallback=mm_score,
                     )
                     qs = [sq] if sq else []
-            tail_out = tail if strict_tail_mode and tail else None
+            tail_out = tail if tail else None
             return qs, tail_out, mm_score, intent
 
         sq = _literal_single_search_q(
             user_query,
-            strict_tail_mode=strict_tail_mode,
+            strict_tail_mode=strict_for_queries,
             required_tail=required_tail,
             strict_model_mode=strict_model_mode,
             required_marketing_type=required_marketing_type,
@@ -1196,7 +1225,7 @@ def resolve_queries_for_consultant_gallery(
         )
         if not sq:
             return [], None, mm_score, intent
-        tail_out = tail if strict_tail_mode and tail else None
+        tail_out = tail if tail else None
         return [sq], tail_out, mm_score, intent
 
     # Legacy: multi-query fan-out (``SEARCHAPI_LITERAL_USER_QUERY=0``).

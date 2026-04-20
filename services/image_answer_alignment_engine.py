@@ -33,6 +33,12 @@ def _phly_model_candidates(
 ) -> List[Dict[str, Any]]:
     out: List[Dict[str, Any]] = []
     seen: set[str] = set()
+    # Latest-turn marketing anchor (from explicit query inference) must lead grouping — stale Phly
+    # rows from earlier purchase threads must not reorder gallery headings.
+    mh0 = (marketing_hint or "").strip()
+    if mh0 and len(mh0) >= 3:
+        seen.add(mh0.lower())
+        out.append({"model": mh0, "reason": "latest_query_marketing_anchor", "fit_score": 0.92})
     for r in phly_rows or []:
         if not isinstance(r, dict):
             continue

@@ -470,8 +470,13 @@ def run_consultant_retrieval_bundle(
     try:
         from rag.aviation_tail import find_visual_gallery_tail_candidates
         from rag.consultant_fine_intent import ConsultantFineIntent
+        from rag.consultant_query_anchor import effective_history_for_gallery_tail
 
-        has_tail_for_policy = bool(find_visual_gallery_tail_candidates(query or "", history))
+        has_tail_for_policy = bool(
+            find_visual_gallery_tail_candidates(
+                query or "", effective_history_for_gallery_tail(query or "", history)
+            )
+        )
         if has_tail_for_policy and _fine.intent in (ConsultantFineIntent.OWNERSHIP_LOOKUP,):
             vector_chunk_budget = 0
         if _fine.intent in (ConsultantFineIntent.AIRCRAFT_SPECS,) and not has_tail_for_policy:
@@ -593,24 +598,47 @@ def run_consultant_retrieval_bundle(
     if single_tavily_pass:
         run_secondary = False
         merge_purchase = False
-    img_q = build_aircraft_photo_focus_tavily_query(query, phly_rows, history)
     skip_img_pass = _env_truthy("CONSULTANT_TAVILY_SKIP_IMAGE_PASS")
     from services.searchapi_aircraft_images import searchapi_aircraft_images_enabled, searchapi_image_engine
 
     _searchapi_images = searchapi_aircraft_images_enabled()
     requested_tail_for_images: Optional[str] = None
     strict_tail_image_request = False
+    gallery_user_query = (query or "").strip()
     if user_wants_gallery:
         try:
-            from rag.aviation_tail import find_visual_gallery_tail_candidates
+            from rag.aviation_tail import (
+                find_strict_tail_candidates,
+                find_strict_tail_candidates_in_text,
+                find_visual_gallery_tail_candidates,
+            )
+            from rag.consultant_query_anchor import effective_history_for_gallery_tail
 
-            tails_in_query = find_visual_gallery_tail_candidates(query or "", history)
+            tails_in_query = find_visual_gallery_tail_candidates(
+                query or "",
+                effective_history_for_gallery_tail(query or "", history),
+            )
+            if not tails_in_query:
+                tails_in_query = find_strict_tail_candidates(query or "", history)
+            if not tails_in_query:
+                from rag.consultant_image_intent import _thread_text_for_entity_resolution
+
+                tails_in_query = find_strict_tail_candidates_in_text(
+                    _thread_text_for_entity_resolution(query or "", history)
+                )
             if tails_in_query:
                 # Option B: tail requests require tail-verified images only (no model fallback).
                 requested_tail_for_images = tails_in_query[0]
                 strict_tail_image_request = True
         except Exception:
             pass
+        if requested_tail_for_images:
+            from rag.consultant_query_anchor import gallery_user_query_for_image_pipeline
+
+            gallery_user_query = gallery_user_query_for_image_pipeline(
+                query or "", resolved_tail=requested_tail_for_images
+            )
+    img_q = build_aircraft_photo_focus_tavily_query(gallery_user_query, phly_rows, history)
     inferred_marketing_type_for_images: Optional[str] = None
     if user_wants_gallery and not strict_tail_image_request:
         try:
@@ -620,7 +648,7 @@ def run_consultant_retrieval_bundle(
                 normalize_aircraft_name,
             )
 
-            blob = (query or "").strip()
+            blob = gallery_user_query.strip()
             mans = _detect_manufacturers(blob.lower())
             mdls = _detect_models(blob)
             mt_q = compose_manufacturer_model_phrase(
@@ -924,7 +952,7 @@ def run_consultant_retrieval_bundle(
             strict_tail_page_match=strict_tail_image_request,
             required_marketing_type=inferred_marketing_type_for_images,
             strict_model_title_alt_match=bool(inferred_marketing_type_for_images) and not strict_tail_image_request,
-            user_query=query,
+            user_query=gallery_user_query,
             history=history,
             gallery_meta_out=searchapi_gallery_meta,
         )
@@ -959,7 +987,9 @@ def run_consultant_retrieval_bundle(
                     listing_urls=listing_urls_for_img or None,
                     listing_rows=lr_img or None,
                     trust_tail_biased_tavily_images=True,
-                    user_query=query,
+                    required_tail=requested_tail_for_images,
+                    strict_tail_page_match=strict_tail_image_request,
+                    user_query=gallery_user_query,
                     history=history,
                     gallery_meta_out=searchapi_gallery_meta,
                 )
@@ -998,7 +1028,9 @@ def run_consultant_retrieval_bundle(
                 listing_urls=listing_urls_for_img or None,
                 listing_rows=lr_img or None,
                 trust_tail_biased_tavily_images=True,
-                user_query=query,
+                required_tail=requested_tail_for_images,
+                strict_tail_page_match=strict_tail_image_request,
+                user_query=gallery_user_query,
                 history=history,
                 gallery_meta_out=searchapi_gallery_meta,
             )
@@ -1243,11 +1275,36 @@ def run_consultant_retrieval_bundle(
         "Attribution: use *typical operational performance for this class* / *from a broker’s perspective* when answering from general knowledge. "
         "Use *per the aircraft record in this brief* / listing-style phrasing **only** when the context for this turn actually includes those facts—never imply registry or market sourcing otherwise.\n"
         "If this thread already had a short fallback reply, do not repeat the same stock wording—vary or shorten.\n"
+        "**Thread continuity:** When the latest line is vague, uses pronouns (*that*, *it*, *the same jet*), "
+        "or is a short follow-up, infer the aircraft from **earlier turns in this thread**—do not answer "
+        "as if the user restated everything in one line.\n"
+        "**Avoid redundant repetition:** If you already covered a fact in this conversation, do **not** "
+        "paste the same sentences or full bullet checklist again; prefer a concise back-reference "
+        "(*As noted above…*) and only what is new for this question.\n"
         "Recommendations: short conversational opening first—no essay or spec dump unless the user asks. "
         "Avoid philosophical aviation one-liners. Do not list serials/regs as the main thrust unless detailed data was requested.\n"
     )
 
     system_prompt += response_depth_prompt_suffix(_response_depth_kind)
+
+    try:
+        from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+        if (
+            user_wants_gallery
+            and (requested_tail_for_images or "").strip()
+            and not find_strict_tail_candidates_in_text(query or "")
+        ):
+            _rt_img = (requested_tail_for_images or "").strip()
+            system_prompt += (
+                "\n\n**Visual follow-up (same aircraft as the thread):** The user is asking to **see** this jet; "
+                f"the system anchored visuals to **{_rt_img}**. Do **not** repeat the full **Aircraft Record** / "
+                "registry bullet recap if the same facts were already given in the immediately previous answer — "
+                "use **1–2 short sentences** referencing the aircraft, then focus on what the **attached gallery** "
+                "shows (exterior vs cabin vs cockpit), without re-listing every field."
+            )
+    except Exception:
+        pass
 
     if user_wants_gallery or tavily_image_n > 0 or aircraft_images:
         system_prompt += (
@@ -1282,6 +1339,7 @@ def run_consultant_retrieval_bundle(
     # --- Reasoning / response-mode router (does not affect retrieval) ---
     try:
         from rag.aviation_tail import find_visual_gallery_tail_candidates
+        from rag.consultant_query_anchor import effective_history_for_gallery_tail
         from rag.consultant_response_mode import (
             ConsultantResponseMode,
             classify_consultant_response_mode,
@@ -1289,7 +1347,11 @@ def run_consultant_retrieval_bundle(
         )
         from rag.consultant_validity import validate_aircraft_model
 
-        has_tail = bool(find_visual_gallery_tail_candidates(query or "", history))
+        has_tail = bool(
+            find_visual_gallery_tail_candidates(
+                query or "", effective_history_for_gallery_tail(query or "", history)
+            )
+        )
         # Use "visual" phrasing as a signal even when gallery intent routing was not triggered upstream.
         has_visual_intent = bool(re.search(r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look)\b", (query or ""), re.I))
         v = validate_aircraft_model(query or "")

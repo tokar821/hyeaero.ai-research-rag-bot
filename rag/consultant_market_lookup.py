@@ -468,7 +468,63 @@ def build_aircraft_photo_focus_tavily_query(
     with structured exterior/cabin/jet facets — not only the bare tail (CDN paths rarely include reg text).
 
     **Tail workflow:** resolve type from registry/Phly first; image search is driven by that **model string**.
+
+    When the **latest user message alone** names make/model or tail (see ``rag.consultant_query_anchor``),
+    that identity wins over **stale Phly rows** from earlier turns so gallery search does not follow the wrong aircraft.
     """
+    try:
+        from rag.consultant_query_anchor import latest_message_anchors_aircraft_identity
+    except Exception:
+        latest_message_anchors_aircraft_identity = lambda _q: False  # type: ignore[misc,assignment]
+
+    q_strip = (query or "").strip()
+    if q_strip and latest_message_anchors_aircraft_identity(q_strip):
+        from rag.aviation_tail import (
+            find_loose_us_n_tail_tokens_in_text,
+            find_strict_tail_candidates_in_text,
+            normalize_tail_token,
+        )
+        from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+        from services.searchapi_aircraft_images import compose_manufacturer_model_phrase, normalize_aircraft_name
+
+        blob_lc = q_strip.lower()
+        mans = _detect_manufacturers(blob_lc)
+        mdls = _detect_models(q_strip)
+        mt = compose_manufacturer_model_phrase(mans[0] if mans else "", mdls[0] if mdls else "").strip()
+        mt = normalize_aircraft_name(mt) if mt else ""
+        if not mt and mdls:
+            mt = normalize_aircraft_name(mdls[0]) if mdls[0] else ""
+        if mt and len(mt) >= 2:
+            out = clamp_structured_aircraft_image_tavily_query(mt)
+            if out:
+                return out
+
+        strict_regs = find_strict_tail_candidates_in_text(q_strip)
+        reg_set = {normalize_tail_token(x) for x in strict_regs}
+        for r in phly_rows[:4]:
+            rv = normalize_tail_token(r.get("registration_number") or "")
+            if not rv or rv not in reg_set:
+                continue
+            man = (r.get("manufacturer") or "").strip()
+            mdl = (r.get("model") or "").strip()
+            mm_phly = compose_manufacturer_model_phrase(man, mdl).strip()
+            mm_phly = normalize_aircraft_name(mm_phly) if mm_phly else ""
+            if mm_phly and len(mm_phly) >= 2:
+                out = clamp_structured_aircraft_image_tavily_query(mm_phly)
+                if out:
+                    return out
+
+        for t in strict_regs:
+            u = (t or "").strip().upper().replace(" ", "").replace("-", "")
+            if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
+                parts = [f'"{u}"', "aircraft", "exterior", "cabin", "private jet", "aviation", "photos", "JetPhotos", "planespotter"]
+                return clamp_tavily_query(" ".join(parts))
+        for t in find_loose_us_n_tail_tokens_in_text(q_strip):
+            u = (t or "").strip().upper().replace(" ", "").replace("-", "")
+            if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
+                parts = [f'"{u}"', "aircraft", "exterior", "cabin", "private jet", "aviation", "photos", "JetPhotos", "planespotter"]
+                return clamp_tavily_query(" ".join(parts))
+
     for r in phly_rows[:4]:
         man = (r.get("manufacturer") or "").strip()
         mdl = (r.get("model") or "").strip()
@@ -516,7 +572,10 @@ def build_aircraft_photo_focus_tavily_query(
     elif serial:
         parts.append(f'"{serial}"')
     else:
-        blob = _photo_query_thread_blob(query, history)
+        if q_strip and latest_message_anchors_aircraft_identity(q_strip):
+            blob = q_strip
+        else:
+            blob = _photo_query_thread_blob(query, history)
         blob_lc = blob.lower()
         from rag.consultant_query_expand import _detect_manufacturers, _detect_models
 

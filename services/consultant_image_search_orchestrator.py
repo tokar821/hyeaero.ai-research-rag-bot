@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from rag.aviation_tail import is_invalid_placeholder_us_n_tail, normalize_tail_token
 
 from services.searchapi_aircraft_images import (
+    _literal_single_search_q,
     compose_manufacturer_model_phrase,
     normalize_aircraft_name,
     strip_domains,
@@ -218,6 +219,31 @@ def classify_premium_aviation_intent(
             out["type"] = "AIRCRAFT_LOOKUP"
         elif visual or out["image_type"]:
             out["type"] = "IMAGE_REQUEST"
+            # Anchor aircraft from this message (or required_marketing_type) before Phly — stale SQL rows
+            # from earlier turns must not define gallery intent for a fresh "G650 / Challenger …" ask.
+            mm_v = (required_marketing_type or "").strip()
+            if not mm_v:
+                try:
+                    from rag.consultant_query_expand import _detect_manufacturers, _detect_models
+
+                    mans = _detect_manufacturers(low)
+                    mdls = _detect_models(raw)
+                    mm_v = compose_manufacturer_model_phrase(
+                        mans[0] if mans else "",
+                        mdls[0] if mdls else "",
+                    ).strip()
+                except Exception:
+                    mm_v = ""
+            if not mm_v and phly_rows:
+                for r in (phly_rows or [])[:4]:
+                    man = (r.get("manufacturer") or "").strip()
+                    mdl = (r.get("model") or "").strip()
+                    if man or mdl:
+                        mm_v = compose_manufacturer_model_phrase(man, mdl)
+                        break
+            mm_v = normalize_aircraft_name(mm_v.strip()) if mm_v else ""
+            if mm_v and len(mm_v) >= 3:
+                out["aircraft"] = mm_v
         else:
             mm_hint = (required_marketing_type or "").strip()
             if not mm_hint and phly_rows:
@@ -332,6 +358,19 @@ def build_precision_image_search_queries(
     if intent.get("suppress_image_search") or intent.get("type") == "INVALID":
         return [], meta_out
     from services.image_query_decision_engine import query_violates_banned_terms
+
+    tail_fb = normalize_tail_token(str(required_tail or "").strip())
+    if tail_fb:
+        sq = _literal_single_search_q(
+            user_query,
+            strict_tail_mode=True,
+            required_tail=required_tail,
+            strict_model_mode=False,
+            required_marketing_type=required_marketing_type,
+            mm_fallback=mm_for_scoring,
+        )
+        if sq:
+            return _uniq_nonempty([sq]), meta_out
 
     fallback = _word_cap(" ".join((user_query or "").strip().split()), 5)
     if len(fallback) >= 3 and not query_violates_banned_terms(fallback):

@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from services.searchapi_aircraft_images import (
     MIN_TAIL_MATCH_SCORE,
+    _literal_single_search_q,
     apply_intent_boost,
     build_aircraft_image_search_queries,
     compose_manufacturer_model_phrase,
@@ -17,6 +18,43 @@ from services.searchapi_aircraft_images import (
     strip_domains,
     strict_tail_search_hit_confirmed,
 )
+
+
+def test_literal_single_search_q_tail_only_for_deictic_when_required_tail_set():
+    q = _literal_single_search_q(
+        "so can I see that?",
+        strict_tail_mode=False,
+        required_tail="N878BW",
+        strict_model_mode=False,
+        required_marketing_type=None,
+        mm_fallback=None,
+    )
+    assert q == "N878BW"
+
+
+def test_literal_single_search_q_tail_plus_facets_when_user_typed_tail():
+    q = _literal_single_search_q(
+        "N878BW exterior photo",
+        strict_tail_mode=True,
+        required_tail="N878BW",
+        strict_model_mode=False,
+        required_marketing_type=None,
+        mm_fallback=None,
+    )
+    assert "N878BW" in q.upper()
+    assert "exterior" in q.lower()
+
+
+def test_literal_single_search_q_tail_only_when_required_tail_no_facets_in_line():
+    q = _literal_single_search_q(
+        "so can I see that?",
+        strict_tail_mode=True,
+        required_tail="N878BW",
+        strict_model_mode=False,
+        required_marketing_type=None,
+        mm_fallback=None,
+    )
+    assert q == "N878BW"
 
 
 def test_build_queries_tail_branch():

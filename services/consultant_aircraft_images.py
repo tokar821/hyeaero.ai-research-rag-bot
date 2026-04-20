@@ -178,7 +178,15 @@ def _derive_model_negative_tokens(marketing_type: str) -> List[str]:
 
 _NON_AVIATION_INTERIOR_SPAM = re.compile(
     r"(?i)\b(?:interior\s+design|houzz|archdaily|not\s+decoration|george\s+street|georgestreet|"
-    r"furniture\s+store|living\s+room\s+design|home\s+decor|reception\s+seating|wedding\s+reception)\b"
+    r"furniture\s+store|living\s+room\s+design|home\s+decor|natural\s+interior|style\s+guide|"
+    r"reception\s+seating|wedding\s+reception|nightclub\s+interiors?)\b"
+)
+
+# Home / lifestyle hosts that rank for generic "interior" queries — never bizjet OEM galleries.
+_HOME_BUILDING_DECOR_HOST = re.compile(
+    r"(?i)(?:tollbrothers\.com|terrysfabrics\.|carpetone\.|blog\.cort\.com|premiumbeat\.com|"
+    r"dezeen\.com|ahmadasaad\.com|stockcake\.com|squarespace-cdn\.com|shopify\.com/s/files|"
+    r"pinterest\.com/pin)"
 )
 
 # Known SearchAPI / Tavily paths that are almost always residential or editorial “interior”, not bizjet cabins.
@@ -273,6 +281,8 @@ def _consultant_gallery_row_is_residential_or_editorial_junk(row: Dict[str, Any]
 def _non_aviation_interior_spam_row(row: Dict[str, Any]) -> bool:
     """Generic residential / editorial interior hits that lack any aviation anchor."""
     blob = _gallery_row_combined_blob(row).lower()
+    if _HOME_BUILDING_DECOR_HOST.search(blob) and not _AIRFRAME_OR_TAIL_QUICK_HINT.search(blob):
+        return True
     if not _NON_AVIATION_INTERIOR_SPAM.search(blob):
         return False
     if any(
@@ -1204,11 +1214,15 @@ def build_consultant_aircraft_images(
                     _sea_meta["consultant_image_query_engine_suppressed"] = True
                     queries = []
             if queries:
+                # When a registration is known, pass it through for URL/title tail scoring even if the
+                # SQL path did not set strict_tail_page_match (defensive).
+                _canon = (canon_tail or rt) if (strict_tail or rt) else None
+                _strict_fetch = bool(strict_tail or rt)
                 sea, _ = fetch_ranked_searchapi_aircraft_images(
                     queries=queries,
-                    canonical_tail=canon_tail if strict_tail else None,
-                    strict_tail_mode=strict_tail,
-                    marketing_type_for_model_match=(gallery_mt if not strict_tail else None),
+                    canonical_tail=_canon,
+                    strict_tail_mode=_strict_fetch,
+                    marketing_type_for_model_match=(gallery_mt if not _strict_fetch else None),
                     max_out=cap,
                     user_query=user_query or "",
                     gallery_meta=_sea_meta,
