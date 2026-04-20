@@ -70,7 +70,7 @@ class ConsultantProgressLogger:
         else:
             suffix = ""
         logger.info(
-            "[consultant %s] +%dms Δ%dms | %s%s",
+            "[consultant %s] +%dms d%dms | %s%s",
             self.request_id,
             rel_ms,
             delta_ms,

@@ -16,18 +16,73 @@ if TYPE_CHECKING:
 
 class ResponseDepthKind(str, Enum):
     CONFIRMATION = "confirmation"
+    VISUAL_FOLLOWUP = "visual_followup"
     AIRCRAFT_LOOKUP = "aircraft_lookup"
     ADVISORY = "advisory"
+
+
+def _has_prior_thread_substance(history: Optional[List[dict]]) -> bool:
+    """True when the thread already has at least one non-empty message (context to resolve pronouns)."""
+    if not history:
+        return False
+    for h in history[-12:]:
+        if (h.get("content") or "").strip():
+            return True
+    return False
 
 
 def _has_prior_turns(history: Optional[List[dict]], *, min_assistant: int = 1) -> bool:
     if not history:
         return False
+    from rag.aviation_tail import normalize_history_role_for_tail_scan
+
     n = 0
     for h in history[-12:]:
-        if (h.get("role") or "").strip().lower() == "assistant" and (h.get("content") or "").strip():
+        if normalize_history_role_for_tail_scan(h.get("role")) == "assistant" and (h.get("content") or "").strip():
             n += 1
     return n >= min_assistant
+
+
+def _looks_like_deictic_visual_followup(query: str) -> bool:
+    """
+    Conversation Context Engine — short lines that mean *show the last aircraft we discussed*,
+    including bare *show me*, *let me see*, *can I see that*, or *show me interior / cabin / cockpit*
+    with no model in the latest line.
+    """
+    raw = (query or "").strip()
+    if not raw or len(raw) > 160:
+        return False
+    low = raw.lower().rstrip(".!?")
+    if len(low.split()) > 12:
+        return False
+    # Bare "show me" / "show me." — resolved from thread (requires aircraft context in classifier).
+    if re.fullmatch(r"\s*show\s+me\s*", low, re.I):
+        return True
+    if re.search(
+        r"\b(photo|photos|picture|pictures|image|images|gallery)\b",
+        low,
+        re.I,
+    ) and len(low.split()) <= 10:
+        return True
+    if re.search(
+        r"(?:^|\s)(?:so\s*,?\s+)?(?:can|could)\s+i\s+see\s+(?:it|them|that|this|one)\b",
+        low,
+        re.I,
+    ):
+        return True
+    if re.search(r"\blet\s+me\s+see\b", low, re.I):
+        return True
+    if re.search(r"\b(?:show|showing)\s+me\s+(?:that|this|it|them|the\s+same)\b", low, re.I):
+        return True
+    if re.fullmatch(r"\s*show\s+me\s+(?:interior|exterior|cabin|cockpit)\s*", low, re.I):
+        return True
+    if re.search(
+        r"\bshow\s+me\s+(?:interior|exterior|cabin|cockpit)\b(?!\s*(?:design|decor|ideas|furniture|home)\b)",
+        low,
+        re.I,
+    ) and len(low.split()) <= 6:
+        return True
+    return False
 
 
 def _looks_like_confirmation_query(query: str) -> bool:
@@ -70,6 +125,16 @@ def classify_response_depth(
     if _has_prior_turns(history) and _looks_like_confirmation_query(query):
         return ResponseDepthKind.CONFIRMATION
 
+    # Visual / deictic follow-up: reuse last aircraft from thread — images + short line only.
+    if _has_prior_thread_substance(history) and _looks_like_deictic_visual_followup(query):
+        try:
+            from rag.consultant_image_intent import thread_has_aircraft_context
+
+            if thread_has_aircraft_context(query, history):
+                return ResponseDepthKind.VISUAL_FOLLOWUP
+        except Exception:
+            pass
+
     fi = fine_intent
 
     if fi in (
@@ -102,6 +167,21 @@ def response_depth_prompt_suffix(kind: ResponseDepthKind) -> str:
             "- **Do not** repeat full aircraft identity, specs, ownership, or listing blocks already covered unless they ask for detail again.\n"
             "- Prefer: *Yes — …* / *Correct — …* / *That's consistent with …* grounded in context.\n"
             "- **Forbidden:** corporate filler such as *feel free to ask*, *reach out to brokers*, *I'm here to help*, or re-introducing HyeAero.AI capabilities.\n"
+        )
+    if kind == ResponseDepthKind.VISUAL_FOLLOWUP:
+        return (
+            "\n\n**Conversation Context Engine — visual mode (memory-aware):** Short asks like *show me*, "
+            "*let me see*, *can I see that/it*, or *show me interior/cabin/cockpit* refer to the **last aircraft** "
+            "already established in this thread.\n"
+            "- **Reuse that identity** (make/model + tail from context). **Do not** ask which aircraft they mean.\n"
+            "- **Do not** repeat full registry / listing / spec dumps, **Aircraft Record** field-by-field recap, or "
+            "the same long prose as the prior turn.\n"
+            "- **Required shape:** (1) **One short header line** — aircraft name and tail if known, plus what the "
+            "gallery covers (e.g. *Gulfstream G400 (N888YG) — Cabin & exterior*). (2) **Images are the body** — "
+            "the in-app gallery is the main answer. (3) **At most one optional** follow-up sentence for context "
+            "(what to look for, verification caveat if needed).\n"
+            "- **Bad:** Repeating full registrant, ownership blocks, or spec tables. **Good:** Short header + "
+            "images + optional one-liner.\n"
         )
     if kind == ResponseDepthKind.AIRCRAFT_LOOKUP:
         return (

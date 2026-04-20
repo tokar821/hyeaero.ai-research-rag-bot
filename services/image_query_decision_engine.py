@@ -1,7 +1,7 @@
 """
 Strict retrieval decision engine: ultra-precise Google Image ``q`` strings (no LLM).
 
-Output shape: ``{"queries": ["...", ...]}`` — each query ≤5 words, identity + facet only,
+Output shape: ``{"queries": ["...", ...]}`` — each query ≤6 words, identity + facet + quality cues,
 no banned generic tokens (jet, plane, aircraft, …).
 """
 
@@ -64,6 +64,9 @@ _BANNED_WORDS = frozenset(
 
 _ALLOWED_FACETS = frozenset({"cockpit", "cabin", "interior", "exterior"})
 
+# Google Image ``q`` length cap (deterministic path + dedupe); allows e.g. ``… high resolution``.
+_MAX_WORDS_PER_GOOGLE_IMAGE_Q = 6
+
 
 def _ban_pattern() -> re.Pattern[str]:
     inner = "|".join(sorted(re.escape(w) for w in _BANNED_WORDS))
@@ -77,6 +80,8 @@ _ULTRA_CABIN_BROWSE_RE = re.compile(
     r"(?:\b(?:best|top|nicest|finest|ultimate|greatest)\b.+\b(?:cabin|interior)\b)"
     r"|\b(?:best|top)\s+(?:private\s+)?jets?\s+cabin\b"
     r"|\bultra[\s-]*long[\s-]*range\s+(?:cabin|interior)\b"
+    r"|\b(?:hotel|resort)\s+feel\b"
+    r"|^\s*(?:premium|luxury)\s*$"
 )
 
 
@@ -84,21 +89,31 @@ def query_violates_banned_terms(q: str) -> bool:
     return bool(_BAN_RE.search((q or "").strip()))
 
 
-def _word_cap(s: str, max_words: int = 5) -> str:
+def _word_cap(s: str, max_words: int = _MAX_WORDS_PER_GOOGLE_IMAGE_Q) -> str:
     parts = [p for p in (s or "").strip().split() if p]
     return " ".join(parts[:max_words]).strip()
 
 
-def _is_ultra_long_range_cabin_discovery(user_low: str, intent: Dict[str, Any], mm: str) -> bool:
-    """Generic 'best cabin' browse with no tail/model — fan out to flagship long-range cabins."""
+def _is_ultra_long_range_cabin_discovery(
+    user_low: str, intent: Dict[str, Any], mm: str, *, user_text: str
+) -> bool:
+    """Generic luxury / cabin / 'hotel feel' browse with no tail/model — fan out to **large-cabin** examples."""
     if str(intent.get("type") or "").upper() == "INVALID":
         return False
     if intent.get("suppress_image_search"):
         return False
     if normalize_tail_token(str(intent.get("tail_number") or "").strip()):
         return False
-    if len((mm or "").strip()) >= 3:
-        return False
+    # Do not let incidental model hints from retrieval context (mm_for_scoring / phly rows) disable
+    # browse fan-out. Only treat this as "model specified" when the **user text** names a model.
+    try:
+        from rag.consultant_query_expand import _detect_models
+
+        if _detect_models((user_text or "").strip()):
+            return False
+    except Exception:
+        if len((mm or "").strip()) >= 3:
+            return False
     if not _ULTRA_CABIN_BROWSE_RE.search(user_low):
         return False
     if str(intent.get("image_type") or "").lower() in ("exterior", "cockpit"):
@@ -113,7 +128,7 @@ def _uniq_cap(qs: List[str]) -> List[str]:
     seen: Set[str] = set()
     out: List[str] = []
     for q in qs:
-        qn = _word_cap(q, 5)
+        qn = _word_cap(q, _MAX_WORDS_PER_GOOGLE_IMAGE_Q)
         if len(qn) < 2 or query_violates_banned_terms(qn):
             continue
         # Every query must contain at least one allowed facet token as a whole word.
@@ -136,6 +151,26 @@ def _resolve_model_marketing(
     phly_rows: Optional[List[Dict[str, Any]]],
     mm_for_scoring: Optional[str],
 ) -> str:
+    # For "best cabin / luxury / hotel feel" browse queries, do not let unrelated context rows
+    # (Phly/SQL/MM-for-scoring) force a specific model. We want a multi-aircraft fan-out.
+    raw = (user_text or "").strip()
+    low = raw.lower()
+    if (
+        _ULTRA_CABIN_BROWSE_RE.search(low)
+        and not normalize_tail_token(str(intent.get("tail_number") or "").strip())
+        and not (required_marketing_type or "").strip()
+        and not str(intent.get("aircraft") or "").strip()
+    ):
+        try:
+            from rag.consultant_query_expand import _detect_models
+
+            mdls = _detect_models(raw)
+        except Exception:
+            mdls = []
+        if not mdls:
+            mm_for_scoring = None
+            phly_rows = None
+
     mm = (
         (required_marketing_type or "").strip()
         or str(intent.get("aircraft") or "").strip()
@@ -152,8 +187,6 @@ def _resolve_model_marketing(
         try:
             from rag.consultant_query_expand import _detect_manufacturers, _detect_models
 
-            raw = (user_text or "").strip()
-            low = raw.lower()
             mans = _detect_manufacturers(low)
             mdls = _detect_models(raw)
             mm = compose_manufacturer_model_phrase(
@@ -357,7 +390,7 @@ def _build_query_variants(
     facet: str,
     user_low: str,
 ) -> List[str]:
-    """3–5 strings: identity + allowed facet(s), ≤5 words, no banned terms."""
+    """3–5 strings: identity + allowed facet(s), ≤6 words, no banned terms."""
     prelude = _prepend_searchapi_high_recall_queries(identity, facet)
     out: List[str] = []
     if not identity or facet not in _ALLOWED_FACETS:
@@ -453,8 +486,47 @@ def generate_ultra_precise_google_image_queries_json(
         mm_for_scoring=mm_for_scoring,
     )
 
-    if _is_ultra_long_range_cabin_discovery(user_low, intent, mm):
-        return {"queries": _uniq_cap(["G700 cabin", "Global 7500 cabin", "Falcon 8X cabin"])}
+    # Premium interior icons (no budget given): ensure flagship examples for "best jet interior".
+    # Must run BEFORE generic "best cabin / luxury" browse fan-out.
+    if re.search(r"(?i)\bbest\s+jet\s+interior\b|\bbest\s+jet\s+interiors\b", raw):
+        return {
+            "queries": _uniq_cap(
+                [
+                    "Global 7500 cabin interior high resolution",
+                    "Gulfstream G700 cabin interior high resolution",
+                    "Falcon 10X cabin interior luxury",
+                    "Global 8000 cabin interior high resolution",
+                    "Gulfstream G800 cabin interior high resolution",
+                ]
+            )
+        }
+
+    if _is_ultra_long_range_cabin_discovery(user_low, intent, mm, user_text=raw):
+        # Expert browse: named models + cabin/interior + quality; no bare “cabin”; avoid non-aviation drift.
+        # Budget-sensitive: under ~$15M should not default to ULR flagships.
+        if re.search(r"(?i)\bunder\s*\$?\s*1[0-5]\s*m\b|\bunder\s*\$?\s*1[0-5]\s*million\b|\bunder\s*\$?\s*15,?000,?000\b", raw):
+            return {
+                "queries": _uniq_cap(
+                    [
+                        "Challenger 300 cabin interior high resolution",
+                        "Citation Latitude interior modern cabin",
+                        "Falcon 2000EX cabin interior luxury",
+                        "Challenger 350 cabin interior high resolution",
+                        "Legacy 450 cabin interior high resolution",
+                    ]
+                )
+            }
+        return {
+            "queries": _uniq_cap(
+                [
+                    "Challenger 300 cabin interior high resolution",
+                    "Citation Latitude interior modern cabin",
+                    "Falcon 2000LXS luxury cabin interior",
+                    "Challenger 650 cabin interior high resolution",
+                    "Global 6000 cabin interior high resolution",
+                ]
+            )
+        }
 
     if intent.get("suppress_image_search") or intent.get("type") == "INVALID":
         return {"queries": []}
@@ -469,7 +541,7 @@ def generate_ultra_precise_google_image_queries_json(
 
     qs: List[str] = []
     if tail and len(facets_intent) >= 2:
-        qs = [_word_cap(f"{tail} {f}", 5) for f in facets_intent[:5]]
+        qs = [_word_cap(f"{tail} {f}", _MAX_WORDS_PER_GOOGLE_IMAGE_Q) for f in facets_intent[:5]]
     elif mm and len(mm) >= 2 and len(facets_intent) >= 2:
         qs = []
         for f in facets_intent[:5]:
@@ -478,12 +550,12 @@ def generate_ultra_precise_google_image_queries_json(
                 continue
             if f_l in _ALLOWED_FACETS:
                 qs.extend(_prepend_searchapi_high_recall_queries(mm, f_l))
-            qs.append(_word_cap(f"{mm} {f_l}", 5))
+            qs.append(_word_cap(f"{mm} {f_l}", _MAX_WORDS_PER_GOOGLE_IMAGE_Q))
     elif tail:
         identity = tail
         if not itype:
             for facet in _default_discovery_facets(user_low=user_low):
-                qs.append(_word_cap(f"{identity} {facet}", 5))
+                qs.append(_word_cap(f"{identity} {facet}", _MAX_WORDS_PER_GOOGLE_IMAGE_Q))
         else:
             facet = itype
             if itype == "cabin" and "interior" in user_low and "cabin" not in user_low:
@@ -493,7 +565,7 @@ def generate_ultra_precise_google_image_queries_json(
         identity = mm
         if not itype:
             for facet in _default_discovery_facets(user_low=user_low):
-                qs.append(_word_cap(f"{identity} {facet}", 5))
+                qs.append(_word_cap(f"{identity} {facet}", _MAX_WORDS_PER_GOOGLE_IMAGE_Q))
         else:
             facet = itype
             if itype == "cabin" and "interior" in user_low and "cabin" not in user_low:

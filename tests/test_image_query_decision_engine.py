@@ -25,7 +25,7 @@ def test_tail_cabin_queries_json():
     qs = out["queries"]
     assert 3 <= len(qs) <= 5
     for q in qs:
-        assert len(q.split()) <= 5
+        assert len(q.split()) <= 6
         assert "N807JS" in q
         low = q.lower()
         assert any(f in low.split() for f in ("cabin", "interior", "cockpit", "exterior"))
@@ -84,11 +84,23 @@ def test_ultra_long_range_cabin_browse_queries():
         "What is the best private jet cabin for transcontinental comfort?"
     )
     qs = out["queries"]
-    assert len(qs) == 3
+    assert len(qs) == 5
     joined = " ".join(qs).lower()
-    assert "g700" in joined
-    assert "7500" in joined
-    assert "falcon" in joined and "8x" in joined
+    assert "challenger" in joined and "300" in joined
+    assert "latitude" in joined
+    assert "falcon" in joined and "2000" in joined
+    assert "challenger" in joined and "650" in joined
+    assert "global" in joined and "6000" in joined
+    assert "high resolution" in joined
+
+
+def test_luxury_premium_hotel_feel_triggers_large_cabin_browse():
+    for phrase in ("luxury", "premium", "hotel feel"):
+        out = generate_ultra_precise_google_image_queries_json(phrase)
+        joined = " ".join(out["queries"]).lower()
+        assert "challenger" in joined or "falcon" in joined or "global" in joined
+        assert "cj2" not in joined
+        assert "learjet" not in joined
 
 
 def test_multi_facet_tail_one_query_per_facet():
@@ -97,4 +109,4 @@ def test_multi_facet_tail_one_query_per_facet():
     )
     qs = out["queries"]
     assert qs == ["N628TS exterior", "N628TS cabin", "N628TS cockpit"]
-    assert all(len(q.split()) <= 5 for q in qs)
+    assert all(len(q.split()) <= 6 for q in qs)

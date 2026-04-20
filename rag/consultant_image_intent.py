@@ -54,7 +54,12 @@ Output only valid JSON: {"intent": "<one of the five labels above>"}"""
 # "See" / "wanna see" / "try to see" mean **photos of the aircraft**, not maps or flight tracking.
 _VISUAL_FOLLOWUP_INNER = re.compile(
     r"(?is)(?:"
-    r"\bcan\s+i\s+see\s+(?:it|them|that|one|this)\b"
+    r"^\s*show\s+me\s*$"
+    r"|^\s*show\s+me\s+inside\s*\??\s*$"
+    r"|^\s*let\s+me\s+see\s*$"
+    r"|^\s*(?:inside)\s*\??\s*$"
+    r"|^\s*(?:interior|cabin|cockpit|exterior)\s*\??\s*$"
+    r"|\bcan\s+i\s+see\s+(?:it|them|that|one|this)\b"
     r"|\bcould\s+i\s+see\s+(?:it|them|that|one|this)\b"
     r"|\blet\s+me\s+see\s+(?:it|them|that|one|this)\b"
     r"|\bi\s+want\s+to\s+see\s+(?:it|them|that|one|this)\b"

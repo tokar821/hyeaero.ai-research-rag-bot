@@ -2,8 +2,8 @@
 Optional Tavily lookup to score **unknown** image source domains for aviation relevance.
 
 We cannot list every OEM, blog, or charter site. When the static domain table is uncertain
-(low score) and ``SEARCHAPI_TAVILY_DOMAIN_VERIFY=1``, we run a **single** Tavily search per host
-(cached) and derive a small boost from result titles/snippets — no second LLM.
+(low score) and ``SEARCHAPI_TAVILY_DOMAIN_VERIFY=1`` (recommended in production), we run a
+**single** Tavily search per host (cached) and derive a boost from result titles/snippets — no second LLM.
 """
 
 from __future__ import annotations
@@ -75,6 +75,13 @@ _NEG_HINTS: Tuple[str, ...] = (
     "casino",
     "football",
     "basketball",
+    "vacation rental",
+    "cabin rental",
+    "gatlinburg",
+    "racing sim",
+    "furniture store",
+    "interior designer",
+    "book review",
 )
 
 

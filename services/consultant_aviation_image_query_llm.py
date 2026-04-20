@@ -65,6 +65,13 @@ def should_run_image_query_llm(
         return not qs
     if not qs:
         return True
+    # Deterministic decision engine already produced a full high-precision set (3–5). Do not
+    # invoke the LLM just because the user used budget/superlatives — this avoids drift into
+    # out-of-band classes (e.g. Falcon 8X for "under $12M").
+    if len(qs) >= 3:
+        joined = " ".join(qs).lower()
+        if any(k in joined for k in ("high resolution", "cabin interior", "cockpit")):
+            return False
     if _user_image_query_needs_llm_for_complexity(user_query, intent=intent):
         return True
     return _user_query_lacks_aviation_anchor_for_images(
@@ -216,7 +223,9 @@ def _llm_image_query_is_safe_and_aviation(q: str) -> bool:
     has_model_shorthand = bool(
         re.search(
             r"(?<![a-z0-9])(?:g|f|cl|cj|pc)[-\s]?\d|\b(?:gulfstream|falcon|challenger|citation|"
-            r"phenom|learjet|global\s*\d|king\s*air|pilatus|embraer|bombardier|cessna)\b",
+            r"phenom|learjet|eclipse|global\s*\d|king\s*air|pilatus|embraer|bombardier|cessna|dassault|"
+            r"hawker|beechcraft|hondaJet|honda\s*jet|daher|sovereign|longitude|latitude|excel|xls|"
+            r"ultra|encore|premier)\b",
             low,
             re.I,
         )
@@ -229,11 +238,26 @@ def _llm_image_query_is_safe_and_aviation(q: str) -> bool:
             re.I,
         )
     )
+    intent_qual = bool(
+        re.search(
+            r"\b(luxury|premium|modern|budget|midsize|super\s*midsize|light\s*jet|heavy|ultra|best|"
+            r"nicest|cheaper|affordable|comparison|versus|under\s+\$|below\s+\$|"
+            r"high\s+res(?:olution)?|\bhd\b)\b",
+            low,
+            re.I,
+        )
+    )
     if has_tail or has_model_shorthand:
         ok = has_facet or has_aviation
         if has_tail and ok:
             return True
+        # Named model + visual section: product spec allows clean q strings without minus-terms.
+        if has_model_shorthand and ok:
+            return True
         return ok and has_minus
+    # Vague browse (e.g. "best midsize jet cabin"): require aviation cue + facet + intent + length.
+    if has_facet and has_aviation and intent_qual and len(parts) >= 5:
+        return True
     return (has_facet and has_aviation) and has_minus
 
 

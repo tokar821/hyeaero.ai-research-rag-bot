@@ -384,6 +384,10 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     # Superlative cabin browse (no explicit "photos" — still a visual shopping ask).
     r"|\b(?:best|top|nicest|finest|ultimate)\b.+\b(?:cabin|interior)\b"
     r"|\b(?:best|top)\s+(?:private\s+)?jets?\s+cabin\b"
+    # Model/tail + facet even without "show me" (e.g. "Falcon 9000 interior", "G650 cockpit").
+    r"|(?:(?<![a-z0-9])(?:g|f|cl|cj|pc)[-\s]?\d{2,4}(?:er)?\b|\b(?:gulfstream|falcon|challenger|citation|"
+    r"global\s*\d{4}|learjet|phenom|embraer|bombardier|cessna|dassault|pilatus|king\s*air|latitude|longitude)\b)"
+    r".{0,40}\b(?:interior|cabin|cockpit|exterior)\b"
     r")",
 )
 

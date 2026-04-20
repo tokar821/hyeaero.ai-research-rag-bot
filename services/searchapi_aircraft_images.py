@@ -162,6 +162,15 @@ _DOMAIN_SCORES_MODEL: Tuple[Tuple[str, int], ...] = (
     ("flightglobal.com", 730),
     ("corporatejetinvestor.com", 720),
     ("flycorporate.com", 710),
+    # Q&A / community / gov — high trust for real aircraft context (often better than generic CDNs).
+    ("stackexchange.com", 640),
+    ("sstatic.net", 620),
+    ("flightaware.com", 720),
+    ("faa.gov", 780),
+    ("easa.europa.eu", 760),
+    ("icao.int", 720),
+    ("aopa.org", 700),
+    ("nbaa.org", 700),
 )
 
 # Longer keys first so ``G650ER`` wins over ``G650``.
@@ -203,7 +212,9 @@ def searchapi_preserve_google_image_rank_order() -> bool:
 
     Within the first ``SEARCHAPI_AVIATION_RANKUP_WINDOW`` positions (per merged ``_api_rank``),
     results are **re-ordered by aviation-domain authority** while keeping Google order as the
-    backbone (see :func:`searchapi_aviation_rankup_window`).
+    backbone (see :func:`searchapi_aviation_rankup_window`). A separate **effective-rank** shift
+    (:func:`searchapi_aviation_rank_slot_shift_params`) can pull **trusted aviation pages** ahead of
+    **higher-position** off-topic hits.
 
     Set ``SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER=0`` to restore domain-heavy ordering.
     """
@@ -245,6 +256,37 @@ def _searchapi_tavily_domain_timeout_s() -> float:
         return max(4.0, min(30.0, float((os.getenv("SEARCHAPI_TAVILY_DOMAIN_TIMEOUT") or "9").strip())))
     except ValueError:
         return 9.0
+
+
+def searchapi_aviation_rank_slot_shift_params() -> Tuple[float, float, float]:
+    """
+    When preserve-Google order is on, **effective** API rank = ``position - shift(ar)`` where
+    ``shift`` grows with :func:`aviation_rankup_authority_score` so a **strong aviation host** at
+    Google #6 can sort ahead of a **non-aviation** hit at #2.
+
+    Returns ``(baseline_ar, divisor, max_slots)`` — ``shift = min(max_slots, max(0, ar-baseline)/divisor)``.
+    """
+    try:
+        base = float((os.getenv("SEARCHAPI_AVIATION_SLOT_SHIFT_BASELINE") or "95").strip())
+    except ValueError:
+        base = 95.0
+    try:
+        div = float((os.getenv("SEARCHAPI_AVIATION_SLOT_SHIFT_DIVISOR") or "18").strip())
+    except ValueError:
+        div = 18.0
+    try:
+        mx = float((os.getenv("SEARCHAPI_AVIATION_SLOT_SHIFT_MAX") or "36").strip())
+    except ValueError:
+        mx = 36.0
+    return (base, div, max(10.0, min(60.0, mx)))
+
+
+def _adjusted_api_rank_for_aviation_priority(api_r: int, ar: int) -> float:
+    """Lower is better in the same sense as smaller Google position."""
+    base, div, mx = searchapi_aviation_rank_slot_shift_params()
+    shift = max(0.0, float(ar) - base) / div
+    shift = min(mx, shift)
+    return max(0.15, float(api_r) - shift)
 
 
 def searchapi_aviation_rankup_window() -> int:
@@ -388,7 +430,46 @@ def _off_topic_image_rankup_penalty(low: str) -> int:
         pen += 480
     if "stockphoto" in low or "shutterstock" in low or "gettyimages" in low or "istockphoto" in low:
         pen += 350
-    return min(pen, 900)
+    # Vacation / residential “cabin” SEO spam (distinct from aircraft cabin).
+    if any(
+        x in low
+        for x in (
+            "cabinsforyou.com",
+            "greatsmokyvacations.com",
+            "nottodaycabin",
+            "logcabins.co.uk",
+            "broken bow",
+            "gatlinburg",
+            "vacation rental",
+            "rental cabin",
+            "smoky mountain",
+            "cabin rental",
+        )
+    ):
+        pen += 720
+    # Retail / gaming / humor — common false positives on “cockpit”.
+    if any(
+        x in low
+        for x in (
+            "target.com",
+            "walmart.com",
+            "bestbuy.com",
+            "thrustmaster",
+            "logitech",
+            "racing sim",
+            "wheel & pedal",
+            "dardoo",
+            "speedreaders.info",
+            "thefrontlines.com",
+            "brabbu.com",
+            "parnassusbooks.net",
+            "georgestreetphoto.com",
+        )
+    ):
+        pen += 680
+    if "t-magazine" in low and "nytimes.com" in low:
+        pen += 520
+    return min(pen, 920)
 
 
 def aviation_rankup_authority_score(
@@ -850,10 +931,11 @@ def fetch_ranked_searchapi_aircraft_images(
     Run SearchAPI image search (Google or Bing), score, rank, cap per-domain, return gallery rows.
 
     Model mode (default): after strict verification on **image URL, title, source name, and source page
-    link**, ordering follows Google’s ``position`` in **buckets** (see ``SEARCHAPI_AVIATION_RANKUP_WINDOW``):
-    within each bucket, **aviation / OEM / trade-press** hosts rank above obvious off-topic pages while
-    keeping overall API order. Set ``SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER=0`` for legacy host-heavy
-    scoring. Set ``SEARCHAPI_AVIATION_RANKUP_WINDOW=0`` to disable rank-up inside preserve mode.
+    link**, ordering blends Google’s ``position`` with **aviation-domain authority** (tier table,
+    off-topic penalties, optional Tavily domain verify) via **buckets** and an **effective-rank** shift
+    (see ``SEARCHAPI_AVIATION_RANKUP_WINDOW`` and :func:`searchapi_aviation_rank_slot_shift_params`).
+    Set ``SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER=0`` for legacy host-heavy scoring.
+    Set ``SEARCHAPI_AVIATION_RANKUP_WINDOW=0`` to disable rank-up inside preserve mode.
 
     Optional **image rank & filter** pass (``SEARCHAPI_IMAGE_RANK_FILTER_ENGINE=1``): deterministic
     broker-style filter on titles/URLs (houses/hotels, wrong section, weak aircraft match). Requires
@@ -873,6 +955,10 @@ def fetch_ranked_searchapi_aircraft_images(
     meta_out["searchapi_preserve_google_rank_order"] = bool(preserve_google)
     rankup_w = searchapi_aviation_rankup_window() if preserve_google else 0
     meta_out["searchapi_aviation_rankup_window"] = int(rankup_w)
+    _sb, _sd, _sm = searchapi_aviation_rank_slot_shift_params()
+    meta_out["searchapi_aviation_slot_shift_baseline"] = _sb
+    meta_out["searchapi_aviation_slot_shift_divisor"] = _sd
+    meta_out["searchapi_aviation_slot_shift_max"] = _sm
     meta_out["searchapi_max_per_image_domain"] = searchapi_max_images_per_domain(mode=mode)
 
     merged: List[Dict[str, Any]] = []
@@ -1017,7 +1103,8 @@ def fetch_ranked_searchapi_aircraft_images(
                     int(tavily_host_boosts.get(_norm_host(extract_domain(page)), 0)),
                     int(tavily_host_boosts.get(_norm_host(extract_domain(url)), 0)),
                 )
-            score += float(tw) * 0.06
+            # Tavily domain verify: meaningful tie-break vs raw position (scaled with ``ar`` path).
+            score += float(tw) * 0.35
         else:
             score = float(_domain_score_for_query_mode(url, mode))
             score += float(_avbuyer_penalty(url, source))
@@ -1044,7 +1131,9 @@ def fetch_ranked_searchapi_aircraft_images(
                 mode=mode,
                 tavily_host_boosts=tavily_host_boosts or None,
             )
-            bucket = api_r // rankup_w
+            adj = _adjusted_api_rank_for_aviation_priority(api_r, ar)
+            # Floor toward -inf is OK: stronger aviation rows form earlier buckets than weak #1–2 junk.
+            bucket = int(adj) // rankup_w if rankup_w > 0 else 0
             # Ascending: smaller bucket first; within bucket higher aviation first; then higher composite.
             return (bucket, -ar, -s)
 

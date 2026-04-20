@@ -77,6 +77,13 @@ def test_visual_followup_requires_aircraft_thread():
     assert visual_followup_suggests_image_request("What is the capital of France?", hist) is False
 
 
+def test_visual_followup_bare_show_me_and_let_me_see_need_thread_aircraft():
+    hist = [{"role": "user", "content": "Tell me about N888YG Gulfstream G400"}]
+    assert visual_followup_suggests_image_request("show me", hist) is True
+    assert visual_followup_suggests_image_request("let me see", hist) is True
+    assert visual_followup_suggests_image_request("show me", None) is False
+
+
 def test_visual_followup_wanna_see_try_to_see_means_photos_not_maps():
     hist = [{"role": "user", "content": "What about N807JS?"}]
     assert visual_followup_suggests_image_request("I wanna see that", hist) is True

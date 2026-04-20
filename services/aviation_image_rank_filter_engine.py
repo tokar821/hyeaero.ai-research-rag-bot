@@ -1,8 +1,11 @@
 """
-HyeAero.AI **image ranking & filter** layer: deterministic text/URL heuristics over SearchAPI rows.
+**Aircraft Image Validation Engine** (HyeAero.AI): **filter** and **rank** image candidates.
 
-This is **not** CLIP (no vision embeddings here). ``semantic_match`` is a **text-relevance proxy**
-from titles/URLs/snippets vs a synthetic intent line. Optional env disables the pass.
+Deterministic text/URL heuristics over SearchAPI rows — **not** CLIP (no vision embeddings).
+``semantic_match`` is a **text-relevance proxy** from titles/URLs vs intent.
+
+Output shape from :func:`rank_and_filter_aviation_images` includes ``valid_images`` (product spec)
+and ``selected_images`` (same list, backward-compatible alias). Optional env disables the pass.
 """
 
 from __future__ import annotations
@@ -14,10 +17,21 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+# Non-aviation retail / lifestyle (STEP 1 hard reject).
+_INTERIOR_DESIGN_FURNITURE = re.compile(
+    r"\b("
+    r"interior\s+design|furniture\b|furniture\s+store|home\s+furnishings|"
+    r"living\s+room\s+design|kitchen\s+remodel|decor\s+ideas"
+    r")\b",
+    re.I,
+)
+
 _HOUSE_HOTEL = re.compile(
     r"\b("
     r"house\b|home\b|airbnb|vrbo|zillow|realtor|hotel\b|resort\b|motel\b|"
-    r"wood\s+cabin|log\s+cabin|cottage\b|bed\s+and\s+breakfast|\bbnb\b"
+    r"wood\s+cabin|log\s+cabin|cottage\b|bed\s+and\s+breakfast|\bbnb\b|"
+    r"vacation\s+rental|rental\s+cabin|gatlinburg|great\s+smoky|broken\s+bow|"
+    r"cabin\s+rental|cabins\s+for\s+you"
     r")\b",
     re.I,
 )
@@ -82,6 +96,16 @@ def _blob(row: Dict[str, Any]) -> str:
 
 
 def _hard_reject_reason(blob: str, section: str) -> Optional[str]:
+    if _INTERIOR_DESIGN_FURNITURE.search(blob):
+        return "interior_design_or_furniture"
+    # Consumer retail / gaming — common Google noise for “cockpit”.
+    if re.search(
+        r"(?i)(?:target\.com\/|walmart\.com\/).*(?:racing|simulator|sim\s+cockpit|thrustmaster|logitech|pedal)",
+        blob,
+    ):
+        return "retail_gaming_sim_not_aircraft"
+    if re.search(r"(?i)(?:speedreaders\.info|thefrontlines\.com)", blob):
+        return "non_aviation_blog_host"
     if _HOUSE_HOTEL.search(blob):
         return "house_hotel_residential"
     if _RENDER_CGI.search(blob):
@@ -199,11 +223,103 @@ def _quality_score(blob: str) -> float:
     return max(0.15, min(1.0, q))
 
 
-def _final_score(air: float, sec: float, sem: float, qual: float) -> float:
-    return max(
-        0.0,
-        min(1.0, 0.4 * air + 0.3 * sec + 0.2 * sem + 0.1 * qual),
+def _title_has_aircraft_context(title: str, query_intent: Dict[str, Any]) -> bool:
+    """
+    STEP 1 — require aircraft-related anchors in **title** (not only URL),
+    so generic lifestyle / stock titles fail early.
+    """
+    t = (title or "").strip()
+    if len(t) < 2:
+        return False
+    tl = t.lower()
+    if re.search(r"\bn[1-9][a-z0-9]{1,5}\b", tl, re.I):
+        return True
+    anchors = (
+        "aircraft",
+        "bizjet",
+        "business jet",
+        "private jet",
+        "cockpit",
+        "cabin",
+        "interior",
+        "exterior",
+        "gulfstream",
+        "citation",
+        "falcon",
+        "challenger",
+        "phenom",
+        "learjet",
+        "global ",
+        "hawker",
+        "eclipse",
+        "planespotter",
+        "jetphotos",
+        "airliner",
+        "taxi",
+        "ramp",
+        "takeoff",
+        "landing",
+        "parked",
+        "registration",
     )
+    if any(a in tl for a in anchors):
+        return True
+    ac = str(query_intent.get("aircraft") or "").strip()
+    for tok in re.split(r"[^\w]+", ac):
+        if len(tok) >= 3 and tok.lower() in tl:
+            return True
+    return False
+
+
+def _aviation_source_score(blob: str) -> float:
+    """0..1 — high for planespotter / listing / registry style hosts (maps to +20 max)."""
+    if re.search(
+        r"jetphotos|planespotters|airliners\.net|controller\.|globalair\.|avbuyer\.|flightaware|"
+        r"stackexchange\.com|sstatic\.net|aircharterservice|flexjet\.com|bombardier\.com|gulfstream\.com|"
+        r"dassault-aviation|embraer\.com|bjtonline|ainonline|flightglobal|aviationweek",
+        blob,
+        re.I,
+    ):
+        return 1.0
+    if re.search(r"\.gov\b|\bfaa\b|\beasa\b", blob, re.I):
+        return 0.95
+    if re.search(r"wikipedia|reddit|pinterest|instagram|facebook|etsy\b", blob, re.I):
+        return 0.25
+    return 0.55
+
+
+def _score_breakdown_0_100(air: float, sec: float, src: float, qual: float) -> Tuple[int, str]:
+    """
+    STEP 2 — relevance on 0–100: model +40, cabin/cockpit +30, aviation source +20, clarity +10.
+    """
+    model_pts = int(round(40.0 * max(0.0, min(1.0, air))))
+    section_pts = int(round(30.0 * max(0.0, min(1.0, sec))))
+    source_pts = int(round(20.0 * max(0.0, min(1.0, src))))
+    qn = max(0.15, min(1.0, qual))
+    clarity_pts = int(round(10.0 * (qn - 0.15) / 0.85))
+    clarity_pts = max(0, min(10, clarity_pts))
+    total = min(100, model_pts + section_pts + source_pts + clarity_pts)
+
+    parts: List[str] = []
+    if air >= 0.95:
+        parts.append("exact/near model match")
+    elif air >= 0.72:
+        parts.append("partial model match")
+    elif air >= 0.55:
+        parts.append("weak model match")
+    if sec >= 0.85:
+        parts.append("cabin/cockpit/exterior match")
+    elif sec >= 0.5:
+        parts.append("facet partially matches")
+    if src >= 0.9:
+        parts.append("aviation-grade source")
+    elif src <= 0.35:
+        parts.append("low-authority host")
+    if clarity_pts >= 7:
+        parts.append("clear title cues")
+
+    reason = "; ".join(parts) if parts else "passed filters"
+    return total, reason[:220]
 
 
 def rank_and_filter_aviation_images(
@@ -215,20 +331,35 @@ def rank_and_filter_aviation_images(
     min_final_score: float = 0.52,
 ) -> Dict[str, Any]:
     """
-    Rank/filter image dicts (url/title/source/alt). Returns JSON-shaped dict per product spec.
+    Rank/filter image dicts (url/title/source/alt). Returns JSON-shaped dict per product spec:
+
+    - ``valid_images`` / ``selected_images``: top **3–5** rows with ``url``, ``score`` (0–100), ``reason``.
+    - ``rejected_count``, ``confidence`` (0–1, legacy consumers).
 
     ``images`` may include ``_gallery_item`` to preserve SearchAPI gallery row shape on output.
+
+    ``min_final_score`` may be **0–1** (legacy, e.g. 0.52) or already **0–100**; values ``<=1`` are scaled ×100.
     """
     aircraft = str(query_intent.get("aircraft") or "").strip()
     section = str(query_intent.get("section") or query_intent.get("type") or "interior").strip()
 
-    scored_rows: List[Tuple[float, str, Dict[str, Any]]] = []
+    try:
+        raw_min = float(min_final_score)
+    except (TypeError, ValueError):
+        raw_min = 0.52
+    min_score_100 = int(round(raw_min * 100)) if raw_min <= 1.0 else int(raw_min)
+
+    scored_rows: List[Tuple[int, str, Dict[str, Any]]] = []
     rejected = 0
 
     for im in images:
         b = _blob(im)
+        title_only = str(im.get("title") or "").strip()
         hr = _hard_reject_reason(b, section)
         if hr:
+            rejected += 1
+            continue
+        if not _title_has_aircraft_context(title_only, query_intent):
             rejected += 1
             continue
         air = _aircraft_match_score(aircraft, b)
@@ -244,34 +375,32 @@ def rank_and_filter_aviation_images(
             rejected += 1
             continue
         qual = _quality_score(b)
-        fs = _final_score(air, sec, sem, qual)
-        if fs < min_final_score:
+        qual_for_clarity = min(1.0, 0.55 * qual + 0.45 * sem)
+        src = _aviation_source_score(b)
+        total, reason = _score_breakdown_0_100(air, sec, src, qual_for_clarity)
+        if total < min_score_100:
             rejected += 1
             continue
-        reason_parts = [
-            f"aircraft={air:.2f}",
-            f"section={sec:.2f}",
-            f"text={sem:.2f}",
-            f"quality={qual:.2f}",
-        ]
-        scored_rows.append((fs, "; ".join(reason_parts), im))
+        scored_rows.append((total, reason, im))
 
     scored_rows.sort(key=lambda t: t[0], reverse=True)
     top = scored_rows[:max_selected]
 
     if len(top) < min_selected:
         conf = 0.35 if top else 0.2
-        return {
+        empty: Dict[str, Any] = {
+            "valid_images": [],
             "selected_images": [],
-            "rejected_count": len(images),
+            "rejected_count": rejected,
             "confidence": conf,
         }
+        return empty
 
     selected: List[Dict[str, Any]] = []
-    for fs, reason, im in top:
+    for total, reason, im in top:
         entry: Dict[str, Any] = {
             "url": str(im.get("url") or "").strip(),
-            "score": round(fs, 4),
+            "score": int(total),
             "reason": reason[:220],
         }
         gi = im.get("_gallery_item")
@@ -279,11 +408,12 @@ def rank_and_filter_aviation_images(
             entry["_gallery_item"] = gi
         selected.append(entry)
 
-    conf_out = round(min(s[0] for s in top) * 0.92 + 0.05, 3)
+    conf_out = round(min(s[0] for s in top) / 100.0 * 0.92 + 0.05, 3)
     conf_out = max(0.55, min(0.98, conf_out))
 
     return {
-        "selected_images": selected,
+        "valid_images": list(selected),
+        "selected_images": list(selected),
         "rejected_count": rejected,
         "confidence": conf_out,
     }
@@ -324,10 +454,15 @@ def apply_rank_filter_to_gallery_items(
     )
 
     if gallery_meta is not None:
+        _vi = out.get("valid_images") or []
         gallery_meta["image_rank_filter_engine"] = {
             "rejected_count": out.get("rejected_count"),
             "confidence": out.get("confidence"),
             "selected_n": len(out.get("selected_images") or []),
+            "valid_images_preview": [
+                {"url": (x.get("url") or "")[:200], "score": x.get("score"), "reason": (x.get("reason") or "")[:120]}
+                for x in _vi[:5]
+            ],
         }
 
     sel = out.get("selected_images") or []

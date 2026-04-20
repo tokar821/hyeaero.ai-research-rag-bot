@@ -234,6 +234,13 @@ def classify_premium_aviation_intent(
                     ).strip()
                 except Exception:
                     mm_v = ""
+            # For vague "best cabin / luxury / hotel feel" browse queries without an explicit model,
+            # do not pick an arbitrary aircraft from SQL/Phly rows; let the browse query fan-out happen.
+            if (
+                not mm_v
+                and re.search(r"\b(best\s+cabin|luxury|premium|hotel\s+feel|like\s+a\s+hotel)\b", low, re.I)
+            ):
+                phly_rows = None
             if not mm_v and phly_rows:
                 for r in (phly_rows or [])[:4]:
                     man = (r.get("manufacturer") or "").strip()

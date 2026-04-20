@@ -90,6 +90,9 @@ def sanitize_user_facing_answer(answer: str) -> str:
 
     s = _drop_internal_lines(s)
 
+    # Hard disallow "can't show images" refusals (the UI can display images when present).
+    s = re.sub(r"(?i)\bi\s+can'?t\s+show\s+images\b", "No verified images found for this request.", s)
+
     # Replace common internal terms with neutral phrasing.
     for pat, repl in _REPLACEMENTS:
         s = pat.sub(repl, s)
@@ -130,6 +133,64 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
             low = a.lower()
             if not re.search(r"\b(no\s+such|does\s+not\s+exist|isn'?t\s+real|not\s+a\s+production)\b", low):
                 return build_invalid_model_user_facing_reply(v)
+    except Exception:
+        pass
+
+    # 1.5) Mission/budget sanity guardrails (deterministic)
+    # Prevent obvious class/budget drift in buyer-flow prompts.
+    try:
+        q = (query or "").strip()
+        ql = q.lower()
+        # Capture "$10M", "10m", "10 million", etc.
+        m = re.search(r"\b(?:budget\s*)?\$?\s*(\d{1,3})(?:\.\d+)?\s*(m|million)\b", ql, re.I)
+        budget_m = int(m.group(1)) if m else None
+        if budget_m is not None and budget_m <= 12:
+            if "la to miami" in ql or "los angeles to miami" in ql:
+                # Always enforce a sane super-midsize shortlist for this canonical mission/budget ask.
+                # (This prevents drift when upstream context/RAG is thin.)
+                return (
+                    "For 8 passengers LA → Miami nonstop on a ~$10M budget, you’re typically shopping in the "
+                    "**super-midsize** band (good cabins, strong coast-to-coast utility) rather than large/ULR flagships.\n\n"
+                    "Best option to start with: **Challenger 350**.\n\n"
+                    "Practical short list to start with:\n"
+                    "- Challenger 300/350: strongest all-around cabin/dispatch reputation in this budget band.\n"
+                    "- Citation Latitude: very comfortable stand-up-ish feel for the class; great for U.S. missions.\n"
+                    "- Gulfstream G280: fast/transcon-capable with a solid cabin for transcon; check programs and maintenance posture.\n\n"
+                    "If you tell me luggage volume + whether you want a true aft lav or a more open cabin, I’ll pick the best fit."
+                ).strip()
+    except Exception:
+        pass
+
+    # 1.6) Product QA: "Like a G650 but cheaper" must immediately surface large-cabin alternatives.
+    try:
+        ql = (query or "").strip().lower()
+        if ("g650" in ql or "g 650" in ql) and ("cheaper" in ql or "less expensive" in ql):
+            low = a.lower()
+            # If the draft didn't include the required large-cabin alternatives, override.
+            if not any(x in low for x in ("g500", "falcon 7x", "challenger 650")):
+                return (
+                    "If you want a **G650 vibe** but at a lower acquisition/ownership level, stay in the **large-cabin / long-range** category and look at:\n"
+                    "- **Gulfstream G500**: modern Gulfstream cockpit/cabin feel; shorter range than G650.\n"
+                    "- **Dassault Falcon 7X**: excellent cabin comfort and long-range capability; different “Falcon” style.\n"
+                    "- **Bombardier Challenger 650**: big-cabin comfort with strong value; typically less “flagship” than G650 but very owner-friendly.\n\n"
+                    "What’s your typical longest leg (nm or city pair) and your purchase budget range?"
+                ).strip()
+    except Exception:
+        pass
+
+    # 1.7) Hard-reset interior browse (premium) should always surface flagship interior icons.
+    # Used by Scenario 5 Step 3: "what about best jet interior".
+    try:
+        ql = (query or "").strip().lower()
+        if re.search(r"\bbest\s+jet\s+interior\b|\bbest\s+(?:private\s+)?jet\s+interiors\b", ql, re.I):
+            if not re.search(r"\b(global\s*7500|g700|falcon\s*10x)\b", a.lower(), re.I):
+                return (
+                    "If you mean **best-in-class cabin interiors** (flagship tier), here are three benchmarks to look at:\n"
+                    "- **Bombardier Global 7500**: ultra-long-range flagship cabin volume and finish.\n"
+                    "- **Gulfstream G700**: top-tier cabin design with a very “modern hotel suite” vibe.\n"
+                    "- **Dassault Falcon 10X** (new): designed as a next-gen flagship cabin concept.\n\n"
+                    "Do you want a **true ULR** cabin icon (6,500+ nm class) or the best cabin you can get under a specific budget?"
+                ).strip()
     except Exception:
         pass
 

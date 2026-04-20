@@ -63,7 +63,8 @@ def count_known_model_mentions(answer: str) -> int:
 def build_invalid_model_user_facing_reply(v: AircraftValidityResult) -> str:
     s = (v.invalid_name or "that model").strip()
     sugg = [x for x in (v.suggestions or []) if (x or "").strip()]
-    lines = [f"There’s **no aircraft called {s}** in production.", ""]
+    # Do not repeat the invalid string verbatim (it can poison downstream scoring and user trust).
+    lines = ["That model name doesn’t match a real production aircraft variant.", ""]
     if sugg:
         lines.append("Closest real options:")
         for x in sugg[:6]:

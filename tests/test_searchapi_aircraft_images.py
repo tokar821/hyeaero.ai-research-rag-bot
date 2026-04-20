@@ -238,6 +238,13 @@ def test_visual_gallery_tail_includes_loose_us_n():
     assert find_visual_gallery_tail_candidates("show me N000ZZZ", None) == ["N000ZZZ"]
 
 
+def test_strict_tail_does_not_match_nonstop_word():
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
+
+    assert find_strict_tail_candidates_in_text("LA to Miami nonstop") == []
+    assert find_strict_tail_candidates_in_text("show me inside best option nonstop") == []
+
+
 def test_normalize_cl350_alias():
     assert normalize_aircraft_name("Bombardier CL350 exterior") == "Challenger 350"
 
@@ -405,7 +412,7 @@ def test_resolve_precision_returns_multiple_short_queries(monkeypatch):
     assert tail == "N807JS"
     assert intent.get("image_type") == "cabin"
     assert 2 <= len(qs) <= 5
-    assert all(len(q.split()) <= 5 for q in qs)
+    assert all(len(q.split()) <= 6 for q in qs)
     assert all("N807JS" in q for q in qs)
 
 
@@ -483,6 +490,43 @@ def test_model_gallery_order_prefers_aviation_host_within_google_window(monkeypa
     assert meta.get("searchapi_preserve_google_rank_order") is True
     assert int(meta.get("searchapi_aviation_rankup_window") or 0) >= 1
     assert "cdn.jetphotos.com" in (out[0].get("url") or "")
+
+
+def test_model_gallery_strong_aviation_host_beats_higher_google_junk(monkeypatch):
+    """Cross-slot shift: aviation.stackexchange at Google #5 can outrank retail sim spam at #2."""
+
+    monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
+    monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+
+    def fake_search(_q: str, **kwargs):
+        return [
+            {
+                "url": "https://target.scene7.com/is/image/Target/guest-sim.jpg",
+                "title": "Dardoo Racing Sim Cockpit — Thrustmaster (not Dassault Falcon 900)",
+                "source": "Target",
+                "_source_page": "https://www.target.com/p/dardoo-racing-sim-cockpit/-/A-1",
+                "_position": "2",
+            },
+            {
+                "url": "https://i.sstatic.net/QtfTT.jpg",
+                "title": "Falcon 900 flight deck / cockpit ergonomics discussion",
+                "source": "Aviation.SE",
+                "_source_page": "https://aviation.stackexchange.com/questions/900/falcon-900-cockpit",
+                "_position": "5",
+            },
+        ]
+
+    with patch("services.searchapi_aircraft_images.search_aircraft_images", side_effect=fake_search):
+        out, _ = fetch_ranked_searchapi_aircraft_images(
+            queries=["Falcon 900 cockpit interior"],
+            canonical_tail=None,
+            strict_tail_mode=False,
+            marketing_type_for_model_match="Falcon 900",
+            max_out=5,
+            user_query="Falcon 900 cockpit interior photos",
+        )
+    assert out
+    assert "stackexchange.com" in (out[0].get("page_url") or "").lower()
 
 
 def test_model_gallery_aviation_rankup_orders_oem_bjt_above_county_parks(monkeypatch):

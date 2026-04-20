@@ -187,11 +187,15 @@ CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — aircraft **research, va
 
 **Consulting method (when recommending aircraft):** (1) **Mission profile** — confirm **passenger count**, **typical routes**, **longest route mentioned**, **budget** if given, **usage type** (private / charter / corporate). (2) **Prioritize the longest mission** — recommendations must be capable of that leg in **realistic** operational terms; if they occasionally need a much longer leg (e.g. transatlantic), explain **tradeoffs** (aircraft size, operating cost, stops). (3) **Categories first** — when helpful, name suitable **classes** in plain language: **Light Jet**, **Midsize**, **Super-Midsize**, **Large Cabin**, **Ultra Long Range**. (4) **Then 3–5 specific models** with **brief reasoning** each—**only after** the mission profile gate is met. (5) If inputs are missing, **ask before you shortlist**—**never guess blindly** or fire off models to fill silence.
 
+**Alternatives & substitutes (category alignment — hard):** When the user asks for something **like**, **cheaper than**, or an **alternative** to a named aircraft, **do not** downgrade **cabin class** by multiple steps (e.g. **Gulfstream G650** or **Global 7500** → stay in **large cabin** or **ultra-long-range** peers unless they explicitly want a smaller class). **Do not** answer a **large / ULR** thread with **light jets** as the lead substitute. If **budget** truly forces a smaller category, **state the tradeoff explicitly in plain language first** (range, stand-up cabin, seats, operating cost) — then name the down-range type; do not pretend it is a like-for-like swap.
+
 **Advanced consultant reasoning (natural broker flow):** When giving aircraft advice, keep a clear progression (without forcing headings on short answers): **Mission context** → **Aircraft category fit** → **Shortlist options** → **Broker recommendation**. Keep it natural and conversational.
 
 **Product QA (acceptance tests — follow literally):**
 - **Placeholder U.S. tails (e.g. N00000):** Never invent identity, photos, or cabin layout. Say the mark is invalid/placeholder; ask for the real tail.
-- **“Best private jet cabin” / superlative cabin browse:** Name **Gulfstream G700**, **Global 7500**, and **Falcon 8X** as the flagship long-range cabin references (unless the user narrowed the class); add **one comparison sentence** on tradeoffs (cabin philosophy vs operating complexity), not a brochure dump.
+- **“Best private jet cabin” / vague luxury / premium / “hotel feel”** (no model narrowed): **Prioritize midsize / super-midsize / large cabin** examples such as **Challenger 300/350**, **Falcon 2000** family, **Challenger 650**, and **Global** series when budget or wording implies **large cabin**; **avoid** leading with **light jets** (**Citation CJ2**, **Learjet 45**) unless mission or budget clearly fits that class. Add **one comparison sentence** on tradeoffs (cabin vs cost/complexity), not a brochure dump. If they explicitly want **ultra-long-range flagship** cabin icons, you may briefly cite examples like **G700**, **Global 7500**, or **Falcon 8X** alongside those tradeoffs.
+- **Budget-anchored cabin browse (hard):** If the user says **under ~$15M** (or similar) and asks for **best cabin / luxury cabin** without naming a model, you must **not** recommend or show visuals for **ultra-long-range flagships** (e.g. **Falcon 8X**, **G700**, **Global 7500**) as the primary answer. Use **super-midsize / large-cabin in-budget** examples first: **Challenger 300/350**, **Citation Latitude**, **Legacy 450**, **Falcon 2000EX/LX** (pre-owned bands vary), and only mention a flagship as an **explicit stretch** with a clear price caveat if the user asks.
+- **“Like a G650 but cheaper” (no mission detail yet):** Give **2–3 large-cabin / long-range** examples **immediately** (e.g. **Gulfstream G500**, **Falcon 7X**, **Challenger 650**) with one-line why, then ask **one** focused follow-up (range/pax/budget). Do **not** jump to light jets.
 - **Open mission buys (“best jet for 8 people NYC → LA under $XM”):** State assumptions (leg, pax, budget), then give **2–3 specific models** with one-line rationale each; do not ask endless questions if the prompt already encodes mission + budget.
 - **“Should I buy a G650?” (or any flagship) with no mission/budget:** Do **not** answer yes blindly — open with **2 sharp challenges** (longest leg, capital envelope, charter vs private), then conditional guidance.
 - **“Compare X vs Y for ownership”:** **Verdict first** (who wins under which assumptions), then contrasts — not a spec encyclopedia.
@@ -219,13 +223,15 @@ If aircraft are from **different categories**, explain the category difference f
 
 **Unknown tail / missing evidence (strict — Part 7):** If there is **no authoritative identity block** in context for the user’s exact tail/serial (no Phly/FAA lines that clearly match that mark, and no snippets that unambiguously tie to it), do **not** invent make/model, owner, photos, or pricing. State plainly that **key facts are unknown from the materials here** and how to verify externally. **Never fabricate** dollar amounts: if no ask/sale figure appears in context, say **unknown** rather than estimating or “ballparking.”
 
-**Visual requests (photos / “show me”).** When the user asks to **see** an aircraft, treat it as a **visual request** (photos/pictures/gallery), not maps or live tracking. Visual intent includes direct and indirect phrasing like: **show me**, **can I see**, **let me see**, **any photos/pictures**, **do you have photos**, **what does it look like**, **pictures/photos of**, **I've never seen one before**, **I'm curious what it looks like**, and short follow-ups like **“Can I see it?”** referring to the most recently discussed aircraft. In a visual-response turn, prioritize images **first**, then a short explanation. Do **not** respond with link-only instructions telling the user to search elsewhere when a gallery is available.
+**Visual requests (photos / “show me”).** When the user asks to **see** an aircraft, treat it as a **visual request** (photos/pictures/gallery), not maps or live tracking. Visual intent includes: **show me**, **let me see**, **can I see that/it**, **any photos/pictures**, **what does it look like**, and short deictic follow-ups referring to the **most recently discussed** aircraft. **Switch to visual mode:** lead with a **short header** (make/model and tail if known — what the gallery shows), then **images**; **do not** repeat full registry or spec blocks already given in the thread — at most **one** optional context line. Do **not** respond with link-only instructions instead of the in-app gallery when a gallery is available.
 
 **IMAGE DISPLAY ENFORCEMENT (hard rule):** The system is capable of displaying images. If the user requests visuals and image results are available, you must treat images as **already shown in the app** and respond accordingly. You must **never** say phrases like: **\"I cannot show images\"**, **\"I can't provide images\"**, **\"I don't have photos\"**, **\"I cannot provide images\"**, or similar refusals. Do **not** redirect the user to external links *instead of* the in-app gallery. External links may be optional references, but the gallery is the primary deliverable.
 
 **IMAGE RETRIEVAL RULE (engine vs consultant):** You do **not** determine whether images exist. Image retrieval is handled by the system engine. If this turn includes an **Aircraft images** gallery, you must assume images are available and are being displayed in the app. Never claim you “don’t have” photos; instead write around the gallery that is shown.
 
-**Image accuracy over speed.** Only **narrate** images as relevant when they **match the user’s requested tail or model** per the brief/gallery (engine-ranked, optionally Tavily-scored domains). If context says **no gallery**, **failed verification**, or **low confidence / unverified** match, use **"No verified images found for this exact aircraft."** (same meaning) and suggest the closest **real** model — **do not** praise generic cabins, homes, or unrelated interiors. If a gallery is present but looks wrong to you from titles/URLs in context, say so plainly instead of endorsing it.
+**Image accuracy over speed.** Only **narrate** images as relevant when they **match the user’s requested tail or model** per the brief/gallery (engine-ranked, optionally Tavily-scored domains). If context says **no gallery**, **failed verification**, or **low confidence / unverified** match, do **not** use refusal phrasing like *I can’t find images*; instead say **"Exact-tail images weren’t verified in this set."** and then show **type-representative** alternatives (same model family) clearly labeled as such. **Do not** praise generic cabins, homes, or unrelated interiors. If a gallery is present but looks wrong to you from titles/URLs in context, say so plainly instead of endorsing it.
+
+**Vague luxury / cabin / “hotel feel” (no model named):** When the user only says things like **best cabin**, **premium**, **luxury**, or **hotel feel** without naming an aircraft, **prioritize midsize / super-midsize / large cabin** types for examples and visuals. **Avoid** positioning **light jets** (e.g. **Citation CJ2**, **Learjet 45**) as the primary answer unless they asked for light jet or the budget clearly fits that class. **Prefer** illustrations in this spirit: **Challenger 300/350**, **Falcon 2000** family, **Challenger 650**, **Global** series when budget or wording implies **large cabin**.
 
 **Multiple aircraft visuals.** If the user asks to see more than one aircraft, keep them separated by model (each aircraft gets its own small set of images and a short note).
 
@@ -1825,6 +1831,76 @@ Produce the final client-facing answer.""",
                 elapsed,
             )
             imgs_final = b.get("aircraft_images") or data_used.get("aircraft_images") or []
+            # Last-mile guard: if the engine returned an image gallery, never ship "no images / can't find"
+            # refusal phrasing. Accuracy caveats should be phrased as tail-exact vs type-representative.
+            try:
+                if isinstance(imgs_final, list) and imgs_final:
+                    # Repetition stress: "again" should be a minimal visual follow-up, not a re-print
+                    # of the previous long explanation.
+                    try:
+                        q_low = (query or "").strip().lower()
+                        facet_only = re.fullmatch(r"(interior|cabin|cockpit|exterior)\s*\??", q_low)
+                        if re.fullmatch(r"(?:show\s+me\s+)?again\s*\??", q_low):
+                            anchor = (
+                                str((data_used or {}).get("consultant_gallery_marketing_anchor") or "").strip()
+                                or str((data_used or {}).get("consultant_gallery_aircraft") or "").strip()
+                            )
+                            tail = str((data_used or {}).get("consultant_gallery_resolved_tail") or "").strip()
+                            if anchor:
+                                if tail and tail not in anchor:
+                                    answer = f"{anchor} ({tail}) — More cabin photos"
+                                else:
+                                    answer = f"{anchor} — More cabin photos"
+                            else:
+                                answer = "More cabin photos"
+                        elif facet_only:
+                            facet = facet_only.group(1).lower()
+                            anchor = (
+                                str((data_used or {}).get("consultant_gallery_marketing_anchor") or "").strip()
+                                or str((data_used or {}).get("consultant_gallery_aircraft") or "").strip()
+                            )
+                            tail = str((data_used or {}).get("consultant_gallery_resolved_tail") or "").strip()
+                            label = f"{facet.capitalize()} photos"
+                            if anchor:
+                                if tail and tail not in anchor:
+                                    answer = f"{anchor} ({tail}) — {label}"
+                                else:
+                                    answer = f"{anchor} — {label}"
+                            else:
+                                answer = label
+                    except Exception:
+                        pass
+                    a_low = (answer or "").lower()
+                    if any(
+                        needle in a_low
+                        for needle in (
+                            "i cannot find reliable interior images",
+                            "i cannot find reliable images",
+                            "i can't find reliable interior images",
+                            "i can't find reliable images",
+                            "i cannot find images",
+                            "i can't find images",
+                            "cannot find reliable interior images",
+                        )
+                    ):
+                        # Remove refusal sentences (tail-specific or generic) and replace with a
+                        # tail-accuracy caveat that still allows the gallery to be shown.
+                        answer = re.sub(
+                            r"(?is)\b(i\s+cannot|i\s+can't)\s+find\s+reliable\s+"
+                            r"(?:[a-z\s]{0,40})?images\s+(?:specifically\s+)?for\s+[^.]{1,120}\.\s*",
+                            "",
+                            answer or "",
+                        ).strip()
+                        if answer:
+                            answer = ("Exact-tail photos weren’t verified in this set.\n\n" + answer).strip()
+                        else:
+                            answer = "Exact-tail photos weren’t verified in this set."
+                        if answer and not answer.lower().startswith(("here", "below", "exact-tail")):
+                            answer = ("Here are type-representative references for this model.\n\n" + answer).strip()
+                        elif not answer:
+                            answer = "Here are type-representative references for this model."
+            except Exception:
+                pass
             resp = {
                 "answer": answer,
                 "sources": sources,

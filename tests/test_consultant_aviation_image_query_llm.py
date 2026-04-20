@@ -25,6 +25,13 @@ def test_llm_query_validator_accepts_private_jet_cabin():
     assert _llm_image_query_is_safe_and_aviation("G650 cabin interior real photo -house -hotel")
 
 
+def test_llm_query_validator_accepts_model_led_queries_without_minus_terms():
+    """Product spec: cabin/interior words allowed when aircraft identity is explicit."""
+    assert _llm_image_query_is_safe_and_aviation("Challenger 300 cabin interior luxury")
+    assert _llm_image_query_is_safe_and_aviation("Eclipse EA500 N878BW exterior")
+    assert _llm_image_query_is_safe_and_aviation("Falcon 7X cabin luxury interior")
+
+
 def test_llm_query_validator_rejects_bare_best_cabin():
     assert not _llm_image_query_is_safe_and_aviation("best cabin")
     assert not _llm_image_query_is_safe_and_aviation("nice interior design")

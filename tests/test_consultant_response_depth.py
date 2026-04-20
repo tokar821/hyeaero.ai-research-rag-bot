@@ -68,10 +68,46 @@ def test_general_question_tail_vs_broad():
     )
 
 
+def test_visual_followup_show_me_that_after_tail_in_thread():
+    h = [{"role": "user", "content": "Have you N878BW?"}]
+    assert (
+        classify_response_depth("show me that", h, ConsultantFineIntent.AIRCRAFT_SPECS)
+        == ResponseDepthKind.VISUAL_FOLLOWUP
+    )
+
+
+def test_visual_followup_can_i_see_it_with_consultant_role():
+    h = [
+        {"role": "You", "content": "Have N878BW?"},
+        {"role": "Consultant", "content": "N878BW is an Eclipse EA500."},
+    ]
+    assert (
+        classify_response_depth("can I see it?", h, ConsultantFineIntent.OWNERSHIP_LOOKUP)
+        == ResponseDepthKind.VISUAL_FOLLOWUP
+    )
+
+
+def test_visual_followup_show_me_interior_short():
+    h = [{"role": "user", "content": "N807JS cabin question earlier"}]
+    assert (
+        classify_response_depth("show me interior", h, ConsultantFineIntent.GENERAL_QUESTION)
+        == ResponseDepthKind.VISUAL_FOLLOWUP
+    )
+
+
+def test_visual_followup_bare_show_me_with_thread_aircraft():
+    h = [{"role": "user", "content": "N807JS is a Citation Excel on the market."}]
+    assert (
+        classify_response_depth("show me", h, ConsultantFineIntent.GENERAL_QUESTION)
+        == ResponseDepthKind.VISUAL_FOLLOWUP
+    )
+
+
 @pytest.mark.parametrize(
     "kind",
     [
         ResponseDepthKind.CONFIRMATION,
+        ResponseDepthKind.VISUAL_FOLLOWUP,
         ResponseDepthKind.AIRCRAFT_LOOKUP,
         ResponseDepthKind.ADVISORY,
     ],
