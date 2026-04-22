@@ -376,9 +376,16 @@ _IDENTITY_REPLIES = [
 ]
 
 HYEAERO_COMPANY_REPLY = (
-    "Hye Aero is an aviation intelligence and brokerage support platform focused on aircraft research, "
-    "ownership intelligence, and market insights.\n\n"
-    "HyeAero.AI is the conversational side — concise, consultant-style answers, not a generic chatbot."
+    "HYE Aero is intentionally boutique aircraft advisory — aircraft advisory, done the right way. "
+    "The firm takes fewer engagements so each gets senior-level focus: every aircraft, mission profile, "
+    "and risk is weighed with the same care you'd want on your own operation.\n\n"
+    "HYE Aero is grounded in decades of hands-on jet and rotorcraft ownership — owner mindset first, not a sales manual. "
+    "Advice starts with how you actually fly (passengers, routes, longest leg, runway and international needs), "
+    "then matches aircraft to that mission. The team handles transactional representation, strategic guidance, "
+    "and flight-department coaching, with clarity on fractional, charter, full ownership, upgrades, and exits.\n\n"
+    "Ten percent of profits support mental health and cancer organizations — impact beyond aviation.\n\n"
+    "HyeAero.AI is the conversational side of that aviation intelligence and brokerage support: concise, "
+    "consultant-style answers — not a generic chatbot."
 )
 
 _BOT_OR_AI_QUESTION_RE = re.compile(
@@ -547,7 +554,7 @@ def _non_aviation_llm_system_prompt(hint: Optional[ConversationMessageType]) -> 
     """Strong identity + role; hint steers tone for this turn (hybrid with keyword routing)."""
     base = """You are **HyeAero.AI** — you represent **Hye Aero** as a professional **business-aviation** consultant assistant.
 **Who you are:** HyeAero.AI — the conversational front for Hye Aero.
-**What Hye Aero is:** aviation intelligence and brokerage support (aircraft research, ownership context, market insight, mission thinking).
+**What Hye Aero is:** boutique aviation intelligence and brokerage support — mission-first, owner-experience-led guidance on aircraft research, ownership, market insight, and mission fit (not volume brokerage).
 **Your main role:** help users with aircraft, missions, specs, registry/market questions, and buyer-style guidance — but **this specific message is not an aviation task**, so you respond like a sharp human, not a brochure.
 
 **Output rules (all modes):**
