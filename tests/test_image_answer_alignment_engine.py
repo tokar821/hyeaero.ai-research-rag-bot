@@ -141,3 +141,106 @@ def test_format_layered_block_truncates():
     s = iae.format_alignment_block_for_layered_context(plan, max_chars=50)
     assert len(s) <= 50
     assert s.endswith("...")
+
+
+def test_align_images_drops_row_not_matching_answer_aircraft():
+    norm = {"intent_type": "interior_visual", "visual_focus": "interior", "aircraft": None, "constraints": {}}
+    cands = ["Bombardier Challenger 650", "Dassault Falcon 7X"]
+    selected = [
+        {
+            "url": "https://a.com/1.jpg",
+            "description": "Challenger 650 cabin interior seating",
+            "score": 0.92,
+        },
+        {
+            "url": "https://a.com/3.jpg",
+            "description": "Challenger 650 main cabin interior galley",
+            "score": 0.91,
+        },
+        {
+            "url": "https://a.com/4.jpg",
+            "description": "Challenger 650 vip cabin interior oval windows",
+            "score": 0.90,
+        },
+        {
+            "url": "https://a.com/2.jpg",
+            "description": "Citation CJ2 cabin interior",
+            "score": 0.85,
+        },
+    ]
+    out = iae.align_images_with_consultant_answer(
+        answer_text="The Bombardier Challenger 650 offers a wide cabin…",
+        normalized_intent=norm,
+        selected_images=selected,
+        aircraft_candidates=cands,
+    )
+    assert len(out["final_images"]) == 3
+    assert all("challenger" in (im.get("description") or "").lower() for im in out["final_images"])
+    assert out["fix_applied"] is True
+    assert any("removed_image" in x for x in out["issues"])
+
+
+def test_align_images_strips_exterior_when_interior_intent():
+    norm = {"intent_type": "interior_visual", "visual_focus": "interior", "aircraft": None, "constraints": {}}
+    selected = [
+        {
+            "url": "https://a.com/in1.jpg",
+            "description": "Falcon 7X cabin interior seating windows aisle",
+            "score": 0.93,
+        },
+        {
+            "url": "https://a.com/in2.jpg",
+            "description": "Falcon 7X main cabin interior vip club seating",
+            "score": 0.92,
+        },
+        {
+            "url": "https://a.com/in3.jpg",
+            "description": "Dassault Falcon 7X salon interior galley",
+            "score": 0.91,
+        },
+        {
+            "url": "https://a.com/out.jpg",
+            "description": "Falcon 7X ramp taxi takeoff exterior",
+            "score": 0.88,
+        },
+    ]
+    out = iae.align_images_with_consultant_answer(
+        answer_text="The Dassault Falcon 7X cabin discussion anchors this turn.",
+        normalized_intent=norm,
+        selected_images=selected,
+        aircraft_candidates=["Dassault Falcon 7X"],
+    )
+    assert len(out["final_images"]) == 3
+    assert all("interior" in (im.get("description") or "").lower() for im in out["final_images"])
+
+
+def test_align_strict_keeps_three_on_list_rows_without_pool_fallback():
+    norm = {"intent_type": "interior_visual", "visual_focus": "interior", "aircraft": None, "constraints": {}}
+    selected = [
+        {
+            "url": "https://p.com/1.jpg",
+            "title": "Bombardier Global 6000 aircraft cabin interior",
+            "description": "Bombardier Global 6000 aircraft cabin interior galley",
+            "score": 0.92,
+        },
+        {
+            "url": "https://p.com/2.jpg",
+            "title": "Global 6000 main cabin interior seating",
+            "description": "Global 6000 main cabin interior seating windows",
+            "score": 0.91,
+        },
+        {
+            "url": "https://p.com/3.jpg",
+            "title": "Global 6000 vip interior cabin",
+            "description": "Global 6000 vip interior cabin divan",
+            "score": 0.9,
+        },
+    ]
+    out = iae.align_images_with_consultant_answer(
+        answer_text="Bombardier Global 6000 cabin geometry is the reference.",
+        normalized_intent=norm,
+        selected_images=selected,
+        aircraft_candidates=["Bombardier Global 6000"],
+    )
+    assert len(out["final_images"]) == 3
+    assert out["alignment_score"] > 0.2

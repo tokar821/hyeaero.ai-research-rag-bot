@@ -304,6 +304,249 @@ def _quote_user_phrase(s: str) -> str:
     return t
 
 
+def _alignment_image_blob(row: Dict[str, Any]) -> str:
+    return " ".join(
+        str(row.get(k) or "")
+        for k in ("title", "description", "url", "source_domain", "page_url", "source")
+    ).lower()
+
+
+def _answer_mentions_models(answer: str, candidates: Optional[List[str]]) -> List[str]:
+    """Models explicitly grounded in answer text (subset of candidates when possible)."""
+    al = (answer or "").lower()
+    out: List[str] = []
+    seen: set[str] = set()
+    for c in candidates or []:
+        cs = str(c).strip()
+        if not cs or len(cs) < 3:
+            continue
+        cl = cs.lower()
+        if cl in al:
+            if cl not in seen:
+                seen.add(cl)
+                out.append(cs)
+            continue
+        toks = [t for t in re.split(r"[^\w]+", cl) if len(t) >= 2 and t not in ("g", "iv", "lx", "ex")]
+        if len(toks) >= 2 and all(t in al for t in toks[-2:]):
+            if cl not in seen:
+                seen.add(cl)
+                out.append(cs)
+    return out
+
+
+def _exterior_only_blob(blob: str) -> bool:
+    if re.search(
+        r"\b(ramp|taxi|takeoff|landing|exterior|parked|gear\s*down|rotate|airside)\b",
+        blob,
+        re.I,
+    ) and not re.search(
+        r"\b(cabin|interior|seating|windows?|galley|divan|cockpit|flight\s*deck)\b",
+        blob,
+        re.I,
+    ):
+        return True
+    return False
+
+
+def _dominant_model_for_row(blob: str, candidates: List[str]) -> Optional[str]:
+    best = None
+    best_len = 0
+    for c in candidates:
+        cl = c.lower()
+        if cl in blob and len(cl) > best_len:
+            best_len = len(cl)
+            best = c
+    return best
+
+
+def _claim_style_terms(answer: str) -> List[str]:
+    al = (answer or "").lower()
+    terms: List[str] = []
+    for phrase, toks in (
+        ("modern interior", ("modern", "interior")),
+        ("ambient lighting", ("ambient", "lighting")),
+        ("luxury", ("luxury",)),
+    ):
+        if phrase.replace(" ", "") in al.replace(" ", "") or all(t in al for t in toks):
+            terms.extend(list(toks))
+    return list(dict.fromkeys(terms))
+
+
+def _blob_supports_claims(blob: str, claims: List[str]) -> bool:
+    if not claims:
+        return True
+    for t in claims:
+        if t in blob:
+            return True
+    return False
+
+
+def _row_matches_answer_aircraft(blob: str, mentioned: List[str]) -> bool:
+    """True only if blob meets **≥ 0.65** aircraft similarity to an allowed model mention."""
+    if not mentioned:
+        return True
+    for m in mentioned:
+        ml = m.lower()
+        if ml in blob:
+            return True
+        try:
+            from services.aviation_image_rank_filter_engine import _aircraft_match_score
+
+            if float(_aircraft_match_score(m, blob)) >= 0.65:
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _row_matches_aircraft_candidates_strict(blob: str, candidates: List[str]) -> bool:
+    """Every retained row must satisfy the candidate lock."""
+    if not candidates:
+        return True
+    best = 0.0
+    try:
+        from services.aviation_image_rank_filter_engine import _aircraft_match_score
+
+        for c in candidates:
+            best = max(best, float(_aircraft_match_score(c, blob)))
+    except Exception:
+        return False
+    return best >= 0.65
+
+
+def align_images_with_consultant_answer(
+    *,
+    answer_text: str,
+    normalized_intent: Optional[Dict[str, Any]],
+    selected_images: List[Dict[str, Any]],
+    aircraft_candidates: Optional[List[str]] = None,
+    image_pool: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """
+    Align ranked/selected images with the **final** consultant answer + intent.
+
+    Each input row should include at least ``url`` plus text fields (``title`` / ``description``)
+    so aircraft / visual / claim checks can run. Ranking-engine fields (``score``, …) are preserved.
+
+    Returns:
+        ``final_images``, ``alignment_score`` (0–1), ``issues`` (strings), ``fix_applied`` (bool).
+
+    Optional ``image_pool`` supplies extra rows for claim-gap replacement or minimum-count fallback
+    (re-ranked with a single strict aircraft when needed). No user-facing prose is added here.
+    """
+    issues: List[str] = []
+    fix_applied = False
+    norm = normalized_intent if isinstance(normalized_intent, dict) else {}
+    cands = [str(x).strip() for x in (aircraft_candidates or []) if str(x).strip()]
+
+    rows = [dict(x) for x in (selected_images or []) if str(x.get("url") or "").strip()]
+    rows.sort(key=lambda r: float(r.get("score") or 0.0), reverse=True)
+
+    mentioned = _answer_mentions_models(answer_text or "", cands)
+    vf = str(norm.get("visual_focus") or "").strip().lower()
+    it = str(norm.get("intent_type") or "").strip().lower()
+    # Interior/cabin user ask → strip exterior-only rows (cockpit intent handled separately).
+    no_exterior_when_cabin_intent = it in ("interior_visual", "cabin_search") or vf in (
+        "interior",
+        "cabin",
+        "bedroom",
+        "galley",
+    )
+
+    claims = _claim_style_terms(answer_text or "")
+
+    # --- 0) Mandatory candidate lock ---
+    kept0: List[Dict[str, Any]] = []
+    for r in rows:
+        b = _alignment_image_blob(r)
+        if not _row_matches_aircraft_candidates_strict(b, cands):
+            issues.append(f"removed_image_candidate_lock_aircraft<{r.get('url','')[:48]}>")
+            fix_applied = True
+            continue
+        kept0.append(r)
+    rows = kept0
+
+    # --- 1) Aircraft wording vs answer-derived mentions ---
+    if mentioned:
+        kept: List[Dict[str, Any]] = []
+        for r in rows:
+            b = _alignment_image_blob(r)
+            if not _row_matches_answer_aircraft(b, mentioned):
+                issues.append(f"removed_image_not_matching_answer_aircraft:{r.get('url','')[:48]}")
+                fix_applied = True
+                continue
+            kept.append(r)
+        rows = kept
+
+    # --- 4) Interior / cabin → no exterior-only rows ---
+    if no_exterior_when_cabin_intent and vf != "exterior":
+        kept2: List[Dict[str, Any]] = []
+        for r in rows:
+            b = _alignment_image_blob(r)
+            if vf not in ("exterior",) and _exterior_only_blob(b):
+                issues.append("removed_exterior_only_under_interior_intent")
+                fix_applied = True
+                continue
+            kept2.append(r)
+        rows = kept2
+
+    # --- 3) Single aircraft cluster ---
+    if len(cands) >= 2 and len(rows) >= 2:
+        clusters: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for r in rows:
+            b = _alignment_image_blob(r)
+            dm = _dominant_model_for_row(b, cands) or (cands[0] if cands else "")
+            clusters[dm or "_"].append(r)
+        best_key = max(clusters.keys(), key=lambda k: len(clusters[k]))
+        if len(clusters) > 1:
+            merged = clusters[best_key]
+            if len(merged) < len(rows):
+                issues.append("removed_mixed_aircraft_cluster_outliers")
+                fix_applied = True
+            rows = merged
+
+    # --- Claims: strict per-row; no pool backfill ---
+    if claims:
+        kept_claims: List[Dict[str, Any]] = []
+        for r in rows:
+            b = _alignment_image_blob(r)
+            if not _blob_supports_claims(b, claims):
+                issues.append(f"removed_claim_mismatch<{r.get('url','')[:48]}>")
+                fix_applied = True
+                continue
+            kept_claims.append(r)
+        rows = kept_claims
+
+    rows.sort(key=lambda r: float(r.get("score") or 0.0), reverse=True)
+    rows = rows[:5]
+
+    if len(rows) < 3:
+        issues.append("below_three_strict_aligned_images_returning_empty")
+        fix_applied = True
+        rows = []
+
+    # Alignment score
+    if not rows:
+        align = 0.15
+    else:
+        base = sum(float(r.get("score") or 0.72) for r in rows) / max(1, len(rows))
+        pen = min(0.45, 0.08 * len(issues))
+        align = max(0.0, min(1.0, base - pen))
+
+    # Strip internal-only keys for output
+    final: List[Dict[str, Any]] = []
+    for r in rows[:6]:
+        out_row = {k: v for k, v in r.items() if not str(k).startswith("_")}
+        final.append(out_row)
+
+    return {
+        "final_images": final,
+        "alignment_score": round(float(align), 4),
+        "issues": issues,
+        "fix_applied": bool(fix_applied),
+    }
+
+
 def format_alignment_block_for_layered_context(plan: Dict[str, Any], *, max_chars: int = 2800) -> str:
     """Compact block for RAG layered context (not full JSON dump)."""
     if not isinstance(plan, dict) or not plan.get("llm_directives"):
