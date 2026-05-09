@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from rag.consultant_response_mode import (
     ConsultantResponseMode,
+    HyeAeroRouterMode,
     classify_consultant_response_mode,
+    classify_hye_aero_response_router,
     response_mode_prompt_suffix,
 )
 from rag.consultant_suspicious_model import consultant_suspicious_aircraft_model_note
@@ -64,6 +66,32 @@ def test_mode_mission_advisory_from_fine_intent():
         suspicious_model_note=None,
     )
     assert mode == ConsultantResponseMode.MISSION_ADVISORY
+
+
+def test_hye_aero_router_json_visual_and_deal():
+    v = classify_hye_aero_response_router(
+        query="show me G650 interior cabin",
+        fine_intent="aircraft_specs",
+        has_tail=False,
+        has_visual_intent=True,
+        suspicious_model_note=None,
+    )
+    assert v.mode == HyeAeroRouterMode.VISUAL_MODE
+    assert v.visual_priority is True
+    assert v.verbosity == "minimal"
+    d = v.to_dict()
+    assert d["mode"] == "VISUAL_MODE"
+    assert "reason" in d
+
+    deal = classify_hye_aero_response_router(
+        query="Is this a good deal at the asking price?",
+        fine_intent="market_question",
+        has_tail=False,
+        has_visual_intent=False,
+        suspicious_model_note=None,
+    )
+    assert deal.mode == HyeAeroRouterMode.DEAL_ANALYSIS_MODE
+    assert deal.to_dict()["verbosity"] == "short"
 
 
 def test_prompt_suffix_contains_required_templates_and_insight():

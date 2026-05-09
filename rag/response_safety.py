@@ -197,7 +197,12 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
     # 2) Advisory recommendation enforcement (mode-driven)
     try:
         mode = str((data_used or {}).get("consultant_response_mode") or "").strip().lower()
-        if mode in ("mission_advisory", "client_decision_scenarios", "advisory"):
+        if mode in (
+            "mission_advisory",
+            "client_decision_scenarios",
+            "advisory",
+            "deal_analysis",
+        ):
             from rag.consultant_validity import count_known_model_mentions
 
             n_models = count_known_model_mentions(a)

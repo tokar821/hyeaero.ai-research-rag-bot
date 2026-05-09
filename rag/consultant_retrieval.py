@@ -1453,6 +1453,7 @@ def run_consultant_retrieval_bundle(
         from rag.consultant_response_mode import (
             ConsultantResponseMode,
             classify_consultant_response_mode,
+            classify_hye_aero_response_router,
             response_mode_prompt_suffix,
         )
         from rag.consultant_validity import validate_aircraft_model
@@ -1465,15 +1466,25 @@ def run_consultant_retrieval_bundle(
         # Use "visual" phrasing as a signal even when gallery intent routing was not triggered upstream.
         has_visual_intent = bool(re.search(r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look)\b", (query or ""), re.I))
         v = validate_aircraft_model(query or "")
-        mode: ConsultantResponseMode = classify_consultant_response_mode(
+        _fi_s = str(getattr(_fine.intent, "value", _fine.intent))
+        _susp_combined = _susp_model or (v.message if v else None)
+        router = classify_hye_aero_response_router(
             query=query or "",
-            fine_intent=str(getattr(_fine.intent, "value", _fine.intent)),
+            fine_intent=_fi_s,
             has_tail=has_tail,
             has_visual_intent=bool(user_wants_gallery or has_visual_intent),
-            suspicious_model_note=_susp_model or (v.message if v else None),
+            suspicious_model_note=_susp_combined,
+        )
+        data_used["consultant_response_router"] = router.to_dict()
+        mode: ConsultantResponseMode = classify_consultant_response_mode(
+            query=query or "",
+            fine_intent=_fi_s,
+            has_tail=has_tail,
+            has_visual_intent=bool(user_wants_gallery or has_visual_intent),
+            suspicious_model_note=_susp_combined,
         )
         data_used["consultant_response_mode"] = mode.value
-        system_prompt += response_mode_prompt_suffix(mode)
+        system_prompt += response_mode_prompt_suffix(mode, router=router)
 
         # Internal confidence tag (not user-facing UI): high when tail + authoritative record, else medium/low.
         conf = "low"
@@ -1483,7 +1494,12 @@ def run_consultant_retrieval_bundle(
             else:
                 conf = "medium"
         else:
-            if mode in (ConsultantResponseMode.COMPARISON, ConsultantResponseMode.MISSION_ADVISORY, ConsultantResponseMode.STRATEGIC_OWNERSHIP):
+            if mode in (
+                ConsultantResponseMode.COMPARISON,
+                ConsultantResponseMode.MISSION_ADVISORY,
+                ConsultantResponseMode.STRATEGIC_OWNERSHIP,
+                ConsultantResponseMode.DEAL_ANALYSIS,
+            ):
                 conf = "medium"
         data_used["consultant_confidence"] = conf
     except Exception:
