@@ -22,6 +22,15 @@ def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
 
 
+def _consultant_strong_aircraft_gallery_from_data_used(data_used: Optional[Dict[str, Any]]) -> bool:
+    """True when alignment marked ≥2 highly relevant aircraft images — use confident tone, not retrieval-failure copy."""
+    try:
+        ial = (data_used or {}).get("image_answer_alignment") or {}
+        return int(ial.get("highly_relevant_image_count") or 0) >= 2
+    except Exception:
+        return False
+
+
 def _consultant_faa_no_phly_user_directive(phly_meta: Optional[Dict[str, Any]]) -> str:
     """
     Extra user-message instructions when Phly has no row but FAA MASTER matched — stops the drafter/reviewer
@@ -1232,6 +1241,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         score_threshold: Optional[float],
         history: Optional[List[Dict[str, str]]],
         progress: Any = None,
+        conversation_state: Optional[Dict[str, Any]] = None,
     ) -> Tuple[str, Any]:
         """
         Delegates to :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle` (entity → router →
@@ -1252,6 +1262,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             score_threshold,
             history,
             progress=progress,
+            client_conversation_state=conversation_state,
         )
 
     @staticmethod
@@ -1294,6 +1305,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         max_context_chars: int = 14000,
         score_threshold: Optional[float] = None,
         history: Optional[List[Dict[str, str]]] = None,
+        conversation_state: Optional[Dict[str, Any]] = None,
     ) -> Iterator[Dict[str, Any]]:
         """
         SSE-friendly events for ChatGPT-style token streaming.
@@ -1325,10 +1337,22 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 yield {"type": "status", "message": "Retrieving your recent briefing…"}
                 for piece in self._iter_display_chunks(norm.get("answer") or ""):
                     yield {"type": "delta", "text": piece}
+                _du_hit = dict(apply_cache_hit_metadata(norm.get("data_used")) or {})
+                try:
+                    from rag.consultant_conversation_state import finalize_consultant_conversation_state
+
+                    finalize_consultant_conversation_state(
+                        _du_hit,
+                        conversation_state,
+                        query=query or "",
+                        history=history,
+                    )
+                except Exception:
+                    pass
                 yield {
                     "type": "done",
                     "sources": norm.get("sources") or [],
-                    "data_used": apply_cache_hit_metadata(norm.get("data_used")),
+                    "data_used": _du_hit,
                     "aircraft_images": norm.get("aircraft_images") or [],
                     "error": norm.get("error"),
                 }
@@ -1342,6 +1366,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 score_threshold,
                 history,
                 progress=pr,
+                conversation_state=conversation_state,
             )
             if kind == "small_talk":
                 if pr:
@@ -1434,6 +1459,17 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                         du_gk = apply_cache_miss_metadata(du_gk)
                         if written_gk:
                             du_gk["rag_cache_write"] = 1
+                    try:
+                        from rag.consultant_conversation_state import finalize_consultant_conversation_state
+
+                        finalize_consultant_conversation_state(
+                            du_gk,
+                            conversation_state,
+                            query=query or "",
+                            history=history,
+                        )
+                    except Exception:
+                        pass
                     yield {
                         "type": "done",
                         "sources": [],
@@ -1555,7 +1591,8 @@ Produce the final client-facing answer.""",
             try:
                 from rag.response_safety import enforce_consultant_quality, sanitize_user_facing_answer
 
-                final_text = sanitize_user_facing_answer(final_text or "")
+                _sg = _consultant_strong_aircraft_gallery_from_data_used(data_used)
+                final_text = sanitize_user_facing_answer(final_text or "", strong_aircraft_gallery=_sg)
                 final_text = enforce_consultant_quality(
                     final_text or "",
                     query=b.get("query") or "",
@@ -1637,6 +1674,7 @@ Produce the final client-facing answer.""",
         max_context_chars: int = 14000,
         score_threshold: Optional[float] = None,
         history: Optional[List[Dict[str, str]]] = None,
+        conversation_state: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Ask Consultant pipeline: PhlyData (Hye Aero aircraft source) + FAA → listing SQL if relevant → LLM query expand → Tavily →
@@ -1666,7 +1704,19 @@ Produce the final client-facing answer.""",
                 if pr:
                     pr.step("path_cache_hit", short_circuit=1)
                 norm = normalize_answer_payload_for_cache(cached_hit)
-                norm["data_used"] = apply_cache_hit_metadata(norm.get("data_used"))
+                _du_c = dict(apply_cache_hit_metadata(norm.get("data_used")) or {})
+                try:
+                    from rag.consultant_conversation_state import finalize_consultant_conversation_state
+
+                    finalize_consultant_conversation_state(
+                        _du_c,
+                        conversation_state,
+                        query=query or "",
+                        history=history,
+                    )
+                except Exception:
+                    pass
+                norm["data_used"] = _du_c
                 return norm
 
         try:
@@ -1677,6 +1727,7 @@ Produce the final client-facing answer.""",
                 score_threshold,
                 history,
                 progress=pr,
+                conversation_state=conversation_state,
             )
             if kind == "small_talk":
                 pl = payload if isinstance(payload, dict) else {}
@@ -1714,6 +1765,21 @@ Produce the final client-facing answer.""",
                     out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
                     if written_gk:
                         out["data_used"]["rag_cache_write"] = 1
+                try:
+                    from rag.consultant_conversation_state import finalize_consultant_conversation_state
+
+                    _du_gk2 = out.get("data_used")
+                    if not isinstance(_du_gk2, dict):
+                        _du_gk2 = {}
+                        out["data_used"] = _du_gk2
+                    finalize_consultant_conversation_state(
+                        _du_gk2,
+                        conversation_state,
+                        query=query or "",
+                        history=history,
+                    )
+                except Exception:
+                    pass
                 return out
 
             b = payload
@@ -1807,7 +1873,8 @@ Produce the final client-facing answer.""",
             try:
                 from rag.response_safety import enforce_consultant_quality, sanitize_user_facing_answer
 
-                answer = sanitize_user_facing_answer(answer or "")
+                _sg = _consultant_strong_aircraft_gallery_from_data_used(data_used)
+                answer = sanitize_user_facing_answer(answer or "", strong_aircraft_gallery=_sg)
                 answer = enforce_consultant_quality(answer or "", query=b.get("query") or "", data_used=data_used)
             except Exception as se:
                 logger.warning("answer sanitize skipped: %s", se)
@@ -1880,34 +1947,62 @@ Produce the final client-facing answer.""",
                     except Exception:
                         pass
                     a_low = (answer or "").lower()
-                    if any(
-                        needle in a_low
-                        for needle in (
-                            "i cannot find reliable interior images",
-                            "i cannot find reliable images",
-                            "i can't find reliable interior images",
-                            "i can't find reliable images",
-                            "i cannot find images",
-                            "i can't find images",
-                            "cannot find reliable interior images",
-                        )
-                    ):
-                        # Remove refusal sentences (tail-specific or generic) and replace with a
-                        # tail-accuracy caveat that still allows the gallery to be shown.
-                        answer = re.sub(
-                            r"(?is)\b(i\s+cannot|i\s+can't)\s+find\s+reliable\s+"
-                            r"(?:[a-z\s]{0,40})?images\s+(?:specifically\s+)?for\s+[^.]{1,120}\.\s*",
-                            "",
-                            answer or "",
-                        ).strip()
-                        if answer:
-                            answer = ("Exact-tail photos weren’t verified in this set.\n\n" + answer).strip()
+                    _visual_refusal_needles = (
+                        "i cannot find reliable interior images",
+                        "i cannot find reliable images",
+                        "i can't find reliable interior images",
+                        "i can't find reliable images",
+                        "i cannot find images",
+                        "i can't find images",
+                        "cannot find reliable interior images",
+                        "cannot find reliable images",
+                        "unable to locate",
+                        "closest references",
+                        "closest accurate references",
+                    )
+                    if any(n in a_low for n in _visual_refusal_needles):
+                        _strong_gal = _consultant_strong_aircraft_gallery_from_data_used(data_used)
+                        if _strong_gal:
+                            # ≥2 highly relevant images: strip hedging only — do not inject retrieval-failure framing.
+                            a = answer or ""
+                            a = re.sub(
+                                r"(?is)\b(i\s+cannot|i\s+can't)\s+find\s+reliable\s+"
+                                r"(?:[a-z\s]{0,40})?images\s+(?:specifically\s+)?for\s+[^.\n]{1,200}\.?\s*",
+                                "",
+                                a,
+                            )
+                            a = re.sub(
+                                r"(?is)\b(i\s+cannot|i\s+can't)\s+find\s+images\s+[^.\n]{1,200}\.?\s*",
+                                "",
+                                a,
+                            )
+                            a = re.sub(r"(?is)\bcannot\s+find\s+reliable\s+interior\s+images\b[^.\n]{0,220}\.?\s*", "", a)
+                            a = re.sub(r"(?is)\bcannot\s+find\s+reliable\s+images\b[^.\n]{0,220}\.?\s*", "", a)
+                            a = re.sub(r"(?i)\bunable\s+to\s+locate\b[^.\n]{0,220}\.?\s*", "", a)
+                            a = re.sub(
+                                r"(?is)\bhere\s+are\s+the\s+closest\s+accurate\s+references\b[^.\n]{0,220}\.?\s*",
+                                "",
+                                a,
+                            )
+                            a = re.sub(r"(?is)\bclosest\s+(?:accurate\s+)?references\b[^.\n]{0,160}\.?\s*", "", a)
+                            answer = re.sub(r"\n{3,}", "\n\n", a.strip()).strip()
                         else:
-                            answer = "Exact-tail photos weren’t verified in this set."
-                        if answer and not answer.lower().startswith(("here", "below", "exact-tail")):
-                            answer = ("Here are type-representative references for this model.\n\n" + answer).strip()
-                        elif not answer:
-                            answer = "Here are type-representative references for this model."
+                            # Remove refusal sentences (tail-specific or generic) and replace with a
+                            # tail-accuracy caveat that still allows the gallery to be shown.
+                            answer = re.sub(
+                                r"(?is)\b(i\s+cannot|i\s+can't)\s+find\s+reliable\s+"
+                                r"(?:[a-z\s]{0,40})?images\s+(?:specifically\s+)?for\s+[^.]{1,120}\.\s*",
+                                "",
+                                answer or "",
+                            ).strip()
+                            if answer:
+                                answer = ("Exact-tail photos weren’t verified in this set.\n\n" + answer).strip()
+                            else:
+                                answer = "Exact-tail photos weren’t verified in this set."
+                            if answer and not answer.lower().startswith(("here", "below", "exact-tail")):
+                                answer = ("Here are type-representative references for this model.\n\n" + answer).strip()
+                            elif not answer:
+                                answer = "Here are type-representative references for this model."
             except Exception:
                 pass
             resp = {

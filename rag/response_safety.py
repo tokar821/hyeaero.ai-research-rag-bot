@@ -78,7 +78,11 @@ def _drop_internal_lines(text: str) -> str:
     return "\n".join(out_lines).strip()
 
 
-def sanitize_user_facing_answer(answer: str) -> str:
+def sanitize_user_facing_answer(
+    answer: str,
+    *,
+    strong_aircraft_gallery: bool = False,
+) -> str:
     """
     Sanitize a model-produced answer so it never leaks internal infrastructure/dataset naming.
 
@@ -91,7 +95,14 @@ def sanitize_user_facing_answer(answer: str) -> str:
     s = _drop_internal_lines(s)
 
     # Hard disallow "can't show images" refusals (the UI can display images when present).
-    s = re.sub(r"(?i)\bi\s+can'?t\s+show\s+images\b", "No verified images found for this request.", s)
+    if strong_aircraft_gallery:
+        s = re.sub(
+            r"(?i)\bi\s+can'?t\s+show\s+images\b",
+            "Images are shown in the gallery with this reply.",
+            s,
+        )
+    else:
+        s = re.sub(r"(?i)\bi\s+can'?t\s+show\s+images\b", "No verified images found for this request.", s)
 
     # Replace common internal terms with neutral phrasing.
     for pat, repl in _REPLACEMENTS:
@@ -158,6 +169,62 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
                     "- Gulfstream G280: fast/transcon-capable with a solid cabin for transcon; check programs and maintenance posture.\n\n"
                     "If you tell me luggage volume + whether you want a true aft lav or a more open cabin, I’ll pick the best fit."
                 ).strip()
+        # High acquisition budget + cabin / finish framing → large-cabin OEMs (not light jet drift).
+        if budget_m is not None and budget_m >= 28:
+            cabin_tone = any(
+                w in ql
+                for w in (
+                    "cabin",
+                    "interior",
+                    "finish",
+                    "expensive",
+                    "tacky",
+                    "refined",
+                    "premium",
+                    "luxury",
+                    "upscale",
+                    "hotel",
+                    "materials",
+                    "aesthetic",
+                    "appointment",
+                    "bespoke",
+                )
+            )
+            if cabin_tone:
+                low = a.lower()
+                large_oem_hit = any(
+                    x in low
+                    for x in (
+                        "gulfstream",
+                        "global 7500",
+                        "global 6500",
+                        "global ",
+                        "falcon 8x",
+                        "falcon 7x",
+                        "falcon 6x",
+                        " falcon ",
+                        "challenger",
+                        "g650",
+                        "g700",
+                        "g7500",
+                        "g650er",
+                        "g600",
+                        "g500",
+                    )
+                )
+                if not large_oem_hit:
+                    return (
+                        f"In a **~${budget_m}M** bracket, buyers who want cabins that feel **expensive and restrained** "
+                        "(not loud or dated) mostly shop **large-cabin / long-range** aircraft—where OEMs spend real "
+                        "money on acoustics, headroom, and quiet materials.\n\n"
+                        "**Start here (all defensible ‘premium but tasteful’ families):**\n"
+                        "- **Gulfstream** (G650/G700-class): famously quiet, high headroom cabins; interiors skew modern when spec’d cool neutrals vs gold trim.\n"
+                        "- **Bombardier Global** (7500/6500-class): standout cabin volume and layout discipline for long legs.\n"
+                        "- **Dassault Falcon** (e.g., 8X-class): distinctly European restraint in finish language; extremely capable cabin feel.\n"
+                        "- **Bombardier Challenger** (large-cabin 600/650-class): pragmatic big-cabin comfort with strong pedigree—often priced under flagship ULRs.\n\n"
+                        "**How to judge ‘tacky’ vs ‘rich’:** favor **matte veneers / low-contrast palettes**, restrained metallics, and **minimal panel clutter**—then spend on acoustics + galley ergonomics.\n\n"
+                        "If you tell me passenger count + longest typical nonstop route, I’ll narrow to 2–3 best fits and what to prioritize in completions."
+                    ).strip()
     except Exception:
         pass
 
@@ -197,12 +264,7 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
     # 2) Advisory recommendation enforcement (mode-driven)
     try:
         mode = str((data_used or {}).get("consultant_response_mode") or "").strip().lower()
-        if mode in (
-            "mission_advisory",
-            "client_decision_scenarios",
-            "advisory",
-            "deal_analysis",
-        ):
+        if mode in ("advisory_mode", "mission_advisory", "client_decision_scenarios", "advisory"):
             from rag.consultant_validity import count_known_model_mentions
 
             n_models = count_known_model_mentions(a)

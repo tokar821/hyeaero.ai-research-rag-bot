@@ -1,270 +1,175 @@
 """
-Consultant response modes (reasoning / structure router).
+Consultant response modes (intent router before answer generation).
 
-Deterministic routing into legacy :class:`ConsultantResponseMode` (pipeline + tests) plus a
-structured **HyeAero response router** payload (mode, reason, visual_priority, verbosity)
-for prompts and ``data_used``.
+Routes each turn into a small set of modes so the system prompt can enforce shape,
+verbosity, and visual-vs-text priority. Also exposes a JSON-serializable router result
+for logging / product (`data_used`).
 """
 
 from __future__ import annotations
 
+import json
 import re
-from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Literal, Optional
-
-VerbosityLevel = Literal["minimal", "short", "detailed"]
-
-
-class HyeAeroRouterMode(str, Enum):
-    """External / product router labels (JSON ``mode`` field)."""
-
-    VISUAL_MODE = "VISUAL_MODE"
-    ADVISORY_MODE = "ADVISORY_MODE"
-    COMPARISON_MODE = "COMPARISON_MODE"
-    DEAL_ANALYSIS_MODE = "DEAL_ANALYSIS_MODE"
-    CONVERSATION_MODE = "CONVERSATION_MODE"
+from typing import Literal, Optional, TypedDict
 
 
 class ConsultantResponseMode(str, Enum):
-    FACTUAL = "factual"
-    VISUAL = "visual"
+    """Primary modes aligned with product routing (plus pipeline-specific helpers)."""
+
+    VISUAL_MODE = "visual_mode"
+    ADVISORY_MODE = "advisory_mode"
+    COMPARISON_MODE = "comparison_mode"
+    DEAL_ANALYSIS_MODE = "deal_analysis_mode"
+    CONVERSATION_MODE = "conversation_mode"
+    # Tail-in-query wins over pure visual framing (registry + optional gallery).
     TAIL_SPECIFIC = "tail_specific"
-    COMPARISON = "comparison"
-    MISSION_ADVISORY = "mission_advisory"
-    STRATEGIC_OWNERSHIP = "strategic_ownership"
-    DEAL_ANALYSIS = "deal_analysis"
-    CONVERSATION = "conversation"
     INVALID_SANITY = "invalid_sanity"
 
 
-@dataclass(frozen=True)
-class ResponseModeRouterResult:
-    mode: HyeAeroRouterMode
+Verbosity = Literal["minimal", "short", "detailed"]
+
+
+class ConsultantResponseRouterResult(TypedDict):
+    """JSON-shaped router output (e.g. persist under data_used)."""
+
+    mode: str
     reason: str
     visual_priority: bool
-    verbosity: VerbosityLevel
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "mode": self.mode.value,
-            "reason": self.reason,
-            "visual_priority": self.visual_priority,
-            "verbosity": self.verbosity,
-        }
+    verbosity: Verbosity
 
 
-# --- Signals (router layer, broader than legacy _VISUAL_HINT) ---
-
-_VISUAL_ROUTER = re.compile(
+_VISUAL_HINT = re.compile(
     r"\b("
-    r"show\s+me|let\s+me\s+see|can\s+i\s+see|\bsee\b(?!\s+(?:you|that\s+it))|showing|viewing|"
-    r"any\s+(?:photos?|pics?|pictures?|images?)|what\s+does\s+it\s+look\s+like|walkaround|"
-    r"exterior|interior|insides?|cabin|cockpit|flight\s+deck|bedroom\s+setup|bed\s+room|"
-    r"ambient\s+lighting|luxury\s+feel|design\s+inspiration|visual\s+vibe|premium\s+aesthetic|"
-    r"hotel\s+vibe|private\s+airline\s+experience|modern\s+jet\s+cabin|huge\s+windows|"
-    r"white\s+interior|something\s+nicer|nicer\s+one|more\s+modern\s+inside"
+    r"show\s+me|show\s+us|let\s+me\s+see|can\s+i\s+see|want\s+to\s+see|"
+    r"any\s+(photos?|pics?|pictures?|images?)|what\s+does\s+it\s+look\s+like|"
+    r"walkaround|exterior|interior|interiors|in\s+the\s+cabin|cabin|cockpit|flight\s+deck|"
+    r"bedroom\s+setup|bedroom|berth|divan|ambient\s+light|ambient\s+lighting|"
+    r"luxury\s+feel|luxury\s+vibe|premium\s+aesthetic|visual\s+vibe|design\s+inspiration|"
+    r"hotel\s+vibe|private\s+airline|modern\s+jet\s+cabin|huge\s+windows|white\s+interior|"
+    r"something\s+nicer|nicer\s+looking|more\s+modern|more\s+premium|"
+    r"picture\s+of|images?\s+of|photos?\s+of"
     r")\b",
     re.I,
 )
 
-_DEAL_ANALYSIS_ROUTER = re.compile(
+_DEAL_HINT = re.compile(
     r"\b("
-    r"good\s+deal|bad\s+deal|worth\s+it|overpriced|underpriced|fair\s+price|"
-    r"suspicious\s+pric|market\s+value|resale|residual|"
-    r"asking\s+too\s+much|too\s+much\s+for|rip[\s-]?off|"
-    r"operating\s+cost|cost\s+per\s+(?:hour|nm)|direct\s+operating|"
-    r"ocr\b|cpi\b|should\s+i\s+(?:pay|buy)\s+at|is\s+this\s+(?:priced|fair)|"
-    r"deal\s+or\s+pass|pass\s+on\s+this"
+    r"good\s+deal|bad\s+deal|great\s+deal|overpriced|underpriced|fair\s+price|"
+    r"worth\s+it|worth\s+buying|would\s+you\s+buy|"
+    r"suspicious\s+pric|too\s+good\s+to\s+be\s+true|"
+    r"market\s+value|resale\s+value|resale\b|"
+    r"is\s+this\s+priced|pricing\s+seem|deal\s+or\s+no|pass\s+or\s+buy|"
+    r"operating\s+costs?\b.*\b(worth|deal|buy)|"
+    r"total\s+cost.*\b(worth|deal)"
     r")\b",
     re.I,
 )
-
-_COMPARISON_ROUTER = re.compile(
-    r"\b("
-    r"vs\.?|versus|compare|comparison|difference\b|stack\s+up|side\s+by\s+side|"
-    r"which\s+(?:feels|is)\s+better|which\s+is\s+more\s+modern|which\s+would\s+you|"
-    r"better\s+than|or\s+the\s+other"
-    r")\b",
+# Tight: "Should I buy **this** …" / listing — not open-ended "what should I buy".
+_DEAL_SHOULD_I_BUY_THIS = re.compile(
+    r"\bshould\s+i\s+buy\b(?!\s+(?:for|when|if\s+i))",
     re.I,
 )
 
-_CONVERSATION_ROUTER = re.compile(
-    r"^\s*("
-    r"hi\b|hello\b|hey\b|yo\b|sup\b|good\s+(?:morning|afternoon|evening)|"
-    r"thanks?\b|thank\s+you|ty\b|thx\b|cheers\b|"
-    r"(?:how\s+are\s+you|what'?s\s+up|whats\s+up)"
-    r")[!.\s?]*\s*$",
+_COMPARISON_HINT = re.compile(
+    r"\b("
+    r"\bversus\b|compare|compared\s+to|difference\s+between|"
+    r"which\s+feels\s+better|which\s+is\s+more\s+modern|which\s+wins|"
+    r"\b(?:\w+\s+){1,4}vs\.?\s+(?:\w+\s+){1,4}\w+"  # "Falcon 2000 vs Challenger" style
+    r"|better\s+for\s+me\b.*\b(or|vs)\b"
+    r")\b",
     re.I,
 )
-
-_ADVISORY_ROUTER = re.compile(
-    r"\b("
-    r"recommend|should\s+i\s+buy|what\s+should\s+i\s+buy|best\s+jet|best\s+aircraft|better\s+option|"
-    r"budget|under\s+\$|mission\s+fit|luxury\s+rank|value\s+retention|"
-    r"what\s+(?:should|would)\s+i\s+(?:get|pick|choose|buy)|"
-    r"which\s+(?:jet|aircraft|plane)\s+(?:for|should|would)|"
-    r"acquisition|shortlist"
-    r")\b",
+# Standalone "vs" / " v. " between tokens (not "own vs charter").
+_VS_BETWEEN_MODELS = re.compile(
+    r"(?:citation|gulfstream|falcon|challenger|global|lear|bombardier|embraer|pilatus|king\s*air|"
+    r"jet|aircraft|series|lx|ex|lxr|\d{3,4})\b[^.?]{0,60}\bvs\.?\b",
     re.I,
 )
 
 _STRATEGIC_HINT = re.compile(
     r"\b("
     r"own\s+vs|charter|fractional|lease|management\s+fee|fixed\s+cost|variable\s+cost|hourly\s+cost|"
-    r"cost\s+of\s+ownership|maintenance|engine\s+program|hangar|crew|insurance|depreciation|"
+    r"cost\s+of\s+ownership|operating\s+cost|maintenance|engine\s+program|hangar|crew|insurance|depreciation|"
     r"utilization|hours\s*/\s*year|roi|liquidity|total\s+cost"
     r")\b",
     re.I,
 )
 
-_LEGACY_VISUAL_HINT = re.compile(
-    r"\b(show\s+me|let\s+me\s+see|can\s+i\s+see|any\s+(?:photos|pics|pictures|images)|what\s+does\s+it\s+look\s+like|"
-    r"walkaround|exterior|interior|cabin|cockpit|flight\s+deck)\b",
+_CONVERSATION_HINT = re.compile(
+    r"^\s*("
+    r"hi\b|hello\b|hey\b|thanks!?|thank\s+you!?|good\s+morning|good\s+afternoon|"
+    r"how\s+are\s+you|what'?s\s+up|sup\b|yo\b|lol\b|haha|nice\s+one|love\s+it"
+    r")[\s!.,?]*$",
     re.I,
 )
 
 
-def classify_hye_aero_response_router(
+def route_consultant_response_mode(
     *,
     query: str,
     fine_intent: str,
     has_tail: bool,
     has_visual_intent: bool,
     suspicious_model_note: Optional[str],
-) -> ResponseModeRouterResult:
+) -> ConsultantResponseRouterResult:
     """
-    Classify user intent into one of five product modes + metadata.
+    Classify user intent for answer generation.
 
-    Invalid / fictional model strings short-circuit to ADVISORY with a sanity reason (legacy
-    pipeline still uses :class:`ConsultantResponseMode.INVALID_SANITY` for the prompt tier).
+    Returns JSON-serializable fields: mode, reason, visual_priority, verbosity.
     """
     q = (query or "").strip()
     ql = q.lower()
     fi = (fine_intent or "").strip().lower()
 
+    def _out(mode: ConsultantResponseMode, reason: str, visual_priority: bool, verbosity: Verbosity) -> ConsultantResponseRouterResult:
+        return {
+            "mode": mode.value,
+            "reason": reason,
+            "visual_priority": visual_priority,
+            "verbosity": verbosity,
+        }
+
     if (suspicious_model_note or "").strip():
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.ADVISORY_MODE,
-            reason="invalid_or_unsupported_model",
-            visual_priority=False,
-            verbosity="short",
+        return _out(ConsultantResponseMode.INVALID_SANITY, "suspicious_or_nonexistent_aircraft_model", False, "short")
+
+    if has_tail:
+        vp = bool(has_visual_intent or _VISUAL_HINT.search(q))
+        return _out(
+            ConsultantResponseMode.TAIL_SPECIFIC,
+            "registration_or_tail_in_query",
+            vp,
+            "short",
         )
 
-    visual_hit = bool(
-        has_visual_intent or _VISUAL_ROUTER.search(q) or _LEGACY_VISUAL_HINT.search(q)
-    )
-    if visual_hit:
-        r = "gallery_or_visual_followup"
-        if has_tail:
-            r = "tail_specific_visual"
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.VISUAL_MODE,
-            reason=r,
-            visual_priority=True,
-            verbosity="minimal",
-        )
+    if has_visual_intent or _VISUAL_HINT.search(q):
+        return _out(ConsultantResponseMode.VISUAL_MODE, "visual_or_interior_intent", True, "minimal")
 
-    # Ownership economics / own-vs-charter — before DEAL (fine_intent can be market_question) and before `\bvs\b` comparisons.
-    if _STRATEGIC_HINT.search(q) or re.search(
-        r"\b(?:own|buy|lease|charter|fractional)\s+vs\s+(?:own|buy|lease|charter|fractional)\b",
-        q,
-        re.I,
-    ):
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.ADVISORY_MODE,
-            reason="ownership_economics_strategic",
-            visual_priority=False,
-            verbosity="short",
-        )
-
-    if _DEAL_ANALYSIS_ROUTER.search(q) or fi == "aircraft_price_lookup":
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.DEAL_ANALYSIS_MODE,
-            reason="pricing_deal_or_economics",
-            visual_priority=False,
-            verbosity="short",
-        )
-
-    if _COMPARISON_ROUTER.search(q) or fi == "aircraft_comparison":
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.COMPARISON_MODE,
-            reason="explicit_compare_or_contrast",
-            visual_priority=False,
-            verbosity="short",
-        )
-
-    if len(q) < 96 and _CONVERSATION_ROUTER.match(q) and not re.search(
-        r"\b(N\d{1,5}[A-Z]{0,2}|tail|citation|gulfstream|falcon|challenger|learjet|jet|aircraft)\b",
+    if len(q) < 120 and _CONVERSATION_HINT.search(q) and not re.search(
+        r"\b(jet|aircraft|tail|n\d|citation|gulfstream|falcon|challenger|global|lear|bombardier)\b",
         ql,
         re.I,
     ):
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.CONVERSATION_MODE,
-            reason="brief_social_or_acknowledgment",
-            visual_priority=False,
-            verbosity="minimal",
-        )
+        return _out(ConsultantResponseMode.CONVERSATION_MODE, "short_social_or_thanks_without_aviation_topic", False, "short")
 
-    if _ADVISORY_ROUTER.search(q) or fi in ("aircraft_recommendation", "aviation_mission"):
-        vb: VerbosityLevel = "short"
-        if len(q) > 180 or "report" in ql or "deep" in ql or "full brief" in ql:
-            vb = "detailed"
-        return ResponseModeRouterResult(
-            mode=HyeAeroRouterMode.ADVISORY_MODE,
-            reason="recommendation_mission_budget_or_acquisition",
-            visual_priority=False,
-            verbosity=vb,
-        )
+    if _STRATEGIC_HINT.search(q):
+        return _out(ConsultantResponseMode.ADVISORY_MODE, "ownership_costs_or_operating_economics", False, "short")
 
-    # Default: consultant advisory tone for remaining aviation queries (specs, lookups phrased generally).
-    return ResponseModeRouterResult(
-        mode=HyeAeroRouterMode.ADVISORY_MODE,
-        reason="general_consultant",
-        visual_priority=False,
-        verbosity="short",
-    )
+    if _DEAL_HINT.search(q) or (
+        _DEAL_SHOULD_I_BUY_THIS.search(q) and not re.search(r"\b(what|which)\s+should\s+i\s+buy\b", ql)
+    ):
+        return _out(ConsultantResponseMode.DEAL_ANALYSIS_MODE, "pricing_deal_worth_or_market_value_intent", False, "short")
 
+    if fi in ("aircraft_comparison",) or _COMPARISON_HINT.search(q) or _VS_BETWEEN_MODELS.search(q):
+        return _out(ConsultantResponseMode.COMPARISON_MODE, "explicit_comparison_or_versus", False, "short")
 
-def _router_to_legacy_mode(
-    r: ResponseModeRouterResult,
-    *,
-    fine_intent: str,
-    query: str,
-) -> ConsultantResponseMode:
-    fi = (fine_intent or "").strip().lower()
-    q = (query or "").strip()
-    ql = q.lower()
+    if fi in ("aircraft_recommendation", "aviation_mission"):
+        return _out(ConsultantResponseMode.ADVISORY_MODE, f"fine_intent:{fi}", False, "short")
 
-    if r.mode == HyeAeroRouterMode.VISUAL_MODE:
-        return ConsultantResponseMode.VISUAL
-    if r.mode == HyeAeroRouterMode.COMPARISON_MODE:
-        return ConsultantResponseMode.COMPARISON
-    if r.mode == HyeAeroRouterMode.DEAL_ANALYSIS_MODE:
-        return ConsultantResponseMode.DEAL_ANALYSIS
-    if r.mode == HyeAeroRouterMode.CONVERSATION_MODE:
-        return ConsultantResponseMode.CONVERSATION
+    if re.search(r"\b(full\s+brief|deep\s+dive|long\s+form|detailed\s+report)\b", ql):
+        return _out(ConsultantResponseMode.ADVISORY_MODE, "user_requested_depth", False, "detailed")
 
-    if r.reason == "invalid_or_unsupported_model":
-        return ConsultantResponseMode.INVALID_SANITY
-    if r.reason == "ownership_economics_strategic":
-        return ConsultantResponseMode.STRATEGIC_OWNERSHIP
-
-    # ADVISORY_MODE → legacy granularity
-    if _STRATEGIC_HINT.search(q) and not _DEAL_ANALYSIS_ROUTER.search(q):
-        return ConsultantResponseMode.STRATEGIC_OWNERSHIP
-    if fi in ("aircraft_recommendation", "aviation_mission") or _ADVISORY_ROUTER.search(q):
-        return ConsultantResponseMode.MISSION_ADVISORY
-    if fi in (
-        "aircraft_specs",
-        "ownership_lookup",
-        "tail_number_lookup",
-        "serial_number_lookup",
-    ) or re.search(r"\b(range|ceiling|mtow|seats|kts|mach)\b", ql):
-        return ConsultantResponseMode.FACTUAL
-    if " nm" in ql or re.search(r"\b\d{3,5}\s*nm\b", ql):
-        return ConsultantResponseMode.FACTUAL
-    return ConsultantResponseMode.MISSION_ADVISORY
+    return _out(ConsultantResponseMode.ADVISORY_MODE, "default_aviation_advisory_or_specs", False, "short")
 
 
 def classify_consultant_response_mode(
@@ -275,136 +180,99 @@ def classify_consultant_response_mode(
     has_visual_intent: bool,
     suspicious_model_note: Optional[str],
 ) -> ConsultantResponseMode:
-    """
-    Deterministic router for the RAG pipeline (backward-compatible enum).
-
-    ``has_tail`` forces **tail_specific** so registry-forward queries stay structured.
-    """
-    if (suspicious_model_note or "").strip():
-        return ConsultantResponseMode.INVALID_SANITY
-
-    if has_tail:
-        return ConsultantResponseMode.TAIL_SPECIFIC
-
-    r = classify_hye_aero_response_router(
+    """Backward-compatible: return the mode enum only."""
+    r = route_consultant_response_mode(
         query=query,
         fine_intent=fine_intent,
-        has_tail=False,
+        has_tail=has_tail,
         has_visual_intent=has_visual_intent,
-        suspicious_model_note=None,
+        suspicious_model_note=suspicious_model_note,
     )
-    return _router_to_legacy_mode(r, fine_intent=fine_intent, query=query)
+    return ConsultantResponseMode(r["mode"])
 
 
-def response_mode_prompt_suffix(
-    mode: ConsultantResponseMode,
-    *,
-    router: Optional[ResponseModeRouterResult] = None,
-) -> str:
-    """
-    System-prompt suffix: structured templates + HyeAero voice.
+def consultant_response_router_json(result: ConsultantResponseRouterResult) -> str:
+    """Stable JSON string for logs or tests."""
+    return json.dumps(dict(result), ensure_ascii=False, sort_keys=True)
 
-    When ``router`` is provided, **VISUAL_MODE** rules override the legacy VISUAL blurb.
-    """
+
+def response_mode_prompt_suffix(mode: ConsultantResponseMode) -> str:
+    """System-prompt suffix: enforce mode-specific shape and tone."""
     common = (
         "\n\n**Reasoning quality (required):**\n"
-        "- Always answer directly, then explain **why** (not just specs).\n"
-        "- If key inputs are missing (route, pax, budget, constraints), state assumptions explicitly in one short line.\n"
-        "- Never list aircraft without a 1-line fit rationale per model.\n"
+        "- Answer directly; add **why** only when it changes the decision.\n"
+        "- If key inputs are missing, one short assumption line — no interrogation.\n"
     )
 
-    if router and router.mode == HyeAeroRouterMode.VISUAL_MODE:
+    if mode == ConsultantResponseMode.VISUAL_MODE:
         return (
-            "\n\n**Response mode: VISUAL_MODE (HyeAero router)**\n"
-            "- **Prioritize** the in-app gallery over prose; images are the main deliverable.\n"
-            "- **At most one** short intro sentence, then let the gallery carry the turn.\n"
-            "- Optional: **one** line of luxury / design tone (e.g. what feels modern or premium) — no spec dumps.\n"
-            "- **Never** say (or close variants): *I cannot find reliable images*, *closest references*, *best match*.\n"
-            "- **No URLs**, no source dumps, no long bullets, no search-engine narration.\n"
-            "- **Forbidden:** long *aircraft features advanced cabin ergonomics…* marketing filler.\n"
-            "**Good:** *These read as the most modern, premium cabins in this set.*\n"
-            "**Bad:** multi-paragraph ergonomic / OEM feature essay.\n"
-        )
-
-    if mode == ConsultantResponseMode.FACTUAL:
-        return (
-            "\n\n**Response mode: FACTUAL**\n"
-            "- Direct answer first.\n"
-            "- Optional context: **1 sentence max**.\n"
+            "\n\n**Response mode: VISUAL_MODE**\n"
+            "- **Images first:** the gallery is the product; text is **support only**.\n"
+            "- **At most one** short intro sentence, then lean on what is shown; optional **one** luxury line — "
+            "no long bullets, no URL dump, no search-engine narration.\n"
+            "- **Forbidden phrasing (when ≥2 gallery images are on-brief / highly relevant):** do not say you "
+            "*cannot find reliable images*, *closest references*, *unable to locate*, *best match*, or similar "
+            "retrieval-failure hedges; present the gallery confidently. Reserve that language only when the "
+            "gallery is weak, identity is uncertain, or there is no real aircraft visual content.\n"
+            "- **Forbidden tone:** no spec-manual wall (*advanced cabin ergonomics…*); prefer a tight premium read "
+            "(e.g. *These read the most modern and premium inside.*).\n"
             + common
         )
 
-    if mode == ConsultantResponseMode.VISUAL:
+    if mode == ConsultantResponseMode.ADVISORY_MODE:
         return (
-            "\n\n**Response mode: VISUAL**\n"
-            "- Acknowledge visuals first (gallery/pictures) when present.\n"
-            "- **Minimal text:** at most one lead-in sentence + optional one luxury/design line; do not lecture.\n"
-            "- **No** long bullet lists for pure visual asks.\n"
+            "\n\n**Response mode: ADVISORY_MODE**\n"
+            "- Concise **consultant** tone: recommendations, mission fit, budget bands, ownership angles — "
+            "**elite advisor**, not generic ChatGPT.\n"
+            "- Structured when helpful; default **short** unless the user asked for depth.\n"
             + common
+        )
+
+    if mode == ConsultantResponseMode.COMPARISON_MODE:
+        return (
+            "\n\n**Response mode: COMPARISON_MODE**\n"
+            "- **Verdict first** (one sentence), then material deltas only — **short** and **premium**.\n"
+            "- When to choose each; avoid spec encyclopedias.\n"
+            + common
+        )
+
+    if mode == ConsultantResponseMode.DEAL_ANALYSIS_MODE:
+        return (
+            "\n\n**Response mode: DEAL_ANALYSIS_MODE**\n"
+            "- **Broker-style** read: deal quality, risk, market positioning — cite numbers **only** from context.\n"
+            "- Clear stance (good / conditional / pass) when evidence allows; no invented comps.\n"
+            + common
+        )
+
+    if mode == ConsultantResponseMode.CONVERSATION_MODE:
+        return (
+            "\n\n**Response mode: CONVERSATION_MODE**\n"
+            "- **Human**, brief, on-brand — **never** generic ChatGPT filler (*I'm here to help*, *feel free*).\n"
+            "- **Elite aviation consultant** persona: warm, confident, optional light pivot to aviation **only** if natural.\n"
         )
 
     if mode == ConsultantResponseMode.TAIL_SPECIFIC:
         return (
-            "\n\n**Response mode: TAIL-SPECIFIC**\n"
-            "- Treat this as an aircraft-specific lookup. Do **not** drift into generic type marketing.\n"
-            "- If evidence is incomplete, say **no verified data** rather than guessing.\n"
+            "\n\n**Response mode: TAIL_SPECIFIC**\n"
+            "- Aircraft identity / registry turn: lead with verified facts; **no** generic type marketing drift.\n"
+            "- If a gallery is attached and the user asked to see the jet, keep text **minimal** beside the images.\n"
             + common
         )
 
-    if mode == ConsultantResponseMode.COMPARISON:
-        return (
-            "\n\n**Response mode: COMPARISON (premium, concise)**\n"
-            "- Verdict first (**1 sentence**).\n"
-            "- **Material differences only** — short bullets or tight sentences.\n"
-            "- When to choose each — **1 line each**.\n"
-            "- **Bottom Line:** 1–2 sentences.\n"
-            "\n\n**Consultant Insight:** 1 sentence of real-world buyer/operator reasoning.\n"
-            + common
-        )
-
-    if mode == ConsultantResponseMode.MISSION_ADVISORY:
-        return (
-            "\n\n**Response mode: MISSION ADVISORY (template required)**\n"
-            "- Restate mission when needed (distance/route, pax, constraints).\n"
-            "- **Recommendations:** **2–4** aircraft with **why it fits** + one tradeoff each.\n"
-            "- Eliminate at least **1** bad-fit example when useful.\n"
-            "- **Bottom Line:** 1–2 sentences.\n"
-            "\n\n**Consultant Insight:** 1–2 sentences of buyer reasoning.\n"
-            + common
-        )
-
-    if mode == ConsultantResponseMode.STRATEGIC_OWNERSHIP:
-        return (
-            "\n\n**Response mode: STRATEGIC / OWNERSHIP**\n"
-            "- Clear stance (own vs charter vs fractional) when relevant.\n"
-            "- Cost logic (fixed vs variable) — rules of thumb if context lacks numbers.\n"
-            "- Risks / hidden costs.\n"
-            "- **Bottom Line:** 1–2 sentences.\n"
-            "\n\n**Consultant Insight:** 1–2 sentences of ownership realism.\n"
-            + common
-        )
-
-    if mode == ConsultantResponseMode.DEAL_ANALYSIS:
-        return (
-            "\n\n**Response mode: DEAL ANALYSIS**\n"
-            "- Broker-style: **deal quality**, **pricing vs context**, **resale / liquidity** framing when relevant.\n"
-            "- **No** fabricated dollars — cite only what the brief supports; otherwise ranges/unknowns are explicit.\n"
-            "- Red flags when warranted; **Bottom line** verdict (\"good deal\" / \"rich\" / \"pass\") in plain words.\n"
-            + common
-        )
-
-    if mode == ConsultantResponseMode.CONVERSATION:
-        return (
-            "\n\n**Response mode: CONVERSATION**\n"
-            "- **Elite aviation consultant** — warm, human, **not** generic ChatGPT filler.\n"
-            "- **Minimal** length; no capability brochure; no *I'm here to help* patterns.\n"
-        )
-
-    # INVALID / SANITY
+    # INVALID_SANITY
     return (
-        "\n\n**Response mode: INVALID / SANITY CHECK (template required)**\n"
-        "- Reject clearly.\n"
-        "- Suggest closest real models.\n"
-        "- Do not invent specs, listings, or 'verified photos' for the fake model.\n"
+        "\n\n**Response mode: INVALID_SANITY**\n"
+        "- Reject the bogus model name clearly; suggest closest **real** variants — **short**, no invented specs or photos.\n"
         + common
     )
+
+
+__all__ = [
+    "ConsultantResponseMode",
+    "ConsultantResponseRouterResult",
+    "Verbosity",
+    "classify_consultant_response_mode",
+    "consultant_response_router_json",
+    "response_mode_prompt_suffix",
+    "route_consultant_response_mode",
+]

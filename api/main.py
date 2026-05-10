@@ -1089,6 +1089,8 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     query: str = Field(..., min_length=1)
     history: Optional[List[ChatMessage]] = None  # prior conversation for context
+    # Echo prior ``data_used["consultant_conversation_state"]`` so deictic follow-ups stay anchored.
+    conversation_state: Optional[dict] = None
 
 class ChatResponse(BaseModel):
     answer: str
@@ -1597,7 +1599,12 @@ def rag_answer(
     q_log_id = _log_consultant_question(request, req.query.strip(), "sync", history_dicts, viewer)
     try:
         rag = get_rag()
-        out = rag.answer(query=req.query.strip(), top_k=20, history=history_dicts if history_dicts else None)
+        out = rag.answer(
+            query=req.query.strip(),
+            top_k=20,
+            history=history_dicts if history_dicts else None,
+            conversation_state=req.conversation_state if isinstance(req.conversation_state, dict) else None,
+        )
         if out.get("error"):
             try:
                 finalize_consultant_query_log_answer(
@@ -1661,6 +1668,7 @@ def rag_answer_stream(
                 query=stream_q,
                 top_k=20,
                 history=history_dicts if history_dicts else None,
+                conversation_state=req.conversation_state if isinstance(req.conversation_state, dict) else None,
             ):
                 et = ev.get("type")
                 if et == "delta":

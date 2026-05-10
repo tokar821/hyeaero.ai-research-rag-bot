@@ -59,6 +59,7 @@ def run_consultant_retrieval_bundle(
     score_threshold: Optional[float],
     history: Optional[List[Dict[str, str]]],
     progress: Any = None,
+    client_conversation_state: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, Any]:
     from rag.consultant_progress_log import new_progress_logger
 
@@ -73,6 +74,7 @@ def run_consultant_retrieval_bundle(
 
     # 1) Rules: greetings, small talk, identity, arithmetic — no tools.
     from rag.conversation_guard import ConversationMessageType, evaluate_conversation_guard
+    from rag.consultant_conversation_state import finalize_consultant_conversation_state
 
     _api_key = getattr(svc, "openai_api_key", "") or ""
     _chat_model = (getattr(svc, "chat_model", "") or "").strip() or (
@@ -137,9 +139,11 @@ def run_consultant_retrieval_bundle(
     except Exception:
         pass
 
+    # Guard must see the real transcript so short aesthetic follow-ups are not misrouted when
+    # :mod:`rag.query_isolation_engine` clears ``history`` for retrieval-only isolation.
     _cg = evaluate_conversation_guard(
         query,
-        history,
+        _history_original,
         openai_api_key=_api_key,
         chat_model=_chat_model,
     )
@@ -156,6 +160,13 @@ def run_consultant_retrieval_bundle(
         }
         if _cg.message_type == ConversationMessageType.NON_AVIATION_GENERAL:
             _du["consultant_non_aviation_general"] = 1
+        finalize_consultant_conversation_state(
+            _du,
+            client_conversation_state,
+            query=query or "",
+            history=_history_original,
+            conversation_guard_type=_cg.message_type.value,
+        )
         return "small_talk", {
             "answer": _cg.reply or "",
             "sources": [],
@@ -180,7 +191,7 @@ def run_consultant_retrieval_bundle(
     )
     from rag.consultant_llm_intent import generate_general_chat_reply_llm
 
-    _strict_tails = find_strict_tail_candidates(query, history)
+    _strict_tails = find_strict_tail_candidates(query, _history_original)
     _fi_thr = fine_intent_confidence_threshold()
     if llm_fine_intent_disabled() or not (_api_key or "").strip():
         _fine = apply_fine_intent_heuristics(
@@ -200,7 +211,7 @@ def run_consultant_retrieval_bundle(
         _t_fi = time.perf_counter()
         _fine = classify_consultant_fine_intent_llm(
             query,
-            history,
+            _history_original,
             api_key=_api_key,
             model=_chat_model,
         )
@@ -215,6 +226,40 @@ def run_consultant_retrieval_bundle(
             )
 
     if is_conversational_fine_intent(_fine):
+        # Do not short-circuit taste / cabin follow-ups mid-consultant-thread (LLM often labels them small_talk).
+        try:
+            from rag.conversation_guard import query_has_aviation_signals
+
+            _hist_blob = " ".join(
+                str((h or {}).get("content") or "")
+                for h in (_history_original or [])[-24:]
+                if isinstance(h, dict)
+            )
+            _qstrip = (query or "").strip()
+            _taste_or_cabin = bool(
+                re.search(
+                    r"\b("
+                    r"feels\s+modern|more\s+modern|not\s+old|luxury\s+hotel|rich\s+guy|tacky|boutique|"
+                    r"cabin|interior|galley|cockpit|photos?|pictures?|show\s+me|vs\.?|compared\s+to"
+                    r")\b",
+                    _qstrip,
+                    re.I,
+                )
+            )
+            if query_has_aviation_signals(_hist_blob) and (
+                query_has_aviation_signals(_qstrip) or _taste_or_cabin
+            ):
+                from rag.consultant_fine_intent import ConsultantFineIntent, ConsultantFineIntentResult
+
+                _fine = ConsultantFineIntentResult(
+                    intent=ConsultantFineIntent.GENERAL_QUESTION,
+                    confidence=max(float(_fine.confidence or 0.0), 0.78),
+                    entities=dict(_fine.entities or {}),
+                )
+        except Exception:
+            pass
+
+    if is_conversational_fine_intent(_fine):
         if progress:
             progress.step(
                 "path_fine_intent_conversational",
@@ -224,7 +269,7 @@ def run_consultant_retrieval_bundle(
         if (_api_key or "").strip():
             _greply = generate_general_chat_reply_llm(
                 query,
-                history,
+                _history_original,
                 api_key=_api_key,
                 model=_chat_model,
             )
@@ -235,14 +280,22 @@ def run_consultant_retrieval_bundle(
                 if _fine.intent == ConsultantFineIntent.GREETING
                 else "Happy to help when you're ready — HyeAero.AI for Hye Aero, missions, specs, ownership, or market."
             )
+        _du_conv: Dict[str, Any] = {
+            "consultant_fine_intent": _fine.intent.value,
+            "consultant_fine_intent_confidence": _fine.confidence,
+            "consultant_fine_intent_conversational": 1,
+        }
+        finalize_consultant_conversation_state(
+            _du_conv,
+            client_conversation_state,
+            query=query or "",
+            history=_history_original,
+            fine_intent=_fine.intent.value,
+        )
         return "small_talk", {
             "answer": _greply,
             "sources": [],
-            "data_used": {
-                "consultant_fine_intent": _fine.intent.value,
-                "consultant_fine_intent_confidence": _fine.confidence,
-                "consultant_fine_intent_conversational": 1,
-            },
+            "data_used": _du_conv,
             "aircraft_images": [],
             "error": None,
         }
@@ -268,15 +321,23 @@ def run_consultant_retrieval_bundle(
                 "I focus on business aviation — missions, specs, comparisons, and market context. "
                 "What would you like to explore?"
             )
+        _du_gc: Dict[str, Any] = {
+            "consultant_fine_intent": _fine.intent.value,
+            "consultant_fine_intent_confidence": _fine.confidence,
+            "consultant_fine_intent_threshold": _fi_thr,
+            "consultant_fine_intent_general_chat": 1,
+        }
+        finalize_consultant_conversation_state(
+            _du_gc,
+            client_conversation_state,
+            query=query or "",
+            history=_history_original,
+            fine_intent=_fine.intent.value,
+        )
         return "small_talk", {
             "answer": _greply,
             "sources": [],
-            "data_used": {
-                "consultant_fine_intent": _fine.intent.value,
-                "consultant_fine_intent_confidence": _fine.confidence,
-                "consultant_fine_intent_threshold": _fi_thr,
-                "consultant_fine_intent_general_chat": 1,
-            },
+            "data_used": _du_gc,
             "aircraft_images": [],
             "error": None,
         }
@@ -298,6 +359,17 @@ def run_consultant_retrieval_bundle(
                 elapsed_ms=int((time.perf_counter() - _t_block) * 1000),
             )
         logger.info("Professional search triggered (deterministic SQL) for query=%r", query)
+        _du_prof = prof.get("data_used")
+        if not isinstance(_du_prof, dict):
+            _du_prof = {}
+            prof["data_used"] = _du_prof
+        finalize_consultant_conversation_state(
+            _du_prof,
+            client_conversation_state,
+            query=query or "",
+            history=_history_original,
+            fine_intent=_fine.intent.value,
+        )
         return "professional", prof
 
 
@@ -784,6 +856,15 @@ def run_consultant_retrieval_bundle(
             f"site:airliners.net {requested_tail_for_images}"
         )
     
+    from rag.consultant_luxury_escalation import (
+        apply_luxury_escalation_score_adjustments,
+        interpret_luxury_escalation,
+        luxury_rerank_anchor,
+    )
+
+    _lux_profile = interpret_luxury_escalation(query or "", _history_original)
+    _lux_anchor = luxury_rerank_anchor(query or "", _lux_profile)
+
     _t_vec = time.perf_counter()
     if vector_chunk_budget <= 0:
         results = []
@@ -802,11 +883,14 @@ def run_consultant_retrieval_bundle(
             max_results_total=vector_chunk_budget,
             max_query_variants=max_rag_variants,
             skip_rerank=fast_retrieval or low_latency,
-            rerank_anchor_query=query,
+            rerank_anchor_query=_lux_anchor,
             pinecone_filter=pinecone_filt,
         )
         results = apply_structured_first_rag_order(results, intent_classification.primary)
         results = svc._filter_rag_results_for_phly_aircraft(results, phly_rows)
+        if _lux_profile.active:
+            results = apply_luxury_escalation_score_adjustments(results, _lux_profile)
+            results = apply_structured_first_rag_order(results, intent_classification.primary)
         if progress:
             progress.step(
                 "vector_db_retrieve",
@@ -1209,6 +1293,8 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_tavily_single_pass"] = 1
     if strict_market_sql:
         data_used["consultant_market_sql_strict"] = 1
+    if _lux_profile.active:
+        data_used["consultant_luxury_escalation"] = _lux_profile.asdict()
     data_used["consultant_pipeline"] = "hybrid_sql_phly_vector_rag_tavily_context_llm_v3"
     data_used["hybrid_retrieval_kind"] = hybrid_plan.kind.value
     data_used["hybrid_vector_primary"] = 1 if hybrid_plan.vector_primary else 0
@@ -1326,6 +1412,12 @@ def run_consultant_retrieval_bundle(
                 marketing_type_hint=inferred_marketing_type_for_images,
             )
             data_used["image_answer_alignment"] = _plan
+            try:
+                data_used["consultant_gallery_highly_relevant_n"] = int(
+                    (_plan or {}).get("highly_relevant_image_count") or 0
+                )
+            except Exception:
+                data_used["consultant_gallery_highly_relevant_n"] = 0
             _align_ctx = format_alignment_block_for_layered_context(_plan)
             if _align_ctx:
                 context = f"{(context or '').rstrip()}\n\n---\n\n**[IMAGE ANSWER ALIGNMENT CONTEXT]**\n\n{_align_ctx}".strip()
@@ -1452,9 +1544,8 @@ def run_consultant_retrieval_bundle(
         from rag.consultant_query_anchor import effective_history_for_gallery_tail
         from rag.consultant_response_mode import (
             ConsultantResponseMode,
-            classify_consultant_response_mode,
-            classify_hye_aero_response_router,
             response_mode_prompt_suffix,
+            route_consultant_response_mode,
         )
         from rag.consultant_validity import validate_aircraft_model
 
@@ -1466,25 +1557,17 @@ def run_consultant_retrieval_bundle(
         # Use "visual" phrasing as a signal even when gallery intent routing was not triggered upstream.
         has_visual_intent = bool(re.search(r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look)\b", (query or ""), re.I))
         v = validate_aircraft_model(query or "")
-        _fi_s = str(getattr(_fine.intent, "value", _fine.intent))
-        _susp_combined = _susp_model or (v.message if v else None)
-        router = classify_hye_aero_response_router(
+        router = route_consultant_response_mode(
             query=query or "",
-            fine_intent=_fi_s,
+            fine_intent=str(getattr(_fine.intent, "value", _fine.intent)),
             has_tail=has_tail,
             has_visual_intent=bool(user_wants_gallery or has_visual_intent),
-            suspicious_model_note=_susp_combined,
+            suspicious_model_note=_susp_model or (v.message if v else None),
         )
-        data_used["consultant_response_router"] = router.to_dict()
-        mode: ConsultantResponseMode = classify_consultant_response_mode(
-            query=query or "",
-            fine_intent=_fi_s,
-            has_tail=has_tail,
-            has_visual_intent=bool(user_wants_gallery or has_visual_intent),
-            suspicious_model_note=_susp_combined,
-        )
-        data_used["consultant_response_mode"] = mode.value
-        system_prompt += response_mode_prompt_suffix(mode, router=router)
+        mode = ConsultantResponseMode(router["mode"])
+        data_used["consultant_response_mode"] = router["mode"]
+        data_used["consultant_response_router"] = dict(router)
+        system_prompt += response_mode_prompt_suffix(mode)
 
         # Internal confidence tag (not user-facing UI): high when tail + authoritative record, else medium/low.
         conf = "low"
@@ -1495,15 +1578,42 @@ def run_consultant_retrieval_bundle(
                 conf = "medium"
         else:
             if mode in (
-                ConsultantResponseMode.COMPARISON,
-                ConsultantResponseMode.MISSION_ADVISORY,
-                ConsultantResponseMode.STRATEGIC_OWNERSHIP,
-                ConsultantResponseMode.DEAL_ANALYSIS,
+                ConsultantResponseMode.COMPARISON_MODE,
+                ConsultantResponseMode.ADVISORY_MODE,
+                ConsultantResponseMode.DEAL_ANALYSIS_MODE,
             ):
                 conf = "medium"
         data_used["consultant_confidence"] = conf
     except Exception:
         pass
+
+    try:
+        from rag.consultant_conversation_state import format_conversation_state_for_system_prompt
+
+        _ae_models2: List[str] = []
+        try:
+            _ae_blob = entity_detection.aviation_entities or {}
+            if isinstance(_ae_blob, dict):
+                _ae_models2 = [str(x) for x in (_ae_blob.get("aircraft_models") or []) if x]
+        except Exception:
+            pass
+        finalize_consultant_conversation_state(
+            data_used,
+            client_conversation_state,
+            query=query or "",
+            history=_history_original,
+            entity_models=_ae_models2 or None,
+            hybrid_kind=str(hybrid_plan.kind.value),
+            fine_intent=str(_fine.intent.value),
+            response_mode=str(data_used.get("consultant_response_mode") or "") or None,
+            user_wants_gallery=bool(user_wants_gallery),
+            mission_hint=_mission_hint,
+        )
+        system_prompt += format_conversation_state_for_system_prompt(
+            data_used.get("consultant_conversation_state") or {}
+        )
+    except Exception as _cst_e:
+        logger.debug("consultant_conversation_state skipped: %s", _cst_e)
 
     # Format requirement for structured retrieval responses (tail/serial/ownership/market).
     if hybrid_plan.kind.value in (

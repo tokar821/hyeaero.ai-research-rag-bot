@@ -119,6 +119,141 @@ def _global_image_confidence(gallery_meta: Dict[str, Any]) -> float:
     return max(0.0, min(1.0, min(qconf, rconf)))
 
 
+def _premium_intent_constrains_visual_rows(premium: Dict[str, Any]) -> bool:
+    """True when facet/tail rules apply (same signal as ``bad_section`` in the alignment plan)."""
+    p = premium or {}
+    return bool(
+        str(p.get("image_type") or "").strip()
+        or (isinstance(p.get("image_facets"), list) and len(p.get("image_facets") or []) > 1)
+        or bool(str(p.get("tail_number") or "").strip())
+    )
+
+
+def _gallery_row_for_premium(im: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "title": str(im.get("description") or ""),
+        "snippet": "",
+        "_source_page": str(im.get("page_url") or ""),
+        "url": str(im.get("url") or ""),
+    }
+
+
+def _blob_aircraft_signal_fallback(im: Dict[str, Any]) -> bool:
+    """Loose fallback when titles are short but URL/page text still looks aviation-specific."""
+    b = _blob_for_image(im)
+    if re.search(r"\bn[1-9][a-z0-9]{1,5}\b", b, re.I):
+        return True
+    anchors = (
+        "gulfstream",
+        "falcon",
+        "citation",
+        "challenger",
+        "global ",
+        "learjet",
+        "phenom",
+        "embraer",
+        "bombardier",
+        "hawker",
+        "bizjet",
+        "private jet",
+        "business jet",
+        "jetphotos",
+        "planespotters",
+        "cockpit",
+        "cabin",
+        "interior",
+        "exterior",
+    )
+    return any(a in b for a in anchors)
+
+
+def _urls_align_for_rank_preview(url: str, preview_url: str) -> bool:
+    u = (url or "").strip().split("?", 1)[0]
+    v = (preview_url or "").strip().split("?", 1)[0]
+    if len(u) < 8 or len(v) < 8:
+        return False
+    if u == v:
+        return True
+    return u in v or v in u or u[: min(len(u), 96)] == v[: min(len(u), 96)]
+
+
+def count_highly_relevant_aircraft_images(
+    aircraft_images: List[Dict[str, Any]],
+    gallery_meta: Dict[str, Any],
+    premium: Dict[str, Any],
+    *,
+    gconf: float,
+    marketing_type_hint: Optional[str],
+) -> int:
+    """
+    Count gallery rows strong enough that the assistant must **not** use retrieval-failure hedging.
+
+    Uses (in order): rank-filter preview scores, premium facet/tail validation when constraints apply,
+    else combined engine confidence + aircraft cues in title/URL.
+    """
+    pics = [x for x in (aircraft_images or []) if str(x.get("url") or "").strip()]
+    if len(pics) < 2:
+        return len(pics)
+
+    gm = gallery_meta or {}
+    rk = gm.get("image_rank_filter_engine") or {}
+    preview = rk.get("valid_images_preview") or []
+    if isinstance(preview, list) and len(preview) >= 2:
+        hr_prev = 0
+        for im in pics:
+            u = str(im.get("url") or "").strip()
+            if not u:
+                continue
+            for v in preview:
+                if not isinstance(v, dict):
+                    continue
+                vu = str(v.get("url") or "").strip()
+                if not vu or not _urls_align_for_rank_preview(u, vu):
+                    continue
+                try:
+                    sc = int(v.get("score") or 0)
+                except (TypeError, ValueError):
+                    sc = 0
+                if sc >= 52:
+                    hr_prev += 1
+                    break
+        if hr_prev >= 2:
+            return hr_prev
+
+    try:
+        from services.consultant_image_search_orchestrator import premium_image_row_passes_validation
+    except Exception:
+        premium_image_row_passes_validation = None  # type: ignore
+
+    try:
+        from services.aviation_image_rank_filter_engine import _title_has_aircraft_context
+    except Exception:
+        _title_has_aircraft_context = None  # type: ignore
+
+    p = premium or {}
+    qintent = {"aircraft": str(p.get("aircraft") or marketing_type_hint or "").strip()}
+    strict_visual = _premium_intent_constrains_visual_rows(p)
+
+    def _row_hr(im: Dict[str, Any]) -> bool:
+        row = _gallery_row_for_premium(im)
+        if strict_visual and premium_image_row_passes_validation:
+            return bool(premium_image_row_passes_validation(row, p))
+        if premium_image_row_passes_validation and (
+            str(p.get("tail_number") or "").strip() or str(p.get("aircraft") or "").strip()
+        ):
+            return bool(premium_image_row_passes_validation(row, p))
+        if gconf < 0.45:
+            return False
+        title = str(im.get("description") or "").strip()
+        if _title_has_aircraft_context and _title_has_aircraft_context(title, qintent):
+            return True
+        if gconf >= 0.58 and _blob_aircraft_signal_fallback(im):
+            return True
+        return False
+
+    return sum(1 for im in pics if _row_hr(im))
+
+
 def _premium_intent_section_pass_rate(
     aircraft_images: List[Dict[str, Any]],
     premium_intent: Dict[str, Any],
@@ -134,12 +269,7 @@ def _premium_intent_section_pass_rate(
     for im in aircraft_images:
         if not str(im.get("url") or "").strip():
             continue
-        row = {
-            "title": str(im.get("description") or ""),
-            "snippet": "",
-            "_source_page": str(im.get("page_url") or ""),
-            "url": str(im.get("url") or ""),
-        }
+        row = _gallery_row_for_premium(im)
         if premium_image_row_passes_validation(row, premium_intent):
             ok += 1
     n = len([x for x in aircraft_images if str(x.get("url") or "").strip()])
@@ -178,6 +308,15 @@ def build_image_answer_alignment_plan(
         or bool(str(premium.get("tail_number") or "").strip())
     )
     weak = low_conf or not aircraft_images or bad_section
+    highly_relevant_n = count_highly_relevant_aircraft_images(
+        aircraft_images,
+        gallery_meta,
+        premium,
+        gconf=gconf,
+        marketing_type_hint=marketing_type_hint,
+    )
+    if highly_relevant_n >= 2:
+        weak = False
     alignment_ok = not weak and bool(groups) and all(g["count"] >= 1 for g in groups)
 
     weak_msg = None
@@ -239,6 +378,8 @@ def build_image_answer_alignment_plan(
         "section_alignment_rate": round(sec_rate, 4),
         "alignment_ok": alignment_ok,
         "weak_images_message": weak_msg,
+        "highly_relevant_image_count": int(highly_relevant_n),
+        "strong_gallery_confident_tone": bool(highly_relevant_n >= 2),
         "best_match_model": best_model or None,
         "llm_directives": directives,
     }

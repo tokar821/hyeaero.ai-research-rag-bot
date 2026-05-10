@@ -42,6 +42,21 @@ def test_what_mean_with_history_routes_to_aviation_pipeline():
     assert r.reply is None
 
 
+def test_guard_casual_self_intro_natural_not_brochure():
+    r = evaluate_conversation_guard("I'm Matt", None)
+    assert r.message_type == ConversationMessageType.SMALL_TALK
+    assert r.reply
+    assert "Matt" in r.reply
+    assert "boutique" not in (r.reply or "").lower()
+    assert "hye aero is" not in (r.reply or "").lower()
+
+    r2 = evaluate_conversation_guard("I'm CEO of HyeAero", None)
+    assert r2.message_type == ConversationMessageType.SMALL_TALK
+    assert r2.reply
+    assert "ambitious" in (r2.reply or "").lower() or "building" in (r2.reply or "").lower()
+    assert "ten percent" not in (r2.reply or "").lower()
+
+
 def test_guard_casual_chat_not_broker_pitch():
     """Short non-aviation chat should not read like a forced CRM handoff."""
     happy = evaluate_conversation_guard("Happy Today!", None)

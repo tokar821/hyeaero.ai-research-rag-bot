@@ -96,12 +96,16 @@ def _env_truthy(key: str) -> bool:
 
 _AIRCRAFT_RE = re.compile(
     r"(\b"
-    r"aircraft|\bjet\b|\bplanes?\b|\baviation|\bFAA\b|registry|\btail\b|"
+    r"aircraft|\bjets?\b|\bplanes?\b|\bfly(ing|s)?\b|\baviation|\bFAA\b|registry|\btail\b|"
     r"\bmsn\b|serial|n-?number|\bn\d[\w\-]{1,6}\b|"
-    r"citation|challenger|gulfstream|falcon|learjet|global\s*\d|phenom|praetor|"
+    r"citation|challenger|gulfstream|falcon|learjet|global\s*\d|\b[gG]\d{3,4}\b|phenom|praetor|"
     r"pilatus|king\s*air|hawker|bombardier|embraer|beechcraft|"
+    r"\bcabin\b|\binterior\b|\bcockpit\b|\bgalley\b|\bexterior\b|\bramp\b|"
+    r"\bphotos?\b|\bpictures?\b|\bgallery\b|"
     r"nautical|\bnm\b|\b(range|payload|mtow)\b|"
     r"\bbroker\b|\bcharter\b|\bleasing\b|\bicao\b|\beasa\b|\bstall\b|\blift\b|"
+    r"\b(nonstop|transcon|transatlantic|pax|passengers?)\b|"
+    r"\b(TEB|VNY|Teterboro|Van\s+Nuys|NYC|JFK|EWR|LAX|Miami|London|Heathrow|Luton)\b|"
     r"\d{2,5}-\d{2,6}"
     r")",
     re.I,
@@ -180,9 +184,67 @@ def query_has_aviation_signals(text: str) -> bool:
         return False
     if _AIRCRAFT_RE.search(text):
         return True
+    # Buyer taste / cabin similes (often misread as hotel or small-talk without aircraft tokens).
+    if re.search(
+        r"\b("
+        r"luxury\s+hotel|hotel[-\s]like|five[-\s]?star|more\s+modern|feels\s+modern|"
+        r"not\s+old|rich\s+guy|boutique\s+feel|tacky|stand[-\s]?up\s+cabin|"
+        r"old\s+rich"
+        r")\b",
+        text,
+        re.I,
+    ):
+        return True
     from rag.aviation_tail import find_strict_tail_candidates_in_text
 
     return bool(find_strict_tail_candidates_in_text(text))
+
+
+def _try_casual_self_intro_reply(raw: str) -> Optional[str]:
+    """
+    High-end consultant tone for casual self-intros — not customer support, no company dump.
+
+    Returns a short deterministic reply, or None when this should go through normal routing.
+    """
+    s = (raw or "").strip()
+    if not s or len(s) > 160:
+        return None
+    if query_has_aviation_signals(s):
+        return None
+    if re.search(
+        r"\b(looking\s+for|need\s+a|want\s+to\s+buy|compare|vs\.?|for\s+sale|budget|"
+        r"listing|mission|route|hours|spec|tail\s+number)\b",
+        s,
+        re.I,
+    ):
+        return None
+
+    low = s.lower().strip()
+
+    # "I'm CEO of …" / founder — acknowledge ambition; do **not** recite Hye Aero marketing.
+    if re.match(
+        r"^\s*i'?m\s+(the\s+)?(ceo|cfo|coo|cto|founder|co-founder|chairman|president|managing\s+partner)\b",
+        low,
+    ):
+        if re.search(r"\bhye\s*aero|hyeaero\b", low):
+            return "Very nice. Sounds like you're building something ambitious."
+        return "Good to meet you. Thanks for the context."
+
+    m = re.match(
+        r"^\s*i'?m\s+([A-Z][a-z]+)(?:\s+([A-Z][a-z]+))?\s*[!?.…]*\s*$",
+        s,
+        re.I,
+    )
+    if m:
+        first = m.group(1).strip().title()
+        return f"Nice to meet you, {first}."
+
+    m2 = re.match(r"^\s*(?:my\s+name\s+is|call\s+me)\s+([A-Za-z][A-Za-z'\-]{1,48})\s*[!?.…]*\s*$", s, re.I)
+    if m2:
+        name = m2.group(1).strip().title()
+        return f"Nice to meet you, {name}."
+
+    return None
 
 
 # --- Greeting (incl. yo, sup, casual) ---
@@ -557,6 +619,8 @@ def _non_aviation_llm_system_prompt(hint: Optional[ConversationMessageType]) -> 
 **What Hye Aero is:** boutique aviation intelligence and brokerage support — mission-first, owner-experience-led guidance on aircraft research, ownership, market insight, and mission fit (not volume brokerage).
 **Your main role:** help users with aircraft, missions, specs, registry/market questions, and buyer-style guidance — but **this specific message is not an aviation task**, so you respond like a sharp human, not a brochure.
 
+**Persona (critical):** You are **not** customer support or a knowledge-base bot. Sound like a **high-end aviation consultant / trusted broker** — natural, confident, peer-to-peer. **Never** recite company brochures, unsolicited Hye Aero descriptions, or "what we do" pages when the user is just being human (greetings, names, light context). Acknowledge their tone and move on organically.
+
 **Output rules (all modes):**
 1) Plain text only. No markdown # headers or ** bold.
 2) Do **not** add forced aviation commentary, metaphors, or tie-ins unless the user brought up flying. No philosophical filler ("Aviation is about precision", "like a well-planned flight").
@@ -568,17 +632,17 @@ def _non_aviation_llm_system_prompt(hint: Optional[ConversationMessageType]) -> 
     if hint == ConversationMessageType.GREETING:
         return (
             base
-            + "\n\n**This turn (greeting):** Respond warmly and briefly — like a colleague. **Do not** pitch aviation or list product capabilities unless they asked."
+            + "\n\n**This turn (greeting):** Warm, **brief**, like a peer at a jet conference — **not** a call-center opener. **Do not** pitch aviation or list product capabilities unless they asked."
         )
     if hint == ConversationMessageType.SMALL_TALK:
         return (
             base
-            + "\n\n**This turn (small talk / thanks / cheer):** Match the user's tone in **one short reply**. No aviation pivot unless natural."
+            + "\n\n**This turn (small talk / thanks / cheer / casual intro):** Match tone in **one short reply** — elite consultant energy, **not** corporate brochure. If they share a name or role, acknowledge naturally; **do not** explain Hye Aero or dump company copy unless they explicitly asked what the company is."
         )
     if hint == ConversationMessageType.IDENTITY_QUESTION:
         return (
             base
-            + "\n\n**This turn (who are you / what do you do):** Explain HyeAero.AI and Hye Aero in **2–4 short sentences** — consultant-like, not a feature list. Mention missions, specs, ownership, market naturally."
+            + "\n\n**This turn (who are you / what do you do / what is Hye Aero):** Only when they **ask** — explain HyeAero.AI and Hye Aero in **2–4 short sentences**, consultant-like, not a feature catalog. If they only **mentioned** Hye Aero in passing (e.g. their title), **do not** recite the company story."
         )
     if hint == ConversationMessageType.NON_AVIATION_GENERAL:
         return (
@@ -781,7 +845,7 @@ Return JSON only: {"type": "<one word>"}
 
 Allowed values:
 - greeting — hi, hello, hey, yo, sup, good morning, short casual hellos (no substantive question).
-- small_talk — thanks, ok, nice, cool, how are you, hi good, tiny non-aviation fragments under ~4 words that are not trivia questions.
+- small_talk — thanks, ok, nice, cool, how are you, hi good, tiny non-aviation fragments under ~4 words that are not trivia questions. **Also** casual self-intros ("I'm Matt", "I'm CEO of …", "my name is …") with **no** aircraft mission — these are **not** aviation_question.
 - identity_question — who are you, what do you do, what can you help with, what is Hye Aero.
 - non_aviation_general — general knowledge unrelated to aviation: simple geography, capitals, science trivia, history, jokes, "what is X" when X is not aircraft/missions/market/registry. **Also use for homework / advanced math** (calculus integrals, derivatives, proofs), **physics problem sets**, **medical/legal advice**, **coding interview / debug** requests — do **not** label those aviation_question.
 - aviation_question — aircraft, tails, N-numbers, registrations, listings, range, payload, MTOW, specs, ownership lookup, broker market, comparisons, flight planning, charter operations on aircraft, etc.
@@ -854,6 +918,10 @@ def evaluate_conversation_guard(
     if _academic_decline is not None:
         return ConversationGuardResult(ConversationMessageType.NON_AVIATION_GENERAL, _academic_decline)
 
+    _casual_intro = _try_casual_self_intro_reply(raw)
+    if _casual_intro:
+        return ConversationGuardResult(ConversationMessageType.SMALL_TALK, _casual_intro)
+
     # Consultant-style closings / follow-ups — run before guard LLM so misclassification cannot
     # send "thanks, have a great day" into the aircraft tool pipeline.
     if not query_has_aviation_signals(raw):
@@ -914,6 +982,28 @@ def evaluate_conversation_guard(
                 pass
         if not _skip_guard_llm:
             llm_t = _llm_classify_message_type(query, history, api_key=key, model=model)
+            # Guard LLM often labels mid-thread cabin/taste fragments as small_talk — keep tools + RAG.
+            if (
+                llm_t is not None
+                and llm_t != ConversationMessageType.AVIATION_QUERY
+                and history
+            ):
+                hist_blob = " ".join(
+                    str((h or {}).get("content") or "")
+                    for h in (history[-24:] if history else [])
+                    if isinstance(h, dict)
+                )
+                if query_has_aviation_signals(hist_blob):
+                    qstrip = (query or "").strip()
+                    if query_has_aviation_signals(qstrip) or re.search(
+                        r"\b("
+                        r"feels\s+modern|more\s+modern|not\s+old|luxury\s+hotel|rich\s+guy|tacky|boutique|"
+                        r"cabin|interior|galley|cockpit|photos?|pictures?|show\s+me"
+                        r")\b",
+                        qstrip,
+                        re.I,
+                    ):
+                        llm_t = ConversationMessageType.AVIATION_QUERY
         if llm_t is not None and llm_t != ConversationMessageType.AVIATION_QUERY:
             if llm_t == ConversationMessageType.NON_AVIATION_GENERAL:
                 if _non_aviation_llm_enabled():

@@ -52,6 +52,62 @@ def test_groups_by_aircraft_and_caps_three(monkeypatch):
     assert "1:1" in plan["llm_directives"] or "1:1" in plan["llm_directives"].replace(" ", "")
 
 
+def test_strong_gallery_suppresses_weak_message_despite_low_engine_confidence():
+    phly = [{"manufacturer": "Gulfstream", "model": "G650"}]
+    imgs = [
+        {
+            "url": "https://x.com/1.jpg",
+            "description": "Gulfstream G650 interior seating",
+            "page_url": "",
+        },
+        {
+            "url": "https://x.com/2.jpg",
+            "description": "G650 cabin galley line",
+            "page_url": "",
+        },
+    ]
+    plan = iae.build_image_answer_alignment_plan(
+        user_query="show cabin",
+        aircraft_images=imgs,
+        phly_rows=phly,
+        gallery_meta={"image_query_engine": {"confidence": 0.55}},
+        marketing_type_hint="Gulfstream G650",
+    )
+    assert plan.get("highly_relevant_image_count", 0) >= 2
+    assert plan["weak_images_message"] is None
+    low = (plan.get("llm_directives") or "").lower()
+    assert "weak or uncertain gallery" not in low
+    assert "cannot find reliable" not in low
+    assert "closest accurate" not in low
+
+
+def test_rank_preview_marks_two_highly_relevant_even_if_query_confidence_low():
+    phly = [{"manufacturer": "Bombardier", "model": "Global 7500"}]
+    imgs = [
+        {"url": "https://cdn.example/a.jpg", "description": "Global 7500 interior", "page_url": ""},
+        {"url": "https://cdn.example/b.jpg", "description": "Global 7500 cabin windows", "page_url": ""},
+    ]
+    gm = {
+        "image_query_engine": {"confidence": 0.5},
+        "image_rank_filter_engine": {
+            "selected_n": 2,
+            "valid_images_preview": [
+                {"url": "https://cdn.example/a.jpg", "score": 72},
+                {"url": "https://cdn.example/b.jpg", "score": 68},
+            ],
+        },
+    }
+    plan = iae.build_image_answer_alignment_plan(
+        user_query="cabin photos",
+        aircraft_images=imgs,
+        phly_rows=phly,
+        gallery_meta=gm,
+        marketing_type_hint=None,
+    )
+    assert plan.get("highly_relevant_image_count", 0) >= 2
+    assert plan["weak_images_message"] is None
+
+
 def test_low_confidence_marks_not_aligned():
     phly = [{"manufacturer": "Gulfstream", "model": "G650"}]
     imgs = [
