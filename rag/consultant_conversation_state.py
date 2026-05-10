@@ -73,6 +73,8 @@ def _sanitize_client_state(raw: Any) -> Dict[str, Any]:
             out[k] = s if s else None
         elif isinstance(v, bool) and k not in out:
             continue
+    if isinstance(raw.get("continuity"), dict):
+        out["continuity"] = raw["continuity"]
     return out
 
 
@@ -341,6 +343,7 @@ def finalize_consultant_conversation_state(
     user_wants_gallery: bool = False,
     mission_hint: Optional[str] = None,
     conversation_guard_type: Optional[str] = None,
+    continuity_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Mutates ``data_used`` in place and returns the new state dict."""
     merged = merge_consultant_conversation_state(
@@ -355,5 +358,9 @@ def finalize_consultant_conversation_state(
         mission_hint=mission_hint,
         conversation_guard_type=conversation_guard_type,
     )
+    if continuity_state is not None:
+        merged["continuity"] = continuity_state
+    elif isinstance(client_state, dict) and isinstance(client_state.get("continuity"), dict):
+        merged["continuity"] = client_state["continuity"]
     data_used["consultant_conversation_state"] = merged
     return merged

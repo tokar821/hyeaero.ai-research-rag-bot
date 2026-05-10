@@ -84,6 +84,7 @@ def run_consultant_retrieval_bundle(
     # Preserve the exact latest user message for "typed now" checks.
     _latest_user_query_raw = (query or "").strip()
     _history_original = history
+    _continuity_bundle = None
 
     # 0) Query Isolation Engine — decide whether to ignore history for this turn.
     # NEW: ignore full conversation history; only use current user query.
@@ -350,6 +351,27 @@ def run_consultant_retrieval_bundle(
         p for p in (_mission_hint, _aviation_engines_ctx) if p
     ).strip()
 
+    try:
+        from services.conversation_continuity import run_continuity_turn
+
+        _continuity_bundle = run_continuity_turn(
+            raw_user_query=_latest_user_query_raw,
+            isolated_query=query,
+            history=_history_original,
+            client_conversation_state=client_conversation_state,
+            strict_tail_candidates=_strict_tails,
+        )
+        _nq = (_continuity_bundle.effective_query or "").strip()
+        if _nq and _nq != (query or "").strip():
+            query = _nq.strip()
+            if progress:
+                progress.step(
+                    "consultant_query_continuity_expand",
+                    refinement_type=_continuity_bundle.refinement.type,
+                )
+    except Exception as _cce:
+        logger.debug("conversation_continuity skipped: %s", _cce)
+
     _t_block = time.perf_counter()
     prof = svc._professional_search_answer(query)
     if prof:
@@ -369,6 +391,7 @@ def run_consultant_retrieval_bundle(
             query=query or "",
             history=_history_original,
             fine_intent=_fine.intent.value,
+            continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
         )
         return "professional", prof
 
@@ -1295,6 +1318,9 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_market_sql_strict"] = 1
     if _lux_profile.active:
         data_used["consultant_luxury_escalation"] = _lux_profile.asdict()
+    if _continuity_bundle is not None:
+        data_used["consultant_continuity_state"] = _continuity_bundle.serialized
+        data_used["consultant_refinement_interpretation"] = _continuity_bundle.refinement.model_dump(mode="json")
     data_used["consultant_pipeline"] = "hybrid_sql_phly_vector_rag_tavily_context_llm_v3"
     data_used["hybrid_retrieval_kind"] = hybrid_plan.kind.value
     data_used["hybrid_vector_primary"] = 1 if hybrid_plan.vector_primary else 0
@@ -1608,10 +1634,13 @@ def run_consultant_retrieval_bundle(
             response_mode=str(data_used.get("consultant_response_mode") or "") or None,
             user_wants_gallery=bool(user_wants_gallery),
             mission_hint=_mission_hint,
+            continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
         )
         system_prompt += format_conversation_state_for_system_prompt(
             data_used.get("consultant_conversation_state") or {}
         )
+        if _continuity_bundle is not None:
+            system_prompt += _continuity_bundle.prompt_block
     except Exception as _cst_e:
         logger.debug("consultant_conversation_state skipped: %s", _cst_e)
 
