@@ -1688,6 +1688,12 @@ def run_consultant_retrieval_bundle(
             intent_persistence_state=(
                 _intent_bundle.resolved_intent if _intent_bundle is not None else None
             ),
+            refinement_type=(
+                _intent_bundle.refinement_type if _intent_bundle is not None else "none"
+            ),
+            routing_hint=(
+                _intent_bundle.routing_decision.value if _intent_bundle is not None else ""
+            ),
         )
         system_prompt += format_conversation_state_for_system_prompt(
             data_used.get("consultant_conversation_state") or {}

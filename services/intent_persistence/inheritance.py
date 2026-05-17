@@ -106,10 +106,43 @@ def merge_prev_snapshot(raw: Optional[dict]) -> Optional[PersistentIntentState]:
     direct = raw.get("intent_persistence")
     if isinstance(direct, dict):
         return intent_state_from_dict_safe(direct)
+    mem = raw.get("conversation_memory")
+    if isinstance(mem, dict):
+        return _memory_dict_to_intent(mem)
     cont = raw.get("continuity")
     if isinstance(cont, dict):
         return continuity_dict_to_intent(cont)
     return None
+
+
+def _memory_dict_to_intent(mem: dict) -> PersistentIntentState:
+    from .schemas import ConversationGoal, IntentResponseMode, PersistentIntentState
+
+    mode = IntentResponseMode.CONSULTANT_MODE
+    rm = str(mem.get("response_mode") or "")
+    if rm in ("image_showcase", "visual_only"):
+        mode = IntentResponseMode.IMAGE_SHOWCASE
+    elif rm == "short_caption":
+        mode = IntentResponseMode.SHORT_CAPTION
+
+    goal = ConversationGoal.UNKNOWN
+    cg = str(mem.get("conversation_goal") or mem.get("current_conversation_goal") or "")
+    if cg in ("visual_gallery", "VISUAL_GALLERY"):
+        goal = ConversationGoal.VISUAL_GALLERY
+    elif cg in ("refinement", "REFINEMENT"):
+        goal = ConversationGoal.REFINEMENT
+
+    return PersistentIntentState(
+        active_aircraft=mem.get("active_aircraft"),
+        active_tail=mem.get("active_tail"),
+        active_visual_focus=mem.get("last_visual_context"),
+        active_budget_usd=mem.get("active_budget_usd"),
+        response_mode=mode,
+        aesthetic_preferences=list(mem.get("aesthetic_preferences") or []),
+        negative_preferences=list(mem.get("negative_preferences") or []),
+        comparison_target=mem.get("comparison_target"),
+        current_conversation_goal=goal,
+    )
 
 
 def intent_state_from_dict_safe(raw: dict) -> PersistentIntentState:

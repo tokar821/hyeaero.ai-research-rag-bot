@@ -75,6 +75,10 @@ def _sanitize_client_state(raw: Any) -> Dict[str, Any]:
             continue
     if isinstance(raw.get("continuity"), dict):
         out["continuity"] = raw["continuity"]
+    if isinstance(raw.get("conversation_memory"), dict):
+        out["conversation_memory"] = raw["conversation_memory"]
+    if isinstance(raw.get("intent_persistence"), dict):
+        out["intent_persistence"] = raw["intent_persistence"]
     return out
 
 
@@ -317,16 +321,30 @@ def merge_consultant_conversation_state(
 
 def format_conversation_state_for_system_prompt(state: Dict[str, Any]) -> str:
     """Internal-only block for the consultant system prompt."""
-    if not isinstance(state, dict) or not any(state.get(k) for k in _STATE_KEYS):
+    blocks: List[str] = []
+    mem = state.get("conversation_memory") if isinstance(state, dict) else None
+    if isinstance(mem, dict) and mem:
+        try:
+            from services.conversation_state_engine.prompt_block import format_memory_prompt_block
+            from services.conversation_state_engine.schemas import memory_from_dict
+
+            pb = format_memory_prompt_block(memory_from_dict(mem))
+            if pb:
+                blocks.append(pb)
+        except Exception:
+            pass
+    if isinstance(state, dict) and any(state.get(k) for k in _STATE_KEYS):
+        lines = [f"- **{k}:** {state.get(k)}" for k in _STATE_KEYS if state.get(k)]
+        if lines:
+            blocks.append(
+                "\n\n**Live conversation state (legacy cues — internal):**\n"
+                + "\n".join(lines)
+            )
+    if not blocks:
         return ""
-    lines = [f"- **{k}:** {state.get(k)}" for k in _STATE_KEYS if state.get(k)]
-    if not lines:
-        return ""
-    return (
-        "\n\n**Live conversation state (internal — do not read aloud; use to resolve deictic follow-ups like "
-        "*something nicer*, *bigger*, *not that*, *similar to that*):**\n"
-        + "\n".join(lines)
-        + "\n- Treat this thread as **continuous** unless the user clearly pivots; do not restart as if there were no prior context.\n"
+    return "".join(blocks) + (
+        "\n- Treat this thread as **continuous** unless the user clearly pivots; "
+        "do not restart as if there were no prior context.\n"
     )
 
 
@@ -345,6 +363,8 @@ def finalize_consultant_conversation_state(
     conversation_guard_type: Optional[str] = None,
     continuity_state: Optional[Dict[str, Any]] = None,
     intent_persistence_state: Optional[Dict[str, Any]] = None,
+    refinement_type: str = "none",
+    routing_hint: str = "",
 ) -> Dict[str, Any]:
     """Mutates ``data_used`` in place and returns the new state dict."""
     merged = merge_consultant_conversation_state(
@@ -367,5 +387,35 @@ def finalize_consultant_conversation_state(
         merged["intent_persistence"] = intent_persistence_state
     elif isinstance(client_state, dict) and isinstance(client_state.get("intent_persistence"), dict):
         merged["intent_persistence"] = client_state["intent_persistence"]
+
+    try:
+        from services.conversation_state_engine import run_conversation_state_turn, sync_legacy_flat_fields
+
+        mem_bundle = run_conversation_state_turn(
+            query=query or "",
+            client_conversation_state=merged,
+            continuity_serialized=merged.get("continuity") if isinstance(merged.get("continuity"), dict) else continuity_state,
+            intent_resolved=intent_persistence_state,
+            refinement_type=refinement_type,
+            entity_models=entity_models,
+            user_wants_gallery=user_wants_gallery,
+            mission_hint=mission_hint,
+            routing_hint=routing_hint,
+        )
+        merged["conversation_memory"] = mem_bundle.serialized
+        for k, v in sync_legacy_flat_fields(mem_bundle.state).items():
+            if v is not None:
+                merged[k] = v
+        data_used["conversation_memory"] = mem_bundle.serialized
+        data_used["conversation_state_engine"] = {
+            "previous_state": mem_bundle.previous_snapshot,
+            "resolved_state": mem_bundle.serialized,
+            "inherited_fields": mem_bundle.inherited_fields,
+            "decayed_fields": mem_bundle.decayed_fields,
+            "memory_stack": mem_bundle.state.memory_stack,
+        }
+    except Exception:
+        pass
+
     data_used["consultant_conversation_state"] = merged
     return merged
