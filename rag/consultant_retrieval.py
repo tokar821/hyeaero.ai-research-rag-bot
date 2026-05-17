@@ -1620,30 +1620,95 @@ def run_consultant_retrieval_bundle(
         from rag.consultant_query_anchor import effective_history_for_gallery_tail
         from rag.consultant_response_mode import (
             ConsultantResponseMode,
-            response_mode_prompt_suffix,
             route_consultant_response_mode,
         )
         from rag.consultant_validity import validate_aircraft_model
+        from services.response_mode_router import (
+            ResponseMode,
+            response_mode_prompt_suffix,
+            route_response_mode,
+        )
 
         has_tail = bool(
             find_visual_gallery_tail_candidates(
                 query or "", effective_history_for_gallery_tail(query or "", history)
             )
         )
-        # Use "visual" phrasing as a signal even when gallery intent routing was not triggered upstream.
-        has_visual_intent = bool(re.search(r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look)\b", (query or ""), re.I))
+        has_visual_intent = bool(
+            re.search(
+                r"\b(show\s+me|can\s+i\s+see|any\s+photos?|pictures?|what\s+does\s+it\s+look|"
+                r"interior|cockpit|cabin|bedroom|ambient)\b",
+                (query or ""),
+                re.I,
+            )
+        )
         v = validate_aircraft_model(query or "")
-        router = route_consultant_response_mode(
+        _mem_rm = ""
+        _has_anchor = False
+        if _intent_bundle is not None:
+            _mem_rm = str((_intent_bundle.resolved_intent or {}).get("response_mode") or "")
+            _has_anchor = bool(
+                (_intent_bundle.resolved_intent or {}).get("active_aircraft")
+                or (_intent_bundle.resolved_intent or {}).get("active_tail")
+            )
+        elif isinstance(client_conversation_state, dict):
+            mem = client_conversation_state.get("conversation_memory")
+            if isinstance(mem, dict):
+                _mem_rm = str(mem.get("response_mode") or "")
+                _has_anchor = bool(mem.get("active_aircraft") or mem.get("active_tail"))
+
+        router_full = route_response_mode(
+            query=query or "",
+            fine_intent=str(getattr(_fine.intent, "value", _fine.intent)),
+            has_tail=has_tail,
+            has_visual_intent=bool(user_wants_gallery or has_visual_intent),
+            user_wants_gallery=bool(user_wants_gallery),
+            suspicious_model_note=_susp_model or (v.message if v else None),
+            refinement_type=(
+                _intent_bundle.refinement_type if _intent_bundle is not None else "none"
+            ),
+            standalone_confidence=(
+                float(_intent_bundle.standalone_confidence) if _intent_bundle is not None else 1.0
+            ),
+            persistence_routing=(
+                _intent_bundle.routing_decision.value if _intent_bundle is not None else ""
+            ),
+            memory_response_mode=_mem_rm,
+            has_conversation_anchor=_has_anchor,
+        )
+        router_legacy = route_consultant_response_mode(
             query=query or "",
             fine_intent=str(getattr(_fine.intent, "value", _fine.intent)),
             has_tail=has_tail,
             has_visual_intent=bool(user_wants_gallery or has_visual_intent),
             suspicious_model_note=_susp_model or (v.message if v else None),
+            user_wants_gallery=bool(user_wants_gallery),
+            refinement_type=(
+                _intent_bundle.refinement_type if _intent_bundle is not None else "none"
+            ),
+            standalone_confidence=(
+                float(_intent_bundle.standalone_confidence) if _intent_bundle is not None else 1.0
+            ),
+            persistence_routing=(
+                _intent_bundle.routing_decision.value if _intent_bundle is not None else ""
+            ),
+            memory_response_mode=_mem_rm,
+            has_conversation_anchor=_has_anchor,
         )
-        mode = ConsultantResponseMode(router["mode"])
-        data_used["consultant_response_mode"] = router["mode"]
-        data_used["consultant_response_router"] = dict(router)
-        system_prompt += response_mode_prompt_suffix(mode)
+        canonical = ResponseMode(router_full["mode"])
+        data_used["consultant_response_mode"] = router_legacy["mode"]
+        data_used["consultant_response_mode_canonical"] = router_full["mode"]
+        data_used["consultant_response_router"] = dict(router_full)
+        system_prompt += response_mode_prompt_suffix(canonical)
+        if progress:
+            progress.step(
+                "response_mode_router",
+                mode=router_full["mode"],
+                reason=router_full.get("reason"),
+                visual_priority=router_full.get("visual_priority"),
+                verbosity=router_full.get("verbosity"),
+                inherit_context=router_full.get("inherit_context"),
+            )
 
         # Internal confidence tag (not user-facing UI): high when tail + authoritative record, else medium/low.
         conf = "low"
@@ -1653,7 +1718,8 @@ def run_consultant_retrieval_bundle(
             else:
                 conf = "medium"
         else:
-            if mode in (
+            legacy_mode = ConsultantResponseMode(router_legacy["mode"])
+            if legacy_mode in (
                 ConsultantResponseMode.COMPARISON_MODE,
                 ConsultantResponseMode.ADVISORY_MODE,
                 ConsultantResponseMode.DEAL_ANALYSIS_MODE,

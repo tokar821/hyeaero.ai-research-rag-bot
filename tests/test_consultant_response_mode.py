@@ -108,9 +108,9 @@ def test_deal_analysis_mode():
 
 def test_prompt_suffix_visual_and_advisory():
     s = response_mode_prompt_suffix(ConsultantResponseMode.VISUAL_MODE)
-    assert "VISUAL_MODE" in s
-    assert "closest references" in s.lower()
+    assert "IMAGE_SHOWCASE" in s
+    assert "gallery" in s.lower()
     s2 = response_mode_prompt_suffix(ConsultantResponseMode.ADVISORY_MODE)
-    assert "ADVISORY_MODE" in s2
+    assert "ADVISORY" in s2
     s3 = response_mode_prompt_suffix(ConsultantResponseMode.COMPARISON_MODE)
     assert "COMPARISON_MODE" in s3

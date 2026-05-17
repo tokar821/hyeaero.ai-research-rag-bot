@@ -118,6 +118,15 @@ def sanitize_user_facing_answer(
     return s
 
 
+def _apply_response_mode_enforcement(answer: str, data_used: Dict[str, Any]) -> str:
+    try:
+        from services.response_mode_router.enforce import enforce_from_data_used
+
+        return enforce_from_data_used(answer, data_used)
+    except Exception:
+        return answer
+
+
 def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, Any]) -> str:
     """
     Last-mile quality firewall (deterministic).
@@ -263,8 +272,18 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
 
     # 2) Advisory recommendation enforcement (mode-driven)
     try:
-        mode = str((data_used or {}).get("consultant_response_mode") or "").strip().lower()
-        if mode in ("advisory_mode", "mission_advisory", "client_decision_scenarios", "advisory"):
+        mode = str(
+            (data_used or {}).get("consultant_response_mode_canonical")
+            or (data_used or {}).get("consultant_response_mode")
+            or ""
+        ).strip().lower()
+        if mode in (
+            "advisory_mode",
+            "advisory",
+            "followup_continuation",
+            "mission_advisory",
+            "client_decision_scenarios",
+        ):
             from rag.consultant_validity import count_known_model_mentions
 
             n_models = count_known_model_mentions(a)
@@ -284,6 +303,7 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
     except Exception:
         pass
 
+    a = _apply_response_mode_enforcement(a, data_used)
     return a
 
 
