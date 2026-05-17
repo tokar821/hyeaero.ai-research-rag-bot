@@ -176,8 +176,54 @@ def run_consultant_retrieval_bundle(
             "error": None,
         }
 
-    # 2) Fine intent (LLM JSON classifier or heuristic) → conversational / general short-circuits.
+    # 1b) Intent Persistence Engine — inherit aircraft/visual context before fine intent & retrieval.
     from rag.aviation_tail import find_strict_tail_candidates
+
+    _strict_tails = find_strict_tail_candidates(query, _history_original)
+    _intent_bundle = None
+    try:
+        from services.conversation_continuity.schemas import RefinementInterpretation
+        from services.intent_persistence import run_intent_persistence_turn
+        from services.intent_persistence.schemas import RoutingDecision
+
+        _intent_bundle = run_intent_persistence_turn(
+            raw_user_query=_latest_user_query_raw,
+            isolated_query=query,
+            history=_history_original,
+            client_conversation_state=client_conversation_state,
+            strict_tail_candidates=_strict_tails,
+        )
+        _continuity_bundle = type(
+            "_ContinuityShim",
+            (),
+            {
+                "effective_query": _intent_bundle.effective_query,
+                "serialized": _intent_bundle.continuity_serialized,
+                "refinement": RefinementInterpretation(
+                    type=_intent_bundle.refinement_type,
+                    inherit_entity=True,
+                ),
+                "prompt_block": _intent_bundle.prompt_block,
+            },
+        )()
+        _eq = (_intent_bundle.effective_query or "").strip()
+        if _eq:
+            query = _eq
+        if _intent_bundle.restore_thread_history:
+            history = _history_original
+        if progress:
+            progress.step(
+                "intent_persistence",
+                previous_intent=_fmt_q_preview(str(_intent_bundle.previous_intent), 180),
+                resolved_intent=_fmt_q_preview(str(_intent_bundle.resolved_intent), 180),
+                inherited_fields=",".join(_intent_bundle.inherited_fields or [])[:240],
+                routing_decision=_intent_bundle.routing_decision.value,
+                standalone_confidence=_intent_bundle.standalone_confidence,
+            )
+    except Exception as _ipe:
+        logger.debug("intent_persistence skipped: %s", _ipe)
+
+    # 2) Fine intent (LLM JSON classifier or heuristic) → conversational / general short-circuits.
     from rag.consultant_fine_intent import (
         ConsultantFineIntent,
         apply_fine_intent_heuristics,
@@ -192,7 +238,6 @@ def run_consultant_retrieval_bundle(
     )
     from rag.consultant_llm_intent import generate_general_chat_reply_llm
 
-    _strict_tails = find_strict_tail_candidates(query, _history_original)
     _fi_thr = fine_intent_confidence_threshold()
     if llm_fine_intent_disabled() or not (_api_key or "").strip():
         _fine = apply_fine_intent_heuristics(
@@ -247,8 +292,15 @@ def run_consultant_retrieval_bundle(
                     re.I,
                 )
             )
+            _persist_inherit = bool(
+                _intent_bundle
+                and getattr(_intent_bundle, "routing_decision", None)
+                and str(getattr(_intent_bundle.routing_decision, "value", _intent_bundle.routing_decision))
+                != "fresh_retrieval"
+                and float(_intent_bundle.standalone_confidence or 1.0) < 0.55
+            )
             if query_has_aviation_signals(_hist_blob) and (
-                query_has_aviation_signals(_qstrip) or _taste_or_cabin
+                query_has_aviation_signals(_qstrip) or _taste_or_cabin or _persist_inherit
             ):
                 from rag.consultant_fine_intent import ConsultantFineIntent, ConsultantFineIntentResult
 
@@ -350,27 +402,6 @@ def run_consultant_retrieval_bundle(
     _consultant_aviation_prefix = "\n\n".join(
         p for p in (_mission_hint, _aviation_engines_ctx) if p
     ).strip()
-
-    try:
-        from services.conversation_continuity import run_continuity_turn
-
-        _continuity_bundle = run_continuity_turn(
-            raw_user_query=_latest_user_query_raw,
-            isolated_query=query,
-            history=_history_original,
-            client_conversation_state=client_conversation_state,
-            strict_tail_candidates=_strict_tails,
-        )
-        _nq = (_continuity_bundle.effective_query or "").strip()
-        if _nq and _nq != (query or "").strip():
-            query = _nq.strip()
-            if progress:
-                progress.step(
-                    "consultant_query_continuity_expand",
-                    refinement_type=_continuity_bundle.refinement.type,
-                )
-    except Exception as _cce:
-        logger.debug("conversation_continuity skipped: %s", _cce)
 
     _t_block = time.perf_counter()
     prof = svc._professional_search_answer(query)
@@ -482,6 +513,8 @@ def run_consultant_retrieval_bundle(
         "yes",
     )
     registry_sql = bool(_router.registry_sql) or _registry_always
+    if _intent_bundle and _intent_bundle.suppress_faa_registry_lookup:
+        registry_sql = False
     pinecone_filt = _router.pinecone_filter
     av_l = intent_classification.aviation_intent.value if intent_classification.aviation_intent else None
     if progress:
@@ -568,6 +601,8 @@ def run_consultant_retrieval_bundle(
             user_wants_gallery, consultant_image_intent_src, consultant_image_llm_intent = (
                 f_int.result()
             )
+    if _intent_bundle and _intent_bundle.force_gallery_intent:
+        user_wants_gallery = True
     if progress:
         rqs_prev = expanded.get("rag_queries") if isinstance(expanded, dict) else None
         rqs_prev = list(rqs_prev) if isinstance(rqs_prev, list) else []
@@ -636,6 +671,9 @@ def run_consultant_retrieval_bundle(
             vector_chunk_budget = max(0, min(int(vector_chunk_budget or 0), 3))
     except Exception:
         pass
+
+    if _intent_bundle and _intent_bundle.suppress_generic_vector_rag:
+        vector_chunk_budget = min(int(vector_chunk_budget or 0), 2)
 
     if progress:
         progress.step(
@@ -1321,6 +1359,18 @@ def run_consultant_retrieval_bundle(
     if _continuity_bundle is not None:
         data_used["consultant_continuity_state"] = _continuity_bundle.serialized
         data_used["consultant_refinement_interpretation"] = _continuity_bundle.refinement.model_dump(mode="json")
+    if _intent_bundle is not None:
+        data_used["intent_persistence"] = {
+            "previous_intent": _intent_bundle.previous_intent,
+            "resolved_intent": _intent_bundle.resolved_intent,
+            "inherited_fields": _intent_bundle.inherited_fields,
+            "routing_decision": _intent_bundle.routing_decision.value,
+            "standalone_confidence": _intent_bundle.standalone_confidence,
+        }
+        if _intent_bundle.suppress_faa_registry_lookup:
+            data_used["intent_persistence_suppress_faa"] = 1
+        if _intent_bundle.suppress_generic_vector_rag:
+            data_used["intent_persistence_suppress_generic_rag"] = 1
     data_used["consultant_pipeline"] = "hybrid_sql_phly_vector_rag_tavily_context_llm_v3"
     data_used["hybrid_retrieval_kind"] = hybrid_plan.kind.value
     data_used["hybrid_vector_primary"] = 1 if hybrid_plan.vector_primary else 0
@@ -1635,6 +1685,9 @@ def run_consultant_retrieval_bundle(
             user_wants_gallery=bool(user_wants_gallery),
             mission_hint=_mission_hint,
             continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+            intent_persistence_state=(
+                _intent_bundle.resolved_intent if _intent_bundle is not None else None
+            ),
         )
         system_prompt += format_conversation_state_for_system_prompt(
             data_used.get("consultant_conversation_state") or {}

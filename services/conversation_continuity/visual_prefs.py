@@ -8,6 +8,8 @@ from typing import List, Tuple
 
 _NEG_HINTS = (
     ("less corporate", "corporate beige"),
+    ("banker vibe", "corporate beige"),
+    ("old-money", "corporate beige"),
     ("not tacky", "tacky trim"),
     ("not old", "dated interior"),
     ("not flashy", "loud finishes"),
@@ -22,6 +24,8 @@ def extract_preferences(query: str) -> Tuple[List[str], List[str]]:
 
     patterns = (
         (r"\b(?:luxury|five[- ]star)\s+hotel\b", "luxury hotel"),
+        (r"\bfour\s+seasons\b", "luxury hotel"),
+        (r"\bmore\s+like\s+four\s+seasons\b", "luxury hotel"),
         (r"\b(?:young\s+|\b|^)tech\s+ceo\b|\byoung\s+(?:professional|money)\b|\bminimalist\b", "young tech minimalist"),
         (r"\bambient\s+(?:light|lighting)\b", "ambient lighting"),
         (r"\bhuge\s+windows\b|\bbig\s+windows\b|\blots\s+of\s+glass\b", "large windows"),

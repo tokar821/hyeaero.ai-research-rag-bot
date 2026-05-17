@@ -19,7 +19,12 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
     if _RESET_RE.search(ql):
         return RefinementInterpretation(type="explicit_reset", inherit_entity=False, notes="User asked to reset thread")
 
-    if re.search(r"\bactually\b.*\b(bigger|larger|more\s+(?:space|room|cabin))\b|\b(?:something\s+)?bigger\b|\b(?:step|move)\s*up\b", ql):
+    if re.search(
+        r"\bactually\b.*\b(bigger|larger|more\s+(?:space|room|cabin))\b|"
+        r"\b(?:something\s+)?bigger\b|\b(?:step|move)\s*up\b|"
+        r"\byounger\s+feeling\b",
+        ql,
+    ):
         return RefinementInterpretation(
             type="size_upgrade",
             reference_aircraft=prev_aircraft,
@@ -28,7 +33,10 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
             notes="Upsize versus prior focal aircraft",
         )
 
-    if re.search(r"\b(smaller|cheaper\b.*jet| tighter\s+budget)\b|\b(?:downsize|step\s+down)\b", ql):
+    if re.search(
+        r"\b(smaller|cheaper\b.*jet|cheaper\b| tighter\s+budget)\b|\b(?:downsize|step\s+down)\b",
+        ql,
+    ):
         bd = RefinementInterpretation(
             type="size_or_budget_down",
             reference_aircraft=prev_aircraft,
@@ -45,7 +53,11 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
             notes="Budget sensitivity",
         )
 
-    if re.search(r"\bless\s+corporate\b|\b(?:not\s+)?corporate\b|\b(relaxed|softer|hotel|residential)\b", ql):
+    if re.search(
+        r"\bless\s+corporate\b|\b(?:not\s+)?corporate\b|\b(relaxed|softer|hotel|residential)\b|"
+        r"\bold[- ]money\b|\bbanker\s+vibe\b",
+        ql,
+    ):
         return RefinementInterpretation(
             type="style_shift",
             remove_traits=["corporate"],
@@ -91,7 +103,10 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
             notes="Reject dated finishes",
         )
 
-    if re.search(r"\bcockpit\s+too\b|\band\s+cockpit\b|\bflight\s+deck\b", ql):
+    if re.search(
+        r"\b(?:now\s+)?show\s+cockpit\b|\bcockpit\s+too\b|\band\s+cockpit\b|\bnow\s+cockpit\b|\bflight\s+deck\b",
+        ql,
+    ):
         return RefinementInterpretation(
             type="view_change",
             requested_view="cockpit",

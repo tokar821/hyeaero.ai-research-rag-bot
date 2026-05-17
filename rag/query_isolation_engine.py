@@ -39,6 +39,12 @@ _DEICTIC_CONTEXTUAL = re.compile(
     r"|^\s*both\s+(?:cabins|interiors|cockpits)\b"
     r"|^\s*(?:show\s+me\s+inside|inside)\s+best\s+(?:option|one)\b"
     r"|^\s*best\s+(?:option|one)\s*$"
+    r"|^\s*(?:actually\s+)?bigger\s*[\.\!]?\s*$"
+    r"|^\s*more\s+modern\s*[\.\!]?\s*$"
+    r"|^\s*less\s+corporate\s*[\.\!]?\s*$"
+    r"|^\s*cheaper\s*[\.\!]?\s*$"
+    r"|^\s*cockpit\s+too(?:\s+please)?\s*[\.\!]?\s*$"
+    r"|^\s*show\s+cockpit\s*[\.\!]?\s*$"
     r")"
 )
 
