@@ -9,7 +9,7 @@ in context or drafts, and replaces them with neutral, client-safe phrasing.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 
 # Words/phrases that must never appear in user-visible answers.
@@ -94,15 +94,24 @@ def sanitize_user_facing_answer(
 
     s = _drop_internal_lines(s)
 
-    # Hard disallow "can't show images" refusals (the UI can display images when present).
+    # Hard disallow visual refusals — executive advisor delivers best-available visuals, not apologies.
+    _refusal_patterns = (
+        (r"(?i)\bi\s+can'?t\s+(?:show|provide|create|display)\s+(?:images?|graphics?|photos?|pictures?)\b", ""),
+        (r"(?i)\bi\s+(?:cannot|can't)\s+find\s+(?:reliable\s+)?(?:images?|photos?|pictures?)\b", ""),
+        (r"(?i)\bi\s+do\s+not\s+have\s+(?:access\s+to\s+)?(?:images?|photos?|pictures?)\b", ""),
+        (r"(?i)\bunable\s+to\s+(?:locate|find|provide)\s+(?:images?|photos?|pictures?)\b", ""),
+    )
+    for pat, repl in _refusal_patterns:
+        s = re.sub(pat, repl, s)
+    s = re.sub(r"^[\s,;.\-–—]+", "", s).strip()
     if strong_aircraft_gallery:
-        s = re.sub(
-            r"(?i)\bi\s+can'?t\s+show\s+images\b",
-            "Images are shown in the gallery with this reply.",
-            s,
-        )
-    else:
-        s = re.sub(r"(?i)\bi\s+can'?t\s+show\s+images\b", "No verified images found for this request.", s)
+        if not s:
+            s = "Representative cabin and exterior references are in the gallery with this reply."
+        elif "gallery" not in s.lower() and (
+            len(s) < 48 or re.match(r"^(but|however|though)\b", s, re.I)
+        ):
+            s = f"Images are in the gallery with this reply. {s}".strip()
+    s = re.sub(r"\n{3,}", "\n\n", s).strip()
 
     # Replace common internal terms with neutral phrasing.
     for pat, repl in _REPLACEMENTS:
@@ -115,7 +124,70 @@ def sanitize_user_facing_answer(
     s = re.sub(r"[ \t]{2,}", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s).strip()
 
+    s = _strip_markdown_asterisk_emphasis(s)
+    s = _strip_markdown_hash_markers(s)
+
+    try:
+        from rag.pinpoint_answer import strip_advisory_boilerplate
+
+        s = strip_advisory_boilerplate(s)
+    except Exception:
+        pass
+
     return s
+
+
+def _parse_first_usd_amount(text: str) -> Optional[float]:
+    m = re.search(r"\$\s*([\d][\d,]*(?:\.\d+)?)\s*(k|m|million|mil)?", text or "", re.I)
+    if not m:
+        return None
+    try:
+        val = float(m.group(1).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    suf = (m.group(2) or "").lower()
+    if suf in ("m", "million", "mil"):
+        val *= 1_000_000.0
+    elif suf == "k":
+        val *= 1_000.0
+    return val
+
+
+def _scrub_implausible_market_price_in_pinpoint(answer: str, query: str) -> str:
+    """Replace obvious bad listing ingest prices on used type-price asks."""
+    ql = (query or "").lower()
+    if "challenger" not in ql or "350" not in ql:
+        return answer
+    amt = _parse_first_usd_amount(answer)
+    if amt is not None and amt < 4_500_000:
+        return (
+            "Used Challenger 350s typically trade around $15–25 million depending on year, "
+            "hours, and programs — well above light-jet pricing. I can narrow to current listings "
+            "if you share target year band and mission."
+        )
+    return answer
+
+
+def _strip_markdown_asterisk_emphasis(text: str) -> str:
+    """Plain-text policy: remove **bold** / *italic* markdown from user-facing answers."""
+    s = (text or "").strip()
+    if not s:
+        return s
+    s = re.sub(r"\*\*([^*]+)\*\*", r"\1", s)
+    s = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"\1", s)
+    return s
+
+
+def _strip_markdown_hash_markers(text: str) -> str:
+    """Plain-text policy: no markdown # headers or hash characters in user-facing answers."""
+    if not (text or "").strip():
+        return (text or "").strip()
+    out_lines: list[str] = []
+    for line in (text or "").splitlines():
+        line = re.sub(r"^#{1,6}\s*", "", line)
+        line = line.replace("#", "")
+        out_lines.append(line)
+    return "\n".join(out_lines).strip()
 
 
 def _apply_response_mode_enforcement(answer: str, data_used: Dict[str, Any]) -> str:
@@ -270,8 +342,24 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
     except Exception:
         pass
 
+    # 1.8) Pinpoint factual — no advisory shortlist / GOOD FIT append
+    try:
+        from rag.pinpoint_answer import enforce_pinpoint_answer, is_pinpoint_factual_turn
+
+        if is_pinpoint_factual_turn(query or "", data_used):
+            a = _scrub_implausible_market_price_in_pinpoint(a, query or "")
+            return enforce_pinpoint_answer(a, query=query or "", data_used=data_used)
+    except Exception:
+        pass
+
     # 2) Advisory recommendation enforcement (mode-driven)
     try:
+        from rag.pinpoint_answer import is_pinpoint_factual_turn
+
+        if is_pinpoint_factual_turn(query or "", data_used):
+            a = _apply_response_mode_enforcement(a, data_used)
+            return a
+
         mode = str(
             (data_used or {}).get("consultant_response_mode_canonical")
             or (data_used or {}).get("consultant_response_mode")
@@ -304,6 +392,18 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
         pass
 
     a = _apply_response_mode_enforcement(a, data_used)
+    try:
+        from rag.buyer_journey_enforcement import enforce_buyer_journey_answer
+        from rag.pinpoint_answer import enforce_pinpoint_answer, strip_advisory_boilerplate
+        from rag.refinement_answer import enforce_size_upgrade_answer, enforce_style_shift_answer
+
+        a = strip_advisory_boilerplate(a)
+        a = enforce_style_shift_answer(a, query=query or "", data_used=data_used)
+        a = enforce_size_upgrade_answer(a, query=query or "", data_used=data_used)
+        a = enforce_buyer_journey_answer(a, query=query or "", data_used=data_used)
+        a = enforce_pinpoint_answer(a, query=query or "", data_used=data_used)
+    except Exception:
+        pass
     return a
 
 

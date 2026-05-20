@@ -45,6 +45,27 @@ def test_size_upgrade_carry_traits_and_evolution():
     assert "phenom 300" in qlo or "larger cabin" in qlo
 
 
+def test_g650_seats_query_not_comparison_anchor():
+    from services.conversation_continuity.refinement import interpret_refinement
+
+    r = interpret_refinement(
+        "How many seats does a G650 have?", prev_aircraft=None, prev_tail=None
+    )
+    assert r.type != "comparison_anchor"
+
+
+def test_explicit_vs_parses_comparison_anchor():
+    from services.conversation_continuity.refinement import interpret_refinement
+
+    r = interpret_refinement(
+        "Compare G700 vs Global 7500.", prev_aircraft=None, prev_tail=None
+    )
+    assert r.type == "comparison_anchor"
+    ref = (r.reference_aircraft or "").lower()
+    assert "g700" in ref
+    assert "7500" in ref
+
+
 def test_style_shift_negative_preferences():
     prev = {"continuity": {"current_aircraft": "Challenger 350", "schema_version": 1}}
     b = run_continuity_turn(

@@ -7,6 +7,14 @@ from typing import Any, Dict, List, Optional, Set
 
 from .schemas import AircraftCategory, ConversationGoal, ConversationMemoryState, ResponseMode
 
+_DEICTIC_ONLY_RE = re.compile(
+    r"^\s*("
+    r"bigger|smaller|more\s+modern|less\s+corporate|something\s+(?:less|more|nicer|better)|"
+    r"that\s+one|same\s+jet|again|cockpit\s+too|show\s+cockpit"
+    r")\s*[\.\!]?\s*$",
+    re.I,
+)
+
 
 def _merge_traits(base: List[str], add: List[str], remove: List[str], cap: int = 48) -> List[str]:
     out = [str(x).strip() for x in base if str(x).strip()]
@@ -74,6 +82,7 @@ def apply_update_rules(
     entity_models: Optional[List[str]],
     user_wants_gallery: bool,
     mission_hint: Optional[str],
+    shopping_anchor_model: Optional[str] = None,
 ) -> ConversationMemoryState:
     """Apply turn updates; mutates ``state`` in place."""
     q = (query or "").strip()
@@ -86,19 +95,60 @@ def apply_update_rules(
     leg = legacy_state if isinstance(legacy_state, dict) else {}
 
     models = [str(m).strip() for m in (entity_models or []) if str(m).strip()]
+    anchor = (shopping_anchor_model or "").strip()
+    if anchor:
+        models = [anchor]
     if not models and cont.get("current_aircraft"):
         models = [str(cont["current_aircraft"]).strip()]
     if intent.get("active_aircraft"):
         models = models or [str(intent["active_aircraft"]).strip()]
 
-    # --- Entity anchors (highest priority) ---
-    explicit_air = (models[0] if models else None) or cont.get("current_aircraft") or intent.get("active_aircraft")
+    # --- Entity anchors ---
+    intent_air = (str(intent.get("active_aircraft")).strip() if intent.get("active_aircraft") else None)
+    cont_air = (str(cont.get("current_aircraft")).strip() if cont.get("current_aircraft") else None)
+    model_from_query = (models[0] if models else None)
+
+    if ref in (
+        "view_change",
+        "style_shift",
+        "size_upgrade",
+        "comparison_anchor",
+        "ambiguous_followup",
+        "budget_shift",
+        "size_or_budget_down",
+        "lifestyle_inference",
+    ):
+        explicit_air = intent_air or state.active_aircraft or cont_air or anchor or model_from_query
+    elif model_from_query and not _DEICTIC_ONLY_RE.search(ql):
+        explicit_air = model_from_query
+    else:
+        explicit_air = intent_air or model_from_query or cont_air
     tail = cont.get("current_tail") or intent.get("active_tail")
     locked = cont.get("locked_entity") if isinstance(cont.get("locked_entity"), dict) else {}
     if locked.get("type") == "tail" and locked.get("value"):
         tail = str(locked["value"]).strip().upper()
 
     inherit_entity = ref not in ("explicit_reset",) and ref != "comparison_anchor"
+
+    # Do not let stray RAG entity tags override an active A vs B comparison thread.
+    pair_models: list[str] = []
+    if state.comparison_target and re.search(r"\bvs\.?\b", str(state.comparison_target), re.I):
+        pair_models = [
+            p.strip()
+            for p in re.split(r"\s+vs\.?\s+", str(state.comparison_target), flags=re.I)
+            if p.strip()
+        ]
+
+    def _in_comparison_pair(name: Optional[str]) -> bool:
+        if not name or not pair_models:
+            return False
+        nl = name.lower()
+        return any(p.lower() in nl or nl in p.lower() for p in pair_models)
+
+    if pair_models and model_from_query and not _in_comparison_pair(model_from_query):
+        if ref not in ("comparison_anchor",):
+            model_from_query = None
+
     if explicit_air and (not state.active_aircraft or not inherit_entity or explicit_air.lower() != (state.active_aircraft or "").lower()):
         if explicit_air:
             prev_a = state.active_aircraft
@@ -126,7 +176,14 @@ def apply_update_rules(
 
     # --- Refinement rules ---
     if ref == "size_upgrade":
-        state.active_category = _upgrade_category(state.active_category)
+        cap = state.active_budget_usd
+        if cap is not None and cap <= 12_000_000:
+            if state.active_category.value in ("unknown", "vlj", "light", "midsize"):
+                state.active_category = AircraftCategory.SUPER_MID
+            elif state.active_category == AircraftCategory.LARGE:
+                state.active_category = AircraftCategory.SUPER_MID
+        else:
+            state.active_category = _upgrade_category(state.active_category)
         _touch(state, "active_category", reinforced)
         state.conversation_goal = ConversationGoal.REFINEMENT
         _touch(state, "conversation_goal", reinforced)
@@ -134,8 +191,14 @@ def apply_update_rules(
         _touch(state, "active_topic", reinforced)
         if state.active_aircraft:
             _touch(state, "active_aircraft", reinforced)
+        if state.active_budget_usd is not None:
+            _touch(state, "active_budget_usd", reinforced)
 
     elif ref == "style_shift":
+        if state.active_aircraft:
+            _touch(state, "active_aircraft", reinforced)
+        if state.active_budget_usd is not None:
+            _touch(state, "active_budget_usd", reinforced)
         add = list(cont.get("style_preferences") or intent.get("aesthetic_preferences") or [])
         neg = list(cont.get("negative_preferences") or intent.get("negative_preferences") or [])
         try:
@@ -177,9 +240,24 @@ def apply_update_rules(
         comp = intent.get("comparison_target")
         lr = cont.get("last_refinement") if isinstance(cont.get("last_refinement"), dict) else {}
         comp = comp or lr.get("reference_aircraft")
+        if not comp and isinstance(lr, dict):
+            comp = lr.get("reference_aircraft")
+        if not comp:
+            m_vs = re.search(
+                r"(?:\bcompare\s+)?(.+?)\s+(?:vs\.?|versus)\s+(.+?)\s*[\.\!]?\s*$",
+                q,
+                re.I,
+            )
+            if m_vs:
+                comp = f"{m_vs.group(1).strip()} vs {m_vs.group(2).strip()}"
         if comp:
             state.comparison_target = str(comp).strip()
             _touch(state, "comparison_target", reinforced)
+        if intent_air:
+            state.active_aircraft = intent_air
+            state.active_category = _category_from_name(intent_air)
+            _touch(state, "active_aircraft", reinforced)
+            _touch(state, "active_category", reinforced)
         state.conversation_goal = ConversationGoal.COMPARE
         _touch(state, "conversation_goal", reinforced)
 
@@ -235,6 +313,9 @@ def apply_update_rules(
     if bl:
         state.active_budget_label = str(bl)
         _touch(state, "active_budget_usd", reinforced)
+    if state.active_budget_usd is not None and not state.active_budget_label:
+        state.active_budget_label = f"${int(state.active_budget_usd / 1_000_000)}M"
+        _touch(state, "active_budget_usd", reinforced)
 
     mission = leg.get("current_mission") or (mission_hint or "").strip() or None
     if mission:
@@ -249,6 +330,27 @@ def apply_update_rules(
     if state.active_aircraft and state.conversation_goal == ConversationGoal.UNKNOWN:
         state.conversation_goal = ConversationGoal.EXPLORE
         _touch(state, "conversation_goal", reinforced)
+
+    # After a compare thread, follow-ups stay on the compared types (not an old browse / RAG anchor).
+    if pair_models:
+        if ref in ("view_change", "ambiguous_followup", "none") or re.search(
+            r"\b(cabin\s+feel|comfort|quieter|cockpit|interior|experience|speed)\b", ql, re.I
+        ):
+            pick = intent_air if intent_air and _in_comparison_pair(intent_air) else None
+            if not pick and re.search(r"\bcockpit\b", ql, re.I):
+                pick = pair_models[0]
+            if not pick and re.search(
+                r"\b(cabin|feel|comfort|interior|speed)\b", ql, re.I
+            ):
+                pick = pair_models[0]
+            if pick:
+                state.active_aircraft = pick
+                state.active_category = _category_from_name(pick)
+                _touch(state, "active_aircraft", reinforced)
+                _touch(state, "active_category", reinforced)
+            state.conversation_goal = ConversationGoal.COMPARE
+            _touch(state, "conversation_goal", reinforced)
+            _touch(state, "comparison_target", reinforced)
 
     state.reinforced_fields = sorted(reinforced)
     return state

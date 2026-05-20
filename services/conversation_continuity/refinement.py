@@ -80,7 +80,25 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
             notes="Likely influencer / prestige charter aesthetic",
         )
 
-    if re.search(r"\bg650\b|\bcompare\b.*\bgulfstream\b|\bvs\b.*\bg650\b|\bversus\b.*\bg650\b", ql):
+    m_vs = re.search(
+        r"(?:\bcompare\s+)?(.+?)\s+(?:vs\.?|versus)\s+(.+?)\s*[\.\!]?\s*$",
+        ql,
+        re.I,
+    )
+    if m_vs:
+        left, right = m_vs.group(1).strip(), m_vs.group(2).strip()
+        left = re.sub(r"^compare\s+", "", left, flags=re.I).strip()
+        if left and right:
+            return RefinementInterpretation(
+                type="comparison_anchor",
+                reference_aircraft=f"{left} vs {right}",
+                add_traits=["comparison shopping"],
+                notes="Explicit model comparison",
+            )
+
+    if re.search(r"\bcompare\b", ql) and re.search(
+        r"\bg650\b|\bgulfstream\b", ql
+    ) and re.search(r"\b(cheaper|less expensive|vs\.?|versus|alternative)\b", ql):
         return RefinementInterpretation(
             type="comparison_anchor",
             reference_aircraft="Gulfstream G650 family",

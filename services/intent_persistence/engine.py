@@ -15,6 +15,8 @@ from services.conversation_continuity import run_continuity_turn
 from services.conversation_continuity.schemas import ContinuityResponseMode
 
 from .inheritance import inherited_field_names, is_contextual_followup_query, merge_prev_snapshot
+from .client_state import sanitize_client_state_for_shopping_pivot
+from .pivot import is_visual_budget_shopping_pivot
 from .routing import resolve_routing
 from .schemas import (
     ConversationGoal,
@@ -95,14 +97,30 @@ def run_intent_persistence_turn(
     client_conversation_state: Optional[Dict[str, Any]],
     strict_tail_candidates: Optional[List[str]],
 ) -> IntentPersistenceBundle:
-    prev = merge_prev_snapshot(client_conversation_state) or PersistentIntentState()
+    _pivot = is_visual_budget_shopping_pivot(isolated_query or raw_user_query)
+    _client_for_turn = (
+        sanitize_client_state_for_shopping_pivot(client_conversation_state)
+        if _pivot
+        else client_conversation_state
+    )
+
+    prev = merge_prev_snapshot(_client_for_turn) or PersistentIntentState()
+    if _pivot:
+        prev = prev.model_copy(
+            update={
+                "active_aircraft": None,
+                "active_tail": None,
+                "comparison_target": None,
+                "active_visual_focus": None,
+            }
+        )
     prev_snapshot = prev.model_dump(mode="json")
 
     continuity = run_continuity_turn(
         raw_user_query=raw_user_query,
         isolated_query=isolated_query,
         history=history,
-        client_conversation_state=client_conversation_state,
+        client_conversation_state=_client_for_turn,
         strict_tail_candidates=strict_tail_candidates,
     )
 
@@ -114,6 +132,54 @@ def run_intent_persistence_turn(
         standalone_confidence=conf,
         refinement_type=refinement_type,
     )
+    if _pivot:
+        try:
+            from .pivot import _parse_budget_millions, shopping_gallery_models
+
+            bm = _parse_budget_millions(isolated_query or raw_user_query)
+            budget_usd = float(bm) * 1_000_000.0 if bm is not None else None
+            sgm = shopping_gallery_models(isolated_query or raw_user_query)
+            anchor = (sgm[0] if sgm else None) or (continuity.state.current_aircraft if continuity.state else None)
+            resolved = resolved.model_copy(
+                update={
+                    "active_aircraft": anchor,
+                    "active_tail": None,
+                    "comparison_target": None,
+                    "current_conversation_goal": ConversationGoal.VISUAL_GALLERY,
+                    "response_mode": IntentResponseMode.IMAGE_SHOWCASE,
+                    "active_budget_usd": budget_usd,
+                    "active_visual_focus": "modern cabin",
+                }
+            )
+        except Exception:
+            resolved = resolved.model_copy(
+                update={
+                    "active_aircraft": None,
+                    "active_tail": None,
+                    "comparison_target": None,
+                    "current_conversation_goal": ConversationGoal.VISUAL_GALLERY,
+                    "response_mode": IntentResponseMode.IMAGE_SHOWCASE,
+                }
+            )
+
+    if refinement_type in (
+        "style_shift",
+        "size_upgrade",
+        "view_change",
+        "ambiguous_followup",
+        "sleeping_configuration",
+    ):
+        carry: Dict[str, Any] = {}
+        if not (resolved.active_budget_usd or 0) and (prev.active_budget_usd or 0) > 0:
+            carry["active_budget_usd"] = prev.active_budget_usd
+        if not (resolved.active_aircraft or "").strip() and (prev.active_aircraft or "").strip():
+            carry["active_aircraft"] = prev.active_aircraft
+        if not resolved.aesthetic_preferences and prev.aesthetic_preferences:
+            carry["aesthetic_preferences"] = list(prev.aesthetic_preferences)
+        if not resolved.negative_preferences and prev.negative_preferences:
+            carry["negative_preferences"] = list(prev.negative_preferences)
+        if carry:
+            resolved = resolved.model_copy(update=carry)
 
     # IMAGE_SHOWCASE sticks across vague visual follow-ups.
     if is_contextual_followup_query(isolated_query or raw_user_query, prev):
@@ -139,7 +205,31 @@ def run_intent_persistence_turn(
         RoutingDecision.REFINEMENT_CONTINUATION,
     ) or resolved.response_mode == IntentResponseMode.IMAGE_SHOWCASE
 
-    effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
+    if _pivot:
+        try:
+            from .pivot import shopping_search_query
+
+            effective = shopping_search_query(isolated_query or raw_user_query).strip()
+        except Exception:
+            effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
+    elif refinement_type in ("style_shift", "size_upgrade", "view_change"):
+        try:
+            from .pivot import refinement_gallery_models, refinement_search_query
+
+            rq = refinement_search_query(
+                refinement_type, isolated_query or raw_user_query
+            ).strip()
+            if rq:
+                effective = rq
+            else:
+                effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
+            rmodels = refinement_gallery_models(refinement_type, isolated_query or raw_user_query)
+            if rmodels:
+                resolved = resolved.model_copy(update={"active_aircraft": rmodels[0]})
+        except Exception:
+            effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
+    else:
+        effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
 
     logger.info(
         "intent_persistence previous_intent=%s resolved_intent=%s inherited_fields=%s "

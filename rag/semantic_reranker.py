@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,67 @@ def effective_reranker_model_name_from_env() -> str:
     if _rerank_light_profile_enabled():
         return DEFAULT_MODEL_LIGHT
     return DEFAULT_MODEL
+
+
+def huggingface_cache_dir() -> Path:
+    hf_home = (os.getenv("HF_HOME") or "").strip()
+    if hf_home:
+        return Path(hf_home)
+    xdg = (os.getenv("XDG_CACHE_HOME") or "").strip()
+    if xdg:
+        return Path(xdg) / "huggingface"
+    return Path.home() / ".cache" / "huggingface"
+
+
+def estimated_reranker_download_bytes(model_name: str) -> int:
+    low = (model_name or "").lower()
+    if "large" in low:
+        return 2_400_000_000
+    if "base" in low:
+        return 1_100_000_000
+    return 1_500_000_000
+
+
+def reranker_model_cached(model_name: str) -> bool:
+    """True when the HF hub snapshot for ``model_name`` appears present locally."""
+    slug = "models--" + model_name.replace("/", "--")
+    hub = huggingface_cache_dir() / "hub" / slug
+    snapshots = hub / "snapshots"
+    if not snapshots.is_dir():
+        return False
+    try:
+        return any(snapshots.iterdir())
+    except OSError:
+        return False
+
+
+def reranker_resources_available(model_name: Optional[str] = None) -> Tuple[bool, str]:
+    """
+    Disk preflight before downloading BGE weights. Prevents process crashes on hosts
+    with very little free space (HF hub warns then Rust/torch may abort).
+    """
+    model = (model_name or effective_reranker_model_name_from_env()).strip()
+    if not model:
+        return True, ""
+    if reranker_model_cached(model):
+        return True, ""
+    try:
+        import shutil
+
+        cache = huggingface_cache_dir()
+        cache.mkdir(parents=True, exist_ok=True)
+        free = shutil.disk_usage(cache).free
+        need = estimated_reranker_download_bytes(model)
+        if free < need:
+            free_mb = free // (1024 * 1024)
+            need_mb = need // (1024 * 1024)
+            return (
+                False,
+                f"insufficient disk for reranker {model}: {free_mb} MB free, need ~{need_mb} MB",
+            )
+    except Exception as exc:
+        logger.debug("reranker disk preflight skipped: %s", exc)
+    return True, ""
 
 
 def _apply_cpu_thread_cap_for_memory() -> None:
@@ -154,8 +216,29 @@ class SemanticRerankerService:
         kwargs: Dict[str, Any] = {"max_length": self.max_length}
         if self.device:
             kwargs["device"] = self.device
+        ok, reason = reranker_resources_available(self.model_name)
+        if not ok:
+            raise RuntimeError(f"Reranker preflight failed: {reason}")
+
         logger.info("Loading reranker model %s (max_length=%s)", self.model_name, self.max_length)
-        self._model = CrossEncoder(self.model_name, **kwargs)
+        try:
+            self._model = CrossEncoder(self.model_name, **kwargs)
+        except MemoryError as e:
+            raise RuntimeError(f"Reranker model load ran out of memory: {e}") from e
+        except Exception as e:
+            low = str(e).lower()
+            if any(
+                frag in low
+                for frag in (
+                    "not enough free disk",
+                    "disk space",
+                    "memory allocation",
+                    "out of memory",
+                    "cuda out of memory",
+                )
+            ):
+                raise RuntimeError(f"Reranker model load failed (resources): {e}") from e
+            raise
 
     def rerank(
         self,

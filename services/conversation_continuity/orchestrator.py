@@ -114,7 +114,11 @@ def run_continuity_turn(
         if isinstance(csub, dict):
             prev_bundle = csub
 
-    prev = continuity_state_from_dict(prev_bundle)
+    from services.intent_persistence.pivot import is_visual_budget_shopping_pivot
+
+    _shopping_pivot = is_visual_budget_shopping_pivot(iso or raw)
+
+    prev = continuity_state_from_dict({} if _shopping_pivot else prev_bundle)
 
     prev_air = (prev.current_aircraft or "").strip() or None
     prev_tail_val = (
@@ -151,7 +155,8 @@ def run_continuity_turn(
         from rag.consultant_query_expand import _detect_models
 
         hist_blob = _history_user_blob(history)
-        typed_models = _detect_models(raw + " " + iso + " " + hist_blob[-4000:]) or []
+        model_blob = (raw + " " + iso) if _shopping_pivot else (raw + " " + iso + " " + hist_blob[-4000:])
+        typed_models = _detect_models(model_blob) or []
     except Exception:
         typed_models = []
 
@@ -172,6 +177,15 @@ def run_continuity_turn(
     if not focal_model and refinement.inherit_entity:
         focal_model = prev_air
 
+    # Prefer canonical client memory over stale continuity/history (prevents G650 bleed after budget pivot).
+    if refinement.type in ("style_shift", "size_upgrade", "view_change", "ambiguous_followup"):
+        if isinstance(client_conversation_state, dict):
+            mem = client_conversation_state.get("conversation_memory")
+            if isinstance(mem, dict) and (mem.get("active_aircraft") or "").strip():
+                focal_model = str(mem["active_aircraft"]).strip()
+            elif (client_conversation_state.get("current_aircraft_reference") or "").strip():
+                focal_model = str(client_conversation_state["current_aircraft_reference"]).strip()
+
     if refinement.type == "comparison_anchor":
         focal_model = focal_model or prev_air
 
@@ -182,6 +196,11 @@ def run_continuity_turn(
         fm_work = focal_model or prev_air
     else:
         fm_work = prev_air or focal_model
+
+    if refinement.type in ("style_shift", "size_upgrade") and isinstance(client_conversation_state, dict):
+        mem = client_conversation_state.get("conversation_memory")
+        if isinstance(mem, dict) and (mem.get("active_aircraft") or "").strip():
+            fm_work = str(mem["active_aircraft"]).strip()
 
     evolution = _grow_evolution(prev.aircraft_evolution, prev_air, fm_work or focal_model or prev_air, refinement.type)
 
@@ -201,6 +220,18 @@ def run_continuity_turn(
         buyer_direction.size = "smaller"
         buyer_direction.luxury = "lower"
     parsed_budget = _parse_budget_upper(raw + " " + iso)
+    if parsed_budget is None and prev.buyer_direction.budget_usd_approx:
+        parsed_budget = float(prev.buyer_direction.budget_usd_approx)
+    if parsed_budget is None and isinstance(client_conversation_state, dict):
+        mem = client_conversation_state.get("conversation_memory")
+        if isinstance(mem, dict) and mem.get("active_budget_usd") is not None:
+            try:
+                parsed_budget = float(mem["active_budget_usd"])
+            except (TypeError, ValueError):
+                parsed_budget = None
+        if parsed_budget is None:
+            leg_b = str(client_conversation_state.get("current_budget") or "").strip()
+            parsed_budget = _parse_budget_upper(leg_b)
     if parsed_budget:
         buyer_direction.budget_usd_approx = parsed_budget
 
@@ -239,7 +270,12 @@ def run_continuity_turn(
     state.contextual_intent_tags = inferred_tags[-20:]
     state.last_refinement = refinement
 
-    size_frag = evolution_hint_for_upgrade(prev_air if refinement.type == "size_upgrade" else None)
+    _budget_cap = float(buyer_direction.budget_usd_approx or 0) or None
+    size_frag = evolution_hint_for_upgrade(
+        prev_air if refinement.type == "size_upgrade" else None,
+        max_budget_usd=_budget_cap if _budget_cap else None,
+        refinement_query=raw,
+    )
     augmented = bool(refinement.type == "size_upgrade" and prev_air)
 
     effective = reinforce_query_with_context(
@@ -250,6 +286,21 @@ def run_continuity_turn(
         augment_size=bool(augmented and bool(size_frag.strip())),
         size_augment_fragment=size_frag,
     )
+
+    if refinement.type in ("style_shift", "size_upgrade", "view_change", "ambiguous_followup"):
+        extras: List[str] = []
+        if state.current_aircraft and (state.current_aircraft or "").lower() not in effective.lower():
+            extras.append(str(state.current_aircraft))
+        if _budget_cap and _budget_cap <= 25_000_000:
+            cap_m = int(round(_budget_cap / 1_000_000))
+            if str(cap_m) not in effective and f"${cap_m}" not in effective:
+                extras.append(f"under ~${cap_m}M budget")
+        if refinement.type == "style_shift" and state.negative_preferences:
+            for pref in state.negative_preferences[:2]:
+                if pref.lower() not in effective.lower():
+                    extras.append(pref)
+        if extras:
+            effective = (effective + " " + " ".join(extras)).strip()
 
     state.drift_flags = continuity_drift_flags(state, not raw)
 

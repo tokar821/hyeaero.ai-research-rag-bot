@@ -1,0 +1,408 @@
+{
+  "title": "Elite Advisor 10-turn continuous simulation",
+  "ran_at": "2026-05-19T13:52:32.931543+00:00",
+  "turns": 10,
+  "grades": {
+    "PASS": 10,
+    "PARTIAL": 0,
+    "FAIL": 0
+  },
+  "pass_rate": 1.0,
+  "report": [
+    {
+      "turn": 1,
+      "query": "How many seats does a G650 have?",
+      "kind": "factual_pinpoint",
+      "grade": "PASS",
+      "elapsed_sec": 11.77,
+      "word_count": 63,
+      "answer": "The Gulfstream G650 typically seats up to 16 passengers in a standard configuration. The seating layout can be customized, often featuring a mix of single and double club seating, divans, and options for private suites, enhancing passenger comfort during long flights.\n\nIf you have any specific configurations in mind or would like to compare the G650 with other models, feel free to ask.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "advisory",
+        "response_mode_legacy": "advisory_mode",
+        "router_decision": "advisory",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft",
+          "active_topic",
+          "comparison_target"
+        ],
+        "resolved_aircraft": "G650",
+        "memory_active_aircraft": "G650",
+        "memory_active_category": "large_cabin",
+        "memory_last_visual": null,
+        "memory_budget": null,
+        "memory_comparison": "Gulfstream G650 family",
+        "cse_inherited": [
+          "active_category",
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "G650",
+        "current_budget": null,
+        "image_count": 0,
+        "fine_intent": "aircraft_specs"
+      },
+      "error": null
+    },
+    {
+      "turn": 2,
+      "query": "What's the range of a Falcon 8X?",
+      "kind": "factual_pinpoint",
+      "grade": "PASS",
+      "elapsed_sec": 14.5,
+      "word_count": 29,
+      "answer": "The Dassault Falcon 8X boasts a maximum range of 6,450 nautical miles (approximately 11,945 kilometers), allowing it to connect a wide array of global destinations non-stop.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "advisory",
+        "response_mode_legacy": "advisory_mode",
+        "router_decision": "advisory",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft",
+          "active_topic"
+        ],
+        "resolved_aircraft": "Falcon 8X",
+        "memory_active_aircraft": "Falcon 8X",
+        "memory_active_category": "unknown",
+        "memory_last_visual": null,
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "Falcon 8X",
+        "current_budget": null,
+        "image_count": 0,
+        "fine_intent": "aircraft_specs"
+      },
+      "error": null
+    },
+    {
+      "turn": 3,
+      "query": "Price of a used Challenger 350?",
+      "kind": "factual_pinpoint",
+      "grade": "PASS",
+      "elapsed_sec": 19.53,
+      "word_count": 28,
+      "answer": "The asking price for a used Challenger 350 typically ranges from approximately $7 million to $9 million, depending on factors such as condition, total hours, and specific equipment.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "advisory",
+        "response_mode_legacy": "advisory_mode",
+        "router_decision": "advisory",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft"
+        ],
+        "resolved_aircraft": "Challenger 350",
+        "memory_active_aircraft": "Challenger 350",
+        "memory_active_category": "unknown",
+        "memory_last_visual": null,
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "Challenger 350",
+        "current_budget": null,
+        "image_count": 0,
+        "fine_intent": "market_question"
+      },
+      "error": null
+    },
+    {
+      "turn": 4,
+      "query": "Best jet for SF to London with 12 people?",
+      "kind": "mission_advisory",
+      "grade": "PASS",
+      "elapsed_sec": 18.82,
+      "word_count": 149,
+      "answer": "For a direct flight from San Francisco to London with 12 passengers, the Gulfstream G650 is an excellent choice due to its impressive range and capacity. Here’s why it stands out:\n\n- Range: Approximately 7,000 nautical miles, allowing for nonstop flights between SFO and LHR.\n- Passenger Capacity: Comfortably accommodates up to 16 passengers, providing ample space for your group.\n- Speed and Efficiency: It offers a good balance of speed and operating costs for a large cabin jet.\n\nWhile the G650 is a strong candidate, you might also consider the Bombardier Global 7500:\n\n- Range: Approximately 7,700 nautical miles, which is ideal for longer transatlantic trips.\n- Passenger Capacity: Seats up to 17 passengers, ensuring comfort for your group.\n\nBoth options are well-suited for your journey, providing the necessary range and passenger comfort. If you have any further questions or need additional options, feel free to ask! \n\n✅ GOOD FIT",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "advisory",
+        "response_mode_legacy": "advisory_mode",
+        "router_decision": "advisory",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft"
+        ],
+        "resolved_aircraft": "G650",
+        "memory_active_aircraft": "G650",
+        "memory_active_category": "unknown",
+        "memory_last_visual": null,
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "G650",
+        "current_budget": null,
+        "image_count": 0,
+        "fine_intent": "aircraft_recommendation"
+      },
+      "error": null
+    },
+    {
+      "turn": 5,
+      "query": "Show me modern cabin under $10M.",
+      "kind": "visual_gallery",
+      "grade": "PASS",
+      "elapsed_sec": 31.37,
+      "word_count": 53,
+      "answer": "Here are some examples of the Gulfstream G650, showcasing its modern cabin design: ### Gulfstream G650 (4 image(s) in app gallery)\n- The first image features a sleek interior with club seating, ideal for business or leisure travel. - The second image highlights a spacious layout, emphasizing comfort and style for an enhanced passenger experience.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "image_showcase",
+        "response_mode_legacy": "visual_mode",
+        "router_decision": "image_showcase",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft",
+          "active_topic",
+          "active_visual_focus",
+          "active_budget_usd",
+          "aesthetic_preferences"
+        ],
+        "resolved_aircraft": "G650",
+        "memory_active_aircraft": "G650",
+        "memory_active_category": "unknown",
+        "memory_last_visual": "modern cabin",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "G650",
+        "current_budget": "$10M",
+        "image_count": 4,
+        "fine_intent": "aircraft_recommendation"
+      },
+      "error": null
+    },
+    {
+      "turn": 6,
+      "query": "Something less corporate.",
+      "kind": "refinement_followup",
+      "grade": "PASS",
+      "elapsed_sec": 2.51,
+      "word_count": 69,
+      "answer": "Got it. If you're looking for a modern cabin under $10M, consider the Embraer Phenom 300 or the Cessna Citation CJ3+. Both offer stylish interiors and great performance. The Phenom 300 has a sleek, contemporary design with comfortable seating for up to 10, while the CJ3+ is known for its efficiency and user-friendly cabin layout. Let me know if you want details on specific features or options!",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": null,
+        "response_mode_legacy": null,
+        "router_decision": null,
+        "intent_routing": null,
+        "intent_inherited": [],
+        "resolved_aircraft": null,
+        "memory_active_aircraft": "G650",
+        "memory_active_category": "unknown",
+        "memory_last_visual": "modern cabin",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "G650",
+        "current_budget": "$10M",
+        "image_count": 0,
+        "fine_intent": null
+      },
+      "error": null
+    },
+    {
+      "turn": 7,
+      "query": "Bigger.",
+      "kind": "refinement_followup",
+      "grade": "PASS",
+      "elapsed_sec": 50.77,
+      "word_count": 50,
+      "answer": "The Embraer Citation CJ3 is a capable light jet, but if you're looking for a larger cabin in the ultra-long-range class, the Gulfstream G650 stands out as a top contender. The Gulfstream G650 offers a spacious cabin designed for comfort and productivity, accommodating up to 14 passengers.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "image_showcase",
+        "response_mode_legacy": "visual_mode",
+        "router_decision": "image_showcase",
+        "intent_routing": "image_showcase_continuation",
+        "intent_inherited": [
+          "active_aircraft",
+          "active_topic"
+        ],
+        "resolved_aircraft": "Citation CJ3",
+        "memory_active_aircraft": "Citation CJ3",
+        "memory_active_category": "vlj",
+        "memory_last_visual": "cabin interior",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "active_category",
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "Citation CJ3",
+        "current_budget": "$10M",
+        "image_count": 4,
+        "fine_intent": "aircraft_comparison"
+      },
+      "error": null
+    },
+    {
+      "turn": 8,
+      "query": "Compare G700 vs Global 7500.",
+      "kind": "comparison",
+      "grade": "PASS",
+      "elapsed_sec": 86.53,
+      "word_count": 196,
+      "answer": "The Gulfstream G700 and Bombardier Global 7500 are both exceptional ultra-long-range business jets, each designed to meet specific mission needs.\n\nThe G700 has a range of approximately 7,500 nautical miles, while the Global 7500 offers a slightly longer range of about 7,700 nautical miles. In terms of passenger capacity, the G700 can accommodate up to 19 passengers in a standard configuration, whereas the Global 7500 typically seats 14 to 17 passengers comfortably.\n\nBoth jets cruise at a speed of Mach 0.925, ensuring efficient travel times. The G700 features five separate living zones, providing versatility in cabin configurations, while the Global 7500 is known for its luxurious design with up to four living zones, although it has a slightly shorter cabin length.\n\nWhen it comes to operational capabilities, the Global 7500 requires less runway for takeoff, needing only 5,800 feet compared to the G700's 6,250 feet. This can be advantageous for accessing shorter airports.\n\nIn summary, if your priority is a more versatile interior configuration, the G700 may be the better choice. However, if you value extended range and superior runway performance, the Global 7500 stands out.\n\n✅ GOOD FIT",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "comparison_mode",
+        "response_mode_legacy": "comparison_mode",
+        "router_decision": "comparison_mode",
+        "intent_routing": "fresh_retrieval",
+        "intent_inherited": [
+          "active_aircraft",
+          "active_topic"
+        ],
+        "resolved_aircraft": "G700",
+        "memory_active_aircraft": "Global 7500",
+        "memory_active_category": "ultra_long_range",
+        "memory_last_visual": "cabin interior",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "active_aircraft",
+          "active_category",
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "Global 7500",
+        "current_budget": "$10M",
+        "image_count": 0,
+        "fine_intent": "aircraft_comparison"
+      },
+      "error": null
+    },
+    {
+      "turn": 9,
+      "query": "Show cockpit too.",
+      "kind": "visual_followup",
+      "grade": "PASS",
+      "elapsed_sec": 44.82,
+      "word_count": 61,
+      "answer": "Here are images of the Gulfstream G700 cockpit, showcasing its advanced design and features: ### Gulfstream G700 (5 image(s) in app gallery)\n- The cockpit features Gulfstream's innovative Symmetry Flight Deck, designed to enhance pilot efficiency and safety, reflecting the latest in aviation technology. - The flight deck includes advanced avionics and intuitive controls, ensuring ease of operation for pilots during flights.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "image_showcase",
+        "response_mode_legacy": "visual_mode",
+        "router_decision": "image_showcase",
+        "intent_routing": "image_showcase_continuation",
+        "intent_inherited": [
+          "active_topic",
+          "active_visual_focus"
+        ],
+        "resolved_aircraft": "G700",
+        "memory_active_aircraft": "G700",
+        "memory_active_category": "unknown",
+        "memory_last_visual": "cockpit",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "G700",
+        "current_budget": "$10M",
+        "image_count": 5,
+        "fine_intent": "general_question"
+      },
+      "error": null
+    },
+    {
+      "turn": 10,
+      "query": "I care more about cabin feel than speed.",
+      "kind": "preference_followup",
+      "grade": "PASS",
+      "elapsed_sec": 37.88,
+      "word_count": 48,
+      "answer": "The Gulfstream G700 is designed with an emphasis on cabin comfort, making it an excellent choice for those prioritizing a pleasant flying experience. ### Gulfstream G700 (5 image(s) in app gallery)\n- The cabin features a flexible layout that can accommodate various configurations, ideal for both work and relaxation.",
+      "notes": [],
+      "subscores": {
+        "relevance": 1.0,
+        "engine": 1.0,
+        "visual": 1.0
+      },
+      "engine": {
+        "response_mode": "image_showcase",
+        "response_mode_legacy": "visual_mode",
+        "router_decision": "image_showcase",
+        "intent_routing": "image_showcase_continuation",
+        "intent_inherited": [
+          "active_topic",
+          "active_visual_focus"
+        ],
+        "resolved_aircraft": "G700",
+        "memory_active_aircraft": "Bombardier Global 7500",
+        "memory_active_category": "ultra_long_range",
+        "memory_last_visual": "cabin interior",
+        "memory_budget": null,
+        "memory_comparison": null,
+        "cse_inherited": [
+          "active_aircraft",
+          "active_category",
+          "conversation_goal"
+        ],
+        "current_aircraft_reference": "Bombardier Global 7500",
+        "current_budget": "$10M",
+        "image_count": 5,
+        "fine_intent": "aircraft_comparison"
+      },
+      "error": null
+    }
+  ]
+}

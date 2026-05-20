@@ -87,6 +87,7 @@ def run_conversation_state_turn(
     user_wants_gallery: bool = False,
     mission_hint: Optional[str] = None,
     routing_hint: str = "",
+    shopping_anchor_model: Optional[str] = None,
 ) -> ConversationStateBundle:
     """
     Single turn: load prior memory → apply updates → decay stale fields → log → return bundle.
@@ -113,7 +114,16 @@ def run_conversation_state_turn(
         entity_models=entity_models,
         user_wants_gallery=user_wants_gallery,
         mission_hint=mission_hint,
+        shopping_anchor_model=shopping_anchor_model,
     )
+
+    # Carry comparison pair across cockpit / cabin follow-ups when still in compare goal.
+    if (
+        state.comparison_target
+        and refinement_type not in ("comparison_anchor", "explicit_reset")
+        and state.conversation_goal.value == "compare"
+    ):
+        state.field_turns["comparison_target"] = int(state.turn_index or 0)
 
     decayed = apply_memory_decay(state, explicit_reset=explicit_reset)
     inherited = _diff_inherited(prev_snapshot, state)

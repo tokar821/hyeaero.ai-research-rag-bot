@@ -51,6 +51,31 @@ def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
 
 
+def _filter_phly_rows_for_shopping_pivot(
+    rows: List[Dict[str, Any]],
+    query: str,
+) -> List[Dict[str, Any]]:
+    """Drop ULR rows when user pivoted to a sub-$12M cabin browse."""
+    if not rows:
+        return rows
+    try:
+        from services.intent_persistence.pivot import _parse_budget_millions
+    except Exception:
+        return rows
+    bm = _parse_budget_millions(query or "")
+    if bm is None or bm > 12:
+        return rows
+    kept: List[Dict[str, Any]] = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        blob = f"{r.get('manufacturer') or ''} {r.get('model') or ''}".lower()
+        if re.search(r"\b(g\s*650|g650|g700|global\s*7500|falcon\s*8x)\b", blob, re.I):
+            continue
+        kept.append(r)
+    return kept if kept else rows
+
+
 def run_consultant_retrieval_bundle(
     svc: Any,
     query: str,
@@ -223,6 +248,14 @@ def run_consultant_retrieval_bundle(
     except Exception as _ipe:
         logger.debug("intent_persistence skipped: %s", _ipe)
 
+    _shopping_pivot = False
+    try:
+        from services.intent_persistence.pivot import is_visual_budget_shopping_pivot
+
+        _shopping_pivot = is_visual_budget_shopping_pivot(_latest_user_query_raw or query or "")
+    except Exception:
+        pass
+
     # 2) Fine intent (LLM JSON classifier or heuristic) → conversational / general short-circuits.
     from rag.consultant_fine_intent import (
         ConsultantFineIntent,
@@ -285,8 +318,9 @@ def run_consultant_retrieval_bundle(
             _taste_or_cabin = bool(
                 re.search(
                     r"\b("
-                    r"feels\s+modern|more\s+modern|not\s+old|luxury\s+hotel|rich\s+guy|tacky|boutique|"
-                    r"cabin|interior|galley|cockpit|photos?|pictures?|show\s+me|vs\.?|compared\s+to"
+                    r"feels\s+modern|more\s+modern|less\s+corporate|something\s+(?:less|more|nicer)|"
+                    r"not\s+old|luxury\s+hotel|rich\s+guy|tacky|boutique|corporate|"
+                    r"cabin|interior|galley|cockpit|photos?|pictures?|show\s+me|vs\.?|compared\s+to|bigger"
                     r")\b",
                     _qstrip,
                     re.I,
@@ -299,8 +333,16 @@ def run_consultant_retrieval_bundle(
                 != "fresh_retrieval"
                 and float(_intent_bundle.standalone_confidence or 1.0) < 0.55
             )
+            _refinement_followup = bool(
+                _intent_bundle
+                and str(getattr(_intent_bundle, "refinement_type", "") or "").strip().lower()
+                not in ("", "none", "explicit_reset")
+            )
             if query_has_aviation_signals(_hist_blob) and (
-                query_has_aviation_signals(_qstrip) or _taste_or_cabin or _persist_inherit
+                query_has_aviation_signals(_qstrip)
+                or _taste_or_cabin
+                or _persist_inherit
+                or _refinement_followup
             ):
                 from rag.consultant_fine_intent import ConsultantFineIntent, ConsultantFineIntentResult
 
@@ -344,6 +386,18 @@ def run_consultant_retrieval_bundle(
             query=query or "",
             history=_history_original,
             fine_intent=_fine.intent.value,
+            continuity_state=(_intent_bundle.continuity_serialized if _intent_bundle else None),
+            intent_persistence_state=(
+                _intent_bundle.resolved_intent if _intent_bundle is not None else None
+            ),
+            refinement_type=(
+                str(_intent_bundle.refinement_type or "none") if _intent_bundle else "none"
+            ),
+            routing_hint=(
+                str(_intent_bundle.routing_decision.value)
+                if _intent_bundle and hasattr(_intent_bundle.routing_decision, "value")
+                else ""
+            ),
         )
         return "small_talk", {
             "answer": _greply,
@@ -558,6 +612,10 @@ def run_consultant_retrieval_bundle(
             f_phly = pre_pool.submit(_run_phly)
             f_int = pre_pool.submit(_run_image_gallery_intent)
             phly_authority, phly_meta, phly_rows = f_phly.result()
+            if _shopping_pivot:
+                phly_rows = _filter_phly_rows_for_shopping_pivot(
+                    phly_rows, _latest_user_query_raw or query or ""
+                )
             phly_authority = (
                 ((_consultant_aviation_prefix + "\n\n") if _consultant_aviation_prefix else "")
                 + _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
@@ -591,6 +649,10 @@ def run_consultant_retrieval_bundle(
             f_exp = pre_pool.submit(_run_expand)
             f_int = pre_pool.submit(_run_image_gallery_intent)
             phly_authority, phly_meta, phly_rows = f_phly.result()
+            if _shopping_pivot:
+                phly_rows = _filter_phly_rows_for_shopping_pivot(
+                    phly_rows, _latest_user_query_raw or query or ""
+                )
             phly_authority = (
                 ((_consultant_aviation_prefix + "\n\n") if _consultant_aviation_prefix else "")
                 + _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta)
@@ -874,13 +936,19 @@ def run_consultant_retrieval_bundle(
             # For vague "best cabin / luxury / hotel feel" browse queries with **no explicit model**,
             # do not anchor the gallery to an arbitrary SQL/Phly row. Let the deterministic browse
             # query list drive image selection instead (prevents drift to out-of-band models).
+            elif _shopping_pivot:
+                from services.intent_persistence.pivot import shopping_gallery_models
+
+                _sgm = shopping_gallery_models(_latest_user_query_raw or query or "")
+                inferred_marketing_type_for_images = _sgm[0] if _sgm else "Challenger 350"
             elif re.search(
-                r"\b(best\s+cabin|luxury|premium|hotel\s+feel|like\s+a\s+hotel)\b",
+                r"\b(best\s+cabin|luxury|premium|hotel\s+feel|like\s+a\s+hotel|"
+                r"modern\s+cabin|under\s+\$?\d+\s*m)\b",
                 blob_low,
                 re.I,
             ):
                 inferred_marketing_type_for_images = None
-            elif mt_phly and len(mt_phly) >= 3:
+            elif mt_phly and len(mt_phly) >= 3 and not _shopping_pivot:
                 inferred_marketing_type_for_images = mt_phly
             else:
                 inferred_marketing_type_for_images = None
@@ -1342,12 +1410,15 @@ def run_consultant_retrieval_bundle(
         )
 
     data_used: Dict[str, Any] = dict(phly_meta)
+    data_used["consultant_query"] = (query or "").strip()
     for k, v in strip_market_meta_zeros(market_meta).items():
         data_used[k] = v
     if low_latency:
         data_used["consultant_low_latency"] = 1
     if fast_retrieval:
         data_used["consultant_fast_retrieval"] = 1
+    if _shopping_pivot:
+        data_used["consultant_shopping_pivot"] = 1
     if skip_expand:
         data_used["consultant_skip_query_expand"] = 1
     if single_tavily_pass:
@@ -1360,6 +1431,7 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_continuity_state"] = _continuity_bundle.serialized
         data_used["consultant_refinement_interpretation"] = _continuity_bundle.refinement.model_dump(mode="json")
     if _intent_bundle is not None:
+        data_used["consultant_refinement_type"] = str(_intent_bundle.refinement_type or "none")
         data_used["intent_persistence"] = {
             "previous_intent": _intent_bundle.previous_intent,
             "resolved_intent": _intent_bundle.resolved_intent,
@@ -1739,6 +1811,38 @@ def run_consultant_retrieval_bundle(
                 _ae_models2 = [str(x) for x in (_ae_blob.get("aircraft_models") or []) if x]
         except Exception:
             pass
+        _shopping_anchor: Optional[str] = None
+        _ref_rt = (
+            str(_intent_bundle.refinement_type or "none").strip().lower()
+            if _intent_bundle is not None
+            else "none"
+        )
+        if _shopping_pivot or data_used.get("consultant_shopping_pivot"):
+            try:
+                from services.intent_persistence.pivot import shopping_gallery_models
+
+                _sgm = shopping_gallery_models(_latest_user_query_raw or query or "")
+                _shopping_anchor = (_sgm[0] if _sgm else None) or None
+            except Exception:
+                _shopping_anchor = None
+            if _shopping_anchor:
+                data_used["consultant_gallery_marketing_anchor"] = _shopping_anchor
+                _ae_models2 = [_shopping_anchor]
+        elif _ref_rt in ("style_shift", "size_upgrade", "view_change"):
+            try:
+                from services.intent_persistence.pivot import refinement_gallery_models
+
+                _rgm = refinement_gallery_models(_ref_rt, _latest_user_query_raw or query or "")
+                if _rgm:
+                    _shopping_anchor = _rgm[0]
+                    data_used["consultant_gallery_marketing_anchor"] = _shopping_anchor
+                    data_used["consultant_gallery_models"] = _rgm
+                    _ae_models2 = list(_rgm)
+            except Exception:
+                pass
+        elif (inferred_marketing_type_for_images or "").strip():
+            _shopping_anchor = str(inferred_marketing_type_for_images).strip()
+            data_used.setdefault("consultant_gallery_marketing_anchor", _shopping_anchor)
         finalize_consultant_conversation_state(
             data_used,
             client_conversation_state,
@@ -1760,6 +1864,7 @@ def run_consultant_retrieval_bundle(
             routing_hint=(
                 _intent_bundle.routing_decision.value if _intent_bundle is not None else ""
             ),
+            shopping_anchor_model=_shopping_anchor,
         )
         system_prompt += format_conversation_state_for_system_prompt(
             data_used.get("consultant_conversation_state") or {}

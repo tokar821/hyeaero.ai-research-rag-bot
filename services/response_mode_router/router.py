@@ -105,6 +105,18 @@ def route_response_mode(
     if (suspicious_model_note or "").strip():
         return _out(ResponseMode.INVALID_SANITY, "suspicious_or_nonexistent_aircraft_model")
 
+    try:
+        from services.intent_persistence.pivot import is_visual_budget_shopping_pivot
+
+        if is_visual_budget_shopping_pivot(q):
+            return _out(
+                ResponseMode.IMAGE_SHOWCASE,
+                "budget_cabin_shopping_pivot",
+                inherit_context=False,
+            )
+    except Exception:
+        pass
+
     if len(q) < 80 and CONVERSATION_ONLY_RE.search(q) and not re.search(
         r"\b(jet|aircraft|n\d|citation|gulfstream)\b", ql, re.I
     ):
@@ -126,7 +138,9 @@ def route_response_mode(
         or mem_rm in ("image_showcase", "visual_only", "short_caption")
     )
     is_comparison = bool(
-        fi == "aircraft_comparison" or COMPARISON_RE.search(q) or VS_MODEL_RE.search(q)
+        (fi == "aircraft_comparison" or COMPARISON_RE.search(q) or VS_MODEL_RE.search(q))
+        and not (is_followup and ref in _REFINEMENT_FOLLOWUP)
+        and not IMAGE_SHOWCASE_RE.search(q)
     )
     is_educational = bool(EDUCATIONAL_RE.search(q) and not is_comparison)
     is_advisory = bool(ADVISORY_RE.search(q) or DEAL_RE.search(q) or fi in ("aircraft_recommendation", "aviation_mission"))

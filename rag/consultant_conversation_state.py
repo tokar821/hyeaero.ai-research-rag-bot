@@ -245,6 +245,7 @@ def merge_consultant_conversation_state(
     user_wants_gallery: bool = False,
     mission_hint: Optional[str] = None,
     conversation_guard_type: Optional[str] = None,
+    shopping_anchor_model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Produce the next ``consultant_conversation_state`` snapshot (JSON-friendly).
@@ -255,11 +256,28 @@ def merge_consultant_conversation_state(
     q = (query or "").strip()
     ql = q.lower()
 
+    _shopping_pivot = False
+    try:
+        from services.intent_persistence.pivot import is_visual_budget_shopping_pivot
+
+        _shopping_pivot = is_visual_budget_shopping_pivot(q)
+    except Exception:
+        _shopping_pivot = False
+
+    if _shopping_pivot and prev_in is not None:
+        try:
+            from services.intent_persistence.client_state import sanitize_client_state_for_shopping_pivot
+
+            prev_in = sanitize_client_state_for_shopping_pivot(prev_in)
+        except Exception:
+            pass
+
     if prev_in is None:
         prev = default_consultant_conversation_state()
-        hist_infer = _infer_models_from_history(history if isinstance(history, list) else None)
-        if hist_infer and not prev.get("current_aircraft_reference"):
-            prev["current_aircraft_reference"] = hist_infer[-1]
+        if not _shopping_pivot:
+            hist_infer = _infer_models_from_history(history if isinstance(history, list) else None)
+            if hist_infer and not prev.get("current_aircraft_reference"):
+                prev["current_aircraft_reference"] = hist_infer[-1]
     else:
         prev = _sanitize_client_state(prev_in)
 
@@ -269,13 +287,16 @@ def merge_consultant_conversation_state(
     deictic = bool(_DEICTIC_FOLLOWUP_RE.search(q)) and len(q) < 140
     prev_air = prev.get("current_aircraft_reference")
 
-    air = _primary_aircraft_reference_fixed(
-        entity_models,
-        q,
-        history if isinstance(history, list) else None,
-        str(prev_air) if prev_air else None,
-        deictic,
-    )
+    if (shopping_anchor_model or "").strip():
+        air = (shopping_anchor_model or "").strip()
+    else:
+        air = _primary_aircraft_reference_fixed(
+            entity_models,
+            q,
+            None if _shopping_pivot else history,
+            str(prev_air) if prev_air else None,
+            deictic,
+        )
 
     st_new, cab_new = _infer_style_and_cabin(ql)
     user_style = st_new or prev.get("user_style")
@@ -365,8 +386,12 @@ def finalize_consultant_conversation_state(
     intent_persistence_state: Optional[Dict[str, Any]] = None,
     refinement_type: str = "none",
     routing_hint: str = "",
+    shopping_anchor_model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Mutates ``data_used`` in place and returns the new state dict."""
+    _anchor = (shopping_anchor_model or "").strip()
+    if not _anchor and isinstance(data_used, dict):
+        _anchor = str(data_used.get("consultant_gallery_marketing_anchor") or "").strip()
     merged = merge_consultant_conversation_state(
         client_state,
         query=query,
@@ -378,6 +403,7 @@ def finalize_consultant_conversation_state(
         user_wants_gallery=user_wants_gallery,
         mission_hint=mission_hint,
         conversation_guard_type=conversation_guard_type,
+        shopping_anchor_model=_anchor or None,
     )
     if continuity_state is not None:
         merged["continuity"] = continuity_state
@@ -401,6 +427,7 @@ def finalize_consultant_conversation_state(
             user_wants_gallery=user_wants_gallery,
             mission_hint=mission_hint,
             routing_hint=routing_hint,
+            shopping_anchor_model=_anchor or None,
         )
         merged["conversation_memory"] = mem_bundle.serialized
         for k, v in sync_legacy_flat_fields(mem_bundle.state).items():

@@ -21,13 +21,17 @@ _AVIATION_STYLE = {
         "\n\n**Answer shape (intent: for sale):** Lead on PhlyData internal snapshot when present; frame marketplace rows as **listing-ingest** with availability caveats."
     ),
     AviationIntent.MARKET_PRICE: (
-        "\n\n**Answer shape (intent: market price):** Cite numbers from context; separate Phly internal ask from listing ask and web snippets."
+        "\n\n**Answer shape (intent: market price):** Lead with **typical used-market range** or the "
+        "**verified ask** from context; separate Phly internal ask from listing ask when both appear. "
+        "**Do not** append unrelated jet recommendations or GOOD FIT blocks. **Under ~120 words** unless they asked for a full market brief."
     ),
     AviationIntent.AIRCRAFT_SPECS: (
-        "\n\n**Answer shape (intent: specs):** Advisor tone—**short lead** (what it means for their mission), then **only** the specs that matter; avoid walls of numbers. Prefer facts from structured context, labeled by source. **~120–200 words** default unless they asked for full specs."
+        "\n\n**Answer shape (intent: specs):** **Direct answer first** — only the field they asked for "
+        "(seats, range, speed, etc.). **One to three sentences** on pinpoint asks; no extra models, "
+        "no GOOD FIT block, no market shortlist unless they asked."
     ),
     AviationIntent.MISSION_FEASIBILITY: (
-        "\n\n**Answer shape (intent: mission / recommendation):** **Concise first:** short mission read, a few aircraft names that fit, **one** clarifying question—expand specs only if asked. "
+        "\n\n**Answer shape (intent: mission / recommendation):** **Strategic framing first** (category + mission fit), then **one primary** recommendation and at most **two** alternates—never five equal bullets. **One** clarifying question only if blocked. "
         "If **pax**, **route/distance**, **longest leg**, **budget**, or **private vs charter** are missing on an **open-ended** buy ask, ask **1–2** questions **before** a model shortlist. "
         "No philosophical filler; no serial/N-number dumps unless user wants detail. "
         "Budget bands: under ~$5M light; $5M–$10M light/entry midsize; $10M–$20M midsize/super-mid; $20M+ large cabin. "

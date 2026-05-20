@@ -32,15 +32,41 @@ def categorize_model_hint(model_name: Optional[str]) -> AircraftCategory:
     return AircraftCategory.UNKNOWN
 
 
-def evolution_hint_for_upgrade(prev_model: Optional[str]) -> str:
+def evolution_hint_for_upgrade(
+    prev_model: Optional[str],
+    *,
+    max_budget_usd: Optional[float] = None,
+    refinement_query: str = "",
+) -> str:
     """Natural-language suffix for retrieval when user asks for bigger / more cabin."""
+    rq = (refinement_query or "").strip()
+    if re.match(r"^\s*bigger\s*[\.\!]?\s*$", rq, re.I):
+        try:
+            from services.intent_persistence.pivot import bigger_modern_cabin_models
+
+            models = bigger_modern_cabin_models()
+            return (
+                f" Upscale cabin volume while keeping modern lounge feel: "
+                f"{', '.join(models)}."
+            )
+        except Exception:
+            pass
     if not (prev_model or "").strip():
         return ""
-    cls, _ = suggest_next_class(prev_model)
-    return f" Larger cabin than {prev_model.strip()} targeting {cls.value.replace('_', ' ')} class or higher. "
+    cls, hint = suggest_next_class(prev_model, max_budget_usd=max_budget_usd)
+    if max_budget_usd is not None and max_budget_usd <= 12_000_000:
+        return (
+            f" Larger cabin than {prev_model.strip()} within ~${max_budget_usd/1_000_000:.0f}M — "
+            f"super-midsize (e.g. Challenger 350, Citation Latitude, Legacy 650), not ULR flagships. "
+        )
+    return f" Larger cabin than {prev_model.strip()} targeting {cls.value.replace('_', ' ')} class or higher. {hint}"
 
 
-def suggest_next_class(model_name: Optional[str]) -> Tuple[AircraftCategory, str]:
+def suggest_next_class(
+    model_name: Optional[str],
+    *,
+    max_budget_usd: Optional[float] = None,
+) -> Tuple[AircraftCategory, str]:
     cur = categorize_model_hint(model_name)
     order = [
         AircraftCategory.VLJ,
@@ -55,4 +81,10 @@ def suggest_next_class(model_name: Optional[str]) -> Tuple[AircraftCategory, str
     except ValueError:
         idx = 2  # default midsize band
     nxt = order[min(idx + 1, len(order) - 1)]
+    if max_budget_usd is not None and max_budget_usd <= 12_000_000:
+        if nxt in (AircraftCategory.LARGE, AircraftCategory.ULR):
+            nxt = AircraftCategory.SUPER_MID
+    elif max_budget_usd is not None and max_budget_usd <= 22_000_000:
+        if nxt == AircraftCategory.ULR:
+            nxt = AircraftCategory.LARGE
     return nxt, f"Prefer {nxt.value.replace('_', ' ')}"

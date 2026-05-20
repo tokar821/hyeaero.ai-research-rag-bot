@@ -120,6 +120,73 @@ def prioritize_and_deduplicate_listing_rows(rows: List[Dict[str, Any]]) -> List[
     return out
 
 
+# Minimum plausible asking prices (USD) for common types — filters bad ingest rows.
+_MODEL_MIN_ASK_USD: Tuple[Tuple[re.Pattern, float], ...] = (
+    (re.compile(r"challenger\s*350", re.I), 4_500_000.0),
+    (re.compile(r"challenger\s*300", re.I), 3_000_000.0),
+    (re.compile(r"challenger\s*6[05]0", re.I), 12_000_000.0),
+    (re.compile(r"\bg650\b|gulfstream\s*g650", re.I), 15_000_000.0),
+    (re.compile(r"\bg700\b|gulfstream\s*g700", re.I), 45_000_000.0),
+    (re.compile(r"global\s*7500", re.I), 40_000_000.0),
+    (re.compile(r"global\s*6500", re.I), 25_000_000.0),
+    (re.compile(r"falcon\s*8x", re.I), 20_000_000.0),
+    (re.compile(r"falcon\s*7x", re.I), 12_000_000.0),
+    (re.compile(r"legacy\s*650", re.I), 6_000_000.0),
+    (re.compile(r"latitude", re.I), 8_000_000.0),
+    (re.compile(r"phenom\s*300", re.I), 4_000_000.0),
+    (re.compile(r"citation\s*latitude", re.I), 8_000_000.0),
+)
+
+
+def _min_ask_for_model_row(row: Dict[str, Any]) -> Optional[float]:
+    blob = " ".join(
+        str(row.get(k) or "")
+        for k in ("manufacturer", "model", "make_model_name")
+    ).strip()
+    if not blob:
+        return None
+    for pat, floor in _MODEL_MIN_ASK_USD:
+        if pat.search(blob):
+            return floor
+    return None
+
+
+def filter_listings_sane_ask_prices(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Drop marketplace rows whose ask_price is implausibly low for the stated model."""
+    out: List[Dict[str, Any]] = []
+    dropped = 0
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        ask = row.get("ask_price")
+        if ask is None:
+            out.append(row)
+            continue
+        try:
+            ask_f = float(ask)
+        except (TypeError, ValueError):
+            out.append(row)
+            continue
+        floor = _min_ask_for_model_row(row)
+        if floor is not None and ask_f < floor:
+            dropped += 1
+            logger.info(
+                "consultant_market_lookup: dropped implausible ask $%s for %s %s (floor $%s)",
+                f"{ask_f:,.0f}",
+                row.get("manufacturer"),
+                row.get("model"),
+                f"{floor:,.0f}",
+            )
+            continue
+        out.append(row)
+    if dropped and not out:
+        logger.warning(
+            "consultant_market_lookup: all %s listing rows failed price sanity — omitting bad asks",
+            len(rows),
+        )
+    return out
+
+
 def _photo_query_thread_blob(
     query: str,
     history: Optional[List[Dict[str, str]]],
@@ -1014,6 +1081,7 @@ def build_consultant_market_authority_block(
 
     if listings_out:
         listings_out = prioritize_and_deduplicate_listing_rows(listings_out)
+        listings_out = filter_listings_sane_ask_prices(listings_out)
 
     if listings_out:
         meta["consultant_internal_listings"] = len(listings_out)

@@ -7,13 +7,14 @@ import re
 from typing import List, Dict, Any, Optional, Iterator, Tuple
 
 from rag.answer.aviation_formatter import aviation_answer_format_contract_block
+from rag.executive_advisor_charter import executive_advisor_charter_block
 from rag.embedding_service import EmbeddingService
 from rag.entity_extractors import EXTRACTORS
 from vector_store.pinecone_client import PineconeClient
 from database.postgres_client import PostgresClient
 from services.aviacost_lookup import lookup_aviacost
 from rag.pinecone_metadata import infer_pinecone_entity_filter, legacy_meta_aircraft_model
-from rag.semantic_reranker import SemanticRerankerService
+from rag.semantic_reranker import SemanticRerankerService, reranker_resources_available
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +122,7 @@ def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dic
 DEFAULT_SCORE_THRESHOLD = 0.5
 
 CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — aircraft **research, valuation, and acquisition** intelligence for **Hye Aero**. You behave like a **top-tier private aviation broker** advising serious buyers (**not** a generic chatbot, **not** a wall-of-text analyst memo). Your value is **accuracy, clarity, and decision guidance** — not verbosity. Sound **human** and direct (avoid robotic checklist-speak like "bring a tail," "bring a route," "lead with a mission").
+""" + executive_advisor_charter_block() + """
 
 **Core job:** Help users **identify aircraft correctly**, understand **cabins, cockpits, and configurations**, **compare realistically**, **evaluate acquisition decisions**, and **avoid costly mistakes**.
 
@@ -130,7 +132,7 @@ CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — aircraft **research, va
 - **No generic filler:** Never waste lines on obvious platitudes (*private jets are luxurious*, *I can help with that*, *let me know*, *feel free*, *absolutely*, *don't hesitate*). Every sentence must **add value**.
 - **Consultant tone:** Confident, direct, helpful — experienced broker, not robotic, not overly casual.
 - **Guide the user:** If input is weak or vague, steer with **1–2 sharp questions** or **2–3 relevant options** — not endless lists.
-- **Visual phrasing:** Treat **show / see / image / photo / picture / cabin / cockpit / interior / exterior** as visual intent. Follow all **IMAGE DISPLAY ENFORCEMENT** and **IMAGE RETRIEVAL RULE** blocks below. When tail-specific shots are not available but **type-correct** references are shown, say what you found and **how accurate** it is (e.g. cockpit layout matches the series). **Never** refuse with *I can't show images* / *I don't have photos* when a gallery is attached.
+- **Visual phrasing:** Treat **show / see / image / photo / picture / cabin / cockpit / interior / exterior** as visual intent. Follow all **IMAGE DISPLAY ENFORCEMENT** and **IMAGE RETRIEVAL RULE** blocks below. When tail-specific shots are not available but **type-correct** references are shown, say what you found and **how accurate** it is (e.g. cockpit layout matches the series). **Never** refuse with *I can't show images* / *I don't have photos* when a gallery is attached — **always** deliver the best available visual (in-app gallery or clearly labeled type-representative references).
 - **Failure modes to avoid:** Generic-assistant tone, vague obvious info, ignoring invalid inputs, not answering the actual question, over-explaining without insight. Aim for: *I just got advice from a real aircraft broker who knows the market.*
 
 **Acquisition consultant mode (strict — product-aligned):**
@@ -149,7 +151,7 @@ CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — aircraft **research, va
 
 **Advisor habits (consultant, not analyst):** Strong advisors clarify **mission** (the trip or ownership goal), **budget**, **passengers**, **routes** (city pairs or stage length), and **private vs charter** usage—**when those are missing and the question needs them**. Weave these in as **one short question or two**, not an interrogation. Prefer *here is what matters for your decision* over *here is everything we know*.
 
-**Default length:** Unless the user explicitly asks for a **full** brief, **deep dive**, or **report**, keep the **first reply short**—think **roughly 120–200 words** for a normal turn, **2–4 short paragraphs max**, then stop. You may offer depth in one line (*Happy to go deeper on specs, pricing, or alternatives.*). Expand only after they ask or when a legal/regulatory answer truly needs more lines.
+**Default length:** Unless the user explicitly asks for a **full** brief, **deep dive**, or **report**, keep the **first reply short**—think **roughly 120–200 words** for a normal turn, **2–4 short paragraphs max**, then stop. **Pinpoint factual questions** (seats, range, price, one spec) often need **one to three sentences only**—see **RELEVANCE-FIRST** in the executive charter. You may offer depth in one line (*Happy to go deeper on specs, pricing, or alternatives.*). Expand only after they ask or when a legal/regulatory answer truly needs more lines. **Plain text** in user replies—no markdown `**bold**` asterisks.
 
 **Operating rules (accuracy + efficiency):** Before answering, silently classify the user’s message into one of:
 - **Advisory** (recommendations / mission fit) — answer with reasoning; **do not** ask to “look it up online.”
@@ -234,11 +236,11 @@ If aircraft are from **different categories**, explain the category difference f
 
 **Visual requests (photos / “show me”).** When the user asks to **see** an aircraft, treat it as a **visual request** (photos/pictures/gallery), not maps or live tracking. Visual intent includes: **show me**, **let me see**, **can I see that/it**, **any photos/pictures**, **what does it look like**, and short deictic follow-ups referring to the **most recently discussed** aircraft. **Switch to visual mode:** lead with a **short header** (make/model and tail if known — what the gallery shows), then **images**; **do not** repeat full registry or spec blocks already given in the thread — at most **one** optional context line. Do **not** respond with link-only instructions instead of the in-app gallery when a gallery is available.
 
-**IMAGE DISPLAY ENFORCEMENT (hard rule):** The system is capable of displaying images. If the user requests visuals and image results are available, you must treat images as **already shown in the app** and respond accordingly. You must **never** say phrases like: **\"I cannot show images\"**, **\"I can't provide images\"**, **\"I don't have photos\"**, **\"I cannot provide images\"**, or similar refusals. Do **not** redirect the user to external links *instead of* the in-app gallery. External links may be optional references, but the gallery is the primary deliverable.
+**IMAGE DISPLAY ENFORCEMENT (hard rule):** The system **displays aircraft images and route-relevant visuals in-app** when retrieved. If the user requests visuals, you must treat attached images as **already shown** and write **one short, premium line** on what they show. You must **never** say: *I cannot show images*, *I can't provide images*, *I don't have photos*, *I cannot create graphics*, or similar refusals. Do **not** send users away to "search Google" **instead of** the in-app gallery when images are present. If exact-tail match is uncertain, **still deliver value**: label what the gallery represents (type-representative cabin/cockpit/exterior) in **one confident line** — not an apology tour.
 
-**IMAGE RETRIEVAL RULE (engine vs consultant):** You do **not** determine whether images exist. Image retrieval is handled by the system engine. If this turn includes an **Aircraft images** gallery, you must assume images are available and are being displayed in the app. Never claim you “don’t have” photos; instead write around the gallery that is shown.
+**IMAGE RETRIEVAL RULE (engine vs consultant):** Image retrieval is handled by the system (including ranked web imagery). If an **Aircraft images** gallery is in context, assume it is displayed. If the brief says images were withheld or unverified, pivot to the **closest accurate** model/tail visual path and state match quality in **one line** — do **not** end with empty-handed refusal.
 
-**Image accuracy over speed.** Only **narrate** images as relevant when they **match the user’s requested tail or model** per the brief/gallery (engine-ranked, optionally Tavily-scored domains). If context says **no gallery**, **failed verification**, or **low confidence / unverified** match, do **not** use refusal phrasing like *I can’t find images*; instead say **"Exact-tail images weren’t verified in this set."** and then show **type-representative** alternatives (same model family) clearly labeled as such. **Do not** praise generic cabins, homes, or unrelated interiors. If a gallery is present but looks wrong to you from titles/URLs in context, say so plainly instead of endorsing it.
+**Image accuracy over speed.** Narrate only what matches the requested **tail or model** when possible. If verification is weak, say so in **one line**, then present **best-available** type-correct references. **Do not** endorse unrelated residential or stock junk. For **mission / route** asks, you may pair strategic copy with map-relevant context (nonstop vs fuel stop, city-pair sense) when it helps the decision.
 
 **Vague luxury / cabin / “hotel feel” (no model named):** When the user only says things like **best cabin**, **premium**, **luxury**, or **hotel feel** without naming an aircraft, **prioritize midsize / super-midsize / large cabin** types for examples and visuals. **Avoid** positioning **light jets** (e.g. **Citation CJ2**, **Learjet 45**) as the primary answer unless they asked for light jet or the budget clearly fits that class. **Prefer** illustrations in this spirit: **Challenger 300/350**, **Falcon 2000** family, **Challenger 650**, **Global** series when budget or wording implies **large cabin**.
 
@@ -404,7 +406,9 @@ def _consultant_phly_faa_user_directives_suffix(phly_meta: Optional[Dict[str, An
     )
 
 
-CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are **HyeAero.AI** representing **Hye Aero**—a **professional aviation advisor** (broker / mission mindset), **not** an analyst and **not** a search widget. For this turn, little structured aircraft context matched, so lean on **sound general aviation knowledge** and state uncertainty honestly.
+CONSULTANT_FALLBACK_SYSTEM_PROMPT = """You are **HyeAero.AI** representing **Hye Aero**—an **elite executive aviation advisor** (strategic, concise, human), **not** a database dump and **not** a search widget.
+""" + executive_advisor_charter_block() + """
+For this turn, little structured aircraft context matched, so lean on **sound general aviation knowledge** and state uncertainty honestly—still **frame strategically first**, not with spec walls.
 
 **HYE Aero alignment:** Stay consistent with Hye Aero as **boutique, owner-experience-led** advisory — **mission-first**, **owner-outcomes-first**, clear and direct — without marketing filler or repeating company mission lines unless they asked about Hye Aero.
 
@@ -453,6 +457,8 @@ class RAGQueryService:
         self.chat_model = chat_model
         self._reranker: Optional[SemanticRerankerService] = reranker
         self._reranker_init_failed = False
+        self._rerank_resources_blocked = False
+        self._rerank_resources_warned = False
 
     def _get_meta(self, match: Any) -> Dict[str, Any]:
         if hasattr(match, "metadata"):
@@ -632,11 +638,22 @@ class RAGQueryService:
             return 0.0
 
     def _rerank_enabled_globally(self) -> bool:
-        return (os.getenv("RAG_RERANK_ENABLED") or "1").strip().lower() not in (
+        if (os.getenv("RAG_RERANK_ENABLED") or "0").strip().lower() in (
             "0",
             "false",
             "no",
-        )
+        ):
+            return False
+        if self._reranker_init_failed or self._rerank_resources_blocked:
+            return False
+        ok, reason = reranker_resources_available()
+        if not ok:
+            self._rerank_resources_blocked = True
+            if not self._rerank_resources_warned:
+                logger.warning("RAG rerank disabled (resource preflight): %s", reason)
+                self._rerank_resources_warned = True
+            return False
+        return True
 
     def _get_reranker(self) -> Optional[SemanticRerankerService]:
         if not self._rerank_enabled_globally():
@@ -660,7 +677,7 @@ class RAGQueryService:
         first ``rerank()`` call. Disable reranking for the process so every retrieve does not log
         the same fatal error.
         """
-        if isinstance(exc, (OSError, ImportError)):
+        if isinstance(exc, (OSError, ImportError, MemoryError)):
             return True
         low = str(exc).lower()
         return any(
@@ -673,15 +690,27 @@ class RAGQueryService:
                 "dll",
                 "libcudnn",
                 "mps backend",
+                "memory allocation",
+                "out of memory",
+                "not enough free disk",
+                "disk space",
+                "huggingface",
+                "hf hub",
+                "reranker preflight",
+                "reranker model load",
             )
         )
 
     def _disable_reranker_after_runtime_failure(self, exc: BaseException) -> None:
-        if not self._rerank_failure_should_disable_service(exc):
-            return
         self._reranker = None
         self._reranker_init_failed = True
-        logger.warning("RAG semantic reranker disabled for this process (rerank runtime failure): %s", exc)
+        if self._rerank_failure_should_disable_service(exc):
+            logger.warning(
+                "RAG semantic reranker disabled for this process (rerank runtime failure): %s",
+                exc,
+            )
+        else:
+            logger.warning("RAG rerank failed, using Pinecone order: %s", exc)
 
     def _hydrate_pinecone_match(
         self,
@@ -836,7 +865,6 @@ class RAGQueryService:
                         len(results),
                     )
                 except Exception as e:
-                    logger.warning("RAG rerank failed, using Pinecone order: %s", e)
                     self._disable_reranker_after_runtime_failure(e)
                     results = results[:rerank_top_k]
             else:
@@ -958,7 +986,6 @@ class RAGQueryService:
             try:
                 return rz.rerank(anchor, merged_list, top_k=rerank_top_k)
             except Exception as e:
-                logger.warning("retrieve_multi rerank failed: %s", e)
                 self._disable_reranker_after_runtime_failure(e)
         if merged_list:
             return merged_list[:rerank_top_k]

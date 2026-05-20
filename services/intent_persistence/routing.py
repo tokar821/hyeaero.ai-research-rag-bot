@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Tuple
 
 from .inheritance import is_contextual_followup_query
+from .pivot import is_visual_budget_shopping_pivot
 from .schemas import IntentResponseMode, PersistentIntentState, RoutingDecision
 
 
@@ -41,6 +42,9 @@ def resolve_routing(
     )
 
     if refinement_type == "explicit_reset":
+        return RoutingDecision.FRESH_RETRIEVAL, False, False, False
+
+    if is_visual_budget_shopping_pivot(q):
         return RoutingDecision.FRESH_RETRIEVAL, False, False, False
 
     if inherited and has_anchor:

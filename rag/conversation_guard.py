@@ -188,8 +188,9 @@ def query_has_aviation_signals(text: str) -> bool:
     if re.search(
         r"\b("
         r"luxury\s+hotel|hotel[-\s]like|five[-\s]?star|more\s+modern|feels\s+modern|"
-        r"not\s+old|rich\s+guy|boutique\s+feel|tacky|stand[-\s]?up\s+cabin|"
-        r"old\s+rich"
+        r"less\s+corporate|more\s+corporate|not\s+old|rich\s+guy|boutique\s+feel|"
+        r"tacky|stand[-\s]?up\s+cabin|old\s+rich|"
+        r"bigger|smaller|something\s+less|something\s+more|cockpit\s+too"
         r")\b",
         text,
         re.I,
@@ -913,6 +914,22 @@ def evaluate_conversation_guard(
                 return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
         except Exception:
             logger.debug("visual follow-up aviation shortcut skipped", exc_info=True)
+
+    # Mid-thread taste/size refinements ("less corporate", "bigger") — not 3-word small talk.
+    if history and not query_has_aviation_signals(raw):
+        _hist_parts = [
+            str((h or {}).get("content") or "")
+            for h in (history or [])[-12:]
+            if isinstance(h, dict)
+        ]
+        if query_has_aviation_signals(" ".join(_hist_parts)) and re.search(
+            r"(?is)\b("
+            r"less\s+corporate|more\s+modern|bigger|smaller|cockpit\s+too|"
+            r"something\s+(?:less|more|nicer)|cabin\s+feel"
+            r")\b",
+            raw,
+        ):
+            return ConversationGuardResult(ConversationMessageType.AVIATION_QUERY, None)
 
     _academic_decline = _try_advanced_academic_decline_reply(raw)
     if _academic_decline is not None:

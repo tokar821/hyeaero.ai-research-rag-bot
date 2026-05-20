@@ -10,6 +10,7 @@ import pytest
 from rag.semantic_reranker import (
     SemanticRerankerService,
     effective_reranker_model_name_from_env,
+    reranker_resources_available,
 )
 
 
@@ -62,6 +63,29 @@ def test_from_env_explicit_model_overrides_light(monkeypatch):
     monkeypatch.setenv("RAG_RERANKER_MODEL", "BAAI/bge-reranker-large")
     svc = SemanticRerankerService.from_env()
     assert svc.model_name == "BAAI/bge-reranker-large"
+
+
+def test_reranker_resources_available_low_disk(monkeypatch):
+    monkeypatch.setenv("RAG_RERANKER_MODEL", "BAAI/bge-reranker-large")
+    monkeypatch.delenv("RAG_RERANK_LIGHT", raising=False)
+
+    import rag.semantic_reranker as sr
+
+    monkeypatch.setattr(sr, "reranker_model_cached", lambda _m: False)
+    monkeypatch.setattr(
+        sr,
+        "huggingface_cache_dir",
+        lambda: __import__("pathlib").Path("/tmp/hf-test-cache"),
+    )
+
+    class _Usage:
+        free = 100 * 1024 * 1024  # 100 MB
+
+    monkeypatch.setattr("shutil.disk_usage", lambda _p: _Usage())
+
+    ok, reason = reranker_resources_available("BAAI/bge-reranker-large")
+    assert ok is False
+    assert "insufficient disk" in reason.lower()
 
 
 def test_from_env_light_auto_on_render(monkeypatch):

@@ -64,6 +64,47 @@ def test_tail_n628ts_preserved():
     assert b1.state.last_visual_context == "cockpit"
 
 
+def test_view_change_prefers_intent_aircraft_over_stale_retrieval_models():
+    b0 = run_conversation_state_turn(
+        query="Compare G700 vs Global 7500.",
+        client_conversation_state=None,
+        refinement_type="comparison_anchor",
+        intent_resolved={"active_aircraft": "G700", "comparison_target": "G700 vs Global 7500"},
+        entity_models=["Challenger 350"],
+    )
+    assert b0.state.active_aircraft == "G700"
+    assert "7500" in (b0.state.comparison_target or "")
+
+    b1 = run_conversation_state_turn(
+        query="Show cockpit too.",
+        client_conversation_state=_client(b0),
+        refinement_type="view_change",
+        intent_resolved={"active_aircraft": "G700", "active_visual_focus": "cockpit"},
+        entity_models=["Challenger 350"],
+        user_wants_gallery=True,
+    )
+    assert b1.state.active_aircraft == "G700"
+    assert b1.state.last_visual_context == "cockpit"
+
+
+def test_comparison_thread_blocks_stale_entity_model():
+    b0 = run_conversation_state_turn(
+        query="Compare G700 vs Global 7500.",
+        client_conversation_state=None,
+        refinement_type="comparison_anchor",
+        intent_resolved={"active_aircraft": "G700", "comparison_target": "G700 vs Global 7500"},
+    )
+    b1 = run_conversation_state_turn(
+        query="I care more about cabin feel than speed.",
+        client_conversation_state=_client(b0),
+        refinement_type="none",
+        entity_models=["Bombardier Challenger 604"],
+        intent_resolved={"active_aircraft": "G700"},
+    )
+    assert b1.state.active_aircraft == "G700"
+    assert b1.state.comparison_target
+
+
 def test_explicit_reset_clears_memory():
     b0 = run_conversation_state_turn(
         query="Show Phenom 300",
