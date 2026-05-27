@@ -116,8 +116,8 @@
       "status": "PASS",
       "routes": [
         "Lagos -> Geneva",
-        "Houston -> Geneva",
         "Houston -> Paris",
+        "Houston -> Geneva",
         "Houston -> Nigerian Energy Corridor"
       ],
       "expect_hits": [
@@ -143,29 +143,19 @@
       "dir": {
         "corrected": [
           "Lagos -> Geneva",
-          "Houston -> Geneva",
           "Houston -> Paris",
+          "Houston -> Geneva",
           "Houston -> Nigerian Energy Corridor"
         ],
-        "removed": [],
-        "swapped": [
-          "Geneva -> Houston -> Houston -> Geneva"
-        ]
+        "removed": [
+          "Geneva -> Houston"
+        ],
+        "swapped": []
       },
       "topo": {
         "edges": [
           {
             "origin": "Lagos",
-            "destination": "Geneva",
-            "authority": "explicit",
-            "confidence": 0.9,
-            "operational_domain": "executive_hub->executive_hub",
-            "structurally_valid": true,
-            "edge_inference_type": "explicit",
-            "rejection_reason": ""
-          },
-          {
-            "origin": "Houston",
             "destination": "Geneva",
             "authority": "explicit",
             "confidence": 0.9,
@@ -186,6 +176,16 @@
           },
           {
             "origin": "Houston",
+            "destination": "Geneva",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
             "destination": "Nigerian Energy Corridor",
             "authority": "explicit",
             "confidence": 0.9,
@@ -197,8 +197,8 @@
         ],
         "kept_routes": [
           "Lagos -> Geneva",
-          "Houston -> Geneva",
           "Houston -> Paris",
+          "Houston -> Geneva",
           "Houston -> Nigerian Energy Corridor"
         ],
         "removed_routes": []
@@ -209,8 +209,8 @@
           "kind": "domestic_executive",
           "routes": [
             "Lagos -> Geneva",
-            "Houston -> Geneva",
             "Houston -> Paris",
+            "Houston -> Geneva",
             "Houston -> Nigerian Energy Corridor"
           ]
         }
@@ -222,7 +222,8 @@
       "routes": [
         "Calgary -> Frankfurt",
         "Calgary -> Yellowknife",
-        "Yellowknife -> Nunavut Field Ops"
+        "Yellowknife -> Nunavut Field Ops",
+        "Yellowknife -> Frankfurt"
       ],
       "expect_hits": [
         "calgary",
@@ -232,9 +233,9 @@
       ],
       "expect_miss": [],
       "reject_hits": [],
-      "decomposition": false,
-      "proof": "none",
-      "suppressed": false,
+      "decomposition": true,
+      "proof": "incompatible_bands",
+      "suppressed": true,
       "geo": {
         "routes_added": [
           "Yellowknife -> Nunavut Field Ops"
@@ -312,7 +313,8 @@
           "routes": [
             "Calgary -> Frankfurt",
             "Calgary -> Yellowknife",
-            "Yellowknife -> Nunavut Field Ops"
+            "Yellowknife -> Nunavut Field Ops",
+            "Yellowknife -> Frankfurt"
           ]
         }
       ]
@@ -321,11 +323,12 @@
       "title": "Q4 Cross-domain ghost (Asia to Caribbean)",
       "status": "PASS",
       "routes": [
-        "Miami -> Singapore",
         "Miami -> Los Angeles",
         "Miami -> Caribbean",
         "Los Angeles -> Tokyo",
-        "Singapore -> Dubai"
+        "Singapore -> Dubai",
+        "Miami -> Dubai",
+        "Los Angeles -> Dubai"
       ],
       "expect_hits": [
         "los angeles -> tokyo",
@@ -346,8 +349,6 @@
       },
       "dir": {
         "corrected": [
-          "Miami -> Tokyo",
-          "Miami -> Singapore",
           "Miami -> Dubai",
           "Los Angeles -> Dubai",
           "Miami -> Los Angeles",
@@ -355,31 +356,14 @@
           "Los Angeles -> Tokyo",
           "Singapore -> Dubai"
         ],
-        "removed": [],
+        "removed": [
+          "Miami -> Tokyo",
+          "Miami -> Singapore"
+        ],
         "swapped": []
       },
       "topo": {
         "edges": [
-          {
-            "origin": "Miami",
-            "destination": "Tokyo",
-            "authority": "explicit",
-            "confidence": 0.9,
-            "operational_domain": "executive_hub->executive_hub",
-            "structurally_valid": true,
-            "edge_inference_type": "explicit",
-            "rejection_reason": ""
-          },
-          {
-            "origin": "Miami",
-            "destination": "Singapore",
-            "authority": "explicit",
-            "confidence": 0.9,
-            "operational_domain": "executive_hub->executive_hub",
-            "structurally_valid": true,
-            "edge_inference_type": "explicit",
-            "rejection_reason": ""
-          },
           {
             "origin": "Miami",
             "destination": "Dubai",
@@ -442,8 +426,6 @@
           }
         ],
         "kept_routes": [
-          "Miami -> Tokyo",
-          "Miami -> Singapore",
           "Miami -> Dubai",
           "Los Angeles -> Dubai",
           "Miami -> Los Angeles",
@@ -455,10 +437,12 @@
       },
       "segments": [
         {
-          "label": "Transatlantic Executive",
-          "kind": "transatlantic_executive",
+          "label": "Ulr Continuation",
+          "kind": "ulr_continuation",
           "routes": [
-            "Los Angeles -> Tokyo"
+            "Singapore -> Dubai",
+            "Miami -> Dubai",
+            "Los Angeles -> Dubai"
           ]
         },
         {
@@ -472,15 +456,14 @@
           "label": "Domestic Executive",
           "kind": "domestic_executive",
           "routes": [
-            "Miami -> Singapore",
             "Miami -> Los Angeles"
           ]
         },
         {
-          "label": "Ulr Continuation",
-          "kind": "ulr_continuation",
+          "label": "Transatlantic Executive",
+          "kind": "transatlantic_executive",
           "routes": [
-            "Singapore -> Dubai"
+            "Los Angeles -> Tokyo"
           ]
         }
       ]

@@ -1,0 +1,284 @@
+{
+  "summary": {
+    "PASS": 10,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "title": "Q1 Arctic + executive + industrial conflict",
+      "status": "PASS",
+      "domains": [
+        "arctic_operations",
+        "industrial_field",
+        "executive_transport",
+        "ulr_continuation"
+      ],
+      "weights": [
+        0.98,
+        0.92,
+        0.87,
+        0.78
+      ],
+      "hard_domains": [
+        "arctic_operations",
+        "industrial_field"
+      ],
+      "flags_hit": [
+        "arctic_hard_domain",
+        "industrial_hard_domain"
+      ],
+      "invalid": [
+        "single_ulr_covers_arctic_gravel_and_transatlantic_executive",
+        "single_aircraft_universal_hard_domain_coverage",
+        "brochure_range_on_gravel_or_ice_strips",
+        "executive_ulr_subordinates_industrial_field_access"
+      ],
+      "notes": [
+        "Arctic / gravel operations bind runway and winter dispatch before cabin or brochure range.",
+        "Industrial or mining field access is a hard operational constraint \u2014 not a soft preference."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q2 Founder + global prestige vs domestic reality",
+      "status": "PASS",
+      "domains": [
+        "executive_transport",
+        "ulr_continuation",
+        "domestic_utilization"
+      ],
+      "weights": [
+        0.87,
+        0.78,
+        0.7
+      ],
+      "hard_domains": [],
+      "flags_hit": [
+        "ulr_continuation_requires_mandate_hub_origin"
+      ],
+      "invalid": [],
+      "notes": [
+        "Operational priority order: executive transport, ulr continuation, domestic utilization."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q3 Mining + Asia + Europe tri-domain stress",
+      "status": "PASS",
+      "domains": [
+        "mining_logistics",
+        "executive_transport",
+        "ulr_continuation"
+      ],
+      "weights": [
+        0.88,
+        0.82,
+        0.78
+      ],
+      "hard_domains": [
+        "mining_logistics"
+      ],
+      "flags_hit": [
+        "mining_hard_domain"
+      ],
+      "invalid": [],
+      "notes": [
+        "Industrial or mining field access is a hard operational constraint \u2014 not a soft preference."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q4 Arctic + transatlantic + Caribbean mix",
+      "status": "PASS",
+      "domains": [
+        "arctic_operations",
+        "executive_transport",
+        "ulr_continuation",
+        "caribbean_regional"
+      ],
+      "weights": [
+        0.98,
+        0.87,
+        0.78,
+        0.55
+      ],
+      "hard_domains": [
+        "arctic_operations"
+      ],
+      "flags_hit": [
+        "arctic_hard_domain"
+      ],
+      "invalid": [
+        "single_ulr_covers_arctic_gravel_and_transatlantic_executive",
+        "brochure_range_on_gravel_or_ice_strips"
+      ],
+      "notes": [
+        "Arctic / gravel operations bind runway and winter dispatch before cabin or brochure range."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q5 Multi-continent engineering + cargo variability",
+      "status": "PASS",
+      "domains": [
+        "executive_transport",
+        "ulr_continuation",
+        "domestic_utilization"
+      ],
+      "weights": [
+        0.82,
+        0.78,
+        0.7
+      ],
+      "hard_domains": [],
+      "flags_hit": [],
+      "invalid": [],
+      "notes": [
+        "Operational priority order: executive transport, ulr continuation, domestic utilization."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q6 Asia-Pacific + ski season conflict",
+      "status": "PASS",
+      "domains": [
+        "ulr_continuation",
+        "mountain_leisure"
+      ],
+      "weights": [
+        0.78,
+        0.38
+      ],
+      "hard_domains": [],
+      "flags_hit": [],
+      "invalid": [
+        "mountain_leisure_equated_with_ulr_mandate"
+      ],
+      "notes": [
+        "Operational priority order: ulr continuation, mountain leisure."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q7 Industrial Africa + EU executive overlay",
+      "status": "PASS",
+      "domains": [
+        "industrial_field",
+        "executive_transport",
+        "ulr_continuation"
+      ],
+      "weights": [
+        0.92,
+        0.82,
+        0.78
+      ],
+      "hard_domains": [
+        "industrial_field"
+      ],
+      "flags_hit": [
+        "industrial_hard_domain"
+      ],
+      "invalid": [
+        "executive_ulr_subordinates_industrial_field_access"
+      ],
+      "notes": [
+        "Industrial or mining field access is a hard operational constraint \u2014 not a soft preference."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q8 Continuation hub ambiguity (Dubai/Singapore)",
+      "status": "PASS",
+      "domains": [
+        "executive_transport",
+        "ulr_continuation",
+        "domestic_utilization"
+      ],
+      "weights": [
+        0.82,
+        0.78,
+        0.7
+      ],
+      "hard_domains": [],
+      "flags_hit": [
+        "continuation_hubs_semantic_only_not_primary_origin"
+      ],
+      "invalid": [],
+      "notes": [
+        "Operational priority order: executive transport, ulr continuation, domestic utilization."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q9 Extreme mixed-domain pressure system",
+      "status": "PASS",
+      "domains": [
+        "arctic_operations",
+        "industrial_field",
+        "executive_transport",
+        "ulr_continuation",
+        "caribbean_regional"
+      ],
+      "weights": [
+        0.98,
+        0.92,
+        0.82,
+        0.78,
+        0.55
+      ],
+      "hard_domains": [
+        "arctic_operations",
+        "industrial_field"
+      ],
+      "flags_hit": [
+        "multi_hard_domain_mission"
+      ],
+      "invalid": [
+        "single_ulr_covers_arctic_gravel_and_transatlantic_executive",
+        "single_aircraft_universal_hard_domain_coverage",
+        "brochure_range_on_gravel_or_ice_strips",
+        "executive_ulr_subordinates_industrial_field_access"
+      ],
+      "notes": [
+        "Arctic / gravel operations bind runway and winter dispatch before cabin or brochure range.",
+        "Industrial or mining field access is a hard operational constraint \u2014 not a soft preference."
+      ],
+      "errors": []
+    },
+    {
+      "title": "Q10 One-aircraft constraint stress test",
+      "status": "PASS",
+      "domains": [
+        "arctic_operations",
+        "industrial_field",
+        "executive_transport",
+        "ulr_continuation",
+        "caribbean_regional"
+      ],
+      "weights": [
+        0.98,
+        0.92,
+        0.82,
+        0.78,
+        0.55
+      ],
+      "hard_domains": [
+        "arctic_operations",
+        "industrial_field"
+      ],
+      "flags_hit": [],
+      "invalid": [
+        "single_ulr_covers_arctic_gravel_and_transatlantic_executive",
+        "single_aircraft_universal_hard_domain_coverage",
+        "single_aircraft_preference_over_hard_domain_conflict",
+        "brochure_range_on_gravel_or_ice_strips",
+        "executive_ulr_subordinates_industrial_field_access"
+      ],
+      "notes": [
+        "Arctic / gravel operations bind runway and winter dispatch before cabin or brochure range.",
+        "Industrial or mining field access is a hard operational constraint \u2014 not a soft preference."
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -212,4 +212,19 @@ def apply_pre_ranking_representation(
     )
     snapshot["geographic_graph_authority"] = auth_graph.to_dict()
 
+    # 7. Geographic + routing stabilization (no semantics changes)
+    try:
+        from services.mission.mission_graph_stabilizer import stabilize_mission_graph
+
+        stabilize_mission_graph(
+            query=query,
+            profile=profile,
+            original_route_labels=packet.explicit_constraints.get("routes")
+            if packet is not None
+            else None,
+            data_used=du,
+        )
+    except Exception:
+        pass
+
     return profile, mission, packet

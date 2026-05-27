@@ -1,0 +1,261 @@
+{
+  "summary": {
+    "PASS": 15,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "title": "Q1 Arctic + multi-hub stress (Nunavut anchor)",
+      "status": "PASS",
+      "hub_count": 4,
+      "hubs": [
+        "calgary",
+        "london",
+        "paris",
+        "yellowknife"
+      ],
+      "node_count": 8,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q2 Multi-continent hub conflict (NY / LA / Miami)",
+      "status": "PASS",
+      "hub_count": 6,
+      "hubs": [
+        "london",
+        "los angeles",
+        "miami",
+        "new york",
+        "sao paulo",
+        "tokyo"
+      ],
+      "node_count": 8,
+      "edge_count": 3,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "London",
+        "New York",
+        "Singapore",
+        "Tokyo"
+      ]
+    },
+    {
+      "title": "Q3 Industrial Africa + Europe + Middle East continuation",
+      "status": "PASS",
+      "hub_count": 3,
+      "hubs": [
+        "houston",
+        "lagos",
+        "zurich"
+      ],
+      "node_count": 6,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Lagos"
+      ]
+    },
+    {
+      "title": "Q4 Australia mining + Asia + Europe (Perth anchor)",
+      "status": "PASS",
+      "hub_count": 3,
+      "hubs": [
+        "london",
+        "perth",
+        "tokyo"
+      ],
+      "node_count": 7,
+      "edge_count": 7,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q5 Arctic Canada + US East Coast + Europe mix",
+      "status": "PASS",
+      "hub_count": 5,
+      "hubs": [
+        "calgary",
+        "london",
+        "new york",
+        "paris",
+        "yellowknife"
+      ],
+      "node_count": 6,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q6 Caribbean + ME continuation trap",
+      "status": "PASS",
+      "hub_count": 2,
+      "hubs": [
+        "miami",
+        "riyadh"
+      ],
+      "node_count": 5,
+      "edge_count": 4,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Europe"
+      ]
+    },
+    {
+      "title": "Q7 South America + Africa + Europe tri-domain",
+      "status": "PASS",
+      "hub_count": 5,
+      "hubs": [
+        "houston",
+        "lagos",
+        "london",
+        "sao paulo",
+        "zurich"
+      ],
+      "node_count": 7,
+      "edge_count": 14,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q8 Asia-Pacific + US West Coast + ski domain conflict",
+      "status": "PASS",
+      "hub_count": 8,
+      "hubs": [
+        "aspen",
+        "banff",
+        "jackson hole",
+        "los angeles",
+        "san francisco",
+        "seattle",
+        "seoul",
+        "tokyo"
+      ],
+      "node_count": 13,
+      "edge_count": 13,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Seattle"
+      ]
+    },
+    {
+      "title": "Q9 Hub inversion trap (continuation ambiguity)",
+      "status": "PASS",
+      "hub_count": 3,
+      "hubs": [
+        "boston",
+        "chicago",
+        "new york"
+      ],
+      "node_count": 6,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q10 Industrial Texas + West Africa + Europe",
+      "status": "PASS",
+      "hub_count": 3,
+      "hubs": [
+        "houston",
+        "paris",
+        "zurich"
+      ],
+      "node_count": 6,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q11 Arctic + industrial + Asia-Pacific overload",
+      "status": "PASS",
+      "hub_count": 4,
+      "hubs": [
+        "houston",
+        "london",
+        "tokyo",
+        "yellowknife"
+      ],
+      "node_count": 7,
+      "edge_count": 4,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Tokyo"
+      ]
+    },
+    {
+      "title": "Q12 Multi-hub collapse test (5+ hubs)",
+      "status": "PASS",
+      "hub_count": 7,
+      "hubs": [
+        "houston",
+        "london",
+        "los angeles",
+        "miami",
+        "new york",
+        "sao paulo",
+        "tokyo"
+      ],
+      "node_count": 10,
+      "edge_count": 12,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Houston",
+        "Miami"
+      ]
+    },
+    {
+      "title": "Q13 Directionality stress test (reversal trap)",
+      "status": "PASS",
+      "hub_count": 4,
+      "hubs": [
+        "houston",
+        "lagos",
+        "london",
+        "new york"
+      ],
+      "node_count": 6,
+      "edge_count": 8,
+      "failures": [],
+      "dropped_nodes_restored": []
+    },
+    {
+      "title": "Q14 Node loss stress test (remote geography)",
+      "status": "PASS",
+      "hub_count": 5,
+      "hubs": [
+        "lagos",
+        "london",
+        "new york",
+        "perth",
+        "yellowknife"
+      ],
+      "node_count": 9,
+      "edge_count": 9,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Pilbara"
+      ]
+    },
+    {
+      "title": "Q15 Extreme mixed-domain final boss",
+      "status": "PASS",
+      "hub_count": 5,
+      "hubs": [
+        "houston",
+        "london",
+        "miami",
+        "tokyo",
+        "yellowknife"
+      ],
+      "node_count": 11,
+      "edge_count": 6,
+      "failures": [],
+      "dropped_nodes_restored": [
+        "Singapore",
+        "Tokyo"
+      ]
+    }
+  ]
+}

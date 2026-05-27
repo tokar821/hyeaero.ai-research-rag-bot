@@ -367,6 +367,7 @@ def run_deterministic_stages(
                     broker_memory=broker_mem.to_dict(),
                     history=_hist if isinstance(_hist, list) else None,
                     inferred=inferred,
+                    data_used=data_used if isinstance(data_used, dict) else None,
                 )
             mission_profile_out = apply_understanding_to_profile(
                 mission_profile_out,

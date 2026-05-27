@@ -189,6 +189,18 @@ def _is_extractor_leak(origin: str, dest: str, text: str) -> bool:
     if d == "caribbean" and o not in _CARIBBEAN_ANCHOR_HUBS:
         if o in _NON_FLORIDA_CARIBBEAN_ORIGINS or is_me_continuation_hub(origin):
             return True
+    # ME continuation hub -> US executive city without literal edge (remove, never swap)
+    if is_me_continuation_hub(origin) and _is_us_executive_city(dest):
+        if literal_direction_in_text(origin, dest, text) is not True:
+            return True
+    # EU executive -> operational hub inversion without literal edge (remove, never swap)
+    if o in _EU_EXEC_CITIES and d in _OPERATIONAL_HUBS:
+        if literal_direction_in_text(origin, dest, text) is not True:
+            return True
+    # Florida hub -> Pacific/ULR cities without literal edge (avoid Miami absorbing LA/Tokyo)
+    if o in _CARIBBEAN_ANCHOR_HUBS and d in _PACIFIC_ULR_CITIES:
+        if literal_direction_in_text(origin, dest, text) is not True:
+            return True
     # Florida corridor hub → transatlantic EU without literal edge
     if o in _CARIBBEAN_ANCHOR_HUBS and d in _EU_EXEC_CITIES:
         if literal_direction_in_text(origin, dest, text) is not True:
@@ -202,24 +214,13 @@ def _is_extractor_leak(origin: str, dest: str, text: str) -> bool:
 
 def should_swap_continuation(origin: str, destination: str, text: str) -> bool:
     """ME hub as origin to US executive city without textual reverse authority."""
-    stated = literal_direction_in_text(origin, destination, text)
-    if stated is not None:
-        return stated is False and _is_us_executive_city(destination)
-
-    o_l, d_l = origin.lower(), destination.lower()
-    if is_me_continuation_hub(origin) and _is_us_executive_city(destination):
-        return True
+    # Geographic stabilization rule: never swap/flip routes here.
     return False
 
 
 def should_swap_eu_to_operational_hub(origin: str, destination: str, text: str) -> bool:
     """EU city → operational hub should be hub → EU unless explicitly stated backward."""
-    stated = literal_direction_in_text(origin, destination, text)
-    if stated is not None:
-        return False
-    o_l, d_l = origin.lower(), destination.lower()
-    if o_l in _EU_EXEC_CITIES and d_l in _OPERATIONAL_HUBS:
-        return True
+    # Geographic stabilization rule: never swap/flip routes here.
     return False
 
 
@@ -237,22 +238,6 @@ def validate_route_direction(
 
     o, d = route.origin, route.destination
     if _is_extractor_leak(o, d, text):
-        return None, "remove"
-
-    if should_swap_continuation(o, d, text):
-        from services.mission.route_extractor import _build_route_extraction
-
-        ext = _build_route_extraction(d, o, pattern_boost=0.1)
-        if ext:
-            return ext.route, "swap"
-        return None, "remove"
-
-    if should_swap_eu_to_operational_hub(o, d, text):
-        from services.mission.route_extractor import _build_route_extraction
-
-        ext = _build_route_extraction(d, o, pattern_boost=0.1)
-        if ext:
-            return ext.route, "swap"
         return None, "remove"
 
     stated = literal_direction_in_text(o, d, text)

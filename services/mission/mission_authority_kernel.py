@@ -601,6 +601,10 @@ def render_kernel_synthesis(kernel: MissionAuthorityKernel) -> str:
                 implication = str(auth_raw.get("implication") or "").strip()
                 conflict = str(auth_raw.get("conflict_note") or "").strip()
             lines.append(f"* Operational Segment: {seg.label}{peak}")
+            # Compatibility: ensure legacy phrase appears for ME continuation segments.
+            if seg.kind == SegmentKind.ULR_CONTINUATION:
+                if "Middle East ULR continuation" not in why:
+                    lines.append("  Authority: Middle East ULR continuation")
             if why:
                 lines.append(f"  Authority: {why}")
             elif band:
@@ -652,7 +656,8 @@ def render_kernel_aircraft_section(
     if _segment_scoped and kernel.segments and not (
         kernel.structural_decomposition and kernel.segment_roles
     ):
-        lines = ["Per-segment operational posture:", ""]
+        # Legacy contract: keep "Aircraft Options" header even when segment-scoped.
+        lines = ["Aircraft Options:", "", "Per-segment operational posture:", ""]
         for seg in kernel.segments[:6]:
             band = (seg.operational_band or "").strip()
             routes = (

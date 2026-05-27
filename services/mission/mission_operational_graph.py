@@ -36,6 +36,13 @@ PROTECTED_INFERRED_KEYS = frozenset(
         "annual_charter_hours",
         "fuel_stop_averse",
         "runway_over_cabin",
+        "arctic_hard_domain",
+        "industrial_hard_domain",
+        "mining_hard_domain",
+        "multi_hard_domain_mission",
+        "semantic_invalid_interpretations",
+        "hard_domains",
+        "mission_semantic_domains",
     }
 )
 

@@ -879,6 +879,7 @@ def build_mission_understanding(
     history: Optional[Sequence[Dict[str, str]]] = None,
     inferred: Optional[InferredMissionProfile] = None,
     use_llm: Optional[bool] = None,
+    data_used: Optional[Dict[str, Any]] = None,
 ) -> MissionUnderstandingPacket:
     """
     Full mission understanding pass — runs after field extraction, before ranking.
@@ -903,6 +904,17 @@ def build_mission_understanding(
             f"Mission pivot — current turn isolated from prior session ({continuity.reason})."
         )
     packet.confidence_scores["continuity_confidence"] = continuity.continuity_confidence
+
+    # Phase 2 semantic stabilization — intent only, no routes or aircraft
+    from services.mission.mission_semantic_model import stabilize_mission_semantics
+
+    stabilize_mission_semantics(
+        context_text,
+        profile,
+        mission,
+        packet,
+        data_used=data_used if isinstance(data_used, dict) else None,
+    )
 
     # Latent passenger norm inference:
     # on follow-ups, the operational posture still depends on the passenger load.

@@ -576,9 +576,9 @@
       ],
       "expect_miss": [],
       "reject_hits": [],
-      "decomposition": false,
-      "proof": "none",
-      "suppressed": false,
+      "decomposition": true,
+      "proof": "multi_continent_portfolio",
+      "suppressed": true,
       "geo": {
         "routes_added": [],
         "routes_rebalanced": [],
@@ -767,7 +767,8 @@
         "Los Angeles -> Sun Valley",
         "Los Angeles -> Banff",
         "Los Angeles -> Singapore",
-        "New York -> London"
+        "New York -> London",
+        "Los Angeles -> Seoul"
       ],
       "expect_hits": [
         "los angeles",

@@ -535,6 +535,38 @@ def format_broker_advisory_response(
 
     if not viable:
         if packet is not None:
+            # Interpretation-only prompts: structure first, no aircraft output.
+            if query:
+                try:
+                    from services.mission.mission_interpretation_formatter import (
+                        format_mission_interpretation,
+                        is_interpretation_only_query,
+                    )
+                    from services.mission.mission_authority_kernel import (
+                        build_mission_authority_kernel,
+                    )
+
+                    if is_interpretation_only_query(query) or bool(
+                        packet.inferred_constraints.get("defer_global_shortlist")
+                    ):
+                        kernel = build_mission_authority_kernel(
+                            mission,
+                            packet,
+                            recommendations=[],
+                            query=query or "",
+                            data_used=data_used,
+                            route_certainty_degraded=route_degraded,
+                            projection_trace=projection_trace,
+                        )
+                        return format_mission_interpretation(
+                            mission,
+                            packet,
+                            kernel,
+                            query=query or "",
+                            data_used=data_used,
+                        )
+                except Exception:
+                    pass
             return format_understanding_first_advisory(
                 mission,
                 packet,
