@@ -1,0 +1,174 @@
+[
+  {
+    "name": "SFO_Tokyo_London_winter",
+    "query": "SFO to Tokyo and London nonstop westbound winter 8 passengers",
+    "recommendations": [],
+    "feasible_models": [
+      "Falcon 8X",
+      "Gulfstream G650ER",
+      "Gulfstream G650",
+      "Global 6500",
+      "Global 7500"
+    ],
+    "eliminated_models": [
+      "Citation CJ2",
+      "Citation CJ4",
+      "Citation Latitude",
+      "Praetor 600",
+      "Challenger 350",
+      "Challenger 650",
+      "Challenger Longitude",
+      "Gulfstream G280",
+      "Falcon 2000",
+      "Falcon 7X"
+    ],
+    "mission_category": "coast_to_coast",
+    "packet": {
+      "corridor_type": "multi_leg_ultra_long",
+      "bands": [
+        "Transatlantic super-mid / heavy-cabin executive band",
+        "Multi-leg ultra-long-range executive band"
+      ],
+      "recommend_aircraft": true,
+      "confidence": 1.0,
+      "inferred": {
+        "executive_travel_profile": true,
+        "minimum_jet_cabin_floor": true,
+        "dual_use_or_multi_leg": true,
+        "westbound_winter_pressure": true,
+        "international_jet_floor": true,
+        "planning_band_ceiling": "super_midsize",
+        "transatlantic_super_mid_floor": true
+      },
+      "synthesis": "Westbound long-stage planning \u2014 headwind and alternate fuel drive dispatch reliability. Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic super-mid / heavy-cabin executive band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with super-mid or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 8 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Westbound winter margin is decisive \u2014 headwind and alternate fuel burn eliminate marginal ULR airframes from reliable dispatch; ER-class reserves separate conditional from strong performers.. Base-range G650-class may be conditional on winter westbound legs; G650ER and Global 7500-class typically carry stronger dispatch headroom at full passenger load.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated).. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load... Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load.."
+    },
+    "answer": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: San Francisco -> Tokyo; San Francisco -> London\n- Pax: 8\n- Operational read: Westbound long-stage planning  headwind and alternate fuel drive dispatch reliability. Europe / intercontinental stage  light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range  this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 8 passengers with executive baggage  payload-range tradeoffs materially tighten the shortlist versus brochure range.. Westbound winter margin is decisive  headwind and alternate fuel burn eliminate marginal ULR airframes from reliable dispatch; ER-class reserves separate conditional from strong performers.. Base-range G650-class may be conditional on winter westbound legs; G650ER and Global 7500-class typically carry stronger dispatch headroom at full passenger load.. Multi-leg ULR portfolio from a single hub  one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated).. Executive travel profile  dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load... Executive travel profile  dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load..\n- Inferred posture: executive travel profile, minimum jet cabin floor, dual use or multi leg, westbound winter pressure, international jet floor, planning band ceiling\n\nAircraft Class Band:\n\n- Transatlantic / heavy-cabin executive band\n- Multi-leg ultra-long-range executive band\n\nFleet Structure:\n\n- This mission spans incompatible operational bands  one aircraft is unlikely to cover both credibly.\n- Consider splitting by mission band  separate platforms often beat one compromised airframe.\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio likely  Transatlantic / heavy-cabin executive band, Multi-leg ultra-long-range executive band"
+  },
+  {
+    "name": "Miami_Caribbean_SA",
+    "query": "Miami Caribbean South America 8 passengers runway flexibility over luxury",
+    "recommendations": [
+      "Challenger 350",
+      "Citation Latitude"
+    ],
+    "feasible_models": [
+      "Citation Latitude",
+      "Praetor 600",
+      "Challenger 350",
+      "Gulfstream G280"
+    ],
+    "eliminated_models": [
+      "Citation CJ2",
+      "Citation CJ4",
+      "Challenger 650",
+      "Challenger Longitude",
+      "Falcon 2000",
+      "Falcon 7X",
+      "Falcon 8X",
+      "Gulfstream G650ER",
+      "Gulfstream G650",
+      "Global 6500"
+    ],
+    "mission_category": "coast_to_coast",
+    "packet": {
+      "corridor_type": "caribbean_regional",
+      "bands": [
+        "Caribbean executive regional jet band",
+        "Caribbean island-ops short-runway band"
+      ],
+      "recommend_aircraft": true,
+      "confidence": 0.925,
+      "inferred": {
+        "executive_travel_profile": true,
+        "minimum_jet_cabin_floor": true,
+        "corrosion_exposure": true,
+        "island_ops": true,
+        "runway_over_cabin": true,
+        "international_jet_floor": true,
+        "field_capable_super_mid_floor": true,
+        "planning_band_ceiling": "super_midsize"
+      },
+      "synthesis": "Island and tropical operating environment \u2014 heat, humidity, and corrosion exposure. Runway access matters, but executive dispatch and pressurized jet credibility remain the floor. Credible aircraft class conversation starts in: Caribbean executive regional jet band, Caribbean island-ops short-runway band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load.. Caribbean / tropical ops with executive load \u2014 runway access matters, but pressurized jet dispatch and cabin standards remain the floor; PC-12-class is a compromise, not the planning band.. Regional scope includes Caribbean, South America \u2014 size for hub-spoke island ops and occasional longer South America legs, not STOL utility economics... Regional scope includes Caribbean, South America \u2014 size for hub-spoke island ops and occasional longer South America legs, not STOL utility economics.."
+    },
+    "answer": "Nothing in the catalog passed every hard gate as stated  that usually means range with reserves, runway, or passenger load is fighting the request, not that aviation is unknowable. For Miami -> Caribbean with 8 passengers:\n- If you can relax nonstop, the feasible band often widens by one cabin class.\n- If runway or hot/high is the limiter, prioritize field-performance / light-jet bands over range-first transcon setups.\n- Tell me which constraint can move (payload, date, nonstop requirement) and I will re-run the shortlist."
+  },
+  {
+    "name": "Ownership_250hr",
+    "query": "We currently charter around 250 hours annually. At what point does ownership actually become rational?",
+    "recommendations": [],
+    "feasible_models": [],
+    "eliminated_models": [],
+    "mission_category": null,
+    "packet": {
+      "corridor_type": null,
+      "bands": null,
+      "recommend_aircraft": null,
+      "confidence": null,
+      "inferred": null,
+      "synthesis": null
+    },
+    "answer": "Ownership Economics (simulated):\n\n- Utilization: hybrid (250400 hr/year)\n- Structure: charter or card\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed  ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: Dispatch tradeoff: charter/card preserves peak-day flexibility without fixed crew idle; ownership or higher fractional share buys schedule control when ad-hoc lift fails . Capital efficiency: compare burdened all-in hourly (fixed + variable amortized) to fractional card pricing at your peak month  crossover is often utilization-driven, not average-hours driven. Fractional crossover band (~200350 hr/year): evaluate guaranteed availability days, deadhead reposition assumptions, and management overhead before full ownership. Peak-day conflicts: charter pools thin on holidays and major events; ownership/fractional addresses availability risk that average annual hours understate. Deadhead reality: hub-and-spoke or multi-city programs add empty reposition legs  burdened economics must include reposition, not just occupied block hours. In the 200400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe  structure precedes model.\n- Dispatch: schedule-critical  favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth  not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel)."
+  },
+  {
+    "name": "PE_group",
+    "query": "We are a private equity group. Teams move between New York, Dallas, London, and occasionally Dubai. Senior partners hate fuel stops, but we also visit smaller industrial airports domestically. We currently charter around 300 hours annually and are debating ownership.",
+    "recommendations": [],
+    "feasible_models": [
+      "Falcon 8X",
+      "Gulfstream G650ER",
+      "Gulfstream G650",
+      "Global 6500",
+      "Global 7500"
+    ],
+    "eliminated_models": [
+      "Citation CJ2",
+      "Citation CJ4",
+      "Citation Latitude",
+      "Praetor 600",
+      "Challenger 350",
+      "Challenger 650",
+      "Challenger Longitude",
+      "Gulfstream G280",
+      "Falcon 2000",
+      "Falcon 7X"
+    ],
+    "mission_category": "coast_to_coast",
+    "packet": {
+      "corridor_type": "multi_leg_ultra_long",
+      "bands": [
+        "Transatlantic super-mid / heavy-cabin executive band",
+        "Domestic field-access executive band",
+        "Multi-leg ultra-long-range executive band"
+      ],
+      "recommend_aircraft": true,
+      "confidence": 0.928,
+      "inferred": {
+        "executive_travel_profile": true,
+        "industrial_airport_access": true,
+        "incompatible_mission_bands": true,
+        "dual_use_or_multi_leg": true,
+        "ownership_economics_relevant": true,
+        "annual_charter_hours": 300,
+        "fuel_stop_averse": true,
+        "international_jet_floor": true,
+        "planning_band_ceiling": "super_midsize",
+        "transatlantic_super_mid_floor": true
+      },
+      "synthesis": "Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Ownership posture reads as charter transition with multi leg utilization. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic super-mid / heavy-cabin executive band, Domestic field-access executive band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with super-mid or large-cabin aircraft on the longest stages without tech stops.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Ownership crossover relevant at ~300 hr/year \u2014 structure and dispatch control precede airframe... Ownership crossover relevant at ~300 hr/year \u2014 structure and dispatch control precede airframe.."
+    },
+    "answer": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Dallas -> London; London -> Dubai; Dallas -> Dubai\n- Pax: Not stated\n- Operational read: Europe / intercontinental stage  light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Ownership posture reads as charter transition with multi leg utilization. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Domestic field-access executive band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range  this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Fleet composition: incompatible operational bands  ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Ownership crossover relevant at ~300 hr/year  structure and dispatch control precede airframe... Ownership crossover relevant at ~300 hr/year  structure and dispatch control precede airframe..\n- Inferred posture: executive travel profile, industrial airport access, incompatible mission bands, dual use or multi leg, ownership economics relevant, annual charter hours\n\nAircraft Class Band:\n\n- Transatlantic / heavy-cabin executive band\n- Domestic field-access executive band\n- Multi-leg ultra-long-range executive band\n\nFleet Structure:\n\n- This mission spans incompatible operational bands  one aircraft is unlikely to cover both credibly.\n- Typical multi-aircraft portfolio: an ultra-long-range platform for transatlantic/oceanic legs, plus a field-performance type for mountain, island, or industrial airport access.\n- Consolidating into one jet forces a compromise  either short-field capability or nonstop range will suffer on the missions you care about most.\n\nOwnership Economics:\n\n- Utilization: hybrid (250400 hr/year)\n- Structure: charter or card\n- At ~300 hr/year, compare burdened ownership DOC (~$7,033/hr all-in, directional) to fractional or charter before anchoring on airframe.\n- In the 250400 hr band, ownership becomes rational if charter friction and schedule control outweigh capital efficiency  verify downtime and crew assumptions.\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio likely  Transatlantic / heavy-cabin executive band, Domestic field-access executive band, Multi-leg ultra-long-range executive band"
+  },
+  {
+    "name": "context_contamination",
+    "query": "NYC to Tokyo and London, 8 passengers, nonstop westbound winter",
+    "mission_pivot": true,
+    "corridor_type": "multi_leg_ultra_long",
+    "bands": [
+      "Transatlantic super-mid / heavy-cabin executive band",
+      "Multi-leg ultra-long-range executive band"
+    ],
+    "caribbean_in_bands": false,
+    "miami_in_answer": false,
+    "passed": true
+  }
+]

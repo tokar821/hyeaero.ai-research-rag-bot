@@ -1,0 +1,390 @@
+{
+  "summary": {
+    "PASS": 8,
+    "PARTIAL": 2,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "title": "Q1 Industrial + Arctic + Transatlantic",
+      "status": "PARTIAL",
+      "routes": [
+        "Houston -> London",
+        "Calgary -> Yellowknife",
+        "Calgary -> Northern Alberta Oil Fields",
+        "Yellowknife -> Remote Gravel Strips"
+      ],
+      "expect_hits": [
+        "houston",
+        "calgary",
+        "london",
+        "remote"
+      ],
+      "expect_miss": [
+        "arctic",
+        "drilling"
+      ],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo_regions": [
+        "arctic_industrial_layer"
+      ],
+      "geo_added": [
+        "Calgary -> Yellowknife",
+        "Calgary -> Northern Alberta Oil Fields",
+        "Yellowknife -> Remote Gravel Strips"
+      ],
+      "geo_rebalanced": [
+        "Houston -> Northern Alberta Oil Fields"
+      ],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Transatlantic Executive (transatlantic_executive): Houston -> London",
+        "Domestic Executive (domestic_executive): Calgary -> Yellowknife; Calgary -> Northern Alberta Oil Fields",
+        "Industrial Field (industrial_field): Yellowknife -> Remote Gravel Strips"
+      ]
+    },
+    {
+      "title": "Q2 Australia mining + Europe executive",
+      "status": "PASS",
+      "routes": [
+        "Perth -> Frankfurt",
+        "Perth -> Zurich",
+        "Frankfurt -> Zurich",
+        "Perth -> Australian Extraction Strips",
+        "Houston -> Frankfurt",
+        "Houston -> Zurich"
+      ],
+      "expect_hits": [
+        "perth",
+        "frankfurt",
+        "zurich"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo_regions": [
+        "industrial_geography",
+        "executive_eu_overlay"
+      ],
+      "geo_added": [
+        "Perth -> Australian Extraction Strips",
+        "Houston -> Frankfurt",
+        "Houston -> Zurich"
+      ],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Domestic Executive (domestic_executive): Perth -> Frankfurt; Perth -> Zurich; Frankfurt -> Zurich; Perth -> Australian Ex"
+      ]
+    },
+    {
+      "title": "Q3 Florida corridor + ME continuation",
+      "status": "PASS",
+      "routes": [
+        "Miami -> Riyadh",
+        "Miami -> Dubai",
+        "Miami -> Palm Beach"
+      ],
+      "expect_hits": [
+        "miami",
+        "palm beach",
+        "riyadh",
+        "dubai"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": false,
+      "proof": "none",
+      "suppressed": false,
+      "geo_regions": [],
+      "geo_added": [],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Ulr Continuation (ulr_continuation): Miami -> Riyadh; Miami -> Dubai",
+        "Domestic Executive (domestic_executive): Miami -> Palm Beach"
+      ]
+    },
+    {
+      "title": "Q4 Asia-Pacific hub confusion",
+      "status": "PASS",
+      "routes": [
+        "Los Angeles -> Tokyo",
+        "Los Angeles -> Singapore",
+        "Los Angeles -> Aspen",
+        "Los Angeles -> Jackson Hole",
+        "Los Angeles -> Telluride",
+        "Los Angeles -> Vail",
+        "Los Angeles -> Eagle",
+        "Los Angeles -> Sun Valley"
+      ],
+      "expect_hits": [
+        "los angeles -> tokyo",
+        "aspen",
+        "jackson"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "mountain_ulr_incompatibility",
+      "suppressed": true,
+      "geo_regions": [
+        "mountain_overlay"
+      ],
+      "geo_added": [
+        "Los Angeles -> Telluride",
+        "Los Angeles -> Vail",
+        "Los Angeles -> Eagle",
+        "Los Angeles -> Sun Valley"
+      ],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [
+        "Tokyo -> Aspen"
+      ],
+      "topology_removed": [],
+      "segments": [
+        "Transatlantic Executive (transatlantic_executive): Los Angeles -> Tokyo",
+        "Domestic Executive (domestic_executive): Los Angeles -> Singapore; Los Angeles -> Vail; Los Angeles -> Eagle",
+        "Mountain Field (mountain_field): Los Angeles -> Aspen; Los Angeles -> Jackson Hole; Los Angeles -> Telluride; Los"
+      ]
+    },
+    {
+      "title": "Q5 West Africa industrial + EU executive",
+      "status": "PASS",
+      "routes": [
+        "Houston -> Lagos",
+        "Houston -> Frankfurt",
+        "Houston -> Paris",
+        "Frankfurt -> Paris"
+      ],
+      "expect_hits": [
+        "houston",
+        "lagos",
+        "frankfurt",
+        "paris"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo_regions": [],
+      "geo_added": [],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Domestic Executive (domestic_executive): Houston -> Lagos; Houston -> Frankfurt; Houston -> Paris; Frankfurt -> Paris"
+      ]
+    },
+    {
+      "title": "Q6 Canada Arctic + US domestic corridor",
+      "status": "PASS",
+      "routes": [
+        "Houston -> Calgary",
+        "Houston -> Yellowknife",
+        "Houston -> New York",
+        "Calgary -> Chicago",
+        "Calgary -> Yellowknife"
+      ],
+      "expect_hits": [
+        "calgary",
+        "houston",
+        "new york",
+        "chicago"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": false,
+      "proof": "none",
+      "suppressed": false,
+      "geo_regions": [
+        "arctic_industrial_layer"
+      ],
+      "geo_added": [
+        "Calgary -> Yellowknife"
+      ],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Domestic Executive (domestic_executive): Houston -> Calgary; Houston -> Yellowknife; Houston -> New York; Calgary -> Chic"
+      ]
+    },
+    {
+      "title": "Q7 Hub inversion trap",
+      "status": "PASS",
+      "routes": [
+        "New York -> Singapore",
+        "New York -> Dubai",
+        "New York -> London"
+      ],
+      "expect_hits": [
+        "new york",
+        "singapore",
+        "dubai",
+        "london"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": false,
+      "proof": "none",
+      "suppressed": false,
+      "geo_regions": [],
+      "geo_added": [],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Ulr Continuation (ulr_continuation): New York -> Dubai",
+        "Domestic Executive (domestic_executive): New York -> Singapore",
+        "Transatlantic Executive (transatlantic_executive): New York -> London"
+      ]
+    },
+    {
+      "title": "Q8 Desert logistics + European capital bias",
+      "status": "PARTIAL",
+      "routes": [
+        "Houston -> Desert Energy Corridor",
+        "Houston -> Remote Drilling Sites",
+        "Houston -> Paris",
+        "Houston -> Geneva"
+      ],
+      "expect_hits": [
+        "houston",
+        "desert",
+        "paris",
+        "geneva"
+      ],
+      "expect_miss": [
+        "dallas"
+      ],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo_regions": [
+        "industrial_geography",
+        "executive_eu_overlay"
+      ],
+      "geo_added": [
+        "Houston -> Desert Energy Corridor",
+        "Houston -> Remote Drilling Sites",
+        "Houston -> Paris",
+        "Houston -> Geneva"
+      ],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Domestic Executive (domestic_executive): Houston -> Desert Energy Corridor; Houston -> Paris; Houston -> Geneva",
+        "Industrial Field (industrial_field): Houston -> Remote Drilling Sites"
+      ]
+    },
+    {
+      "title": "Q9 Caribbean + South America ambiguity",
+      "status": "PASS",
+      "routes": [
+        "Miami -> Sao Paulo",
+        "Miami -> Madrid",
+        "Miami -> Caribbean"
+      ],
+      "expect_hits": [
+        "miami",
+        "sao paulo",
+        "caribbean",
+        "madrid"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "multi_continent_portfolio",
+      "suppressed": true,
+      "geo_regions": [],
+      "geo_added": [],
+      "geo_rebalanced": [],
+      "dir_swapped": [],
+      "dir_removed": [],
+      "topology_removed": [],
+      "segments": [
+        "Transatlantic Executive (transatlantic_executive): Miami -> Sao Paulo",
+        "Caribbean Regional (caribbean_regional): Miami -> Caribbean",
+        "Domestic Executive (domestic_executive): Miami -> Madrid"
+      ]
+    },
+    {
+      "title": "Q10 Multi-region overload (ghost edge stress)",
+      "status": "PASS",
+      "routes": [
+        "Tokyo -> Singapore",
+        "Singapore -> Dubai",
+        "Los Angeles -> Aspen",
+        "Los Angeles -> Telluride",
+        "Los Angeles -> Jackson Hole",
+        "Los Angeles -> Vail",
+        "Los Angeles -> Eagle",
+        "Los Angeles -> Sun Valley",
+        "Miami -> Caribbean",
+        "Los Angeles -> Tokyo",
+        "Los Angeles -> Singapore"
+      ],
+      "expect_hits": [
+        "los angeles",
+        "aspen",
+        "tokyo",
+        "singapore",
+        "dubai",
+        "caribbean"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "mountain_ulr_incompatibility",
+      "suppressed": true,
+      "geo_regions": [
+        "mountain_overlay",
+        "caribbean_hub_rebalance"
+      ],
+      "geo_added": [
+        "Los Angeles -> Telluride",
+        "Los Angeles -> Jackson Hole",
+        "Los Angeles -> Vail",
+        "Los Angeles -> Eagle",
+        "Los Angeles -> Sun Valley"
+      ],
+      "geo_rebalanced": [
+        "Miami -> Caribbean"
+      ],
+      "dir_swapped": [],
+      "dir_removed": [
+        "Aspen -> Tokyo",
+        "Tokyo -> Caribbean",
+        "Dubai -> Caribbean"
+      ],
+      "topology_removed": [],
+      "segments": [
+        "Transatlantic Executive (transatlantic_executive): Los Angeles -> Tokyo",
+        "Caribbean Regional (caribbean_regional): Miami -> Caribbean",
+        "Domestic Executive (domestic_executive): Tokyo -> Singapore; Los Angeles -> Vail; Los Angeles -> Eagle; Los Angeles -> Si",
+        "Mountain Field (mountain_field): Los Angeles -> Aspen; Los Angeles -> Telluride; Los Angeles -> Jackson Hole; Los",
+        "Ulr Continuation (ulr_continuation): Singapore -> Dubai"
+      ]
+    }
+  ]
+}

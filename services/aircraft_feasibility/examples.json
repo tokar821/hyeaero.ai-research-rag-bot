@@ -1,0 +1,90 @@
+{
+  "description": "Example feasibility verdicts from the deterministic aircraft feasibility engine.",
+  "examples": [
+    {
+      "mission": {
+        "passengers": 8,
+        "origin": "Los Angeles",
+        "destination": ["London"],
+        "nonstop_required": true,
+        "westbound_sensitive": true,
+        "transatlantic": true,
+        "international_ops": true
+      },
+      "aircraft": "Challenger 350",
+      "output": {
+        "feasible": false,
+        "rejectionReasons": [
+          "Transatlantic nonstop (~5450 nm) requires large-cabin / ULR practical range (>= 4000 nm); Challenger 350 is super-midsize (~2700 nm practical)."
+        ],
+        "payloadPenalty": 0.0,
+        "runwayPenalty": 0.0,
+        "winterPenalty": 0.0,
+        "reservesSatisfied": true
+      }
+    },
+    {
+      "mission": {
+        "passengers": 6,
+        "origin": "New York",
+        "destination": ["Tokyo"],
+        "nonstop_required": true,
+        "westbound_sensitive": true,
+        "winter_ops": true,
+        "transpacific": true
+      },
+      "aircraft": "Praetor 600",
+      "output": {
+        "feasible": false,
+        "rejectionReasons": [
+          "Transpacific nonstop (~5900 nm) requires ultra-long-range practical capability (>= 5600 nm); Praetor 600 is super-midsize (~3400 nm practical)."
+        ],
+        "payloadPenalty": 0.0,
+        "runwayPenalty": 0.0,
+        "winterPenalty": 272.0,
+        "reservesSatisfied": true
+      }
+    },
+    {
+      "mission": {
+        "passengers": 6,
+        "origin": "Honolulu",
+        "destination": ["Sydney"],
+        "nonstop_required": true,
+        "transpacific": true,
+        "westbound_sensitive": true
+      },
+      "aircraft": "Challenger Longitude",
+      "output": {
+        "feasible": false,
+        "rejectionReasons": [
+          "Practical available ~3312 nm < mission required ~5020 nm (NBAA reserves, payload, and dispatch margin applied; brochure not used)."
+        ],
+        "payloadPenalty": 0.0,
+        "runwayPenalty": 0.0,
+        "winterPenalty": 108.0,
+        "reservesSatisfied": true
+      }
+    },
+    {
+      "mission": {
+        "passengers": 6,
+        "origin": "San Francisco",
+        "destination": ["Tokyo"],
+        "nonstop_required": true,
+        "westbound_sensitive": true,
+        "winter_ops": true,
+        "transpacific": true
+      },
+      "aircraft": "Global 7500",
+      "output": {
+        "feasible": true,
+        "rejectionReasons": [],
+        "payloadPenalty": 0.0,
+        "runwayPenalty": 0.0,
+        "winterPenalty": 264.0,
+        "reservesSatisfied": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,1664 @@
+{
+  "total": 70,
+  "passed": 69,
+  "failed": 1,
+  "pass_rate": 0.986,
+  "elapsed_s": 381.5,
+  "results": [
+    {
+      "id": 1,
+      "category": "hidden_constraints",
+      "query": "We have 900 employees and fly leadership teams between New York, Dallas, and London several times a month. Sometimes the CEO continues onward to the Middle East. What kind of aircraft strategy would actually make sense?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Ownership posture reads as corporate shuttle candidate with executive shuttle utilization. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive planning band. The organization operates with a significant employee base, necessitating reliable transportation for leadership teams across key routes. The potential for extended travel to the Middle East indicates a need for comfort and efficiency in aircraft selection.\n- Inferred posture: enterprise employees, ownership viability threshold\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 1,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "category": "hidden_constraints",
+      "query": "We move executives around the Caribbean constantly. Runway access matters more than cabin luxury.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission focuses on moving executives across the Caribbean, emphasizing runway access over cabin luxury. The operational environment is characterized by short runways and the need for reliable dispatch capabilities, with a preference for aircraft that can handle the unique challenges of island operations.\n- Inferred posture: corrosion exposure, island ops, runway over cabin\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 2,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "category": "hidden_constraints",
+      "query": "Our board hates fuel stops. Especially westbound in winter.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Westbound long-stage planning - headwind and alternate fuel drive dispatch reliability. Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes the need for reliable westbound operations during winter, minimizing fuel stops due to board preferences. This suggests a focus on aircraft capable of long-range flights with efficient fuel management.\n- Inferred posture: westbound winter pressure, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 3,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "category": "hidden_constraints",
+      "query": "We fly athletes and staff domestically, but ownership costs are getting out of control.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves domestic flights primarily for athletes and staff, indicating a need for efficient and cost-effective travel solutions. Ownership costs are a significant concern, suggesting a potential shift in operational strategy may be necessary.\n- Inferred posture: ownership cost sensitivity, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 4,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "category": "hidden_constraints",
+      "query": "We need something that can still get into mountain airports without embarrassing the executives on longer flights.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes the need for aircraft capable of accessing challenging mountain airports while maintaining executive comfort on longer journeys. This suggests a focus on performance over traditional luxury metrics.\n- Inferred posture: mountain airport access, executive comfort, long range capability, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 5,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "category": "hidden_constraints",
+      "query": "We usually travel with 10\u201312 people, but occasionally only 2 or 3. I don't want to operate something inefficient.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: 10\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves accommodating a variable number of passengers, typically around 10, with occasional smaller groups. There is a strong emphasis on operational efficiency to avoid unnecessary costs.\n- Inferred posture: passenger count, min passenger count, max passenger count, efficiency priority, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 6,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "category": "hidden_constraints",
+      "query": "We're trying to reduce total travel time, not just flight time.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes a reduction in total travel time, suggesting a focus on optimizing connections and minimizing layovers. This may involve strategic planning for routes and scheduling to enhance efficiency.\n- Inferred posture: total travel time priority, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 7,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "category": "hidden_constraints",
+      "query": "We have manufacturing sites across Latin America and short-notice dispatch reliability matters more than luxury.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes short-notice dispatch reliability for operations across Latin America, indicating a need for a flexible and responsive aviation solution. Luxury is not a priority, suggesting a focus on operational efficiency.\n- Inferred posture: short notice dispatch, luxury priority, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 8,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "category": "hidden_constraints",
+      "query": "Our executives insist on nonstop Europe flights, but we also do a lot of Florida and Caribbean hops.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission involves a mix of nonstop transatlantic flights for executives and regional hops to Florida and Caribbean locations. The operational environment is characterized by the need for reliability and performance in island and tropical conditions, where runway access and dispatch simplicity are critical.\n- Inferred posture: corrosion exposure, island ops, nonstop required\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 9,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:8"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "category": "hidden_constraints",
+      "query": "We care more about operating economics and airport flexibility than impressing people.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes cost efficiency and flexibility in airport operations, indicating a preference for practical solutions over luxury. The operational context suggests a focus on standard runway capabilities without specific regional constraints.\n- Inferred posture: operating cost priority, runway complexity, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 10,
+        "category": "hidden_constraints",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "category": "incomplete",
+      "query": "We do Europe twice monthly.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves bi-monthly trips to Europe, indicating a need for reliable and efficient travel solutions. The operational profile suggests a focus on executive travel, potentially requiring comfort and convenience.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 11,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "category": "incomplete",
+      "query": "We need something for heavy international use.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a need for an aircraft capable of heavy international use, suggesting a focus on long-range capabilities. The operational requirements may involve diverse international routes, necessitating flexibility in aircraft choice.\n- Inferred posture: heavy international use, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 12,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "category": "incomplete",
+      "query": "We're mostly domestic but occasionally Asia.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission primarily focuses on domestic travel with occasional international routes to Asia. This suggests a need for flexibility in aircraft capabilities to accommodate both domestic and international operations.\n- Inferred posture: domestic focus, occasional international, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 13,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "category": "incomplete",
+      "query": "We fly teams around South America.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission involves flying teams across South America, indicating a need for flexibility in routing and potential short-haul operations. The operational environment may include varied climates and runway conditions, necessitating a focus on reliability and maintenance.\n- Inferred posture: corrosion exposure, island ops, llm clarifying question\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 14,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:8"
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "category": "incomplete",
+      "query": "We want reliable winter westbound capability.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Westbound long-stage planning - headwind and alternate fuel drive dispatch reliability. Credible aircraft class conversation starts in: Executive planning band.\n- Inferred posture: westbound winter pressure, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 15,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "category": "incomplete",
+      "query": "We need better dispatch reliability than charter.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user is focused on enhancing dispatch reliability compared to charter services, indicating a need for consistent operational performance. Further details on passenger counts and specific routes would help refine the .\n- Inferred posture: dispatch reliability, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 16,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "category": "incomplete",
+      "query": "We've outgrown our current setup.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user has expressed a need for a larger operational setup, suggesting potential growth in travel requirements. Further details on routes and passenger counts are needed to refine the .\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 17,
+        "category": "incomplete",
+        "passed": true,
+        "score": 0.65,
+        "issues": [
+          "missing_ownership_economics"
+        ],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 18,
+      "category": "incomplete",
+      "query": "Our mission profile changed after opening a London office.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The has evolved with the establishment of a London office, indicating potential for transatlantic travel. Further details on passenger needs and specific routes are required for a comprehensive analysis.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 18,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 19,
+      "category": "incomplete",
+      "query": "We spend too much time repositioning.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes the need to minimize repositioning time, indicating a potential focus on efficiency in travel. Further details on routes and passenger needs would enhance understanding.\n- Inferred posture: repositioning time, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 19,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "category": "incomplete",
+      "query": "We're doing more long-haul than we used to.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a shift towards more long-haul travel, suggesting a need for aircraft capable of extended range. Further details on passenger count and specific routes would enhance understanding of operational needs.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 20,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 21,
+      "category": "multi_role",
+      "query": "We need London nonstop capability, but we also spend a lot of time in Aspen.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: London -> Aspen\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic ultra-long-range executive band. The mission requires a balance between high-performance capabilities for mountain airports and the ability to operate nonstop to London. The emphasis on runway access suggests that operational performance is prioritized over cabin comfort.\n- Inferred posture: runway over cabin, nonstop required\n\nAircraft Class Band:\n\n- Transatlantic ultra-long-range executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Transatlantic ultra-long-range executive band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 21,
+        "category": "multi_role",
+        "passed": true,
+        "score": 0.65,
+        "issues": [
+          "missing_multi_aircraft_synthesis"
+        ],
+        "signals": [
+          "operational_terms:7"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "category": "multi_role",
+      "query": "We fly Europe frequently but also need short Caribbean runway access.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission involves frequent flights to Europe with a significant need for short runway access in the Caribbean. The operational environment suggests a focus on field performance and reliability over luxury, particularly in island operations.\n- Inferred posture: corrosion exposure, island ops, short runway access, llm clarifying question\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 22,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:7"
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "category": "multi_role",
+      "query": "Our family office alternates between New York, Jackson Hole, and the south of France.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Mountain field-flexible short-strip band. The family office's travel pattern indicates a need for flexibility and access to mountain airports, prioritizing runway performance over cabin comfort. The alternating routes suggest a multi-leg travel style that may require adaptable aircraft capabilities.\n- Inferred posture: runway over cabin\n\nAircraft Class Band:\n\n- Mountain field-flexible short-strip band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Mountain field-flexible short-strip band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 23,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "category": "multi_role",
+      "query": "We need something for both board travel and factory-site access.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission requires an aircraft capable of supporting both executive board travel and access to factory sites, indicating a need for versatility in operations. The operational environment may vary significantly based on the nature of the factory sites.\n- Inferred posture: board travel, factory site access, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 24,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "category": "multi_role",
+      "query": "We want one aircraft that can do Tokyo and mountain airports.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Executive planning band. The mission requires an aircraft capable of accessing challenging mountain airports while also having the range to operate to Tokyo. This suggests a focus on performance over luxury, indicating a preference for .\n- Inferred posture: mountain airport access, long range, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 25,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 26,
+      "category": "multi_role",
+      "query": "We shuttle executives domestically during the week and take family trips to Europe.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The operation focuses on shuttling executives domestically during the week while accommodating family travel to Europe. This dual-purpose mission suggests a need for flexibility in aircraft capabilities.\n- Inferred posture: executive shuttle, family travel\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 26,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "category": "multi_role",
+      "query": "We need a corporate shuttle but occasionally fly ultra-long-haul.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission requires a versatile aircraft capable of serving both corporate shuttle needs and ultra-long-haul flights. This dual requirement suggests a focus on comfort and operational efficiency for varied travel distances.\n- Inferred posture: ultra long haul, corporate shuttle, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 27,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 28,
+      "category": "multi_role",
+      "query": "We're trying to consolidate two aircraft into one.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a strategic move to streamline operations by consolidating aircraft, likely aiming for improved cost efficiency and operational flexibility. Further details on routes and passenger needs would enhance understanding.\n- Inferred posture: consolidation needed, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 28,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 29,
+      "category": "multi_role",
+      "query": "We want nonstop transatlantic performance without giving up regional flexibility.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes the need for nonstop transatlantic capabilities while maintaining flexibility for regional operations. This suggests a dual-role requirement that balances long-range travel with shorter, more varied routes.\n- Inferred posture: nonstop required, regional flexibility\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 29,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 30,
+      "category": "multi_role",
+      "query": "We need something efficient for short legs but credible for Europe.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission requires an aircraft that can efficiently handle short legs while also being credible for European routes. This suggests a balance between operational efficiency and range capabilities.\n- Inferred posture: short leg efficiency, european credibility, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 30,
+        "category": "multi_role",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 31,
+      "category": "ownership",
+      "query": "We currently charter around 200\u2013250 hours annually. At what point does ownership actually become rational?",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: charter or card\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 31,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:7"
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "category": "ownership",
+      "query": "We're debating fractional versus full ownership.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: fractional vs full tradeoff\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 32,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "category": "ownership",
+      "query": "We don't want capital tied up in a depreciating asset.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 33,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 34,
+      "category": "ownership",
+      "query": "We need guaranteed availability more than prestige.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 34,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "category": "ownership",
+      "query": "We already operate a turboprop but are considering adding a jet.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 35,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "category": "ownership",
+      "query": "We've been using NetJets but are questioning whether it still makes sense.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: fractional program\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 36,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "category": "ownership",
+      "query": "We care a lot about exit liquidity.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 37,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 38,
+      "category": "ownership",
+      "query": "Our travel patterns fluctuate heavily quarter to quarter.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 38,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 39,
+      "category": "ownership",
+      "query": "We're trying to justify ownership internally.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 39,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 40,
+      "category": "ownership",
+      "query": "We don't fly enough to waste money, but charter has become operationally painful.",
+      "answer": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: charter or card\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed -> ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200-400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe - structure precedes model.\n- Dispatch: schedule-critical - favor ownership or higher fractional share\n- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth - not model marketing.\n\nVerdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 40,
+        "category": "ownership",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:7"
+        ]
+      }
+    },
+    {
+      "id": 41,
+      "category": "continuity",
+      "turn1_query": "We fly from San Francisco to Tokyo regularly.",
+      "turn1_answer": "Broker's read: reserves-first dispatch reality decides the shortlist, then we call out the compromises.\n\nMission Fit:\n\n- Route: San Francisco -> Tokyo\n- Pax: Not stated\n- Priorities: cabin\n\nAircraft Options:\n\n- Gulfstream G650ER - Why it fits: Practical range realistic for this leg (~6143 nm vs ~5491 nm required) Key compromise: None material on this leg.\n- Global 7500 - Why it fits: Practical range realistic for this leg (~6436 nm vs ~5491 nm required) Key compromise: None material on this leg.\n- Gulfstream G650 - Why it fits: Practical range realistic for this leg (~5850 nm vs ~5491 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n- PRIMARY RECOMMENDATION: Gulfstream G650ER, Global 7500, Gulfstream G650",
+      "turn2_query": "What about winter westbound?",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Westbound long-stage planning - headwind and alternate fuel drive dispatch reliability. Credible aircraft class conversation starts in: Executive planning band. The mission involves planning for westbound travel during winter, emphasizing the need for reliable dispatch due to potential headwinds. The conversation suggests consideration of aircraft capable of handling these conditions effectively.\n- Inferred posture: westbound winter pressure, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 41,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 42,
+      "category": "continuity",
+      "turn1_query": "We operate mostly around the Caribbean.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission focuses on operations within the Caribbean, where environmental factors such as heat and humidity are significant. The operational profile suggests a need for aircraft capable of short-runway access, prioritizing field performance over luxury.\n- Inferred posture: corrosion exposure, island ops, llm clarifying question\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "turn2_query": "Runways are sometimes an issue.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission may involve operations at airports with challenging runways, indicating a need for aircraft capable of handling such environments. Further details on passenger count and specific routes would help refine the operational profile.\n- Inferred posture: runway issues, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 42,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 43,
+      "category": "continuity",
+      "turn1_query": "We travel with around 14 passengers.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: 14\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves accommodating 14 passengers, suggesting a need for comfort and space. The budget indicates a focus on quality without the necessity for nonstop capabilities.\n- Inferred posture: passenger count, nonstop required, budget, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "Sometimes London.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: 14\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission may involve occasional travel to London with a capacity for 14 passengers. The operational profile suggests a focus on standard dispatch and comfort priorities.\n- Inferred posture: mountain airports, nonstop required, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 43,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 44,
+      "category": "continuity",
+      "turn1_query": "We prioritize low operating cost.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes low operating costs, suggesting a focus on budget-friendly operational strategies. Further details on passenger counts and specific routes would enhance understanding.\n- Inferred posture: low operating cost, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "But dispatch reliability has become a problem.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission highlights a concern regarding dispatch reliability, indicating a need for dependable operational capabilities. Further details on routes and passenger counts are necessary for a comprehensive analysis.\n- Inferred posture: dispatch reliability issue, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 44,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 45,
+      "category": "continuity",
+      "turn1_query": "We're based in Miami.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission is based in Miami, indicating a potential focus on both regional and international travel. Further details on passenger counts and specific routes would help refine the operational profile.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "We also ski frequently.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. User's mission includes frequent skiing trips, indicating a potential need for access to mountain airports. Further details on passenger count and specific routes would enhance understanding of operational needs.\n- Inferred posture: ski access, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 45,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 46,
+      "category": "continuity",
+      "turn1_query": "We charter constantly.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user engages in constant chartering, indicating a dynamic operational need that may require a versatile aircraft solution. The lack of specified routes or passenger counts suggests a broad operational scope, potentially across various regions.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "It's becoming chaotic operationally.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The operational context indicates a need for improved management and possibly a reevaluation of current aviation resources. Further details on routes and passenger needs would clarify the situation.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 46,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 47,
+      "category": "continuity",
+      "turn1_query": "We care about airport access.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes the importance of airport access, suggesting a need for flexibility in operations. Further details on passenger counts and specific routes would enhance understanding.\n- Inferred posture: airport access priority, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "Especially in Europe.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a potential focus on European operations, suggesting a need for flexibility in travel patterns. Further details on passenger counts and specific routes would enhance understanding.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 47,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 48,
+      "category": "continuity",
+      "turn1_query": "We fly executives.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission is centered around transporting executives, indicating a need for high comfort and priority dispatch. The operational context suggests a focus on efficiency and flexibility in travel routes.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "Sometimes families too.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission may involve both executive and family travel, indicating a need for flexibility in operations. The specific routes and passenger counts remain undefined, suggesting a broad operational scope.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 48,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 49,
+      "category": "continuity",
+      "turn1_query": "We're expanding internationally.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a strategic shift towards international operations, which may require adaptable aircraft for diverse routes. Further details on specific regions and passenger needs would enhance understanding.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "Asia is becoming important.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission context indicates a potential shift towards operations in Asia, suggesting a need for flexibility in travel patterns. Further details on passenger counts and specific routes would enhance understanding.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 49,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 50,
+      "category": "continuity",
+      "turn1_query": "We currently use a midsize jet.",
+      "turn1_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user is currently operating a midsize jet, indicating a potential need for a balance between range and capacity. Further details on routes and passenger counts would help refine the operational profile.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "turn2_query": "We're hitting range limitations.",
+      "turn2_answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission indicates a need for an aircraft capable of addressing range limitations, suggesting a focus on longer-range capabilities. Further details on passenger count and specific routes would enhance understanding.\n- Inferred posture: range limitations, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet": {},
+      "score": {
+        "scenario_id": 50,
+        "category": "continuity",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1",
+          "continuity_ok"
+        ]
+      }
+    },
+    {
+      "id": 51,
+      "category": "broker_realism",
+      "query": "What would actually annoy you operationally about this mission? We're a 900-employee company flying NY-Dallas-London with occasional Middle East continuation.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves a corporate entity with a substantial employee base, necessitating efficient travel between major cities. The multi-leg nature of the journey, including potential Middle East connections, indicates a need for flexibility and reliability in operations.\n- Inferred posture: employee count, multi leg, middle east continuation\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 51,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3"
+        ]
+      }
+    },
+    {
+      "id": 52,
+      "category": "broker_realism",
+      "query": "Where do companies usually make the wrong aircraft decision when flying Europe and Caribbean hops?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Executive planning band. The mission involves navigating the unique challenges of Caribbean island operations, where environmental factors like heat and humidity, along with short-runway access, are critical. Decision-making often prioritizes field performance and runway access over cabin luxury, indicating a need for practical aircraft solutions.\n- Inferred posture: corrosion exposure, island ops\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 52,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:6"
+        ]
+      }
+    },
+    {
+      "id": 53,
+      "category": "broker_realism",
+      "query": "What sounds good on paper but becomes painful in reality for mixed domestic and international executive travel?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves mixed domestic and international executive travel, which can lead to challenges in operational efficiency and passenger comfort. The focus on executive travel suggests a need for high comfort and potential complexities in routing.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 53,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 54,
+      "category": "broker_realism",
+      "query": "What would you avoid buying for a mission that mixes London nonstop and Aspen mountain access?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: London -> Aspen\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic ultra-long-range executive band. The mission requires a balance between high-altitude mountain access and transatlantic nonstop capability. Prioritizing runway performance is critical given the operational constraints of Aspen.\n- Inferred posture: runway over cabin, nonstop required\n\nAircraft Class Band:\n\n- Transatlantic ultra-long-range executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Transatlantic ultra-long-range executive band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 54,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:7"
+        ]
+      }
+    },
+    {
+      "id": 55,
+      "category": "broker_realism",
+      "query": "What compromises am I underestimating if I want one jet for Tokyo and mountain airports?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Executive planning band. The mission requires a balance between performance for mountain airport access and comfort for potential longer flights to Tokyo. Compromises may include cabin space and operational costs due to the need for enhanced performance capabilities.\n- Inferred posture: mountain airport access, runway length, performance tradeoffs, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 55,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 56,
+      "category": "broker_realism",
+      "query": "What would make you recommend against ownership for a company chartering 200 hours a year?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The company is evaluating the feasibility of ownership versus chartering for 200 hours annually. This suggests a focus on balancing operational flexibility and cost efficiency.\n- Inferred posture: charter hours, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 56,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 57,
+      "category": "broker_realism",
+      "query": "Where would dispatch reliability become ugly on winter westbound transpac missions?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Westbound long-stage planning - headwind and alternate fuel drive dispatch reliability. Credible aircraft class conversation starts in: Executive planning band. The mission involves planning for westbound transpacific flights during winter, where dispatch reliability may be compromised due to headwinds and fuel considerations. This suggests a need for careful route planning and aircraft selection to mitigate operational challenges.\n- Inferred posture: westbound winter pressure, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 57,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 58,
+      "category": "broker_realism",
+      "query": "What mission detail matters more than most buyers realize when buying for board travel?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission focuses on board travel, indicating a need for comfort and efficiency. The lack of specific routes or passenger counts suggests a flexible operational approach.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 58,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 59,
+      "category": "broker_realism",
+      "query": "What kind of company usually regrets buying too much airplane?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user is exploring the implications of aircraft ownership, particularly regarding potential over-purchasing. There is no specific operational context provided, making it difficult to assess their needs accurately.\n- Inferred posture: llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 59,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 60,
+      "category": "broker_realism",
+      "query": "If this were your company flying executives domestically with rising ownership costs, what operational mistake would you try hardest to avoid?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission involves flying executives domestically while managing rising ownership costs. Prioritizing comfort and dispatch efficiency is crucial to avoid operational mistakes.\n- Inferred posture: ownership cost sensitivity, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 60,
+        "category": "broker_realism",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3"
+        ]
+      }
+    },
+    {
+      "id": 61,
+      "category": "failure_handling",
+      "query": "Can a Citation CJ3+ fly nonstop from New York to Tokyo?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive planning band. The inquiry indicates a focus on nonstop capabilities for long-distance travel, suggesting a preference for reliability and comfort. The context implies a potential interest in aircraft suitable for transcontinental flights.\n- Inferred posture: nonstop required, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band\n\nNext, What's the primary city pair (nonstop required)? Origin and destination are enough - e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 61,
+        "category": "failure_handling",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 62,
+      "category": "failure_handling",
+      "query": "We want one aircraft for London, Aspen, Caribbean islands, and Tokyo.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Aspen -> Caribbean; Caribbean -> Tokyo\n- Pax: Not stated\n- Operational read: Island and tropical operating environment - heat, humidity, and corrosion exposure. Short-runway and dispatch simplicity often dominate over cabin prestige. Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Caribbean island-ops short-runway band, Multi-leg ultra-long-range executive band. The mission involves operating across varied environments from mountain airports to tropical islands, necessitating a focus on runway performance over cabin luxury. The aircraft will need to handle multi-leg journeys efficiently, with an emphasis on reliability in diverse weather conditions.\n- Inferred posture: corrosion exposure, island ops, runway over cabin, dual use or multi leg\n\nAircraft Class Band:\n\n- Caribbean island-ops short-runway band\n- Multi-leg ultra-long-range executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Caribbean island-ops short-runway band, Multi-leg ultra-long-range executive band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 62,
+        "category": "failure_handling",
+        "passed": true,
+        "score": 0.65,
+        "issues": [
+          "missing_multi_aircraft_synthesis"
+        ],
+        "signals": [
+          "operational_terms:8"
+        ]
+      }
+    },
+    {
+      "id": 63,
+      "category": "failure_handling",
+      "query": "We need nonstop Europe capability from Aspen in winter.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Mountain field-flexible short-strip band. The mission requires a focus on runway performance due to mountain airport operations, with a strong emphasis on nonstop capability to Europe during winter months. Dispatch reliability is a critical factor for this operational profile.\n- Inferred posture: runway over cabin\n\nAircraft Class Band:\n\n- Mountain field-flexible short-strip band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Mountain field-flexible short-strip band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 63,
+        "category": "failure_handling",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:8"
+        ]
+      }
+    },
+    {
+      "id": 64,
+      "category": "failure_handling",
+      "query": "What aircraft can realistically do westbound Tokyo from San Diego year-round with 12 passengers?",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: 12\n- Operational read: Westbound long-stage planning - headwind and alternate fuel drive dispatch reliability. Credible aircraft class conversation starts in: Executive planning band. The mission involves planning for a long-haul flight from San Diego to Tokyo with a focus on accommodating 12 passengers. Year-round is essential, and considerations for headwinds and fuel efficiency are critical for dispatch reliability.\n- Inferred posture: westbound winter pressure, passenger capacity, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 64,
+        "category": "failure_handling",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 65,
+      "category": "failure_handling",
+      "query": "We need ultra-long-range capability but also want turboprop economics.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission seeks an aircraft that combines ultra-long-range capabilities with the economic advantages of turboprop operations. This suggests a focus on efficiency and cost-effectiveness for long-distance travel.\n- Inferred posture: ultra long range, turboprop economics, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 65,
+        "category": "failure_handling",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:2"
+        ]
+      }
+    },
+    {
+      "id": 66,
+      "category": "synthesis",
+      "query": "We're a private equity group. Teams move between New York, Dallas, London, and occasionally Dubai. Senior partners hate fuel stops, but we also visit smaller industrial airports domestically. We currently charter around 300 hours annually and are debating ownership.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Dallas -> London; London -> Dubai; Dallas -> Dubai\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Multi-leg ultra-long-range executive band. The private equity group requires a versatile solution for frequent multi-leg travel across major global hubs, with a strong preference for nonstop flights to minimize downtime. Access to smaller airports is also essential for domestic operations.\n- Inferred posture: dual use or multi leg, fuel stop preference, smaller airport access\n\nAircraft Class Band:\n\n- Multi-leg ultra-long-range executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Multi-leg ultra-long-range executive band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 66,
+        "category": "synthesis",
+        "passed": false,
+        "score": 0.3,
+        "issues": [
+          "missing_ownership_economics",
+          "missing_multi_aircraft_synthesis"
+        ],
+        "signals": [
+          "operational_terms:4"
+        ]
+      }
+    },
+    {
+      "id": 67,
+      "category": "synthesis",
+      "query": "Our family office flies between Miami, Aspen, New York, and Europe. We care about comfort, but airport flexibility matters too. We've considered buying one large jet to simplify things.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Field-performance and runway access outweigh brochure cabin metrics on this profile. Credible aircraft class conversation starts in: Mountain field-flexible short-strip band. The family office prioritizes comfort and flexibility, particularly for operations involving mountain airports. A large jet is being considered to streamline travel between Miami, Aspen, New York, and Europe, balancing runway access with passenger comfort.\n- Inferred posture: runway over cabin, airport flexibility\n\nAircraft Class Band:\n\n- Mountain field-flexible short-strip band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Mountain field-flexible short-strip band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 67,
+        "category": "synthesis",
+        "passed": true,
+        "score": 0.65,
+        "issues": [
+          "missing_multi_aircraft_synthesis"
+        ],
+        "signals": [
+          "operational_terms:5"
+        ]
+      }
+    },
+    {
+      "id": 68,
+      "category": "synthesis",
+      "query": "We run a tech company with aggressive international growth. Asia travel increased dramatically this year, but we still do constant West Coast shuttles.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The company is experiencing significant growth, particularly in Asia, while maintaining regular shuttle operations on the West Coast. This dual focus suggests a need for versatile aircraft capable of both regional and international travel.\n- Inferred posture: aggressive growth, constant west coast shuttles\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 68,
+        "category": "synthesis",
+        "passed": true,
+        "score": 0.75,
+        "issues": [
+          "thin_broker_synthesis"
+        ],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 69,
+      "category": "synthesis",
+      "query": "We need something operationally credible for executives, but we're trying hard not to overspend on capability we rarely use.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The mission emphasizes a balance between executive comfort and cost efficiency, indicating a need for a capable yet economical aircraft solution. The focus is on ensuring operational credibility without overspending on infrequently used capabilities.\n- Inferred posture: executive focus, cost sensitivity, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 69,
+        "category": "synthesis",
+        "passed": true,
+        "score": 0.75,
+        "issues": [
+          "thin_broker_synthesis"
+        ],
+        "signals": [
+          "operational_terms:1"
+        ]
+      }
+    },
+    {
+      "id": 70,
+      "category": "synthesis",
+      "query": "We're reaching the point where charter friction is hurting operations, but I'm not convinced full ownership is financially rational yet.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Executive planning band. The user is facing operational inefficiencies due to reliance on charter services and is contemplating ownership options. Financial rationality for full ownership is still under consideration, indicating a need for a balanced approach to operational needs and costs.\n- Inferred posture: charter friction, full ownership rationale, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": null,
+        "corridor_type": null,
+        "travel_pattern": null,
+        "recommend_aircraft": null,
+        "synthesis": "",
+        "inferred": []
+      },
+      "score": {
+        "scenario_id": 70,
+        "category": "synthesis",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:3"
+        ]
+      }
+    }
+  ]
+}

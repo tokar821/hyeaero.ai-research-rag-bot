@@ -22,7 +22,7 @@ from services.searchapi_aircraft_images import (
 )
 
 PREMIUM_VERIFIED_IMAGE_FAILURE = (
-    "I cannot find verified images for this specific request."
+    "No verified images found for this exact aircraft."
 )
 
 

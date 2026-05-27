@@ -497,6 +497,7 @@ def test_model_gallery_strong_aviation_host_beats_higher_google_junk(monkeypatch
 
     monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
     monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+    monkeypatch.setenv("AIRCRAFT_IMAGE_VERIFICATION_STRICT", "0")
 
     def fake_search(_q: str, **kwargs):
         return [
@@ -534,6 +535,7 @@ def test_model_gallery_aviation_rankup_orders_oem_bjt_above_county_parks(monkeyp
 
     monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
     monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+    monkeypatch.setenv("AIRCRAFT_IMAGE_VERIFICATION_STRICT", "0")
 
     def fake_search(_q: str, **kwargs):
         return [

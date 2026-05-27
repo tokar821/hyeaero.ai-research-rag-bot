@@ -96,6 +96,17 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
                 notes="Explicit model comparison",
             )
 
+    # Deictic comparison: "Compare that preference to a Gulfstream G650 cabin"
+    if re.search(r"\bcompare\b", ql) and re.search(r"\b(that|this)\b", ql) and re.search(
+        r"\b(preference|interior|cabin|cockpit|feel|vibe)\b", ql
+    ):
+        return RefinementInterpretation(
+            type="comparison_anchor",
+            reference_aircraft=prev_aircraft or "",
+            add_traits=["comparison shopping"],
+            notes="Deictic comparison anchored to prior preference",
+        )
+
     if re.search(r"\bcompare\b", ql) and re.search(
         r"\bg650\b|\bgulfstream\b", ql
     ) and re.search(r"\b(cheaper|less expensive|vs\.?|versus|alternative)\b", ql):

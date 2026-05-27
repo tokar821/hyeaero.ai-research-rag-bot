@@ -444,5 +444,13 @@ def finalize_consultant_conversation_state(
     except Exception:
         pass
 
+    try:
+        from services.state.mission_state import PERSISTENT_MISSION_STATE_KEY
+
+        if isinstance(data_used, dict) and isinstance(data_used.get(PERSISTENT_MISSION_STATE_KEY), dict):
+            merged[PERSISTENT_MISSION_STATE_KEY] = data_used[PERSISTENT_MISSION_STATE_KEY]
+    except Exception:
+        pass
+
     data_used["consultant_conversation_state"] = merged
     return merged

@@ -421,21 +421,47 @@ def filter_and_rank_images(results: List[ImageHit], intent: ImageIntent) -> List
 
 
 async def get_premium_aircraft_images(user_input: str) -> Dict[str, Any]:
+    from services.aircraft_image_verification import (
+        VERIFIED_FAILURE_MESSAGE,
+        fallback_handling,
+        verify_aircraft_image_rows,
+    )
+
     intent = await extract_image_intent(user_input)
     query = build_image_query(intent)
     raw = search_images(query)
 
-    ranked = filter_and_rank_images(raw, intent)
-    best = ranked[0].score if ranked else 0.0
-    if not ranked or best < 0.7:
+    if not intent.tail and not intent.model:
         return {
             "success": False,
-            "message": "I couldn’t find verified images for this specific aircraft.",
+            "message": VERIFIED_FAILURE_MESSAGE,
+            "images": [],
         }
+
+    rows = [{"url": h.imageUrl, "title": h.title, "source": h.source} for h in raw]
+    vctx_model = intent.model if not intent.tail else None
+    result = verify_aircraft_image_rows(
+        rows,
+        tail=intent.tail,
+        model=vctx_model,
+        section=str(intent.view or "exterior"),
+        max_out=3,
+    )
+    if result.empty:
+        return fallback_handling(had_candidates=bool(raw), verification_result=result)
 
     return {
         "success": True,
         "images": [
-            {"imageUrl": x.imageUrl, "title": x.title, "source": x.source, "score": x.score} for x in ranked
+            {
+                "imageUrl": r.get("url"),
+                "title": r.get("title"),
+                "source": r.get("source"),
+                "score": r.get("_verification_confidence"),
+                "match_type": r.get("_verification_match_type"),
+            }
+            for r in result.images
         ],
+        "confidence": result.audit.pipeline_confidence,
+        "verification_audit": result.audit.to_dict(),
     }

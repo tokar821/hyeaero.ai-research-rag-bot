@@ -27,7 +27,16 @@ _GOOD_FIT_BLOCK_RE = re.compile(
     re.I,
 )
 _ASSUMING_BLOCK_RE = re.compile(
-    r"\n\s*Assuming\s+6[–-]8\s+passengers[\s\S]*$",
+    r"(?:\n\s*)?Assuming\s+6[–-]8\s+passengers[\s\S]*$",
+    re.I,
+)
+_REALISTIC_FITS_BLOCK_RE = re.compile(
+    r"(?:\n\s*)?"
+    r"(?:Assuming\s+6[–-]8\s+passengers\s+and\s+)?"
+    r"typical\s+business-use\s+constraints\s*\(no\s+extreme\s+hot/high\)\s*,?\s*"
+    r"here\s+are\s+a\s+few\s+realistic\s+fits:\s*"
+    r"[\s\S]*?"
+    r"(?=\n\s*(?:For |On |With |I['']d |My |The |If you |What['']s |\Z))",
     re.I,
 )
 _CONSULTANT_INSIGHT_RE = re.compile(
@@ -72,19 +81,31 @@ def is_pinpoint_factual_turn(
 
 
 def strip_advisory_boilerplate(answer: str) -> str:
-    """Remove appended GOOD FIT / shortlist blocks from any consultant reply."""
+    """Remove appended GOOD FIT / stock shortlist blocks from any consultant reply."""
     s = (answer or "").strip()
     if not s:
         return s
-    for pat in (
+    patterns = (
         _GOOD_FIT_BLOCK_RE,
         _ASSUMING_BLOCK_RE,
+        _REALISTIC_FITS_BLOCK_RE,
         _BOTTOM_LINE_RE,
         _CONSULTANT_INSIGHT_RE,
         _CLOSER_RE,
-    ):
-        s = pat.sub("", s).strip()
-    s = re.sub(r"\s*✅\s*GOOD\s+FIT\s*$", "", s, flags=re.I).strip()
+    )
+    for _ in range(4):
+        prev = s
+        for pat in patterns:
+            s = pat.sub("", s).strip()
+        if s == prev:
+            break
+    s = re.sub(r"\s*✅\s*GOOD\s+FIT\s*", "", s, flags=re.I).strip()
+    s = re.sub(
+        r"\n\s*here are a few realistic fits:\s*",
+        "\n",
+        s,
+        flags=re.I,
+    ).strip()
     return s
 
 

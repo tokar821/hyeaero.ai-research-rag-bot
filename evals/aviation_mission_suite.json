@@ -1,0 +1,323 @@
+{
+  "schema_version": 2,
+  "description": "Production aviation mission benchmark — real buyer/advisor questions with golden expectations.",
+  "qa_defaults": {
+    "forbidden_phrases": [
+      "starts the conversation",
+      "worth revisiting",
+      "on my list",
+      "if the trip stays in this profile",
+      "Mission Summary",
+      "Best Fit Aircraft",
+      "my recommendation is the",
+      "great range and comfort",
+      "excellent performance",
+      "good operating economics"
+    ],
+    "max_recommendations": 5
+  },
+  "categories": [
+    "transatlantic_missions",
+    "asia_nonstop",
+    "fractional_vs_ownership",
+    "runway_flexibility",
+    "operating_cost",
+    "mountain_airports",
+    "cabin_comparison",
+    "range_realism",
+    "westbound_winter_constraints",
+    "turn_isolation"
+  ],
+  "cases": [
+    {
+      "id": "transatlantic_001",
+      "category": "transatlantic_missions",
+      "input": "12 passengers New York to London nonstop — what large-cabin options are realistic, not brochure fantasy?",
+      "golden": {
+        "expected_mission_category": "transatlantic_executive",
+        "route_must_include": ["New York", "London"],
+        "expected_any_models": ["Falcon 7X", "Falcon 8X", "Gulfstream G650", "Global 7500", "Challenger 650"],
+        "forbidden_any_models": ["Citation CJ2", "Citation CJ4", "Learjet 75"],
+        "constraints_required": ["nonstop"]
+      }
+    },
+    {
+      "id": "transatlantic_002",
+      "category": "transatlantic_missions",
+      "input": "Boston to Paris, 10 executives, need reliable nonstop with NBAA reserves — compare practical range, not marketing range.",
+      "golden": {
+        "expected_mission_category": "transatlantic_executive",
+        "route_must_include": ["Boston", "Paris"],
+        "expected_any_models": ["Falcon 7X", "Gulfstream G650", "Global 7500", "Challenger 650"],
+        "forbidden_any_models": ["Citation Latitude", "Learjet 75"]
+      }
+    },
+    {
+      "id": "asia_001",
+      "category": "asia_nonstop",
+      "input": "6 executives from San Francisco to Tokyo nonstop westbound in winter — what actually makes the leg?",
+      "golden": {
+        "expected_mission_category": "ultra_long_range",
+        "route_must_include": ["San Francisco", "Tokyo"],
+        "expected_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500", "Falcon 7X"],
+        "forbidden_any_models": ["Citation CJ2", "Challenger 350", "Citation Latitude"],
+        "constraints_required": ["westbound", "winter"]
+      }
+    },
+    {
+      "id": "asia_002",
+      "category": "asia_nonstop",
+      "input": "Can we do Tokyo to Seoul nonstop with 8 pax and bags every week?",
+      "golden": {
+        "route_must_include": ["Tokyo", "Seoul"],
+        "expected_any_models": ["Challenger 350", "Gulfstream G280", "Falcon 2000", "Citation Latitude"],
+        "forbidden_any_models": ["Global 7500", "Gulfstream G650"]
+      }
+    },
+    {
+      "id": "fractional_001",
+      "category": "fractional_vs_ownership",
+      "input": "We fly 250 hours a year transcon — fractional vs full ownership for a Challenger 350?",
+      "golden": {
+        "ownership_posture": "fractional",
+        "expected_any_models": ["Challenger 350"],
+        "forbidden_any_models": [],
+        "answer_must_mention_any": ["fractional", "ownership", "hours", "capital"]
+      }
+    },
+    {
+      "id": "fractional_002",
+      "category": "fractional_vs_ownership",
+      "input": "First-time buyer leaning fractional for US East Coast missions — what should I avoid overbuying?",
+      "golden": {
+        "ownership_posture": "fractional",
+        "forbidden_any_models": ["Global 7500", "Falcon 8X"],
+        "expected_any_models": ["Challenger 350", "Citation Latitude", "Praetor 600", "Gulfstream G280"]
+      }
+    },
+    {
+      "id": "runway_001",
+      "category": "runway_flexibility",
+      "input": "Miami Caribbean missions with runway flexibility — what turboprop or light jet actually fits?",
+      "golden": {
+        "expected_mission_category_any": ["regional_utility", "mountain_airport"],
+        "route_must_include": ["Miami", "Caribbean"],
+        "expected_any_models": ["PC-12", "CJ3", "CJ4", "King Air", "Citation CJ", "Praetor 600", "Citation Latitude", "Challenger 350"],
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500"],
+        "constraints_required": ["runway"]
+      },
+      "notes": "Gold standard: PC-12, CJ3+, King Air 350 — NOT G650"
+    },
+    {
+      "id": "runway_002",
+      "category": "runway_flexibility",
+      "input": "8 passengers Miami to Caribbean, short runway focus — recommend right-sized aircraft.",
+      "golden": {
+        "route_must_include": ["Miami", "Caribbean"],
+        "expected_any_models": ["Citation Latitude", "Praetor 600", "Challenger 350", "Gulfstream G280", "PC-12", "King Air"],
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500"]
+      }
+    },
+    {
+      "id": "operating_cost_001",
+      "category": "operating_cost",
+      "input": "8 passengers LA to Miami nonstop around $10M budget — prioritize operating economics over cabin ego.",
+      "golden": {
+        "route_must_include": ["Los Angeles", "Miami"],
+        "expected_any_models": ["Citation Latitude", "Praetor 600", "Challenger 350", "Gulfstream G280"],
+        "forbidden_any_models": ["Global 7500", "Falcon 8X"],
+        "constraints_required": ["operating_cost"]
+      }
+    },
+    {
+      "id": "operating_cost_002",
+      "category": "operating_cost",
+      "input": "High-cycle East Coast 6 pax — lowest direct operating cost without sacrificing dispatch reliability.",
+      "golden": {
+        "expected_any_models": ["Citation CJ4", "Citation Latitude", "Praetor 600", "Learjet 75"],
+        "forbidden_any_models": ["Gulfstream G650", "Global 7500"],
+        "constraints_required": ["operating_cost"]
+      }
+    },
+    {
+      "id": "mountain_001",
+      "category": "mountain_airports",
+      "input": "6 passengers Dallas to Aspen hot and high — runway and payload realism?",
+      "golden": {
+        "expected_mission_category": "mountain_airport",
+        "route_must_include": ["Dallas", "Aspen"],
+        "expected_any_models": ["Citation Latitude", "Praetor 600", "Challenger 350", "Gulfstream G280"],
+        "forbidden_any_models": ["Citation CJ2", "Gulfstream G650"],
+        "constraints_required": ["mountain", "runway"]
+      }
+    },
+    {
+      "id": "mountain_002",
+      "category": "mountain_airports",
+      "input": "Winter ski trips into Aspen with 8 pax and skis — what not to bring?",
+      "golden": {
+        "route_must_include": ["Aspen"],
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500", "Citation CJ2"],
+        "constraints_required": ["mountain", "baggage"]
+      }
+    },
+    {
+      "id": "cabin_001",
+      "category": "cabin_comparison",
+      "input": "Falcon 2000 vs Challenger 350 for 9 passengers — cabin, baggage, and dispatch tradeoffs?",
+      "golden": {
+        "expected_any_models": ["Falcon 2000", "Challenger 350"],
+        "forbidden_any_models": [],
+        "answer_must_mention_any": ["cabin", "baggage", "tradeoff", "tradeoffs"]
+      }
+    },
+    {
+      "id": "cabin_002",
+      "category": "cabin_comparison",
+      "input": "G650 vs Global 7500 cabin experience for 12 pax transatlantic — be specific, not generic.",
+      "golden": {
+        "expected_any_models": ["Gulfstream G650", "Global 7500"],
+        "forbidden_any_models": ["Citation CJ2"],
+        "answer_must_mention_any": ["cabin"]
+      }
+    },
+    {
+      "id": "range_001",
+      "category": "range_realism",
+      "input": "Brochure says 6,000 nm — what should I plan for with 12 pax and NBAA reserves on a westbound leg?",
+      "golden": {
+        "forbidden_any_models": [],
+        "answer_must_mention_any": ["practical", "reserve", "NBAA", "payload", "westbound", "margin"],
+        "constraints_required": ["range_realism"]
+      }
+    },
+    {
+      "id": "range_002",
+      "category": "range_realism",
+      "input": "8 passengers LA to Miami nonstop — do I need an ultra-long-range jet?",
+      "golden": {
+        "route_must_include": ["Los Angeles", "Miami"],
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500"],
+        "expected_any_models": ["Citation Latitude", "Praetor 600", "Challenger 350", "Gulfstream G280"]
+      }
+    },
+    {
+      "id": "westbound_001",
+      "category": "westbound_winter_constraints",
+      "input": "West coast to Europe westbound winter, 12 passengers, nonstop required — headwind margin?",
+      "golden": {
+        "expected_mission_category": "ultra_long_range",
+        "route_must_include": ["Europe"],
+        "expected_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500", "Falcon 7X"],
+        "forbidden_any_models": ["Citation CJ2", "Citation Latitude"],
+        "constraints_required": ["westbound", "winter", "nonstop"]
+      }
+    },
+    {
+      "id": "westbound_002",
+      "category": "westbound_winter_constraints",
+      "input": "SFO to Paris nonstop westbound 8 pax — which jets are brochure-only on this leg?",
+      "golden": {
+        "route_must_include": ["San Francisco", "Paris"],
+        "expected_any_models": ["Gulfstream G650", "Falcon 8X", "Global 7500", "Falcon 7X"],
+        "forbidden_any_models": ["Citation CJ2", "Learjet 75", "Citation CJ4"],
+        "constraints_required": ["westbound"]
+      }
+    },
+    {
+      "id": "isolation_001",
+      "category": "turn_isolation",
+      "input": "8 passengers Miami to Caribbean, operating cost priority",
+      "conversation_state": {
+        "mission_memory": {
+          "schema_version": 1,
+          "turn_index": 2,
+          "ownership_posture": {
+            "value": "fractional",
+            "confidence": 0.91,
+            "ttl_turns": 5,
+            "field_key": "ownership_posture"
+          },
+          "home_base": {
+            "value": "Teterboro",
+            "confidence": 0.88,
+            "ttl_turns": 8,
+            "field_key": "home_base"
+          }
+        }
+      },
+      "prior_context_must_not_leak": {
+        "routes": ["Los Angeles", "Tokyo", "LA to Miami"],
+        "passengers": [10, 12]
+      },
+      "golden": {
+        "route_must_include": ["Miami", "Caribbean"],
+        "route_must_not_include": ["Tokyo", "Los Angeles"],
+        "passenger_count": 8,
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X"]
+      }
+    },
+    {
+      "id": "isolation_002",
+      "category": "turn_isolation",
+      "input": "6 executives San Francisco to Tokyo nonstop westbound winter",
+      "prior_context_must_not_leak": {
+        "routes": ["Miami", "Caribbean", "LA to Miami"]
+      },
+      "golden": {
+        "route_must_include": ["San Francisco", "Tokyo"],
+        "route_must_not_include": ["Miami", "Caribbean"],
+        "expected_mission_category": "ultra_long_range"
+      }
+    },
+    {
+      "id": "invalid_route_001",
+      "category": "range_realism",
+      "input": "What would you like to work on today for my mission?",
+      "golden": {
+        "routes_must_be_empty": true,
+        "forbidden_route_patterns": ["What Would You Like", "Work"]
+      }
+    },
+    {
+      "id": "transatlantic_003",
+      "category": "transatlantic_missions",
+      "input": "Teterboro to Geneva, 8 pax, prefer Falcon or Gulfstream — mission-fit shortlist only.",
+      "golden": {
+        "route_must_include": ["Teterboro", "Geneva"],
+        "expected_any_models": ["Falcon 7X", "Falcon 8X", "Gulfstream G650", "Gulfstream G280", "Global 7500"],
+        "forbidden_any_models": ["Citation CJ2", "Learjet 75"]
+      }
+    },
+    {
+      "id": "asia_003",
+      "category": "asia_nonstop",
+      "input": "New York to Tokyo nonstop with 10 passengers — ULR reality check.",
+      "golden": {
+        "expected_mission_category_any": ["ultra_long_range", "transatlantic_executive", "coast_to_coast"],
+        "route_must_include": ["New York", "Tokyo"],
+        "expected_any_models": ["Gulfstream G650", "Global 7500", "Falcon 8X"],
+        "forbidden_any_models": ["Citation Latitude", "Challenger 350", "Citation CJ2", "Praetor 600", "Gulfstream G280"]
+      },
+      "qa": {
+        "realism_expectations": {
+          "min_aircraft_class": "ultra-long",
+          "requires_elimination_language": true,
+          "must_not_claim_brochure_nonstop": true,
+          "notes": "NYC-Tokyo westbound winter — super-mids must be eliminated, not recommended"
+        },
+        "required_phrases_any": ["reserve", "westbound", "payload", "margin"]
+      }
+    },
+    {
+      "id": "runway_003",
+      "category": "runway_flexibility",
+      "input": "King Air vs PC-12 vs CJ3 for Caribbean island hopping from Miami — runway under 4,000 ft.",
+      "golden": {
+        "route_must_include": ["Miami", "Caribbean"],
+        "expected_any_models": ["King Air", "PC-12", "CJ3", "CJ4", "Citation CJ"],
+        "forbidden_any_models": ["Gulfstream G650", "Falcon 8X", "Challenger 650"]
+      }
+    }
+  ]
+}

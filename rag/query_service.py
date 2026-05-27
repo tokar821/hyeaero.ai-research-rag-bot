@@ -1616,6 +1616,21 @@ Produce the final client-facing answer.""",
                 final_text = (resp1.choices[0].message.content or "").strip()
 
             try:
+                from rag.consultant_intelligence_hook import (
+                    apply_consultant_intelligence_before_containment,
+                )
+
+                final_text, data_used = apply_consultant_intelligence_before_containment(
+                    final_text or "",
+                    query=b.get("query") or "",
+                    history=history,
+                    data_used=data_used,
+                    conversation_state=conversation_state,
+                )
+            except Exception as intel_e:
+                logger.warning("stream consultant intelligence skipped: %s", intel_e)
+
+            try:
                 from rag.response_safety import enforce_consultant_quality, sanitize_user_facing_answer
 
                 _sg = _consultant_strong_aircraft_gallery_from_data_used(data_used)
@@ -1895,6 +1910,22 @@ Produce the final client-facing answer.""",
                         answer = reviewed
                 except Exception as rev_e:
                     logger.warning("Consultant final review skipped: %s", rev_e)
+
+            # Consultant intelligence layer (before containment / response_safety).
+            try:
+                from rag.consultant_intelligence_hook import (
+                    apply_consultant_intelligence_before_containment,
+                )
+
+                answer, data_used = apply_consultant_intelligence_before_containment(
+                    answer or "",
+                    query=b.get("query") or "",
+                    history=history,
+                    data_used=data_used,
+                    conversation_state=conversation_state,
+                )
+            except Exception as intel_e:
+                logger.warning("consultant intelligence layer skipped: %s", intel_e)
 
             # Last-mile safety: strip internal dataset/infrastructure naming from user-visible output.
             try:

@@ -1,0 +1,86 @@
+{
+  "passed": 5,
+  "total": 5,
+  "results": [
+    {
+      "title": "PE group multi-region strategy",
+      "scenario_id": "pe_multi_region",
+      "passed": true,
+      "score": 1.0,
+      "issues": [],
+      "signals": [
+        "has:fleet",
+        "has:multi",
+        "has:incompatible",
+        "has:transatlantic",
+        "has:portfolio",
+        "packet:incompatible_mission_bands",
+        "packet:dual_use_or_multi_leg",
+        "turn_overlap:0.80"
+      ]
+    },
+    {
+      "title": "Aspen + London incompatible bands",
+      "scenario_id": "aspen_london_coexist",
+      "passed": true,
+      "score": 1.0,
+      "issues": [],
+      "signals": [
+        "has:incompatible",
+        "has:mountain",
+        "has:ulr",
+        "has:band",
+        "has:fleet",
+        "packet:incompatible_mission_bands",
+        "turn_overlap:1.00"
+      ]
+    },
+    {
+      "title": "CEO continuation to Middle East",
+      "scenario_id": "ceo_middle_east_continuation",
+      "passed": true,
+      "score": 0.76,
+      "issues": [
+        "missing_signal:fleet",
+        "missing_signal:fuel"
+      ],
+      "signals": [
+        "has:ulr",
+        "has:nonstop",
+        "has:continuation",
+        "packet:dual_use_or_multi_leg"
+      ]
+    },
+    {
+      "title": "250\u2013300 hr ownership crossover",
+      "scenario_id": "ownership_250_300",
+      "passed": true,
+      "score": 0.88,
+      "issues": [
+        "missing_signal:management"
+      ],
+      "signals": [
+        "has:fractional",
+        "has:charter",
+        "has:utilization",
+        "has:dispatch",
+        "has:capital"
+      ]
+    },
+    {
+      "title": "Miami Caribbean executive shuttle realism",
+      "scenario_id": "miami_caribbean_executive",
+      "passed": true,
+      "score": 1.0,
+      "issues": [],
+      "signals": [
+        "has:pressur",
+        "has:dispatch",
+        "has:runway",
+        "has:jet",
+        "packet:minimum_jet_cabin_floor",
+        "packet:executive_travel_profile"
+      ]
+    }
+  ]
+}

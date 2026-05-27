@@ -405,10 +405,10 @@ def extract_phlydata_tokens_with_history(
     max_history_messages: int = 14,
 ) -> List[str]:
     """
-    Collect serial/tail tokens from the current message and recent **participant** turns so follow-ups
+    Collect serial/tail tokens from the current message and recent **user** turns so follow-ups
     like "thanks" still resolve the same aircraft.
 
-    Only ``system`` / ``tool`` / ``function`` roles are skipped (see :func:`rag.aviation_tail.history_role_contributes_to_thread`).
+    Assistant turns are intentionally skipped so hallucinated tails do not contaminate lookup.
     """
     seen: set[str] = set()
     out: List[str] = []
@@ -420,13 +420,12 @@ def extract_phlydata_tokens_with_history(
                 seen.add(k)
                 out.append(t)
 
-    from rag.aviation_tail import history_role_contributes_to_thread
-
     add_from_text(query or "")
     if history:
         tail = history[-max_history_messages:]
         for h in tail:
-            if not history_role_contributes_to_thread(h.get("role")):
+            r = str(h.get("role") or "").strip().lower()
+            if r not in ("user", "u", "you"):
                 continue
             add_from_text(h.get("content") or "")
     return out
@@ -442,10 +441,7 @@ def _strict_tails_latest_from_user_thread(
     Latest strict civil registration from the **current** message, else the **most recent**
     participant message that contains one. Used when the current line has no extractable tail (follow-ups).
     """
-    from rag.aviation_tail import (
-        find_strict_tail_candidates_in_text,
-        history_role_contributes_to_thread,
-    )
+    from rag.aviation_tail import find_strict_tail_candidates_in_text
 
     here = find_strict_tail_candidates_in_text(query or "")
     if here:
@@ -453,7 +449,8 @@ def _strict_tails_latest_from_user_thread(
     if not history:
         return []
     for h in reversed(history[-max_history_messages:]):
-        if not history_role_contributes_to_thread(h.get("role")):
+        r = str(h.get("role") or "").strip().lower()
+        if r not in ("user", "u", "you"):
             continue
         found = find_strict_tail_candidates_in_text(h.get("content") or "")
         if found:

@@ -420,6 +420,7 @@ def run_aircraft_decision_engine(
     region: Optional[str] = None,
     embedding_service: Any = None,
     pinecone_client: Any = None,
+    persistent_mission_state: Any = None,
 ) -> Dict[str, Any]:
     """
     Evaluate a buy decision from natural language + optional Hye Aero DB signals.
@@ -428,6 +429,18 @@ def run_aircraft_decision_engine(
     """
     raw = (user_query or "").strip()
     mission = extract_mission_profile(raw)
+    if persistent_mission_state is not None:
+        try:
+            from services.state.mission_state import MissionState, merge_decision_mission
+
+            pms = (
+                persistent_mission_state
+                if isinstance(persistent_mission_state, MissionState)
+                else MissionState.from_storage_dict(persistent_mission_state)
+            )
+            mission = merge_decision_mission(mission, pms)
+        except Exception as e:
+            logger.debug("persistent mission merge skipped: %s", e)
     marketing, mfr, mdl = resolve_target_aircraft(raw)
     jet_class = infer_jet_class(marketing)
 

@@ -1,0 +1,700 @@
+{
+  "results": [
+    {
+      "id": "arctic_ulr_remote",
+      "title": "Arctic + ULR + remote ops",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Anchorage -> Calgary",
+          "Anchorage -> London",
+          "Calgary -> London",
+          "Anchorage -> Arctic Oil Platforms",
+          "Anchorage -> Remote Drilling Sites"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": 6,
+          "max_pax": 10,
+          "planning_load": 10,
+          "typical_pax": 8,
+          "cargo_required": false,
+          "variance_note": "range 6-10",
+          "is_variable": true
+        },
+        "governance": {
+          "ceo_ulr_mandate": true,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": true,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": true,
+          "governance_notes": [
+            "Operator prefers one aircraft for simplicity \u2014 structural proof still governs if bands conflict."
+          ]
+        },
+        "industrial": {
+          "classes": [
+            "gravel",
+            "remote_strip"
+          ],
+          "runway_over_cabin": true,
+          "field_access_required": true,
+          "summary": "Field-access classes: gravel, remote strip",
+          "active": true
+        },
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=5",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Anchorage -> Calgary (peak planning); other legs: Anchorage -> Arctic Oil Platforms; Anchorage -> Remote Drilling Sites; Anchorage -> London\n- Pax: 6\u201310 (planning load 10)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Winter transatlantic planning \u2014 reserve fuel and alternate policy dominate; cost-optimized light jets are thin. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Domestic field-access executive band, Transatlantic ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 10 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Westbound winter margin is decisive \u2014 headwind and alternate fuel burn eliminate marginal ULR airframes from reliable dispatch; ER-class reserves separate conditional from strong performers.. Base-range G650-class may be conditional on winter westbound legs; G650ER and Global 7500-class typically carry stronger dispatch headroom at full passenger load.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load.. Field and industrial "
+    },
+    {
+      "id": "governance_domestic_ceo_prestige",
+      "title": "Extreme governance conflict",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "New York -> Tokyo",
+          "New York -> Dubai",
+          "New York -> Boston",
+          "New York -> Chicago",
+          "Chicago -> San Francisco",
+          "New York -> San Francisco"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": 3,
+          "max_pax": 5,
+          "planning_load": 5,
+          "typical_pax": 4,
+          "cargo_required": false,
+          "variance_note": "range 3-5",
+          "is_variable": true
+        },
+        "governance": {
+          "ceo_ulr_mandate": true,
+          "domestic_utilization_dominant": true,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": true,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": true,
+          "governance_notes": [
+            "CEO ULR mandate conflicts with dominant short domestic utilization \u2014 portfolio governance required."
+          ]
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=6",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: New York -> Dubai (peak planning); other legs: New York -> Tokyo; New York -> Tokyo; New York -> San Francisco\n- Pax: 3\u20135 (planning load 5)\n- Operational read: Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Multi-leg ultra-long-range executive band, Middle East ULR continuation band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated)... CEO ULR mandate conflicts with dominant short domestic utilization \u2014 portfolio governance required. Governance: CEO nonstop ULR mandate vs dominant short domestic utilization \u2014 portfolio structure required; daily hops do not justify a single Global-class platform..\n\nOperational segments:\n\n- Operational Segment: Ulr Continuation [peak planning leg]\nAuthority: Middle East / founder continuation authority: New York -> Dubai Routes: New York -> Dubai Operational constraint: continuation_ulr Implication: Daily domestic utilization rarely supports dedicated ULR ownership on peak legs.\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: New York -> Boston (+3 supporting legs) Routes: New York -> Boston; New York -> Chicago; Chicago -> San Francisco\n- Operational Segment: Pacific Ulr\nAuthority: Pacific / Asia ULR corridor: New York -> Tokyo Routes: New York -> Tokyo Operational constraint: continuation_ulr Implication: Oceanic stages require worst-case leg planning \u2014 not a domestic jet problem.\n\nMulti-domain operational problem \u2014 one air"
+    },
+    {
+      "id": "multi_continental_pax_cargo",
+      "title": "Multi-continental + pax + cargo",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Houston -> Sao Paulo",
+          "Houston -> Lagos",
+          "Houston -> Frankfurt",
+          "Lagos -> Frankfurt"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": 4,
+          "max_pax": 16,
+          "planning_load": 16,
+          "typical_pax": 10,
+          "cargo_required": true,
+          "variance_note": "range 4-16; cargo/equipment",
+          "is_variable": true
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": []
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=4",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Houston -> Sao Paulo (peak planning); other legs: Houston -> Lagos; Houston -> Frankfurt; Houston -> Lagos\n- Pax: 4\u201316 (planning load 16)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Credible aircraft class conversation starts in: Latin America / transatlantic executive band, Transatlantic / heavy-cabin executive band, Transatlantic ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 16 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated).. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Houston -> Sao Paulo (+3 supporting legs) Routes: Houston -> Sao Paulo; Houston -> Lagos; Houston -> Frankfurt Operational constraint: cargo\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio required \u2014 segment class bands above"
+    },
+    {
+      "id": "mountain_desert_transatlantic",
+      "title": "Mountain + desert + transatlantic",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Denver -> Riyadh",
+          "Denver -> Zurich",
+          "Denver -> Telluride",
+          "Denver -> Aspen",
+          "Denver -> Jackson Hole",
+          "Denver -> Vail"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": null,
+          "max_pax": null,
+          "planning_load": null,
+          "typical_pax": null,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": []
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": null,
+        "recommend_aircraft": true
+      },
+      "notes": [
+        "routes=8",
+        "struct=True",
+        "defer_rank=None"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Denver -> Zurich (peak planning); other legs: Denver -> Riyadh; Denver -> Telluride; Denver -> Aspen\n- Pax: Not stated\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Winter transatlantic planning \u2014 reserve fuel and alternate policy dominate; cost-optimized light jets are thin. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Middle East ULR continuation band, Mountain field-flexible short-strip band, Transatlantic / heavy-cabin band \u2014 modest passenger load rarely justifies ULR-class capital; supplemental charter on peak legs is often more rational than G650-class ownership... Transatlantic / Europe executive band \u2014 planning centers on or heavy-cabin with realistic winter reserves; light-jet economics are not credible at full passenger load.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise...\n\nOperational segments:\n\n- Operational Segment: Transatlantic Executive [peak planning leg]\nAuthority: Direct route authority: Denver -> Zurich Routes: Denver -> Zurich\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Denver -> Vail (+1 supporting legs) Routes: Denver -> Vail; Denver -> Eagle\n- Operational Segment: Mountain Field\nAuthority: Mountain / short-strip authority: Denver -> Telluride Routes: Denver -> Telluride; Denver -> Aspen; Denver -> Jackson Hole Operational constraint: mountain, short_runway Implication: Winter density altitude and runway length dominate \u2014 not cabin luxury.\n- Operational Segment: Ulr Continuation\nAuthority: Middle East / founder continuation"
+    },
+    {
+      "id": "short_islands_europe_asia_ulr",
+      "title": "Short runway islands + Europe + Asia ULR",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Miami -> Singapore",
+          "Miami -> Paris",
+          "Miami -> Caribbean"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": null,
+          "max_pax": null,
+          "planning_load": null,
+          "typical_pax": null,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": true,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": [
+            "Operator prefers one aircraft for simplicity \u2014 structural proof still governs if bands conflict."
+          ]
+        },
+        "industrial": {},
+        "structural_required": false,
+        "defer_global_shortlist": null,
+        "recommend_aircraft": true
+      },
+      "notes": [
+        "routes=3",
+        "struct=False",
+        "defer_rank=None"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Miami -> Paris (peak planning); other legs: Miami -> Caribbean; Miami -> Singapore; Miami -> Singapore\n- Pax: Not stated\n- Operational read: Island and tropical operating environment \u2014 heat, humidity, and corrosion exposure. Runway access matters, but executive dispatch and pressurized jet credibility remain the floor. Credible aircraft class conversation starts in: Caribbean executive regional jet band, Transatlantic / heavy-cabin executive band, Transatlantic / heavy-cabin band \u2014 modest passenger load rarely justifies ULR-class capital; supplemental charter on peak legs is often more rational than G650-class ownership... Transatlantic / Europe executive band \u2014 planning centers on or heavy-cabin with realistic winter reserves; light-jet economics are not credible at full passenger load... Operator prefers one aircraft for simplicity \u2014 structural proof still governs if bands conflict..\n\nOperational segments:\n\n- Operational Segment: Transatlantic Executive [peak planning leg]\nAuthority: Direct route authority: Miami -> Paris Routes: Miami -> Paris\n- Operational Segment: Caribbean Regional\nAuthority: Direct route authority: Miami -> Caribbean Routes: Miami -> Caribbean Operational constraint: short_runway\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Miami -> Singapore Routes: Miami -> Singapore\n\nMulti-domain operational composition (each domain independently feasible):\n\nVerdict: a single platform spanning all domains is structurally invalid \u2014 decomposition was triggered by elimination failure across domains, not preference.\n\n- Short-field / high-performance (mountain & hot-high) \u2014 Pilatus PC-12 (VIABLE WITH COMPROMISES). Independently feasible within short_field_high_performance domain \u2014 not a global ranking preference. Alternates: Pilatus PC-24.\n- ULR cla"
+    },
+    {
+      "id": "industrial_mining_africa_eu",
+      "title": "Industrial mining + Africa + EU HQ",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "London -> Zurich",
+          "London -> West Africa",
+          "Houston -> West Africa",
+          "Houston -> Remote Drilling Sites",
+          "Houston -> Zurich",
+          "Houston -> London"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": null,
+          "max_pax": null,
+          "planning_load": null,
+          "typical_pax": null,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": []
+        },
+        "industrial": {
+          "classes": [
+            "mining",
+            "remote_strip"
+          ],
+          "runway_over_cabin": true,
+          "field_access_required": true,
+          "summary": "Field-access classes: mining, remote strip",
+          "active": true
+        },
+        "structural_required": true,
+        "defer_global_shortlist": null,
+        "recommend_aircraft": true
+      },
+      "notes": [
+        "routes=6",
+        "struct=True",
+        "defer_rank=None"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Houston -> London (peak planning); other legs: London -> West Africa; Houston -> West Africa; London -> Zurich\n- Pax: Not stated\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Credible aircraft class conversation starts in: Domestic field-access executive band, Transatlantic / heavy-cabin executive band, Transatlantic / heavy-cabin band \u2014 modest passenger load rarely justifies ULR-class capital; supplemental charter on peak legs is often more rational than G650-class ownership... Transatlantic / Europe executive band \u2014 planning centers on or heavy-cabin with realistic winter reserves; light-jet economics are not credible at full passenger load.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Field and industrial airport access dominate cabin spec \u2014 runway length, climb gradient, and unpaved or short-strip capability set the planning floor before interior comfort...\n\nOperational segments:\n\n- Operational Segment: Transatlantic Executive [peak planning leg]\nAuthority: Direct route authority: Houston -> London Routes: Houston -> London\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: London -> Zurich (+1 supporting legs) Routes: London -> Zurich; Houston -> Zurich\n- Operational Segment: Industrial Field\nAuthority: Industrial / remote field authority: London -> West Africa Routes: London -> West Africa; Houston -> West Africa; Houston -> Remote Drilling Sites Operational constraint: industrial, short_runway\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nAircraft "
+    },
+    {
+      "id": "hub_imbalance_continuation",
+      "title": "Executive hub + hidden continuations",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "New York -> Chicago",
+          "Chicago -> San Francisco",
+          "New York -> Abu Dhabi",
+          "New York -> Singapore",
+          "New York -> San Francisco"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": 4,
+          "max_pax": 4,
+          "planning_load": 4,
+          "typical_pax": 4,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": true,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": true,
+          "founder_company_asymmetry": true,
+          "defer_global_aircraft_ranking": true,
+          "governance_notes": [
+            "Founder-exclusive ULR legs vs company domestic scope \u2014 portfolio governance, not one shared tail number."
+          ]
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=5",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: New York -> Abu Dhabi (peak planning); other legs: Chicago -> San Francisco; New York -> Chicago; New York -> Chicago\n- Pax: 4\n- Operational read: Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Middle East ULR continuation band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated)... Founder-exclusive ULR legs vs company domestic scope \u2014 portfolio governance, not one shared tail number..\n\nOperational segments:\n\n- Operational Segment: Ulr Continuation [peak planning leg]\nAuthority: Middle East / founder continuation authority: New York -> Abu Dhabi Routes: New York -> Abu Dhabi Operational constraint: continuation_ulr Implication: Daily domestic utilization rarely supports dedicated ULR ownership on peak legs.\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: New York -> Chicago (+2 supporting legs) Routes: New York -> Chicago; Chicago -> San Francisco; New York -> Singapore\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nAircraft Class Band:\n\n- [Ulr Continuation] Middle East ULR continuation band\n- [Domestic Executive] Long-leg executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio required \u2014 segment class bands above"
+    },
+    {
+      "id": "cargo_heavy_stol_intercontinental",
+      "title": "Cargo-heavy + STOL + intercontinental",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Calgary -> Houston",
+          "Houston -> Remote Drilling Sites"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": 6,
+          "max_pax": 12,
+          "planning_load": 12,
+          "typical_pax": 9,
+          "cargo_required": true,
+          "variance_note": "range 6-12; cargo/equipment",
+          "is_variable": true
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": []
+        },
+        "industrial": {
+          "classes": [
+            "remote_strip"
+          ],
+          "runway_over_cabin": false,
+          "field_access_required": true,
+          "summary": "Field-access classes: remote strip",
+          "active": true
+        },
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=2",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Calgary -> Houston (peak planning); other legs: Houston -> Remote Drilling Sites; Houston -> Remote Drilling Sites\n- Pax: 6\u201312 (planning load 12)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: Credible aircraft class conversation starts in: Domestic field-access executive band, Executive planning band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load.. Field and industrial airport access dominate cabin spec \u2014 runway length, climb gradient, and unpaved or short-strip capability set the planning floor before interior comfort...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Calgary -> Houston Routes: Calgary -> Houston Operational constraint: cargo\n- Operational Segment: Industrial Field\nAuthority: Industrial / remote field authority: Houston -> Remote Drilling Sites Routes: Houston -> Remote Drilling Sites Operational constraint: industrial, short_runway, cargo\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nAircraft Class Band:\n\n- [Domestic Executive] Executive planning band\n- [Industrial Field] Domestic field-access executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio required \u2014 segment class bands above"
+    },
+    {
+      "id": "failed_prior_ski_asia",
+      "title": "Failed prior ownership + ski + Asia",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Los Angeles -> Tokyo",
+          "Los Angeles -> Aspen",
+          "Los Angeles -> Telluride",
+          "Los Angeles -> Jackson Hole",
+          "Los Angeles -> Vail",
+          "Los Angeles -> Eagle"
+        ],
+        "inferred_continuations": [],
+        "passenger_distribution": {
+          "min_pax": null,
+          "max_pax": null,
+          "planning_load": null,
+          "typical_pax": null,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": false,
+          "domestic_utilization_dominant": false,
+          "single_aircraft_preference": false,
+          "utilization_mission_conflict": false,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": false,
+          "governance_notes": []
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": null,
+        "recommend_aircraft": true
+      },
+      "notes": [
+        "routes=9",
+        "struct=True",
+        "defer_rank=None"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Los Angeles -> Tokyo (peak planning); other legs: New York -> London; Los Angeles -> Aspen; Los Angeles -> Telluride\n- Pax: Not stated\n- Operational read: Credible aircraft class conversation starts in: Multi-leg ultra-long-range executive band, Mountain field-flexible short-strip band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise...\n\nOperational segments:\n\n- Operational Segment: Transatlantic Executive [peak planning leg]\nAuthority: Direct route authority: Los Angeles -> Tokyo (+1 supporting legs) Routes: Los Angeles -> Tokyo; New York -> London\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Los Angeles -> Vail (+2 supporting legs) Routes: Los Angeles -> Vail; Los Angeles -> Eagle; Los Angeles -> Singapore\n- Operational Segment: Mountain Field\nAuthority: Mountain / short-strip authority: Los Angeles -> Aspen Routes: Los Angeles -> Aspen; Los Angeles -> Telluride; Los Angeles -> Jackson Hole Operational constraint: mountain, short_runway Implication: Winter density altitude and runway length dominate \u2014 not cabin luxury.\n\nMulti-domain operational composition (each domain independently feasible):\n\nVerdict: a single platform spanning all domains is structurally invalid \u2014 decomposition was triggered by elimination failure across domains, not preference.\n\n- Short-field / high-performance (mountain & hot-high) \u2014 Pilatus PC-12 (VIABLE WITH COMPROMISES). Independently feasible within short_field_high_performance domain \u2014 not a global ranking preference. Alternates: Pilatus PC-24.\n- ULR class \u2014 Los Angeles -> Tokyo \u2014 G"
+    },
+    {
+      "id": "dual_fleet_single_aircraft_pressure",
+      "title": "Dual fleet + forced single aircraft",
+      "grade": "PASS",
+      "extraction": {
+        "all_key_cities_captured": true,
+        "continuation_legs_in_graph": true,
+        "industrial_or_runway_detected": true,
+        "short_runway_signal": true
+      },
+      "representation": {
+        "pax_is_distribution": true,
+        "cargo_flagged": true,
+        "governance_detected": true,
+        "pre_ranking_applied": true
+      },
+      "structure": {
+        "multi_segment_or_portfolio": true,
+        "structural_or_fleet_decomposition": true,
+        "single_aircraft_invalidated_when_needed": true
+      },
+      "ranking": {
+        "no_global7500_default": true,
+        "no_one_jet_collapse": true,
+        "no_premature_shortlist": true,
+        "kernel_authoritative_block": true
+      },
+      "data_snapshot": {
+        "routes": [
+          "Riyadh -> Dubai",
+          "Riyadh -> Singapore",
+          "Dubai -> Singapore",
+          "New York -> Riyadh"
+        ],
+        "inferred_continuations": [
+          "New York -> Riyadh"
+        ],
+        "passenger_distribution": {
+          "min_pax": null,
+          "max_pax": null,
+          "planning_load": null,
+          "typical_pax": null,
+          "cargo_required": false,
+          "variance_note": "",
+          "is_variable": false
+        },
+        "governance": {
+          "ceo_ulr_mandate": true,
+          "domestic_utilization_dominant": true,
+          "single_aircraft_preference": true,
+          "utilization_mission_conflict": true,
+          "founder_company_asymmetry": false,
+          "defer_global_aircraft_ranking": true,
+          "governance_notes": [
+            "CEO ULR mandate conflicts with dominant short domestic utilization \u2014 portfolio governance required.",
+            "Single-aircraft preference acknowledged but structurally constrained by utilization asymmetry."
+          ]
+        },
+        "industrial": {},
+        "structural_required": true,
+        "defer_global_shortlist": true,
+        "recommend_aircraft": false
+      },
+      "notes": [
+        "routes=4",
+        "struct=True",
+        "defer_rank=True"
+      ],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Riyadh -> Dubai (peak planning); other legs: Riyadh -> Singapore; Dubai -> Singapore; Riyadh -> Singapore\n- Pax: Not stated\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Middle East ULR continuation band, Executive planning band... CEO ULR mandate conflicts with dominant short domestic utilization \u2014 portfolio governance required. Single-aircraft preference acknowledged but structurally constrained by utilization asymmetry. Governance: CEO nonstop ULR mandate vs dominant short domestic utilization \u2014 portfolio structure required; daily hops do not justify a single Global-class platform..\n\nOperational segments:\n\n- Operational Segment: Ulr Continuation [peak planning leg]\nAuthority: Middle East / founder continuation authority: Riyadh -> Dubai Routes: Riyadh -> Dubai; Riyadh -> Singapore; Dubai -> Singapore Operational constraint: continuation_ulr Implication: Daily domestic utilization rarely supports dedicated ULR ownership on peak legs.\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nAircraft Class Band:\n\n- [Ulr Continuation] Middle East ULR continuation band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio required \u2014 segment class bands above"
+    }
+  ]
+}

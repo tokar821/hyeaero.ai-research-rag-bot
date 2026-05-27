@@ -1,0 +1,420 @@
+[
+  {
+    "id": 1,
+    "tier": 1,
+    "intent": "payload_range_analysis",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 2,
+    "tier": 1,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [
+      "Global 7500",
+      "Falcon 8X"
+    ],
+    "feasible_n": 5,
+    "answer_preview": "Mission Fit:\n\n- Route: San Francisco -> Tokyo\n- Pax: Not stated\n- Priorities: nonstop, westbound margin, winter ops\n\nAircraft Options:\n\n- Global 7500 \u2014 Why it fits: Practical range realistic for this leg (~6436 nm vs ~6107 nm required) Key compromise: Westbound margin applied (~561 nm equivalent)\n- Falcon 8X \u2014 Why it fits: Cabin comfort is strong for this passenger load Key compromise: Practical r",
+    "answer_len": 483,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 3,
+    "tier": 1,
+    "intent": "payload_range_analysis",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 4,
+    "tier": 1,
+    "intent": "ownership_economics",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: hybrid (250\u2013400 hr/year)\n- Structure: fractional vs full tradeoff\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 5,
+    "tier": 1,
+    "intent": "payload_range_analysis",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 6,
+    "tier": 2,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nNothing in the catalog passed every hard gate as stated \u2014 that usually means range with reserves, runway, or passenger load is fighting the request, not that aviation is unknowable.\n- If you can relax nonstop, the feasible band often widens by one cabin class.\n- If runway or ho",
+    "answer_len": 613,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 7,
+    "tier": 2,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 240,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 8,
+    "tier": 2,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation Latitude"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: 9\n- Priorities: nonstop\n\nAircraft Options:\n\n- Citation Latitude \u2014 Why it fits: Practical range realistic for this leg (~2199 nm vs ~434 nm required) Key compromise: Heavy payload load reduces day-of dispatch flexibility\n\nVerdict:",
+    "answer_len": 270,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 9,
+    "tier": 2,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 240,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 10,
+    "tier": 2,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 18,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: Standard mission \u2014 no special constraints stated\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Practical range realistic for this leg (~1705 nm vs ~333 nm required) Key compromise: None material on this leg.\n\nVerdict:",
+    "answer_len": 287,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 11,
+    "tier": 3,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair (nonstop required)? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 259,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 12,
+    "tier": 3,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [
+      "Pilatus PC-12"
+    ],
+    "feasible_n": 9,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: 8\n- Priorities: nonstop, runway / hot-high\n\nAircraft Options:\n\n- Pilatus PC-12 \u2014 Why it fits: Practical range realistic for this leg (~1401 nm vs ~494 nm required) Key compromise: Runway or hot/high footprint is weak for stated airport environment\n- Citation Latitude \u2014 Why it fits: Practical range realistic for this leg (~2177 nm vs ~494 nm required) Key co",
+    "answer_len": 745,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 13,
+    "tier": 3,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair (nonstop required)? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 259,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 14,
+    "tier": 3,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: westbound margin\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Citation CJ4 covers the and passenger load without stretching the operation beyond what the trip requires Key compromise: Westbound leg adds fuel-stop and reroute exposure\n\nVerdict:",
+    "answer_len": 314,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 15,
+    "tier": 3,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nNothing in the catalog passed every hard gate as stated \u2014 that usually means range with reserves, runway, or passenger load is fighting the request, not that aviation is unknowable.\n- If you can relax nonstop, the feasible band often widens by one cabin class.\n- If runway or ho",
+    "answer_len": 613,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 16,
+    "tier": 4,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 18,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: operating cost, cabin, baggage\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Practical range realistic for this leg (~1648 nm vs ~333 nm required) Key compromise: None material on this leg.\n\nVerdict:",
+    "answer_len": 269,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 17,
+    "tier": 4,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "On a Citation CJ4, the real decision is utilization: below ~400\u2013500 hours a year, fractional or charter often carries the airplane cheaper than owning.\n\nAbove that band, ownership can work \u2014 but only if you budget for mx downtime, crew, and the months the jet sits.\n\nIn practice, most buyers overweight acquisition price and underweight fixed cost, mx reserves, and liquidity when they try to exit.",
+    "answer_len": 398,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 18,
+    "tier": 4,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 18,
+    "answer_preview": "Comparison: Challenger 650 vs Praetor 600\n\n- Range:\nChallenger 650: ~3500 nm practical Praetor 600: ~3400 nm practical\n\n- Cabin:\nChallenger 650: large class Praetor 600: super midsize class\n\n- Operating cost:\nChallenger 650: Higher direct operating cost band Praetor 600: Mid operating cost band\n\n- Runway capability:\nChallenger 650: Large-cabin runway Praetor 600: Super-midsize runway\n\n- Liquidity:",
+    "answer_len": 731,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 19,
+    "tier": 4,
+    "intent": "operational_tradeoff_analysis",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: cabin\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Practical range realistic for this leg (~1705 nm vs ~333 nm required) Key compromise: None material on this leg.\n\nVerdict:",
+    "answer_len": 244,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 20,
+    "tier": 4,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair (roughly $30.0M budget)? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 264,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 21,
+    "tier": 5,
+    "intent": "visualization_request",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Aircraft anchor: Citation Longitude\n- Planning economics @ 250 hr/year: ~$5,660/hr variable + ~$1,055,000/yr fixed \u2192 ~$9,880/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structur",
+    "answer_len": 748,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 22,
+    "tier": 5,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 18,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: cabin\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Practical range realistic for this leg (~1705 nm vs ~333 nm required) Key compromise: None material on this leg.\n\nVerdict:",
+    "answer_len": 244,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 23,
+    "tier": 5,
+    "intent": "visualization_request",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Aircraft anchor: Falcon 8X\n- Planning economics @ 250 hr/year: ~$9,384/hr variable + ~$1,812,000/yr fixed \u2192 ~$16,632/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure preced",
+    "answer_len": 740,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 24,
+    "tier": 6,
+    "intent": "mission_feasibility",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation Latitude",
+      "Challenger 350"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: 10\n- Priorities: nonstop\n\nAircraft Options:\n\n- Citation Latitude \u2014 Why it fits: Practical range realistic for this leg (~2172 nm vs ~470 nm required) Key compromise: Heavy payload load reduces day-of dispatch flexibility\n\nVerdict:",
+    "answer_len": 271,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 25,
+    "tier": 6,
+    "intent": "payload_range_analysis",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 26,
+    "tier": 6,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 18,
+    "answer_preview": "Comparison: Challenger 650 vs Praetor 600\n\n- Range:\nChallenger 650: ~3500 nm practical Praetor 600: ~3400 nm practical\n\n- Cabin:\nChallenger 650: large class Praetor 600: super midsize class\n\n- Operating cost:\nChallenger 650: Higher direct operating cost band Praetor 600: Mid operating cost band\n\n- Runway capability:\nChallenger 650: Large-cabin runway Praetor 600: Super-midsize runway\n\n- Liquidity:",
+    "answer_len": 731,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 27,
+    "tier": 6,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 240,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 28,
+    "tier": 6,
+    "intent": "payload_range_analysis",
+    "requires_ranked": false,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: In the 200\u2013400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe \u2014 structure precedes model.\n- Dispatch: schedule-c",
+    "answer_len": 708,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 29,
+    "tier": 7,
+    "intent": "shortlist_ranking",
+    "requires_ranked": true,
+    "rec_models": [
+      "Citation CJ4"
+    ],
+    "feasible_n": 4,
+    "answer_preview": "Mission Fit:\n\n- Route: Not stated\n- Pax: Not stated\n- Priorities: cabin\n\nAircraft Options:\n\n- Citation CJ4 \u2014 Why it fits: Practical range realistic for this leg (~1705 nm vs ~333 nm required) Key compromise: None material on this leg.\n\nVerdict:",
+    "answer_len": 244,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  },
+  {
+    "id": 30,
+    "tier": 7,
+    "intent": "aircraft_comparison",
+    "requires_ranked": true,
+    "rec_models": [],
+    "feasible_n": 0,
+    "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nWhat's the primary city pair? Origin and destination are enough \u2014 e.g. Los Angeles to Miami or San Francisco to Tokyo.",
+    "answer_len": 240,
+    "issues": [],
+    "formatter": null,
+    "viz_rendered": null
+  }
+]

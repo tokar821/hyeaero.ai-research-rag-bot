@@ -1186,6 +1186,42 @@ def fetch_ranked_searchapi_aircraft_images(
         if len(out) >= max_out:
             break
 
+    from services.aircraft_image_verification import (
+        VERIFIED_FAILURE_MESSAGE,
+        strict_image_verification_enabled,
+        verify_gallery_images,
+    )
+
+    if strict_image_verification_enabled() and (
+        (strict_tail_mode and (canonical_tail or "").strip())
+        or (marketing_type_for_model_match or "").strip()
+    ):
+        _pre_verify_n = len(out)
+        _v_tail = (
+            str(canonical_tail).strip()
+            if strict_tail_mode and (canonical_tail or "").strip()
+            else None
+        )
+        _v_model = (
+            (marketing_type_for_model_match or "").strip()
+            if not _v_tail
+            else None
+        )
+        _v_section = str(
+            intent or (premium_intent or {}).get("image_type") or "exterior"
+        ).strip() or "exterior"
+        out, vmeta = verify_gallery_images(
+            out,
+            tail=_v_tail,
+            model=_v_model,
+            section=_v_section,
+            max_out=max_out,
+        )
+        meta_out.update(vmeta)
+        if _pre_verify_n and not out:
+            meta_out["consultant_gallery_empty"] = True
+            meta_out["consultant_gallery_message"] = VERIFIED_FAILURE_MESSAGE
+
     if out and (marketing_type_for_model_match or canonical_tail or "").strip():
         from services.aviation_image_rank_filter_engine import (
             apply_rank_filter_to_gallery_items,
@@ -1211,6 +1247,46 @@ def fetch_ranked_searchapi_aircraft_images(
                 meta_out["consultant_gallery_message"] = (
                     "No verified images met quality and relevance thresholds."
                 )
+
+    _cabin_intent = str(intent or "").lower() in ("cabin", "interior") or str(
+        (premium_intent or {}).get("image_type") or ""
+    ).lower() in ("cabin", "interior")
+    if (
+        not out
+        and strict_tail_mode
+        and (canonical_tail or "").strip()
+        and _cabin_intent
+        and (marketing_type_for_model_match or "").strip()
+    ):
+        fb_out, fb_meta = fetch_ranked_searchapi_aircraft_images(
+            queries=queries,
+            canonical_tail=None,
+            strict_tail_mode=False,
+            marketing_type_for_model_match=marketing_type_for_model_match,
+            per_query_results=per_query_results,
+            max_out=max_out,
+            user_query=user_query,
+            gallery_meta=None,
+            premium_intent=premium_intent,
+        )
+        if fb_out:
+            _model_lbl = str(marketing_type_for_model_match).strip()
+            _tail_lbl = str(canonical_tail).strip()
+            for row in fb_out:
+                row["image_provenance"] = "representative_model_cabin"
+                row["caption"] = (
+                    f"Representative {_model_lbl} cabin image "
+                    f"(exact {_tail_lbl} interior not verified)."
+                )
+            out = fb_out
+            meta_out.update(fb_meta)
+            meta_out["consultant_cabin_image_tier"] = "representative_model"
+            meta_out["consultant_cabin_image_label"] = (
+                f"Representative {_model_lbl} cabin (exact {_tail_lbl} interior not verified)."
+            )
+            meta_out.pop("consultant_gallery_empty", None)
+            meta_out.pop("consultant_gallery_message", None)
+            mode = "model_representative_cabin"
 
     meta_out["consultant_searchapi_gallery_mode"] = mode
     if strict_tail_mode and canonical_tail:

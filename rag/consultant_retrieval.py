@@ -450,11 +450,95 @@ def run_consultant_retrieval_bundle(
         }
 
     _router = build_consultant_tool_router(_fine, query, _strict_tails)
+    _du_preprocess: Dict[str, Any] = {}
+    try:
+        from services.preprocessing import attach_mission_preprocessing
+
+        attach_mission_preprocessing(_du_preprocess, query or "")
+        try:
+            from services.memory.visual_scope import clear_visual_memory_patch
+
+            _mp = _du_preprocess.get("mission_preprocessing") or {}
+            _new_routes = []
+            if isinstance(_mp, dict):
+                _new_routes = list(_mp.get("routes") or [])
+            _vis_patch = clear_visual_memory_patch(
+                client_conversation_state,
+                new_routes=_new_routes,
+            )
+            if _vis_patch and isinstance(client_conversation_state, dict):
+                mem = client_conversation_state.setdefault("conversation_memory", {})
+                if isinstance(mem, dict):
+                    mem.update(_vis_patch)
+                if _vis_patch.get("visual_memory_cleared"):
+                    _du_preprocess["visual_memory_cleared"] = 1
+        except Exception as _vis_e:
+            logger.debug("visual_scope patch skipped: %s", _vis_e)
+    except Exception as _pre_e:
+        logger.warning("mission pre-processing failed (non-fatal): %s", _pre_e)
+        _du_preprocess = {}
     _mission_hint = (_router.mission_reasoning_hint or "").strip()
     buyer_psychology_result: Optional[Dict[str, Any]] = None
     _aviation_engines_ctx = (_router.aviation_engines_block or "").strip()
+    _pre_llm_pipeline_patch: Dict[str, Any] = {}
+    _pipeline_authority_block = ""
+    try:
+        from services.consultant.pre_llm_recommendation import (
+            run_pre_llm_recommendation,
+            should_run_pre_llm_pipeline,
+        )
+        from services.recommendation.query_recommendation_intent import (
+            apply_query_intent_metadata,
+            classify_query_recommendation_intent,
+        )
+
+        _qri = classify_query_recommendation_intent(query, _history_original)
+        apply_query_intent_metadata(_pre_llm_pipeline_patch, _qri)
+
+        if should_run_pre_llm_pipeline(
+            _fine.intent.value,
+            query,
+            query_intent=_qri.intent.value,
+            history=_history_original,
+        ):
+            _pipeline_authority_block, _pre_llm_pipeline_patch, _ = run_pre_llm_recommendation(
+                query,
+                conversation_state=client_conversation_state,
+                data_used=_pre_llm_pipeline_patch,
+                fine_intent=_fine.intent.value,
+                history=_history_original,
+            )
+        elif _pipeline_authority_block == "":
+            if _qri.intent.value == "visualization_request":
+                from services.consultant.mission_state import MissionState
+                from services.consultant.visualization_handler import (
+                    build_visualization_authority_block,
+                    run_visualization_turn,
+                )
+
+                _viz = run_visualization_turn(
+                    query,
+                    mission=MissionState(),
+                    history=_history_original,
+                    conversation_state=client_conversation_state,
+                    data_used=_pre_llm_pipeline_patch,
+                )
+                _pipeline_authority_block = build_visualization_authority_block(_viz)
+            else:
+                from services.recommendation.query_recommendation_intent import build_intent_authority_note
+
+                _pipeline_authority_block = build_intent_authority_note(_qri)
+            _aviation_engines_ctx = (
+                "[Legacy catalog hints below are secondary — use AUTHORITATIVE pipeline list above.]\n\n"
+                + _aviation_engines_ctx
+                if _aviation_engines_ctx
+                else ""
+            )
+    except Exception as _pipe_e:
+        logger.warning("pre-LLM recommendation pipeline skipped: %s", _pipe_e)
+
     _consultant_aviation_prefix = "\n\n".join(
-        p for p in (_mission_hint, _aviation_engines_ctx) if p
+        p for p in (_mission_hint, _pipeline_authority_block, _aviation_engines_ctx) if p
     ).strip()
 
     _t_block = time.perf_counter()
@@ -663,8 +747,13 @@ def run_consultant_retrieval_bundle(
             user_wants_gallery, consultant_image_intent_src, consultant_image_llm_intent = (
                 f_int.result()
             )
+    from services.orchestration.image_session import gallery_allowed_for_query
+
     if _intent_bundle and _intent_bundle.force_gallery_intent:
         user_wants_gallery = True
+    if user_wants_gallery and not gallery_allowed_for_query(query):
+        user_wants_gallery = False
+        consultant_image_intent_src = "suppressed_advisory_turn"
     if progress:
         rqs_prev = expanded.get("rag_queries") if isinstance(expanded, dict) else None
         rqs_prev = list(rqs_prev) if isinstance(rqs_prev, list) else []
@@ -1409,7 +1498,14 @@ def run_consultant_retrieval_bundle(
             gallery_images=len(aircraft_images),
         )
 
+    from services.orchestration.image_session import advisory_image_context_patch
+
     data_used: Dict[str, Any] = dict(phly_meta)
+    data_used.update(advisory_image_context_patch(query or ""))
+    if _du_preprocess:
+        data_used.update(_du_preprocess)
+    if _pre_llm_pipeline_patch:
+        data_used.update(_pre_llm_pipeline_patch)
     data_used["consultant_query"] = (query or "").strip()
     for k, v in strip_market_meta_zeros(market_meta).items():
         data_used[k] = v
@@ -1597,9 +1693,19 @@ def run_consultant_retrieval_bundle(
             public_decision_payload,
             run_aircraft_decision_engine,
         )
+        from services.state.mission_state import sync_persistent_mission_state
 
         if consultant_query_requests_aircraft_decision(query):
-            _dec = run_aircraft_decision_engine(query, db=svc.db)
+            _persist, _, _validation = sync_persistent_mission_state(
+                query,
+                conversation_state=client_conversation_state,
+                data_used=data_used,
+            )
+            _dec = run_aircraft_decision_engine(
+                query,
+                db=svc.db,
+                persistent_mission_state=_persist,
+            )
             data_used["aircraft_decision"] = public_decision_payload(_dec)
     except Exception as _dec_e:
         logger.debug("aircraft_decision skipped: %s", _dec_e)
@@ -1614,6 +1720,10 @@ def run_consultant_retrieval_bundle(
         intent_classification.primary,
         intent_classification.aviation_intent,
     )
+    if _pipeline_authority_block:
+        from services.consultant.llm_explanation_layer import build_narration_system_addendum
+
+        system_prompt += "\n\n" + build_narration_system_addendum()
     # User-facing safety: never expose internal datasets/pipelines; treat bracketed context tags as internal-only.
     system_prompt += (
         "\n\n**Client-facing safety (strict):** Never mention or imply internal systems, datasets, or infrastructure. "

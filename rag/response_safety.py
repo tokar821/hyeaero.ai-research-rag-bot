@@ -190,6 +190,29 @@ def _strip_markdown_hash_markers(text: str) -> str:
     return "\n".join(out_lines).strip()
 
 
+def _has_structured_consultant_answer(data_used: Optional[Dict[str, Any]]) -> bool:
+    """Intelligence layer already produced mission-ranked advisor copy."""
+    du = data_used if isinstance(data_used, dict) else {}
+    if du.get("recommendation_decision_source") == "deterministic_pipeline":
+        return True
+    if du.get("consultant_intelligence_layer") and (
+        du.get("consultant_structured_formatter")
+        or du.get("consultant_recommendations")
+        or du.get("pre_llm_pipeline_authority")
+    ):
+        return True
+    return bool(du.get("consultant_structured_formatter"))
+
+
+def _strip_stock_advisory_templates(answer: str) -> str:
+    try:
+        from rag.pinpoint_answer import strip_advisory_boilerplate
+
+        return strip_advisory_boilerplate(answer)
+    except Exception:
+        return answer
+
+
 def _apply_response_mode_enforcement(answer: str, data_used: Dict[str, Any]) -> str:
     try:
         from services.response_mode_router.enforce import enforce_from_data_used
@@ -208,7 +231,7 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
 
     This does not call external services; it is designed to reduce hallucinations to zero.
     """
-    a = (answer or "").strip()
+    a = _strip_stock_advisory_templates((answer or "").strip())
     if not a:
         return a
 
@@ -372,39 +395,110 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
             "mission_advisory",
             "client_decision_scenarios",
         ):
-            from rag.consultant_validity import count_known_model_mentions
+            # Never append the legacy stock shortlist — intelligence layer / formatter owns recommendations.
+            if _has_structured_consultant_answer(data_used):
+                pass
+            else:
+                from rag.consultant_validity import count_known_model_mentions
 
-            n_models = count_known_model_mentions(a)
-            if n_models < 2:
-                # Deterministic, decision-grade fallback block: assumptions + 2–4 real models + why + tradeoff + bottom line.
-                # Keep it generic (no fake pricing/specs).
-                fallback = (
-                    a.rstrip()
-                    + "\n\nAssuming 6–8 passengers and typical business-use constraints (no extreme hot/high), here are a few realistic fits:\n"
-                    "- Challenger 350: balanced mission capability and strong dispatch reputation; tradeoff: you’re paying for efficiency/modernity more than maximum cabin volume.\n"
-                    "- Praetor 600: excellent range margin for the class and modern cabin; tradeoff: availability and programs matter a lot by airframe.\n"
-                    "- Gulfstream G280: fast point-to-point with a solid cabin for many U.S. missions; tradeoff: it’s not a large-cabin experience.\n\n"
-                    "Bottom Line: If you want the safest all-around answer without overbuying, start with Challenger 350 unless a specific route or cabin requirement pushes you up or down a class.\n\n"
-                    "Consultant Insight: Most buyer’s remorse isn’t about range—it’s about dispatch reliability and ownership friction (programs, crew, maintenance posture)."
-                ).strip()
-                return fallback
+                if count_known_model_mentions(a) < 2:
+                    a = _strip_stock_advisory_templates(a)
     except Exception:
         pass
 
     a = _apply_response_mode_enforcement(a, data_used)
     try:
         from rag.buyer_journey_enforcement import enforce_buyer_journey_answer
-        from rag.pinpoint_answer import enforce_pinpoint_answer, strip_advisory_boilerplate
+        from rag.pinpoint_answer import enforce_pinpoint_answer
         from rag.refinement_answer import enforce_size_upgrade_answer, enforce_style_shift_answer
 
-        a = strip_advisory_boilerplate(a)
+        a = _strip_stock_advisory_templates(a)
         a = enforce_style_shift_answer(a, query=query or "", data_used=data_used)
         a = enforce_size_upgrade_answer(a, query=query or "", data_used=data_used)
         a = enforce_buyer_journey_answer(a, query=query or "", data_used=data_used)
         a = enforce_pinpoint_answer(a, query=query or "", data_used=data_used)
     except Exception:
         pass
-    return a
+
+    try:
+        from services.consultant.response_cleanup import cleanResponseText
+
+        a = cleanResponseText(a)
+    except Exception:
+        pass
+
+    try:
+        from services.telemetry.reasoning_packet_enforcement import (
+            enforce_reasoning_packet_authority,
+            extract_reasoning_packet,
+        )
+
+        packet = extract_reasoning_packet(data_used)
+        if packet:
+            recs = _recommendations_from_data_used(data_used)
+            mission = _mission_from_data_used(data_used)
+            if recs and mission:
+                a, _ = enforce_reasoning_packet_authority(
+                    a,
+                    data_used=data_used,
+                    recommendations=recs,
+                    mission=mission,
+                    query=query or "",
+                    turn_seed=query or "",
+                )
+    except Exception:
+        pass
+
+    return _strip_stock_advisory_templates(a)
+
+
+def _recommendations_from_data_used(data_used: Dict[str, Any]) -> list:
+    from services.consultant.recommendation_engine import (
+        AircraftRecommendation,
+        RecommendationExplanation,
+    )
+
+    raw = (
+        data_used.get("consultant_recommendations")
+        or (data_used.get("deterministic_recommendation_pipeline") or {}).get("recommendations")
+        or []
+    )
+    out = []
+    for r in raw:
+        if not isinstance(r, dict):
+            continue
+        expl = r.get("explanation") or {}
+        out.append(
+            AircraftRecommendation(
+                model=str(r.get("model") or ""),
+                category=str(r.get("category") or ""),
+                total_score=float(r.get("total_score") or 0),
+                confidence=float(r.get("confidence") or 0),
+                rank=int(r.get("rank") or 0),
+                avoid=bool(r.get("avoid")),
+                fit=str(r.get("fit") or ""),
+                fit_verdict=str(r.get("fit_verdict") or ""),
+                explanation=RecommendationExplanation(
+                    summary=str(expl.get("summary") or ""),
+                    strengths=list(expl.get("strengths") or []),
+                    penalties=list(expl.get("penalties") or []),
+                    operational_caveats=list(expl.get("operational_caveats") or []),
+                ),
+            )
+        )
+    return out
+
+
+def _mission_from_data_used(data_used: Dict[str, Any]):
+    from services.consultant.mission_state import MissionState
+
+    ms = data_used.get("consultant_mission_state") or data_used.get("mission_state")
+    if isinstance(ms, dict):
+        return MissionState.from_dict(ms)
+    pipe = data_used.get("deterministic_recommendation_pipeline") or {}
+    if isinstance(pipe, dict) and isinstance(pipe.get("mission_state"), dict):
+        return MissionState.from_dict(pipe["mission_state"])
+    return None
 
 
 def answer_contains_banned_terms(answer: str, extra: Iterable[str] = ()) -> Dict[str, int]:

@@ -1,0 +1,83 @@
+{
+  "passed": 4,
+  "total": 5,
+  "results": [
+    {
+      "id": "pe_nyc_london_aspen_dubai",
+      "query": "We're a private equity firm based in New York. Most trips are NYC-London with 8 executives, but partners also visit Aspen twice monthly and occasionally continue onward to Dubai. We hate fuel stops and currently charter around 320 hours annually. Would one aircraft honestly cover this, or should we structure a fleet differently?",
+      "passed": true,
+      "issues": [],
+      "signals": [
+        "incompatible",
+        "fleet",
+        "portfolio"
+      ],
+      "corridor": null,
+      "incompatible": null,
+      "continuity": {},
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: New York -> Dubai\n- Pax: 8\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Ownership posture reads as charter transition with multi leg utilization. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic /"
+    },
+    {
+      "id": "sfo_tokyo_london_winter",
+      "query": "We usually fly 4 executives from San Francisco to Tokyo and London. We want reliable westbound winter nonstop capability, but we also care about operating efficiency and don't want to overspend on more airplane than necessary.",
+      "passed": true,
+      "issues": [],
+      "signals": [
+        "ultra",
+        "westbound",
+        "winter"
+      ],
+      "corridor": null,
+      "incompatible": null,
+      "continuity": {},
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: San Francisco -> Tokyo\n- Pax: 4\n- Operational read: Westbound long-stage planning \u2014 headwind and alternate fuel drive dispatch reliability. Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts "
+    },
+    {
+      "id": "miami_caribbean_runway",
+      "query": "We're based in Miami and frequently fly 5-6 passengers into short Caribbean runways and secondary South American airports. Operating cost and runway flexibility matter much more than cabin luxury.",
+      "passed": true,
+      "issues": [],
+      "signals": [
+        "runway",
+        "cost",
+        "caribbean"
+      ],
+      "corridor": null,
+      "incompatible": null,
+      "continuity": {},
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nBroker's read: reserves-first dispatch reality decides the shortlist, then we call out the compromises.\n\nMission Fit:\n\n- Route: Miami -> Caribbean\n- Pax: 6\n- Priorities: operating cost, cabin, runway / hot-high\n\nAircraft Options:\n\n- Citation Latitude \u2014 Why it fits: Practical range realistic for this leg (~2212 nm vs ~1343 nm required) Key compromise: Hot/high or mountain departures erode payload-range\n- Pilatus PC-24 \u2014 Why it fits: Practical range realistic for this leg (~1"
+    },
+    {
+      "id": "ownership_220hr",
+      "query": "We charter about 220 hours annually today, mostly between Dallas, Chicago, New York, and Europe. Some trips are just 3 executives, others are 12-person deal teams. At what point does fractional stop making sense?",
+      "passed": true,
+      "issues": [],
+      "signals": [
+        "fractional",
+        "utilization",
+        "hour"
+      ],
+      "corridor": null,
+      "incompatible": null,
+      "continuity": {},
+      "answer_preview": "Ownership Economics (simulated):\n\n- Utilization: fractional/charter-adjacent (150\u2013250 hr/year)\n- Structure: fractional program\n- Planning economics @ 220 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$8,063/hr all-in (directional, not a quote).\n\nAnalysis: Dispatch tradeoff: charter/card preserves peak-day flexibility without fixed crew idle; ownership or higher fractional share buys schedule control when ad-hoc lift fails . Capital efficiency: compare burdened all-in hourly (fixed + variable amortized) to fractional card pricing at your peak month \u2014 crossover is often utilization-driven"
+    },
+    {
+      "id": "london_aspen_conflict",
+      "query": "We need nonstop London capability, but we also spend a lot of time in Aspen, Eagle, and Jackson Hole. We tried forcing one aircraft to do everything before and it became operationally frustrating.",
+      "passed": false,
+      "issues": [
+        "missing:aspen",
+        "missing:london",
+        "missing:segment"
+      ],
+      "signals": [
+        "incompatible"
+      ],
+      "corridor": null,
+      "incompatible": null,
+      "continuity": {},
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Europe / intercontinental stage \u2014 light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Mountain field-flexible short-strip"
+    }
+  ]
+}

@@ -1,0 +1,2400 @@
+{
+  "summary": {
+    "PASS": 10,
+    "PARTIAL": 0,
+    "FAIL": 0
+  },
+  "results": [
+    {
+      "title": "Q1 Arctic + Industrial + EU Executive conflict",
+      "status": "PASS",
+      "routes": [
+        "Houston -> London",
+        "Houston -> Frankfurt",
+        "Houston -> Anchorage",
+        "Yellowknife -> Nunavut Field Ops",
+        "Yellowknife -> Remote Gravel Strips"
+      ],
+      "expect_hits": [
+        "houston",
+        "london",
+        "frankfurt",
+        "nunavut",
+        "gravel"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Yellowknife -> Nunavut Field Ops",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "arctic_industrial_layer"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Houston -> London",
+          "Houston -> Frankfurt",
+          "Houston -> Anchorage",
+          "Yellowknife -> Nunavut Field Ops",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Frankfurt",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Anchorage",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Nunavut Field Ops",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Houston -> London",
+          "Houston -> Frankfurt",
+          "Houston -> Anchorage",
+          "Yellowknife -> Nunavut Field Ops",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Anchorage",
+          "Frankfurt",
+          "Houston",
+          "London",
+          "Nunavut Field Ops",
+          "Remote Gravel Strips",
+          "Yellowknife"
+        ],
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "London",
+            "authority": "explicit",
+            "origin_cluster": "Houston",
+            "locked": true
+          },
+          {
+            "origin": "Houston",
+            "destination": "Frankfurt",
+            "authority": "explicit",
+            "origin_cluster": "Houston",
+            "locked": true
+          },
+          {
+            "origin": "Houston",
+            "destination": "Anchorage",
+            "authority": "inferred",
+            "origin_cluster": "Houston",
+            "locked": false
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Nunavut Field Ops",
+            "authority": "arctic",
+            "origin_cluster": "Yellowknife",
+            "locked": false
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "arctic",
+            "origin_cluster": "Yellowknife",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Houston": [
+            "Houston -> London",
+            "Houston -> Frankfurt",
+            "Houston -> Anchorage"
+          ],
+          "Yellowknife": [
+            "Yellowknife -> Nunavut Field Ops",
+            "Yellowknife -> Remote Gravel Strips"
+          ]
+        },
+        "industrial_nodes": [
+          "Nunavut Field Ops",
+          "Remote Gravel Strips"
+        ],
+        "arctic_nodes": [
+          "Nunavut Field Ops",
+          "Remote Gravel Strips",
+          "Yellowknife"
+        ],
+        "eu_exec_layer": [
+          "Houston -> Frankfurt",
+          "Houston -> London"
+        ],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [
+          "Houston -> London",
+          "Houston -> Frankfurt"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Houston -> London",
+          "Houston -> Frankfurt",
+          "Houston -> Anchorage",
+          "Yellowknife -> Nunavut Field Ops",
+          "Yellowknife -> Remote Gravel Strips"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Transatlantic Executive",
+          "kind": "transatlantic_executive",
+          "routes": [
+            "Houston -> London"
+          ]
+        },
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Houston -> Frankfurt",
+            "Houston -> Anchorage",
+            "Yellowknife -> Nunavut Field Ops"
+          ]
+        },
+        {
+          "label": "Industrial Field",
+          "kind": "industrial_field",
+          "routes": [
+            "Yellowknife -> Remote Gravel Strips"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q2 Australia Mining + Asia + Europe overlay",
+      "status": "PASS",
+      "routes": [
+        "Perth -> Singapore",
+        "Perth -> London",
+        "Singapore -> London",
+        "Perth -> Pilbara",
+        "Perth -> Australian Extraction Strips"
+      ],
+      "expect_hits": [
+        "perth",
+        "pilbara",
+        "singapore",
+        "london"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Perth -> Australian Extraction Strips"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "industrial_geography"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Perth -> Singapore",
+          "Perth -> London",
+          "Singapore -> London",
+          "Perth -> Pilbara",
+          "Perth -> Australian Extraction Strips"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Perth",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "unknown->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Perth",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Singapore",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.95,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Perth",
+            "destination": "Pilbara",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Perth",
+            "destination": "Australian Extraction Strips",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Perth -> Singapore",
+          "Perth -> London",
+          "Singapore -> London",
+          "Perth -> Pilbara",
+          "Perth -> Australian Extraction Strips"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Australian Extraction Strips",
+          "London",
+          "Perth",
+          "Pilbara",
+          "Singapore"
+        ],
+        "edges": [
+          {
+            "origin": "Perth",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "origin_cluster": "Perth",
+            "locked": true
+          },
+          {
+            "origin": "Perth",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Perth",
+            "locked": false
+          },
+          {
+            "origin": "Singapore",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Singapore",
+            "locked": false
+          },
+          {
+            "origin": "Perth",
+            "destination": "Pilbara",
+            "authority": "inferred",
+            "origin_cluster": "Perth",
+            "locked": false
+          },
+          {
+            "origin": "Perth",
+            "destination": "Australian Extraction Strips",
+            "authority": "industrial",
+            "origin_cluster": "Perth",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Perth": [
+            "Perth -> Singapore",
+            "Perth -> London",
+            "Perth -> Pilbara",
+            "Perth -> Australian Extraction Strips"
+          ],
+          "Singapore": [
+            "Singapore -> London"
+          ]
+        },
+        "industrial_nodes": [
+          "Australian Extraction Strips"
+        ],
+        "arctic_nodes": [],
+        "eu_exec_layer": [
+          "Perth -> London",
+          "Singapore -> London"
+        ],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [
+          "Perth -> Singapore"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Perth -> Singapore",
+          "Perth -> London",
+          "Singapore -> London",
+          "Perth -> Pilbara",
+          "Perth -> Australian Extraction Strips"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Perth -> Singapore",
+            "Perth -> London",
+            "Singapore -> London",
+            "Perth -> Pilbara"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q3 Florida + Caribbean + Middle East continuation trap",
+      "status": "PASS",
+      "routes": [
+        "Miami -> Dubai",
+        "Miami -> Riyadh",
+        "Miami -> Caribbean"
+      ],
+      "expect_hits": [
+        "miami",
+        "caribbean",
+        "dubai",
+        "riyadh"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "elimination_failure",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [],
+        "routes_rebalanced": [],
+        "regions_activated": []
+      },
+      "dir": {
+        "corrected": [
+          "Miami -> Dubai",
+          "Miami -> Riyadh",
+          "Miami -> Caribbean"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Miami",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->me_continuation",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Miami",
+            "destination": "Riyadh",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->me_continuation",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Miami",
+            "destination": "Caribbean",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->caribbean_island",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Miami -> Dubai",
+          "Miami -> Riyadh",
+          "Miami -> Caribbean"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Caribbean",
+          "Dubai",
+          "Miami",
+          "Riyadh"
+        ],
+        "edges": [
+          {
+            "origin": "Miami",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "origin_cluster": "Miami",
+            "locked": true
+          },
+          {
+            "origin": "Miami",
+            "destination": "Riyadh",
+            "authority": "inferred",
+            "origin_cluster": "Miami",
+            "locked": false
+          },
+          {
+            "origin": "Miami",
+            "destination": "Caribbean",
+            "authority": "explicit",
+            "origin_cluster": "Miami",
+            "locked": true
+          }
+        ],
+        "origin_clusters": {
+          "Miami": [
+            "Miami -> Dubai",
+            "Miami -> Riyadh",
+            "Miami -> Caribbean"
+          ]
+        },
+        "industrial_nodes": [],
+        "arctic_nodes": [],
+        "eu_exec_layer": [],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [
+          "Miami -> Dubai",
+          "Miami -> Caribbean"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Miami -> Dubai",
+          "Miami -> Riyadh",
+          "Miami -> Caribbean"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Ulr Continuation",
+          "kind": "ulr_continuation",
+          "routes": [
+            "Miami -> Dubai",
+            "Miami -> Riyadh"
+          ]
+        },
+        {
+          "label": "Caribbean Regional",
+          "kind": "caribbean_regional",
+          "routes": [
+            "Miami -> Caribbean"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q4 Texas Energy + West Africa + EU executive conflict",
+      "status": "PASS",
+      "routes": [
+        "Houston -> Lagos",
+        "Houston -> Paris",
+        "Paris -> Zurich",
+        "Houston -> Permian Basin",
+        "Houston -> Zurich"
+      ],
+      "expect_hits": [
+        "houston",
+        "permian",
+        "lagos",
+        "paris",
+        "zurich"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": false,
+      "proof": "none",
+      "suppressed": false,
+      "geo": {
+        "routes_added": [],
+        "routes_rebalanced": [],
+        "regions_activated": []
+      },
+      "dir": {
+        "corrected": [
+          "Houston -> Lagos",
+          "Houston -> Paris",
+          "Houston -> Zurich",
+          "Paris -> Zurich",
+          "Houston -> Permian Basin"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "Lagos",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Paris",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Paris",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Permian Basin",
+            "authority": "explicit",
+            "confidence": 0.95,
+            "operational_domain": "executive_hub->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Houston -> Lagos",
+          "Houston -> Paris",
+          "Houston -> Zurich",
+          "Paris -> Zurich",
+          "Houston -> Permian Basin"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Houston",
+          "Lagos",
+          "Paris",
+          "Permian Basin",
+          "Zurich"
+        ],
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "Lagos",
+            "authority": "explicit",
+            "origin_cluster": "Houston",
+            "locked": true
+          },
+          {
+            "origin": "Houston",
+            "destination": "Paris",
+            "authority": "eu_exec",
+            "origin_cluster": "Houston",
+            "locked": false
+          },
+          {
+            "origin": "Paris",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "origin_cluster": "Paris",
+            "locked": true
+          },
+          {
+            "origin": "Houston",
+            "destination": "Permian Basin",
+            "authority": "industrial",
+            "origin_cluster": "Houston",
+            "locked": false
+          },
+          {
+            "origin": "Houston",
+            "destination": "Zurich",
+            "authority": "eu_exec",
+            "origin_cluster": "Houston",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Houston": [
+            "Houston -> Lagos",
+            "Houston -> Paris",
+            "Houston -> Permian Basin",
+            "Houston -> Zurich"
+          ],
+          "Paris": [
+            "Paris -> Zurich"
+          ]
+        },
+        "industrial_nodes": [
+          "Permian Basin"
+        ],
+        "arctic_nodes": [],
+        "eu_exec_layer": [
+          "Houston -> Paris",
+          "Houston -> Zurich",
+          "Paris -> Zurich"
+        ],
+        "invalid_edges_blocked": [
+          "re-anchor blocked: Houston -> Zurich"
+        ],
+        "explicit_route_labels": [
+          "Houston -> Lagos",
+          "Paris -> Zurich"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Houston -> Lagos",
+          "Houston -> Paris",
+          "Paris -> Zurich",
+          "Houston -> Permian Basin",
+          "Houston -> Zurich"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Houston -> Lagos",
+            "Houston -> Paris",
+            "Paris -> Zurich",
+            "Houston -> Permian Basin"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q5 Multi-hub Asia-Pacific + Ski conflict",
+      "status": "PASS",
+      "routes": [
+        "Tokyo -> Seoul",
+        "Seoul -> Singapore",
+        "Jackson Hole -> Banff",
+        "Los Angeles -> Tokyo",
+        "Los Angeles -> Aspen",
+        "Los Angeles -> Telluride",
+        "Los Angeles -> Jackson Hole",
+        "Los Angeles -> Vail",
+        "Los Angeles -> Eagle",
+        "Los Angeles -> Sun Valley",
+        "Los Angeles -> Banff",
+        "Los Angeles -> Singapore",
+        "New York -> London"
+      ],
+      "expect_hits": [
+        "los angeles",
+        "tokyo",
+        "seoul",
+        "singapore",
+        "aspen",
+        "jackson hole",
+        "banff"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "mountain_ulr_incompatibility",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Los Angeles -> Aspen",
+          "Los Angeles -> Telluride",
+          "Los Angeles -> Jackson Hole",
+          "Los Angeles -> Vail",
+          "Los Angeles -> Eagle",
+          "Los Angeles -> Sun Valley",
+          "Los Angeles -> Banff"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "mountain_overlay"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Tokyo -> Seoul",
+          "Seoul -> Singapore",
+          "Jackson Hole -> Banff",
+          "Los Angeles -> Tokyo",
+          "Los Angeles -> Seoul",
+          "Los Angeles -> Aspen",
+          "Los Angeles -> Telluride",
+          "Los Angeles -> Jackson Hole",
+          "Los Angeles -> Vail",
+          "Los Angeles -> Eagle",
+          "Los Angeles -> Sun Valley",
+          "Los Angeles -> Banff",
+          "Los Angeles -> Singapore",
+          "New York -> London"
+        ],
+        "removed": [
+          "Singapore -> Jackson Hole"
+        ],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Tokyo",
+            "destination": "Seoul",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Seoul",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Jackson Hole",
+            "destination": "Banff",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "mountain_field->unknown",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Tokyo",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Seoul",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Aspen",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Telluride",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Jackson Hole",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Vail",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->domestic_executive",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Eagle",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->domestic_executive",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Sun Valley",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Banff",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->unknown",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Singapore",
+            "authority": "domain_bridge",
+            "confidence": 0.78,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "domain_bridge",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "New York",
+            "destination": "London",
+            "authority": "domain_bridge",
+            "confidence": 0.78,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "domain_bridge",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Tokyo -> Seoul",
+          "Seoul -> Singapore",
+          "Jackson Hole -> Banff",
+          "Los Angeles -> Tokyo",
+          "Los Angeles -> Seoul",
+          "Los Angeles -> Aspen",
+          "Los Angeles -> Telluride",
+          "Los Angeles -> Jackson Hole",
+          "Los Angeles -> Vail",
+          "Los Angeles -> Eagle",
+          "Los Angeles -> Sun Valley",
+          "Los Angeles -> Banff",
+          "Los Angeles -> Singapore",
+          "New York -> London"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Aspen",
+          "Banff",
+          "Eagle",
+          "Jackson Hole",
+          "London",
+          "Los Angeles",
+          "New York",
+          "Seoul",
+          "Singapore",
+          "Sun Valley",
+          "Telluride",
+          "Tokyo",
+          "Vail"
+        ],
+        "edges": [
+          {
+            "origin": "Tokyo",
+            "destination": "Seoul",
+            "authority": "explicit",
+            "origin_cluster": "Tokyo",
+            "locked": true
+          },
+          {
+            "origin": "Seoul",
+            "destination": "Singapore",
+            "authority": "inferred",
+            "origin_cluster": "Seoul",
+            "locked": false
+          },
+          {
+            "origin": "Jackson Hole",
+            "destination": "Banff",
+            "authority": "inferred",
+            "origin_cluster": "Jackson Hole",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Tokyo",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Aspen",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Telluride",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Jackson Hole",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Vail",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Eagle",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Sun Valley",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Banff",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "Los Angeles",
+            "destination": "Singapore",
+            "authority": "inferred",
+            "origin_cluster": "Los Angeles",
+            "locked": false
+          },
+          {
+            "origin": "New York",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "New York",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Tokyo": [
+            "Tokyo -> Seoul"
+          ],
+          "Seoul": [
+            "Seoul -> Singapore"
+          ],
+          "Jackson Hole": [
+            "Jackson Hole -> Banff"
+          ],
+          "Los Angeles": [
+            "Los Angeles -> Tokyo",
+            "Los Angeles -> Aspen",
+            "Los Angeles -> Telluride",
+            "Los Angeles -> Jackson Hole",
+            "Los Angeles -> Vail",
+            "Los Angeles -> Eagle",
+            "Los Angeles -> Sun Valley",
+            "Los Angeles -> Banff",
+            "Los Angeles -> Singapore"
+          ],
+          "New York": [
+            "New York -> London"
+          ]
+        },
+        "industrial_nodes": [],
+        "arctic_nodes": [],
+        "eu_exec_layer": [
+          "New York -> London"
+        ],
+        "invalid_edges_blocked": [
+          "dir:Singapore -> Jackson Hole",
+          "re-anchor blocked: Los Angeles -> Seoul"
+        ],
+        "explicit_route_labels": [
+          "Tokyo -> Seoul"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Tokyo -> Seoul",
+          "Seoul -> Singapore",
+          "Jackson Hole -> Banff",
+          "Los Angeles -> Tokyo",
+          "Los Angeles -> Aspen",
+          "Los Angeles -> Telluride",
+          "Los Angeles -> Jackson Hole",
+          "Los Angeles -> Vail",
+          "Los Angeles -> Eagle",
+          "Los Angeles -> Sun Valley",
+          "Los Angeles -> Banff",
+          "Los Angeles -> Singapore",
+          "New York -> London"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Transatlantic Executive",
+          "kind": "transatlantic_executive",
+          "routes": [
+            "Los Angeles -> Tokyo",
+            "New York -> London"
+          ]
+        },
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Tokyo -> Seoul",
+            "Seoul -> Singapore",
+            "Los Angeles -> Vail",
+            "Los Angeles -> Eagle"
+          ]
+        },
+        {
+          "label": "Mountain Field",
+          "kind": "mountain_field",
+          "routes": [
+            "Jackson Hole -> Banff",
+            "Los Angeles -> Aspen",
+            "Los Angeles -> Telluride",
+            "Los Angeles -> Jackson Hole"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q6 Europe-heavy + Africa industrial + Arctic overlay",
+      "status": "PASS",
+      "routes": [
+        "Frankfurt -> Zurich",
+        "Frankfurt -> London",
+        "Zurich -> London",
+        "Frankfurt -> West Africa",
+        "Yellowknife -> Remote Gravel Strips",
+        "Calgary -> Frankfurt",
+        "Calgary -> London",
+        "Calgary -> Zurich"
+      ],
+      "expect_hits": [
+        "frankfurt",
+        "zurich",
+        "london",
+        "gravel",
+        "west africa"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Yellowknife -> Remote Gravel Strips",
+          "Calgary -> Frankfurt",
+          "Calgary -> Zurich",
+          "Calgary -> London"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "arctic_industrial_layer",
+          "executive_eu_overlay"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Frankfurt -> Zurich",
+          "Frankfurt -> London",
+          "Zurich -> London",
+          "Frankfurt -> West Africa",
+          "Yellowknife -> Remote Gravel Strips",
+          "Calgary -> Frankfurt",
+          "Calgary -> Zurich",
+          "Calgary -> London"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Frankfurt",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Zurich",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.95,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "West Africa",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Calgary",
+            "destination": "Frankfurt",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Calgary",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Calgary",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Frankfurt -> Zurich",
+          "Frankfurt -> London",
+          "Zurich -> London",
+          "Frankfurt -> West Africa",
+          "Yellowknife -> Remote Gravel Strips",
+          "Calgary -> Frankfurt",
+          "Calgary -> Zurich",
+          "Calgary -> London"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Calgary",
+          "Frankfurt",
+          "London",
+          "Remote Gravel Strips",
+          "West Africa",
+          "Yellowknife",
+          "Zurich"
+        ],
+        "edges": [
+          {
+            "origin": "Frankfurt",
+            "destination": "Zurich",
+            "authority": "explicit",
+            "origin_cluster": "Frankfurt",
+            "locked": true
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Frankfurt",
+            "locked": false
+          },
+          {
+            "origin": "Zurich",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Zurich",
+            "locked": false
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "West Africa",
+            "authority": "industrial",
+            "origin_cluster": "Frankfurt",
+            "locked": false
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "arctic",
+            "origin_cluster": "Yellowknife",
+            "locked": false
+          },
+          {
+            "origin": "Calgary",
+            "destination": "Frankfurt",
+            "authority": "eu_exec",
+            "origin_cluster": "Calgary",
+            "locked": false
+          },
+          {
+            "origin": "Calgary",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Calgary",
+            "locked": false
+          },
+          {
+            "origin": "Calgary",
+            "destination": "Zurich",
+            "authority": "eu_exec",
+            "origin_cluster": "Calgary",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Frankfurt": [
+            "Frankfurt -> Zurich",
+            "Frankfurt -> London",
+            "Frankfurt -> West Africa"
+          ],
+          "Zurich": [
+            "Zurich -> London"
+          ],
+          "Yellowknife": [
+            "Yellowknife -> Remote Gravel Strips"
+          ],
+          "Calgary": [
+            "Calgary -> Frankfurt",
+            "Calgary -> London",
+            "Calgary -> Zurich"
+          ]
+        },
+        "industrial_nodes": [
+          "Remote Gravel Strips",
+          "West Africa"
+        ],
+        "arctic_nodes": [
+          "Remote Gravel Strips",
+          "Yellowknife"
+        ],
+        "eu_exec_layer": [
+          "Calgary -> Frankfurt",
+          "Calgary -> London",
+          "Calgary -> Zurich",
+          "Frankfurt -> London",
+          "Frankfurt -> West Africa",
+          "Frankfurt -> Zurich",
+          "Zurich -> London"
+        ],
+        "invalid_edges_blocked": [
+          "re-anchor blocked: Calgary -> Zurich"
+        ],
+        "explicit_route_labels": [
+          "Frankfurt -> Zurich"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Frankfurt -> Zurich",
+          "Frankfurt -> London",
+          "Zurich -> London",
+          "Frankfurt -> West Africa",
+          "Yellowknife -> Remote Gravel Strips",
+          "Calgary -> Frankfurt",
+          "Calgary -> London",
+          "Calgary -> Zurich"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Frankfurt -> Zurich",
+            "Frankfurt -> London",
+            "Zurich -> London",
+            "Calgary -> Frankfurt"
+          ]
+        },
+        {
+          "label": "Industrial Field",
+          "kind": "industrial_field",
+          "routes": [
+            "Frankfurt -> West Africa",
+            "Yellowknife -> Remote Gravel Strips"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q7 Founder dominance + asymmetric utilization",
+      "status": "PASS",
+      "routes": [
+        "New York -> Singapore",
+        "Boston -> Chicago",
+        "New York -> Boston",
+        "New York -> Washington",
+        "New York -> Chicago"
+      ],
+      "expect_hits": [
+        "new york",
+        "singapore",
+        "boston",
+        "washington",
+        "chicago"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "governance",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [],
+        "routes_rebalanced": [],
+        "regions_activated": []
+      },
+      "dir": {
+        "corrected": [
+          "New York -> Singapore",
+          "Boston -> Chicago",
+          "New York -> Boston",
+          "New York -> Washington",
+          "New York -> Chicago"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "New York",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Boston",
+            "destination": "Chicago",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "New York",
+            "destination": "Boston",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "New York",
+            "destination": "Washington",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "New York",
+            "destination": "Chicago",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "New York -> Singapore",
+          "Boston -> Chicago",
+          "New York -> Boston",
+          "New York -> Washington",
+          "New York -> Chicago"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Boston",
+          "Chicago",
+          "New York",
+          "Singapore",
+          "Washington"
+        ],
+        "edges": [
+          {
+            "origin": "New York",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "origin_cluster": "New York",
+            "locked": true
+          },
+          {
+            "origin": "Boston",
+            "destination": "Chicago",
+            "authority": "inferred",
+            "origin_cluster": "Boston",
+            "locked": false
+          },
+          {
+            "origin": "New York",
+            "destination": "Boston",
+            "authority": "explicit",
+            "origin_cluster": "New York",
+            "locked": true
+          },
+          {
+            "origin": "New York",
+            "destination": "Washington",
+            "authority": "inferred",
+            "origin_cluster": "New York",
+            "locked": false
+          },
+          {
+            "origin": "New York",
+            "destination": "Chicago",
+            "authority": "inferred",
+            "origin_cluster": "New York",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "New York": [
+            "New York -> Singapore",
+            "New York -> Boston",
+            "New York -> Washington",
+            "New York -> Chicago"
+          ],
+          "Boston": [
+            "Boston -> Chicago"
+          ]
+        },
+        "industrial_nodes": [],
+        "arctic_nodes": [],
+        "eu_exec_layer": [],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [
+          "New York -> Singapore",
+          "New York -> Boston"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "New York -> Singapore",
+          "Boston -> Chicago",
+          "New York -> Boston",
+          "New York -> Washington",
+          "New York -> Chicago"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "New York -> Singapore",
+            "Boston -> Chicago",
+            "New York -> Boston",
+            "New York -> Washington"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q8 South America + Middle East + EU triangle",
+      "status": "PASS",
+      "routes": [
+        "Sao Paulo -> Lagos",
+        "Sao Paulo -> Frankfurt",
+        "Sao Paulo -> Dubai",
+        "Frankfurt -> Dubai",
+        "Houston -> Frankfurt"
+      ],
+      "expect_hits": [
+        "sao paulo",
+        "lagos",
+        "frankfurt",
+        "dubai"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": false,
+      "proof": "none",
+      "suppressed": false,
+      "geo": {
+        "routes_added": [
+          "Houston -> Frankfurt"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "executive_eu_overlay"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Sao Paulo -> Lagos",
+          "Sao Paulo -> Frankfurt",
+          "Sao Paulo -> Dubai",
+          "Frankfurt -> Dubai",
+          "Houston -> Frankfurt"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Sao Paulo",
+            "destination": "Lagos",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Sao Paulo",
+            "destination": "Frankfurt",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Sao Paulo",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->me_continuation",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->me_continuation",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Frankfurt",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Sao Paulo -> Lagos",
+          "Sao Paulo -> Frankfurt",
+          "Sao Paulo -> Dubai",
+          "Frankfurt -> Dubai",
+          "Houston -> Frankfurt"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Dubai",
+          "Frankfurt",
+          "Houston",
+          "Lagos",
+          "Sao Paulo"
+        ],
+        "edges": [
+          {
+            "origin": "Sao Paulo",
+            "destination": "Lagos",
+            "authority": "inferred",
+            "origin_cluster": "Sao Paulo",
+            "locked": false
+          },
+          {
+            "origin": "Sao Paulo",
+            "destination": "Frankfurt",
+            "authority": "eu_exec",
+            "origin_cluster": "Sao Paulo",
+            "locked": false
+          },
+          {
+            "origin": "Sao Paulo",
+            "destination": "Dubai",
+            "authority": "inferred",
+            "origin_cluster": "Sao Paulo",
+            "locked": false
+          },
+          {
+            "origin": "Frankfurt",
+            "destination": "Dubai",
+            "authority": "eu_exec",
+            "origin_cluster": "Frankfurt",
+            "locked": false
+          },
+          {
+            "origin": "Houston",
+            "destination": "Frankfurt",
+            "authority": "eu_exec",
+            "origin_cluster": "Houston",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Sao Paulo": [
+            "Sao Paulo -> Lagos",
+            "Sao Paulo -> Frankfurt",
+            "Sao Paulo -> Dubai"
+          ],
+          "Frankfurt": [
+            "Frankfurt -> Dubai"
+          ],
+          "Houston": [
+            "Houston -> Frankfurt"
+          ]
+        },
+        "industrial_nodes": [],
+        "arctic_nodes": [],
+        "eu_exec_layer": [
+          "Frankfurt -> Dubai",
+          "Houston -> Frankfurt",
+          "Sao Paulo -> Frankfurt"
+        ],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Sao Paulo -> Lagos",
+          "Sao Paulo -> Frankfurt",
+          "Sao Paulo -> Dubai",
+          "Frankfurt -> Dubai",
+          "Houston -> Frankfurt"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Ulr Continuation",
+          "kind": "ulr_continuation",
+          "routes": [
+            "Sao Paulo -> Dubai",
+            "Frankfurt -> Dubai"
+          ]
+        },
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Sao Paulo -> Lagos",
+            "Sao Paulo -> Frankfurt",
+            "Houston -> Frankfurt"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q9 Mountain + Desert + Transatlantic split",
+      "status": "PASS",
+      "routes": [
+        "Denver -> Dubai",
+        "Denver -> London",
+        "Denver -> Salt Lake City",
+        "Denver -> Aspen",
+        "Denver -> Transatlantic",
+        "Denver -> Telluride",
+        "Denver -> Jackson Hole",
+        "Denver -> Vail",
+        "Denver -> Eagle",
+        "Denver -> Sun Valley"
+      ],
+      "expect_hits": [
+        "denver",
+        "salt lake",
+        "aspen",
+        "dubai",
+        "london"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "mountain_ulr_incompatibility",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Denver -> Telluride",
+          "Denver -> Jackson Hole",
+          "Denver -> Vail",
+          "Denver -> Eagle",
+          "Denver -> Sun Valley"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "mountain_overlay"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Denver -> Dubai",
+          "Denver -> London",
+          "Aspen -> Dubai",
+          "Denver -> Salt Lake City",
+          "Denver -> Aspen",
+          "Denver -> Transatlantic",
+          "Denver -> Telluride",
+          "Denver -> Jackson Hole",
+          "Denver -> Vail",
+          "Denver -> Eagle",
+          "Denver -> Sun Valley"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Denver",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "confidence": 0.98,
+            "operational_domain": "executive_hub->me_continuation",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Aspen",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "confidence": 0.35,
+            "operational_domain": "mountain_field->me_continuation",
+            "structurally_valid": false,
+            "edge_inference_type": "explicit",
+            "rejection_reason": "restricted_origin_to_executive_or_continuation"
+          },
+          {
+            "origin": "Denver",
+            "destination": "Salt Lake City",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->domestic_executive",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Aspen",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Transatlantic",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Telluride",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Jackson Hole",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Vail",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->domestic_executive",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Eagle",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->domestic_executive",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Denver",
+            "destination": "Sun Valley",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->mountain_field",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Denver -> Dubai",
+          "Denver -> London",
+          "Denver -> Salt Lake City",
+          "Denver -> Aspen",
+          "Denver -> Transatlantic",
+          "Denver -> Telluride",
+          "Denver -> Jackson Hole",
+          "Denver -> Vail",
+          "Denver -> Eagle",
+          "Denver -> Sun Valley"
+        ],
+        "removed_routes": [
+          "Aspen -> Dubai"
+        ]
+      },
+      "graph": {
+        "nodes": [
+          "Aspen",
+          "Denver",
+          "Dubai",
+          "Eagle",
+          "Jackson Hole",
+          "London",
+          "Salt Lake City",
+          "Sun Valley",
+          "Telluride",
+          "Transatlantic",
+          "Vail"
+        ],
+        "edges": [
+          {
+            "origin": "Denver",
+            "destination": "Dubai",
+            "authority": "explicit",
+            "origin_cluster": "Denver",
+            "locked": true
+          },
+          {
+            "origin": "Denver",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Salt Lake City",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Aspen",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Transatlantic",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Telluride",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Jackson Hole",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Vail",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Eagle",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          },
+          {
+            "origin": "Denver",
+            "destination": "Sun Valley",
+            "authority": "inferred",
+            "origin_cluster": "Denver",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Denver": [
+            "Denver -> Dubai",
+            "Denver -> London",
+            "Denver -> Salt Lake City",
+            "Denver -> Aspen",
+            "Denver -> Transatlantic",
+            "Denver -> Telluride",
+            "Denver -> Jackson Hole",
+            "Denver -> Vail",
+            "Denver -> Eagle",
+            "Denver -> Sun Valley"
+          ]
+        },
+        "industrial_nodes": [],
+        "arctic_nodes": [],
+        "eu_exec_layer": [
+          "Denver -> London"
+        ],
+        "invalid_edges_blocked": [
+          "topo:Aspen -> Dubai"
+        ],
+        "explicit_route_labels": [
+          "Denver -> Dubai"
+        ],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Denver -> Dubai",
+          "Denver -> London",
+          "Denver -> Salt Lake City",
+          "Denver -> Aspen",
+          "Denver -> Transatlantic",
+          "Denver -> Telluride",
+          "Denver -> Jackson Hole",
+          "Denver -> Vail",
+          "Denver -> Eagle",
+          "Denver -> Sun Valley"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Ulr Continuation",
+          "kind": "ulr_continuation",
+          "routes": [
+            "Denver -> Dubai"
+          ]
+        },
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Denver -> Salt Lake City",
+            "Denver -> Transatlantic",
+            "Denver -> Vail",
+            "Denver -> Eagle"
+          ]
+        },
+        {
+          "label": "Mountain Field",
+          "kind": "mountain_field",
+          "routes": [
+            "Denver -> Aspen",
+            "Denver -> Telluride",
+            "Denver -> Jackson Hole",
+            "Denver -> Sun Valley"
+          ]
+        },
+        {
+          "label": "Transatlantic Executive",
+          "kind": "transatlantic_executive",
+          "routes": [
+            "Denver -> London"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Q10 Extreme multi-domain stress (full topology test)",
+      "status": "PASS",
+      "routes": [
+        "Houston -> London",
+        "Miami -> Caribbean",
+        "Houston -> Singapore",
+        "Yellowknife -> Remote Gravel Strips"
+      ],
+      "expect_hits": [
+        "houston",
+        "gravel",
+        "miami",
+        "caribbean",
+        "london",
+        "singapore"
+      ],
+      "expect_miss": [],
+      "reject_hits": [],
+      "decomposition": true,
+      "proof": "industrial_transatlantic_conflict",
+      "suppressed": true,
+      "geo": {
+        "routes_added": [
+          "Houston -> London",
+          "Miami -> Caribbean",
+          "Houston -> Singapore",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "routes_rebalanced": [],
+        "regions_activated": [
+          "multi_domain_portfolio",
+          "arctic_industrial_layer"
+        ]
+      },
+      "dir": {
+        "corrected": [
+          "Houston -> London",
+          "Miami -> Caribbean",
+          "Houston -> Singapore",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "removed": [],
+        "swapped": []
+      },
+      "topo": {
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "London",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Miami",
+            "destination": "Caribbean",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->caribbean_island",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Houston",
+            "destination": "Singapore",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "executive_hub->executive_hub",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "explicit",
+            "confidence": 0.9,
+            "operational_domain": "unknown->field_region",
+            "structurally_valid": true,
+            "edge_inference_type": "explicit",
+            "rejection_reason": ""
+          }
+        ],
+        "kept_routes": [
+          "Houston -> London",
+          "Miami -> Caribbean",
+          "Houston -> Singapore",
+          "Yellowknife -> Remote Gravel Strips"
+        ],
+        "removed_routes": []
+      },
+      "graph": {
+        "nodes": [
+          "Caribbean",
+          "Houston",
+          "London",
+          "Miami",
+          "Remote Gravel Strips",
+          "Singapore",
+          "Yellowknife"
+        ],
+        "edges": [
+          {
+            "origin": "Houston",
+            "destination": "London",
+            "authority": "eu_exec",
+            "origin_cluster": "Houston",
+            "locked": false
+          },
+          {
+            "origin": "Miami",
+            "destination": "Caribbean",
+            "authority": "inferred",
+            "origin_cluster": "Miami",
+            "locked": false
+          },
+          {
+            "origin": "Houston",
+            "destination": "Singapore",
+            "authority": "inferred",
+            "origin_cluster": "Houston",
+            "locked": false
+          },
+          {
+            "origin": "Yellowknife",
+            "destination": "Remote Gravel Strips",
+            "authority": "arctic",
+            "origin_cluster": "Yellowknife",
+            "locked": false
+          }
+        ],
+        "origin_clusters": {
+          "Houston": [
+            "Houston -> London",
+            "Houston -> Singapore"
+          ],
+          "Miami": [
+            "Miami -> Caribbean"
+          ],
+          "Yellowknife": [
+            "Yellowknife -> Remote Gravel Strips"
+          ]
+        },
+        "industrial_nodes": [
+          "Remote Gravel Strips"
+        ],
+        "arctic_nodes": [
+          "Remote Gravel Strips",
+          "Yellowknife"
+        ],
+        "eu_exec_layer": [
+          "Houston -> London"
+        ],
+        "invalid_edges_blocked": [],
+        "explicit_route_labels": [],
+        "unresolved_geography_nodes": [],
+        "route_labels": [
+          "Houston -> London",
+          "Miami -> Caribbean",
+          "Houston -> Singapore",
+          "Yellowknife -> Remote Gravel Strips"
+        ]
+      },
+      "segments": [
+        {
+          "label": "Transatlantic Executive",
+          "kind": "transatlantic_executive",
+          "routes": [
+            "Houston -> London"
+          ]
+        },
+        {
+          "label": "Caribbean Regional",
+          "kind": "caribbean_regional",
+          "routes": [
+            "Miami -> Caribbean"
+          ]
+        },
+        {
+          "label": "Domestic Executive",
+          "kind": "domestic_executive",
+          "routes": [
+            "Houston -> Singapore"
+          ]
+        },
+        {
+          "label": "Industrial Field",
+          "kind": "industrial_field",
+          "routes": [
+            "Yellowknife -> Remote Gravel Strips"
+          ]
+        }
+      ]
+    }
+  ]
+}

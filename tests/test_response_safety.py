@@ -25,6 +25,41 @@ Controller scrape shows an asking price.
     assert "aircraft registry" in out.lower() or "registration records" in out.lower()
 
 
+def test_advisory_mode_does_not_append_stock_assuming_block():
+    draft = "The Gulfstream G650 is a strong ultra-long-range option for your mission."
+    out = enforce_consultant_quality(
+        draft,
+        query="What jet should I buy for long trips?",
+        data_used={
+            "consultant_response_mode": "advisory",
+            "consultant_intelligence_layer": 1,
+            "consultant_structured_formatter": 1,
+            "consultant_recommendations": [{"model": "Gulfstream G650"}],
+        },
+    )
+    assert "Assuming 6" not in out
+    assert "here are a few realistic fits" not in out.lower()
+    assert "Consultant Insight:" not in out
+
+
+def test_strips_existing_assuming_block_from_llm_draft():
+    dirty = (
+        "Lead answer about the Falcon 8X.\n\n"
+        "Assuming 6–8 passengers and typical business-use constraints (no extreme hot/high), "
+        "here are a few realistic fits:\n"
+        "- Challenger 350: balanced\n\n"
+        "Consultant Insight: dispatch."
+    )
+    out = enforce_consultant_quality(
+        dirty,
+        query="Tell me about Falcon 8X",
+        data_used={"consultant_response_mode": "advisory"},
+    )
+    assert "Assuming 6" not in out
+    assert "here are a few realistic fits" not in out.lower()
+    assert "Lead answer" in out
+
+
 def test_high_budget_cabin_gate_replaces_light_jet_spam():
     bad = "Try Citation CJ2 and Learjet 45 in your range."
     q = "I want the cabin to feel expensive but not tacky — what should I look at around $40M?"

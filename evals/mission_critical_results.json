@@ -1,0 +1,41 @@
+{
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "elapsed_s": 8.9,
+  "results": [
+    {
+      "id": 17,
+      "category": "incomplete",
+      "query": "We've outgrown our current setup.",
+      "answer": "Some details below are directional rather than catalog-verified - I am narrowing scope instead of overstating certainty:\n\nMission Fit:\n\n- Route: Not fully resolved\n- Pax: Not stated\n- Operational read: Ownership posture reads as charter transition with unknown utilization. Credible aircraft class conversation starts in: Executive planning band. The user indicates a need for an upgrade from their current aviation setup, suggesting a shift towards a more capable solution. This transition may involve considerations for increased passenger capacity or route flexibility.\n- Inferred posture: ownership economics relevant, upgrade from current setup, llm clarifying question\n\nAircraft Class Band:\n\n- Executive planning band\n\nOwnership Economics:\n\n- Utilization: unspecified (planning 150-400 hr/year)\n- Structure: structure tbd\n- At ~250 hr/year, compare burdened ownership DOC (~$7,600/hr all-in, directional) to fractional or charter before anchoring on airframe.\n- In the 250-400 hr band, ownership becomes rational if charter friction and schedule control outweigh capital efficiency - verify downtime and crew assumptions.\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: Executive planning band",
+      "packet_summary": {
+        "confidence": 0.267,
+        "corridor_type": "unspecified_corridor",
+        "travel_pattern": "unknown",
+        "recommend_aircraft": false,
+        "synthesis": "Ownership posture reads as charter transition with unknown utilization. Credible aircraft class conversation starts in: Executive super-mid planning band. The user indicates a need for an upgrade from their current aviation setup, suggesting a shift towards a more capable solution. This transition m",
+        "inferred": [
+          "ownership_economics_relevant",
+          "upgrade_from_current_setup",
+          "llm_clarifying_question"
+        ]
+      },
+      "score": {
+        "scenario_id": 17,
+        "category": "incomplete",
+        "passed": true,
+        "score": 1.0,
+        "issues": [],
+        "signals": [
+          "operational_terms:7",
+          "packet_confidence:0.27",
+          "has_operational_synthesis",
+          "inferred_keys:3",
+          "corridor:unspecified_corridor"
+        ]
+      }
+    }
+  ]
+}

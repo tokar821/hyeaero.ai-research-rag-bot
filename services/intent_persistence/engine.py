@@ -220,12 +220,27 @@ def run_intent_persistence_turn(
                 refinement_type, isolated_query or raw_user_query
             ).strip()
             if rq:
+                if (
+                    refinement_type == "size_upgrade"
+                    and (resolved.active_aircraft or "").strip()
+                    and (resolved.active_aircraft or "").lower() not in rq.lower()
+                ):
+                    rq = f"{resolved.active_aircraft} bigger cabin {rq}".strip()
                 effective = rq
             else:
                 effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
             rmodels = refinement_gallery_models(refinement_type, isolated_query or raw_user_query)
             if rmodels:
-                resolved = resolved.model_copy(update={"active_aircraft": rmodels[0]})
+                # For shopping/gallery flows, a size-up should advance the visual anchor model.
+                # For non-gallery advisory, keep the reference aircraft as the active anchor.
+                allow_override = refinement_type != "size_upgrade"
+                if refinement_type == "size_upgrade":
+                    try:
+                        allow_override = resolved.response_mode == IntentResponseMode.IMAGE_SHOWCASE
+                    except Exception:
+                        allow_override = False
+                if allow_override:
+                    resolved = resolved.model_copy(update={"active_aircraft": rmodels[0]})
         except Exception:
             effective = (continuity.effective_query or isolated_query or raw_user_query).strip()
     else:

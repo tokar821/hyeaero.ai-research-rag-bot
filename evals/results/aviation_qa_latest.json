@@ -1,0 +1,988 @@
+{
+  "schema_version": 2,
+  "suite": {
+    "path": "C:\\Users\\Administrator\\Downloads\\chatbot\\backend\\evals\\aviation_mission_suite.json",
+    "case_count": 24
+  },
+  "summary": {
+    "total_cases": 24,
+    "evaluator_passed": 24,
+    "evaluator_pass_rate": 1.0,
+    "mean_trust_score": 0.9798,
+    "benchmark_pass_rate": 0.875
+  },
+  "repetition": {
+    "answers_seen": 24,
+    "global_phrase_counts": {},
+    "suite_repetition_score": 0.0
+  },
+  "benchmark": {
+    "schema_version": 1,
+    "suite": {
+      "path": "C:\\Users\\Administrator\\Downloads\\chatbot\\backend\\evals\\aviation_mission_suite.json",
+      "mode": "intelligence",
+      "qa_enabled": true
+    },
+    "summary": {
+      "total_cases": 24,
+      "passed": 21,
+      "failed": 3,
+      "pass_rate": 0.875,
+      "critical_failures": 0
+    },
+    "dimension_scores": {
+      "mission_understanding": 0.9869,
+      "entity_accuracy": 1.0,
+      "route_accuracy": 1.0,
+      "aircraft_realism": 0.9,
+      "operational_reasoning": 0.7738,
+      "hallucination_rate": 1.0,
+      "contamination_rate": 1.0
+    },
+    "by_category": {
+      "transatlantic_missions": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3
+      },
+      "asia_nonstop": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3
+      },
+      "fractional_vs_ownership": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2
+      },
+      "runway_flexibility": {
+        "passed": 3,
+        "failed": 0,
+        "total": 3
+      },
+      "operating_cost": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2
+      },
+      "mountain_airports": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2
+      },
+      "cabin_comparison": {
+        "passed": 1,
+        "failed": 1,
+        "total": 2
+      },
+      "range_realism": {
+        "passed": 2,
+        "failed": 1,
+        "total": 3
+      },
+      "westbound_winter_constraints": {
+        "passed": 2,
+        "failed": 0,
+        "total": 2
+      },
+      "turn_isolation": {
+        "passed": 1,
+        "failed": 1,
+        "total": 2
+      }
+    },
+    "contamination_report": {
+      "turn_leak_count": 0,
+      "turn_leak_case_ids": [],
+      "invalid_route_count": 0,
+      "invalid_route_case_ids": [],
+      "template_contamination_count": 0,
+      "mean_contamination_score": 1.0
+    },
+    "realism_score": 0.9,
+    "realism_report": {
+      "mean_aircraft_realism": 0.9,
+      "impossible_recommendation_failures": [],
+      "cases_below_0_6_realism": []
+    },
+    "aircraft_diversity_score": 0.7143,
+    "aircraft_diversity_report": {
+      "unique_top1_models": 6,
+      "top_model_dominance": {
+        "Challenger Longitude": 0.208
+      },
+      "leader_distribution": {
+        "Challenger Longitude": 5,
+        "Global 7500": 5,
+        "Citation Latitude": 4,
+        "Falcon 7X": 2,
+        "Citation CJ4": 2,
+        "Challenger 350": 1
+      },
+      "diversity_score": 0.7143
+    },
+    "recommendation_precision": 0.75,
+    "recommendation_precision_report": {
+      "recommendation_precision": 0.75,
+      "golden_hit_cases": 18,
+      "golden_eligible_cases": 24,
+      "missed_expectation_case_ids": [
+        "fractional_002",
+        "operating_cost_001",
+        "mountain_001",
+        "cabin_002",
+        "range_002",
+        "runway_003"
+      ]
+    },
+    "failed_cases": [
+      {
+        "id": "cabin_002",
+        "category": "cabin_comparison",
+        "automated_failures": [],
+        "issues": [
+          "expected_aircraft_missing"
+        ],
+        "scores": {
+          "mission_understanding": 1.0,
+          "entity_accuracy": 1.0,
+          "route_accuracy": 1.0,
+          "aircraft_realism": 0.6,
+          "operational_reasoning": 0.5,
+          "hallucination_rate": 1.0,
+          "contamination_rate": 1.0
+        }
+      },
+      {
+        "id": "range_001",
+        "category": "range_realism",
+        "automated_failures": [],
+        "issues": [],
+        "scores": {
+          "mission_understanding": 1.0,
+          "entity_accuracy": 1.0,
+          "route_accuracy": 1.0,
+          "aircraft_realism": 1.0,
+          "operational_reasoning": 0.5,
+          "hallucination_rate": 1.0,
+          "contamination_rate": 1.0
+        }
+      },
+      {
+        "id": "isolation_001",
+        "category": "turn_isolation",
+        "automated_failures": [],
+        "issues": [],
+        "scores": {
+          "mission_understanding": 1.0,
+          "entity_accuracy": 1.0,
+          "route_accuracy": 1.0,
+          "aircraft_realism": 1.0,
+          "operational_reasoning": 0.5,
+          "hallucination_rate": 1.0,
+          "contamination_rate": 1.0
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "transatlantic_001",
+      "category": "transatlantic_missions",
+      "input": "12 passengers New York to London nonstop \u2014 what large-cabin options are realistic, not brochure fantasy?",
+      "answer_preview": "For New York -> London, you're realistically in Falcon 7X / Gulfstream G650 (and Falcon 8X) territory.\n\nFalcon 7X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGulfstream G650 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nFalcon 8X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Falcon 7X, Gulfstream G650, Falcon",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Falcon 7X",
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "id": "transatlantic_002",
+      "category": "transatlantic_missions",
+      "input": "Boston to Paris, 10 executives, need reliable nonstop with NBAA reserves \u2014 compare practical range, not marketing range.",
+      "answer_preview": "For Boston -> Paris, you're realistically in Challenger Longitude / Challenger 650 (and Falcon 7X) territory.\n\nChallenger Longitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nChallenger 650 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nFalcon 7X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Challenger Longit",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger Longitude",
+        "Challenger 650",
+        "Falcon 7X"
+      ]
+    },
+    {
+      "id": "asia_001",
+      "category": "asia_nonstop",
+      "input": "6 executives from San Francisco to Tokyo nonstop westbound in winter \u2014 what actually makes the leg?",
+      "answer_preview": "For San Francisco -> Tokyo, you're realistically in Global 7500 / Gulfstream G650ER (and Gulfstream G650) territory.\n\nGlobal 7500 \u2014 Westbound margin applied (~408 nm equivalent).\n\nGulfstream G650ER \u2014 Westbound margin applied (~408 nm equivalent).\n\nGulfstream G650 \u2014 Westbound margin applied (~408 nm equivalent).\n\nGOOD FIT: Global 7500, Gulfstream G650ER\n\nCONDITIONAL FIT: Gulfstream G650",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.8,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Global 7500",
+        "Gulfstream G650ER",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "id": "asia_002",
+      "category": "asia_nonstop",
+      "input": "Can we do Tokyo to Seoul nonstop with 8 pax and bags every week?",
+      "answer_preview": "For Tokyo -> Seoul, you're realistically in Citation CJ4 / Pilatus PC-24 (and Citation Latitude) territory.\n\nCitation CJ4 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nPilatus PC-24 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nCitation Latitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Citation CJ4, Pilatu",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation CJ4",
+        "Pilatus PC-24",
+        "Citation Latitude"
+      ]
+    },
+    {
+      "id": "fractional_001",
+      "category": "fractional_vs_ownership",
+      "input": "We fly 250 hours a year transcon \u2014 fractional vs full ownership for a Challenger 350?",
+      "answer_preview": "At roughly 250 hours a year on a Challenger 350, fractional usually wins on capital at risk and dispatch simplicity \u2014 you are buying access, not managing maintenance downtime.\n\nFull ownership starts to make sense when utilization is steady, you want tail control, and you are willing to carry crew, mx programs, and residual risk yourself.\n\nIn practice, most buyers overweight acquisition price and u",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.7,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "Verbose answer without validated aircraft shortlist",
+        "sub_failures": [
+          "no_route_extracted_and_no_recommendations"
+        ],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": []
+    },
+    {
+      "id": "fractional_002",
+      "category": "fractional_vs_ownership",
+      "input": "First-time buyer leaning fractional for US East Coast missions \u2014 what should I avoid overbuying?",
+      "answer_preview": "Based on what you have described so far, I would size the ownership question to annual hours and how much dispatch control you need \u2014 not brochure performance.\n\nIn practice, most buyers overweight acquisition price and underweight fixed cost, mx reserves, and liquidity when they try to exit.",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.7,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "Verbose answer without validated aircraft shortlist",
+        "sub_failures": [
+          "expected_aircraft_missing",
+          "no_route_extracted_and_no_recommendations"
+        ],
+        "passed": true,
+        "trust_score": 0.9821
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": []
+    },
+    {
+      "id": "runway_001",
+      "category": "runway_flexibility",
+      "input": "Miami Caribbean missions with runway flexibility \u2014 what turboprop or light jet actually fits?",
+      "answer_preview": "For this trip, you're in light jet / turboprop territory.\n\nCitation CJ4 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nPilatus PC-24 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nPilatus PC-12 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nGOOD FIT: Citation CJ4, Pilatus PC-24, Pilatus PC-12",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "mission_category_mismatch:general_advisory!=['regional_utility', 'mountain_airport']"
+        ],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation CJ4",
+        "Pilatus PC-24",
+        "Pilatus PC-12"
+      ]
+    },
+    {
+      "id": "runway_002",
+      "category": "runway_flexibility",
+      "input": "8 passengers Miami to Caribbean, short runway focus \u2014 recommend right-sized aircraft.",
+      "answer_preview": "For Miami -> Caribbean, you're realistically in Citation Latitude / Gulfstream G280 (and Challenger 350) territory.\n\nCitation Latitude \u2014 Higher passenger count reduces effective range vs brochure payloads. Hot/high or mountain departures erode payload-range.\n\nGulfstream G280 \u2014 Higher passenger count reduces effective range vs brochure payloads. Hot/high or mountain departures erode payload-range.\n",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.75,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation Latitude",
+        "Gulfstream G280",
+        "Challenger 350"
+      ]
+    },
+    {
+      "id": "operating_cost_001",
+      "category": "operating_cost",
+      "input": "8 passengers LA to Miami nonstop around $10M budget \u2014 prioritize operating economics over cabin ego.",
+      "answer_preview": "For Los Angeles -> Miami, you're realistically in Challenger Longitude / Challenger 650 (and Falcon 7X) territory.\n\nChallenger Longitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nChallenger 650 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nFalcon 7X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Challenger L",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "expected_aircraft_missing"
+        ],
+        "passed": true,
+        "trust_score": 0.9379
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger Longitude",
+        "Challenger 650",
+        "Falcon 7X"
+      ]
+    },
+    {
+      "id": "operating_cost_002",
+      "category": "operating_cost",
+      "input": "High-cycle East Coast 6 pax \u2014 lowest direct operating cost without sacrificing dispatch reliability.",
+      "answer_preview": "With 6 passengers, you're in / light jet territory.\n\nCitation Latitude \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nCitation CJ4 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nChallenger Longitude \u2014 Large-cabin aircraft is heavier than needed for this short hop.\n\nGOOD FIT: Citation Latitude, Citation CJ4, Challenger Longitude",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation Latitude",
+        "Citation CJ4",
+        "Challenger Longitude"
+      ]
+    },
+    {
+      "id": "mountain_001",
+      "category": "mountain_airports",
+      "input": "6 passengers Dallas to Aspen hot and high \u2014 runway and payload realism?",
+      "answer_preview": "For Dallas -> Aspen, you're realistically in Challenger Longitude / Falcon 7X (and Challenger 650) territory.\n\nChallenger Longitude \u2014 Hot/high or mountain departures erode payload-range.\n\nFalcon 7X \u2014 Hot/high or mountain departures erode payload-range.\n\nChallenger 650 \u2014 Hot/high or mountain departures erode payload-range.\n\nGOOD FIT: Challenger Longitude, Falcon 7X, Challenger 650",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.6,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "expected_aircraft_missing"
+        ],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger Longitude",
+        "Falcon 7X",
+        "Challenger 650"
+      ]
+    },
+    {
+      "id": "mountain_002",
+      "category": "mountain_airports",
+      "input": "Winter ski trips into Aspen with 8 pax and skis \u2014 what not to bring?",
+      "answer_preview": "With 8 passengers, you're in territory.\n\nCitation Latitude \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nGulfstream G280 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nChallenger 350 \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nGOOD FIT: Citation Latitude, Gulfstream G280, Challenger 350",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation Latitude",
+        "Gulfstream G280",
+        "Challenger 350"
+      ]
+    },
+    {
+      "id": "cabin_001",
+      "category": "cabin_comparison",
+      "input": "Falcon 2000 vs Challenger 350 for 9 passengers \u2014 cabin, baggage, and dispatch tradeoffs?",
+      "answer_preview": "With 9 passengers, you're in / large-cabin territory.\n\nChallenger 350 \u2014 Challenger 350 overuse guard \u2014 deprioritized vs mission-specific alternatives.\n\nFalcon 2000 \u2014 Large-cabin aircraft is heavier than needed for this short hop.\n\nGOOD FIT: Challenger 350, Falcon 2000",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger 350",
+        "Falcon 2000"
+      ]
+    },
+    {
+      "id": "cabin_002",
+      "category": "cabin_comparison",
+      "input": "G650 vs Global 7500 cabin experience for 12 pax transatlantic \u2014 be specific, not generic.",
+      "answer_preview": "Tell me the typical city pair or mission pattern and I\u2019ll narrow this to the right aircraft class.",
+      "benchmark_passed": false,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "Composite trust score below threshold",
+        "sub_failures": [
+          "expected_aircraft_missing",
+          "no_route_extracted_and_no_recommendations"
+        ],
+        "passed": true,
+        "trust_score": 0.8039
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": []
+    },
+    {
+      "id": "range_001",
+      "category": "range_realism",
+      "input": "Brochure says 6,000 nm \u2014 what should I plan for with 12 pax and NBAA reserves on a westbound leg?",
+      "answer_preview": "With 12 passengers, you're in large-cabin / territory.\n\nFalcon 7X \u2014 Large-cabin aircraft is heavier than needed for this short hop.\n\nChallenger Longitude \u2014 Large-cabin aircraft is heavier than needed for this short hop.\n\nCitation Latitude \u2014 Passenger load may force fuel stops or reduced baggage on longest legs.\n\nGOOD FIT: Falcon 7X, Challenger Longitude, Citation Latitude",
+      "benchmark_passed": false,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.6,
+        "operational_realism": 0.6,
+        "tone_broker_score": 0.85,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "Composite trust score below threshold",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Falcon 7X",
+        "Challenger Longitude",
+        "Citation Latitude"
+      ]
+    },
+    {
+      "id": "range_002",
+      "category": "range_realism",
+      "input": "8 passengers LA to Miami nonstop \u2014 do I need an ultra-long-range jet?",
+      "answer_preview": "For Los Angeles -> Miami, you're realistically in Challenger Longitude / Challenger 650 (and Falcon 7X) territory.\n\nChallenger Longitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nChallenger 650 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nFalcon 7X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Challenger L",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "expected_aircraft_missing"
+        ],
+        "passed": true,
+        "trust_score": 0.9379
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger Longitude",
+        "Challenger 650",
+        "Falcon 7X"
+      ]
+    },
+    {
+      "id": "westbound_001",
+      "category": "westbound_winter_constraints",
+      "input": "West coast to Europe westbound winter, 12 passengers, nonstop required \u2014 headwind margin?",
+      "answer_preview": "For West Coast -> Europe, you're realistically in Global 7500 / Gulfstream G650ER territory.\n\nGlobal 7500 \u2014 Westbound margin applied (~384 nm equivalent).\n\nGulfstream G650ER \u2014 Westbound margin applied (~384 nm equivalent).\n\nGOOD FIT: Global 7500, Gulfstream G650ER",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.8,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Global 7500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "id": "westbound_002",
+      "category": "westbound_winter_constraints",
+      "input": "SFO to Paris nonstop westbound 8 pax \u2014 which jets are brochure-only on this leg?",
+      "answer_preview": "For San Francisco -> Paris, you're realistically in Global 7500 / Gulfstream G650ER territory.\n\nGlobal 7500 \u2014 Westbound margin applied (~392 nm equivalent).\n\nGulfstream G650ER \u2014 Westbound margin applied (~392 nm equivalent).\n\nGOOD FIT: Global 7500, Gulfstream G650ER",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.8,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Global 7500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "id": "isolation_001",
+      "category": "turn_isolation",
+      "input": "8 passengers Miami to Caribbean, operating cost priority",
+      "answer_preview": "For Miami -> Caribbean, you're realistically in Citation CJ4 / Citation Latitude (and Pilatus PC-24) territory.\n\nCitation CJ4 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nCitation Latitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nPilatus PC-24 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Citation CJ4, Ci",
+      "benchmark_passed": false,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "Verbose answer without validated aircraft shortlist",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": []
+    },
+    {
+      "id": "isolation_002",
+      "category": "turn_isolation",
+      "input": "6 executives San Francisco to Tokyo nonstop westbound winter",
+      "answer_preview": "For San Francisco -> Tokyo, you're realistically in Global 7500 / Gulfstream G650ER (and Gulfstream G650) territory.\n\nGlobal 7500 \u2014 Westbound margin applied (~408 nm equivalent).\n\nGulfstream G650ER \u2014 Westbound margin applied (~408 nm equivalent).\n\nGulfstream G650 \u2014 Westbound margin applied (~408 nm equivalent).\n\nGOOD FIT: Global 7500, Gulfstream G650ER\n\nCONDITIONAL FIT: Gulfstream G650",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.8,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Global 7500",
+        "Gulfstream G650ER",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "id": "invalid_route_001",
+      "category": "range_realism",
+      "input": "What would you like to work on today for my mission?",
+      "answer_preview": "What\u2019s the primary city pair? Origin and destination are enough \u2014 I\u2019ll size the aircraft class to that leg.",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "no_route_extracted_and_no_recommendations"
+        ],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": []
+    },
+    {
+      "id": "transatlantic_003",
+      "category": "transatlantic_missions",
+      "input": "Teterboro to Geneva, 8 pax, prefer Falcon or Gulfstream \u2014 mission-fit shortlist only.",
+      "answer_preview": "For Teterboro -> Geneva, you're realistically in Challenger Longitude / Challenger 650 (and Falcon 7X) territory.\n\nChallenger Longitude \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nChallenger 650 \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nFalcon 7X \u2014 Higher passenger count reduces effective range vs brochure payloads.\n\nGOOD FIT: Challenger Lo",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 1.0,
+        "operational_realism": 0.5,
+        "tone_broker_score": 1.0,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Challenger Longitude",
+        "Challenger 650",
+        "Falcon 7X"
+      ]
+    },
+    {
+      "id": "asia_003",
+      "category": "asia_nonstop",
+      "input": "New York to Tokyo nonstop with 10 passengers \u2014 ULR reality check.",
+      "answer_preview": "For New York -> Tokyo, I'd start with Global 7500.\n\nCurrent-generation aircraft \u2014 aligns with what modern operators spec for this mission.\n\nGOOD FIT: Global 7500",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "PASS",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [],
+        "passed": true,
+        "trust_score": 1.0
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Global 7500"
+      ]
+    },
+    {
+      "id": "runway_003",
+      "category": "runway_flexibility",
+      "input": "King Air vs PC-12 vs CJ3 for Caribbean island hopping from Miami \u2014 runway under 4,000 ft.",
+      "answer_preview": "For this trip, you're in / large-cabin territory.\n\nCitation Latitude \u2014 viable alternate if cabin or cost tradeoffs matter.\n\nChallenger 350 \u2014 Challenger 350 overuse guard \u2014 deprioritized vs mission-specific alternatives.\n\nChallenger Longitude \u2014 Large-cabin aircraft is heavier than needed for this short hop.\n\nGOOD FIT: Citation Latitude, Challenger 350, Challenger Longitude",
+      "benchmark_passed": true,
+      "evaluator": {
+        "route_realism": "PASS",
+        "aircraft_realism": "WARN",
+        "hallucination_risk": 0.0,
+        "repetition_score": 0.0,
+        "humanness_score": 0.25,
+        "operational_realism": 0.35,
+        "tone_broker_score": 0.35,
+        "fake_confidence_risk": 0.0,
+        "brochure_language_risk": 0.0,
+        "missing_tradeoffs": false,
+        "main_failure": "",
+        "sub_failures": [
+          "expected_aircraft_missing"
+        ],
+        "passed": true,
+        "trust_score": 0.8539
+      },
+      "repetition": {
+        "phrase_hits": {},
+        "repetition_score": 0.0,
+        "overused_phrases": []
+      },
+      "top_recommendations": [
+        "Citation Latitude",
+        "Challenger 350",
+        "Challenger Longitude"
+      ]
+    }
+  ],
+  "improvement_plan": {
+    "failed_case_count": 0,
+    "failed_cases": [],
+    "failure_sources": {},
+    "priority_order": [],
+    "suggested_fixes_by_source": {},
+    "suite_repetition_score": 0.0,
+    "next_steps": [
+      "All cases passed trust threshold \u2014 spot-check humanness on 3 random scenarios."
+    ]
+  }
+}
