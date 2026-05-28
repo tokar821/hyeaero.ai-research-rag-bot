@@ -1,0 +1,354 @@
+{
+  "suite": "recommendation_quality_10",
+  "summary": {
+    "total": 10,
+    "PASS": 10,
+    "PARTIAL": 0,
+    "FAIL": 0,
+    "pass_rate": 1.0
+  },
+  "results": [
+    {
+      "id": "q01_founder_mandate_overpowering",
+      "title": "Founder mandate overpowering utilization",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "dominant_utilization_identified": true,
+        "no_generic_ulr_dump": true,
+        "split_or_compromise_strategy": true,
+        "no_prestige_bias": true,
+        "hierarchy_or_governance_signal": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: New York -> Singapore (peak planning); other legs: Boston -> Chicago; New York -> Chicago; New York -> Perth\n- Pax: Not stated\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: executive_transport ulr_continuation Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Regional executive band... Operator prefers one aircraft for simplicity \u2014 structural proof still governs if bands conflict..\n\nOperational segments:\n\n- Operational Segment: Domestic Executive [peak planning leg]\nAuthority: Direct route authority: New York -> Singapore (+4 supporting legs) Routes: New York -> Singapore; New York -> Perth; Boston -> Chicago\n\nMulti-domain operational problem \u2014 one aircraft cannot span these operational domains.\n\nAircraft Class Band:\n\n- [Domestic Executive] Regional executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: multi-aircraft portfolio required \u2014 segment class bands above",
+      "answer_len": 1194
+    },
+    {
+      "id": "q02_industrial_executive_incompatibility",
+      "title": "Industrial + executive incompatibility",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "structural_conflict_first": true,
+        "segmentation_emphasis": true,
+        "dispatch_mismatch": true,
+        "suppress_premature_aircraft": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nUtilization Hierarchy\n- dominant: industrial_field\n\nSecondary / Overlay Traffic\n- executive_transport\n\nContinuation Constraints\n- none\n\nPrimary Utilization\n- industrial_field\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- industrial_field (weight 0.92)\n- executive_transport (weight 0.82)\n\nStructural Conflicts\n- incompatible_mission_bands\n- Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: runway, payload, and season constraints do not align\n- fleet segmentation required: treat as separate operational domains, not one platform\n- industrial field access conflicts with executive transoceanic expectations\n- prior single-aircraft strategy likely caused the dispat",
+      "answer_len": 1421
+    },
+    {
+      "id": "q03_mountain_pacific_ulr_contradiction",
+      "title": "Mountain + Pacific ULR contradiction",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "structural_conflict_first": true,
+        "no_generic_ulr_dump": true,
+        "reject_single_platform_logic": true,
+        "runway_or_performance_compromise": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Mountain field-access and oceanic ULR/transatlantic stages cannot share one airframe.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n- mountain_leisure\n- Seasonal/westbound winter overlay \u2014 does not redefine primary domain\n\nContinuation Constraints\n- New York -> London\n\nContinuation Hub Discipline\n- Continuation hubs remain secondary to dominant origin structure and utilization hierarchy.\n\nPrimary Utilization\n- executive_transport\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- executive_transport (weight 0.87)\n- ulr_continuation (weight 0.78)\n- mountain_leisure (weight 0.38)\n\nStructural Conflicts\n- mountain_leisure_equated_with_ulr_mandate\n- incompatible_mission_bands\n- Mountain field-access and oceanic ULR/transatlantic stages cannot share one airframe.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- ope",
+      "answer_len": 1565
+    },
+    {
+      "id": "q04_caribbean_regional_longhaul_misuse",
+      "title": "Caribbean regional vs long-haul executive misuse",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "dominant_utilization_identified": true,
+        "no_generic_ulr_dump": true,
+        "split_or_compromise_strategy": true,
+        "no_prestige_bias": true,
+        "continuation_hub_secondary": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n- caribbean_regional\n\nContinuation Constraints\n- Miami -> Riyadh\n\nContinuation Hub Discipline\n- Continuation hubs remain secondary to dominant origin structure and utilization hierarchy.\n\nPrimary Utilization\n- executive_transport\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- executive_transport (weight 0.87)\n- ulr_continuation (weight 0.78)\n- caribbean_regional (weight 0.55)\n\nStructural Conflicts\n- incompatible_mission_bands\n- Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: runway, payload, and season constraints do not align\n- fleet segmentation required",
+      "answer_len": 1523
+    },
+    {
+      "id": "q05_cargo_passenger_variability",
+      "title": "Cargo + passenger variability stress",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "payload_volatility": true,
+        "no_generic_ulr_dump": true,
+        "structural_conflict_first": true,
+        "not_executive_only_framing": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- domestic_utilization\n\nContinuation Constraints\n- none\n\nPrimary Utilization\n- executive_transport\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- executive_transport (weight 0.82)\n- domestic_utilization (weight 0.7)\n\nStructural Conflicts\n- incompatible_mission_bands\n- Multi-continent mission with variable payload/cargo \u2014 fleet portfolio planning required.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: runway, payload, and season constraints do not align\n- fleet segmentation required: treat as separate operational domains, not one platform",
+      "answer_len": 1275
+    },
+    {
+      "id": "q06_ownership_economics_trap",
+      "title": "Ownership economics trap",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "ownership_economics_critical": true,
+        "not_salesperson_tone": true,
+        "split_or_compromise_strategy": true,
+        "dominant_utilization_identified": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Citation CJ4",
+          "Learjet 75",
+          "Pilatus PC-24"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": false,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Citation CJ4', 'Learjet 75', 'Pilatus PC-24']"
+      ],
+      "errors": [],
+      "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Dallas -> New York (peak planning); other legs: Dallas -> Chicago; Dallas -> Chicago; New York -> Chicago\n- Pax: Not stated\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: executive_transport domestic_utilization Ownership posture reads as charter transition with multi leg utilization. Credible aircraft class conversation starts in: Regional executive band.. Ownership crossover relevant at ~180 hr/year \u2014 structure and dispatch control precede airframe...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive [peak planning leg]\nAuthority: Direct route authority: Dallas -> New York (+2 supporting legs) Routes: Dallas -> New York; Dallas -> Chicago; New York -> Chicago\n\nOwnership Economics:\n\n- Utilization: fractional/charter-adjacent (150\u2013250 hr/year)\n- Structure: charter or card\n- At ~180 hr/year, compare burdened ownership DOC (~$8,922/hr all-in, directional) to fractional or charter before anchoring on airframe.\n- Below ~200 hr/year, full ownership rarely beats fractional unless dispatch control is non-negotiable.\n\nAircraft Class Band:\n\n- [Domestic Executive] Regional executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: segment class guidance pending",
+      "answer_len": 1286
+    },
+    {
+      "id": "q07_converted_airliner_vs_bbj",
+      "title": "Converted airliner vs business jet",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "converted_airliner_analysis": true,
+        "ownership_economics_critical": true,
+        "no_prestige_bias": true,
+        "structured_verdict": true,
+        "mission_coherence_if_aircraft": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Challenger 350",
+          "Gulfstream G280",
+          "Praetor 600"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": true,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Challenger 350', 'Gulfstream G280', 'Praetor 600']"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Chicago -> London (peak planning); other legs: Chicago -> Frankfurt; Chicago -> Frankfurt; Chicago -> Perth\n- Pax: 14\u201318 (planning load 18)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: executive_transport domestic_utilization Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Transatlantic ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 18 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated).. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load...\n\nOperational segments:\n\n- Operational Segment: Transatlantic Executive [peak planning leg]\nAuthority: Direct route authority: Chicago -> London (+1 supporting legs",
+      "answer_len": 2108
+    },
+    {
+      "id": "q08_continuation_hub_confusion",
+      "title": "Continuation-hub confusion",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "dominant_utilization_identified": true,
+        "continuation_hub_secondary": true,
+        "hierarchy_or_governance_signal": true,
+        "suppress_premature_aircraft": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Multi-domain operational problem: no single aircraft passes all domain hard gates. A single platform spanning every domain is structurally invalid \u2014 not a ranking preference.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n- caribbean_regional\n\nContinuation Constraints\n- Los Angeles -> Dubai (Dubai continuation)\n- Los Angeles -> Tokyo\n- New York -> London\n\nContinuation Hub Discipline\n- Continuation hubs remain secondary to dominant origin structure and utilization hierarchy.\n\nPrimary Utilization\n- executive_transport\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- executive_transport (weight 0.82)\n- ulr_continuation (weight 0.78)\n- caribbean_regional (weight 0.55)\n\nStructural Conflicts\n- Multi-domain operational problem: no single aircraft passes all domain hard gates. A single platform spanning every domain is structurally invalid \u2014 not a ranking preference.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability ca",
+      "answer_len": 1670
+    },
+    {
+      "id": "q09_multi_domain_impossibility",
+      "title": "Multi-domain impossibility test",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "reject_single_category": true,
+        "segmentation_emphasis": true,
+        "no_generic_ulr_dump": true,
+        "structural_conflict_first": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": true,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "gate=incompatible_domains; structural_decomposition_required",
+        "mode=recommendation_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Industrial/remote field access and transatlantic executive nonstop are incompatible bands.\n\nUtilization Hierarchy\n- dominant: arctic_operations\n\nSecondary / Overlay Traffic\n- executive_transport\n- ulr_continuation\n- caribbean_regional\n\nContinuation Constraints\n- none\n\nPrimary Utilization\n- arctic_operations\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- arctic_operations (weight 0.98)\n- executive_transport (weight 0.82)\n- ulr_continuation (weight 0.78)\n- caribbean_regional (weight 0.55)\n\nStructural Conflicts\n- single_ulr_covers_arctic_gravel_and_transatlantic_executive\n- single_aircraft_preference_over_hard_domain_conflict\n- brochure_range_on_gravel_or_ice_strips\n- incompatible_mission_bands\n- Industrial/remote field access and transatlantic executive nonstop are incompatible bands.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: r",
+      "answer_len": 1688
+    },
+    {
+      "id": "q10_recommendation_discipline_stress",
+      "title": "Recommendation discipline stress test",
+      "grade": "PASS",
+      "pass_count": 5,
+      "total_checks": 5,
+      "checks": {
+        "economics_before_prestige": true,
+        "realistic_midsize_shortlist": true,
+        "no_generic_ulr_dump": true,
+        "structured_verdict": true,
+        "mission_coherence_if_aircraft": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Challenger 350",
+          "Praetor 600",
+          "Gulfstream G280"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": false,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Challenger 350', 'Praetor 600', 'Gulfstream G280']"
+      ],
+      "errors": [],
+      "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: San Francisco -> Tokyo\n- Pax: 8\n- Operational read: ulr_continuation Credible aircraft class conversation starts in: Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 8 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load...\n\nOperational segments:\n\n- Operational Segment: Pacific Ulr [peak planning leg]\nAuthority: Pacific / Asia ULR corridor: San Francisco -> Tokyo Routes: San Francisco -> Tokyo Operational constraint: continuation_ulr Implication: Oceanic stages require worst-case leg planning \u2014 not a domestic jet problem.\n\nAircraft Class Band:\n\n- [Pacific Ulr] Multi-leg ultra-long-range executive band\n\nVerdict:\n\n- VIABLE WITH COMPROMISES: segment class guidance pending",
+      "answer_len": 1131
+    }
+  ]
+}

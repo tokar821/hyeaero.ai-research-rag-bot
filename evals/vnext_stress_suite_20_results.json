@@ -1,0 +1,365 @@
+[
+  {
+    "id": "Q01_mixed_feasibility_cost_trap",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 6000\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  },
+  {
+    "id": "Q02_capability_westbound_stress",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Falcon 7X\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: 84\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constraint breakdown\n- dispatch reliability: marginal fuel/payload margin  winter or westbound pressure may block dispa"
+  },
+  {
+    "id": "Q03_comparison_multi_class",
+    "v2_type": "explicit_comparison",
+    "v2_renderer": "explicit_comparison_table",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": true,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nComparison Type: Aircraft vs Aircraft\n\n| Aircraft | Range Class | Cabin Class | Economics | Operational Fit | Verdict |\n|---|---|---|---|---|---|\n| Gulfstream G280 | super-midsize | large_cabin | balanced_cost | general_exec | GOOD FIT |\n| Challenger 650 | large | large_cabin | higher_operating_cost | general_exec | GOOD FIT |\n| Praetor 600 | super-midsize | large_cabin | bala"
+  },
+  {
+    "id": "Q04_strategic_decomposition_trap",
+    "v2_type": "strategic_fleet_analysis",
+    "v2_renderer": "strategic_analysis",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": true,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question  not a single-aircraft shopping exercise.\n\n- **Runway incompatibility:** field or short-runway legs conflict with large-cabin ULR assumptions.\n- **Peak corridor under review:** Miami -> New York\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor"
+  },
+  {
+    "id": "Q05_range_payload_contradiction",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 5500\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  },
+  {
+    "id": "Q06_mixed_routing_hierarchy",
+    "v2_type": "network_structure",
+    "v2_renderer": "network_topology",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": true,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## NETWORK STRUCTURE\n\nThis is a hierarchy/topology question  the correct answer is *how to represent the network*, not which aircraft to buy.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n\nContinuation Constraints\n- none\n\n### Rule of representation\n- **Dominant utilization band** drives fleet sizing and dispatch-reliabil"
+  },
+  {
+    "id": "Q07_capability_escalation_cost",
+    "v2_type": "strategic_fleet_analysis",
+    "v2_renderer": "strategic_analysis",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": true,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question  not a single-aircraft shopping exercise.\n\n- **Peak corridor under review:** Los Angeles -> Hong Kong\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely  mixed utilization rarely survives sing"
+  },
+  {
+    "id": "Q08_comparison_ulr_vs_supermid",
+    "v2_type": "explicit_comparison",
+    "v2_renderer": "explicit_comparison_table",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": true,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nINSUFFICIENT DATA FOR STRUCTURED COMPARISON"
+  },
+  {
+    "id": "Q09_empty_fallback_prevention",
+    "v2_type": "strategic_fleet_analysis",
+    "v2_renderer": "strategic_analysis",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": true,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question  not a single-aircraft shopping exercise.\n\n- **Runway incompatibility:** field or short-runway legs conflict with large-cabin ULR assumptions.\n- **Peak corridor under review:** Anchorage -> Caribbean\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible cor"
+  },
+  {
+    "id": "Q10_named_aircraft_trap",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Citation Longitude\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  },
+  {
+    "id": "Q11_ontology_alias_stress",
+    "v2_type": "explicit_comparison",
+    "v2_renderer": "explicit_comparison_table",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": true,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nComparison Type: Aircraft vs Aircraft\n\n| Aircraft | Range Class | Cabin Class | Economics | Operational Fit | Verdict |\n|---|---|---|---|---|---|\n| Challenger 650 | large | large_cabin | higher_operating_cost | general_exec | GOOD FIT |\n| Global 6500 | ultra-long | heavy_cabin | higher_operating_cost | general_exec | GOOD FIT |"
+  },
+  {
+    "id": "Q12_arctic_ulr_conflict",
+    "v2_type": "strategic_fleet_analysis",
+    "v2_renderer": "strategic_analysis",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": true,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question  not a single-aircraft shopping exercise.\n\n- **Runway incompatibility:** field or short-runway legs conflict with large-cabin ULR assumptions.\n- **Peak corridor under review:** Los Angeles -> Yellowknife\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible"
+  },
+  {
+    "id": "Q13_cost_constraint_long_range_trap",
+    "v2_type": "recommendation_request",
+    "v2_renderer": "recommendation_broker",
+    "recs": [
+      "Global 7500",
+      "Gulfstream G650ER"
+    ],
+    "flags": {
+      "has_ranked_list": true,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Global 7500 | 0.7554 | ELIGIBLE | CONDITIONAL FIT | | 2 | Gulfstream G650ER | 0.6219 | ELIGIBLE | CONDITIONAL FIT |"
+  },
+  {
+    "id": "Q14_comparison_vs_strategy_ambiguity",
+    "v2_type": "explicit_comparison",
+    "v2_renderer": "explicit_comparison_table",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": true,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nComparison Type: Strategy vs Strategy\n\n| Aircraft | Range Class | Cabin Class | Economics | Operational Fit | Verdict |\n|---|---|---|---|---|---|\n| ULR Flagship | ultra-long | heavy_cabin | higher_operating_cost | peak_leg_covered, regional_mismatch_risk | CONDITIONAL FIT |\n| Super-midsize + Charter | super-midsize | midsize_cabin | lower_operating_cost | domestic_dispatch_opt"
+  },
+  {
+    "id": "Q15_capability_margin_stress",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 6000\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  },
+  {
+    "id": "Q16_routing_misclassification_trap",
+    "v2_type": "network_structure",
+    "v2_renderer": "network_topology",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": true,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## NETWORK STRUCTURE\n\nThis is a hierarchy/topology question  the correct answer is *how to represent the network*, not which aircraft to buy.\n\nUtilization Hierarchy\n- dominant: ulr_continuation\n\nSecondary / Overlay Traffic\n- domestic_utilization\n- ULR continuation is secondary unless founder/CEO mandated\n\nContinuation Constraints\n- Dallas -> Riyadh\n\nContinuation Hub Discipline"
+  },
+  {
+    "id": "Q17_heavy_payload_short_runway_conflict",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: G280\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  },
+  {
+    "id": "Q18_multi_domain_fleet_breakdown",
+    "v2_type": "recommendation_request",
+    "v2_renderer": "recommendation_broker",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nNothing in the catalog passed every hard gate as stated  that usually means range with reserves, runway, or passenger load is fighting the request, not that aviation is unknowable. For Miami -> Caribbean:\n- If you can relax nonstop, the feasible band often widens by one cabin class.\n- If runway or hot/high is the limiter, prioritize field-performance / light-jet bands over ran"
+  },
+  {
+    "id": "Q19_comparison_schema_stress",
+    "v2_type": "explicit_comparison",
+    "v2_renderer": "explicit_comparison_table",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": false,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": true,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\nINSUFFICIENT DATA FOR STRUCTURED COMPARISON"
+  },
+  {
+    "id": "Q20_capability_plus_alt_class",
+    "v2_type": "named_aircraft_capability",
+    "v2_renderer": "named_aircraft_capability",
+    "recs": [],
+    "flags": {
+      "has_ranked_list": false,
+      "has_ops_synthesis": false,
+      "has_named_capability": true,
+      "has_strategic_analysis": false,
+      "has_network_structure": false,
+      "has_strict_comparison_table": false,
+      "has_insufficient_data": false,
+      "contains_unverified": false,
+      "contains_banned_lightjets": false
+    },
+    "answer_head": "Some details below are directional rather than catalog-verified  I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Praetor 600\n- **Verdict**: FEASIBLE\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- , passenger load, and reserve assumptions align with class capability for this corridor.\n\n*Evaluation is limited to the named airframe(s) only  no substitute aircraft injected.*"
+  }
+]

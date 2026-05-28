@@ -204,6 +204,9 @@ def assign_fit_tiers(recommendations: List[AircraftRecommendation]) -> None:
         if fv == "NOT A FIT":
             rec.fit = FIT_NOT_RECOMMENDED
             continue
+        if fv == "GOOD FIT":
+            rec.fit = FIT_STRONG
+            continue
         if fv == "BEST FIT" and rec.total_score >= 0.52:
             rec.fit = FIT_STRONG
             continue

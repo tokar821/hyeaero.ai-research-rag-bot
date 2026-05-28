@@ -1,0 +1,312 @@
+{
+  "summary": {
+    "pass": "14/15",
+    "layer_pass": "14/15",
+    "e2e_pass_when_routed": "9/10"
+  },
+  "results": [
+    {
+      "id": "C01",
+      "group": "strict",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "Gulfstream G650",
+        "G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Gulfstream G650er",
+        "Falcon 8x"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "OK",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Gulfstream G650\",\n      \"category\": \"ULR\",\n      \"range_nm\": 6000.0,\n      \"seats\": 14,\n      \"mission_fit_score\": 0.8022,\n      \"cost_band\": \"ultra\",\n      \"winter_westbound_capability\": true\n    },\n    {\n  ",
+      "pass": true
+    },
+    {
+      "id": "C02",
+      "group": "strict",
+      "expected": "OK",
+      "router": "recommendation_request",
+      "models": [
+        "Gulfstream G280",
+        "G280",
+        "Challenger 650",
+        "Praetor 600"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": false,
+      "e2e_pass": null,
+      "e2e_status": null,
+      "e2e_issues": [
+        "not_valid_json"
+      ],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Gulfstream G280\",\n      \"category\": \"super-midsize\",\n      \"range_nm\": 3000.0,\n      \"seats\": 10,\n      \"mission_fit_score\": 0.8102,\n      \"cost_band\": \"medium\",\n      \"winter_westbound_capability\": false\n   ",
+      "pass": true
+    },
+    {
+      "id": "C03",
+      "group": "strict",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "explicit_comparison",
+      "models": [
+        "G500",
+        "Global 5500",
+        "G600"
+      ],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "INSUFFICIENT_DATA",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"incomplete canonical aircraft set; rejected=G500,Global 5500,G600\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C04",
+      "group": "edge",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "explicit_comparison",
+      "models": [
+        "Citation Longitude",
+        "Praetor 600",
+        "Challenger 3500"
+      ],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "INSUFFICIENT_DATA",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"incomplete canonical aircraft set; rejected=Citation Longitude,Challenger 3500\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C05",
+      "group": "edge",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "explicit_comparison",
+      "models": [
+        "Gulfstream G650",
+        "G650",
+        "Falcon 8X",
+        "Global 6000",
+        "Falcon 8x"
+      ],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "INSUFFICIENT_DATA",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"incomplete canonical aircraft set; rejected=Global 6000\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C06",
+      "group": "edge",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "explicit_comparison",
+      "models": [
+        "G500",
+        "Challenger 650",
+        "Global 6500"
+      ],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "INSUFFICIENT_DATA",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"incomplete canonical aircraft set; rejected=G500\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C07",
+      "group": "insufficient",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "recommendation_request",
+      "models": [],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": false,
+      "e2e_pass": null,
+      "e2e_status": null,
+      "e2e_issues": [
+        "not_valid_json"
+      ],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"missing canonical aircraft set\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C08",
+      "group": "insufficient",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "recommendation_request",
+      "models": [],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": false,
+      "e2e_pass": null,
+      "e2e_status": null,
+      "e2e_issues": [
+        "not_valid_json"
+      ],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"missing canonical aircraft set\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C09",
+      "group": "insufficient",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "recommendation_request",
+      "models": [],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": false,
+      "e2e_pass": null,
+      "e2e_status": null,
+      "e2e_issues": [
+        "not_valid_json"
+      ],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"missing canonical aircraft set\"\n}",
+      "pass": true
+    },
+    {
+      "id": "C10",
+      "group": "registry",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "Gulfstream G650",
+        "G650",
+        "Global 7500",
+        "G650er"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "OK",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Gulfstream G650\",\n      \"category\": \"ULR\",\n      \"range_nm\": 6000.0,\n      \"seats\": 14,\n      \"mission_fit_score\": 0.8022,\n      \"cost_band\": \"ultra\",\n      \"winter_westbound_capability\": true\n    },\n    {\n  ",
+      "pass": true
+    },
+    {
+      "id": "C11",
+      "group": "registry",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "Falcon 8X",
+        "Falcon 7X",
+        "Falcon 7x",
+        "Falcon 8x"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "OK",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Falcon 8X\",\n      \"category\": \"ULR\",\n      \"range_nm\": 5600.0,\n      \"seats\": 12,\n      \"mission_fit_score\": 0.8032,\n      \"cost_band\": \"ultra\",\n      \"winter_westbound_capability\": true\n    },\n    {\n      \"n",
+      "pass": true
+    },
+    {
+      "id": "C12",
+      "group": "mixed",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "G500",
+        "Falcon 8X",
+        "Global 7500",
+        "Falcon 8x"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "OK",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Falcon 8X\",\n      \"category\": \"ULR\",\n      \"range_nm\": 5600.0,\n      \"seats\": 12,\n      \"mission_fit_score\": 0.6958,\n      \"cost_band\": \"ultra\",\n      \"winter_westbound_capability\": true\n    },\n    {\n      \"n",
+      "pass": true
+    },
+    {
+      "id": "C13",
+      "group": "mixed",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "Challenger 650",
+        "Praetor 600"
+      ],
+      "layer_pass": true,
+      "layer_status": "OK",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": true,
+      "e2e_status": "OK",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"aircraft\": [\n    {\n      \"name\": \"Challenger 650\",\n      \"category\": \"large-cabin\",\n      \"range_nm\": 3500.0,\n      \"seats\": 10,\n      \"mission_fit_score\": 0.8175,\n      \"cost_band\": \"high\",\n      \"winter_westbound_capability\": \"conditional\"\n",
+      "pass": true
+    },
+    {
+      "id": "C14",
+      "group": "format",
+      "expected": "OK",
+      "router": "explicit_comparison",
+      "models": [
+        "G650",
+        "G600",
+        "G650er",
+        "Global 6000"
+      ],
+      "layer_pass": false,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": true,
+      "e2e_pass": false,
+      "e2e_status": "INSUFFICIENT_DATA",
+      "e2e_issues": [],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"incomplete canonical aircraft set; rejected=G600,Global 6000\"\n}",
+      "pass": false
+    },
+    {
+      "id": "C15",
+      "group": "invalid",
+      "expected": "INSUFFICIENT_DATA",
+      "router": "recommendation_request",
+      "models": [],
+      "layer_pass": true,
+      "layer_status": "INSUFFICIENT_DATA",
+      "layer_issues": [],
+      "e2e_applicable": false,
+      "e2e_pass": null,
+      "e2e_status": null,
+      "e2e_issues": [
+        "not_valid_json"
+      ],
+      "answer_preview": "{\n  \"mode\": \"explicit_comparison\",\n  \"status\": \"INSUFFICIENT_DATA\",\n  \"reason\": \"missing canonical aircraft set\"\n}",
+      "pass": true
+    }
+  ]
+}

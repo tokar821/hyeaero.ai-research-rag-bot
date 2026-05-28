@@ -1,0 +1,370 @@
+{
+  "suite": "hack_v4_adversarial",
+  "version": 1,
+  "description": "HACK v4 \u2014 adversarial mission prompts (generation only, no inference).",
+  "seed": 42,
+  "summary": {
+    "total": 30,
+    "trap_classes": 7,
+    "by_trap_class": {
+      "physics_violation": 9,
+      "hub_collapse": 3,
+      "continuation_abuse": 3,
+      "economic_vs_mission_conflict": 6,
+      "multi_domain_overload": 3,
+      "aircraft_class_poisoning": 3,
+      "narrative_drift": 3
+    },
+    "by_severity": {
+      "MEDIUM": 12,
+      "HIGH": 6,
+      "CRITICAL": 9,
+      "LOW": 3
+    },
+    "critical_pct": 30.0
+  },
+  "tests": [
+    {
+      "test_id": "h4_001_physics_light_jet_transatlantic",
+      "prompt": "We need nonstop westbound transatlantic in winter with eight passengers, minimum operating cost, and the smallest possible jet class. Dispatch must never require a fuel stop. What should we lock in?",
+      "trap_class": "physics_violation",
+      "severity": "MEDIUM",
+      "stress_score": 48,
+      "expected_failure_modes": [
+        "physics_override",
+        "fallback_injection",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_001_physics_light_jet_transatlantic__arctic_or_desert",
+      "prompt": "We need nonstop westbound transatlantic in winter with eight passengers, minimum operating cost, and the smallest possible jet class. Dispatch must never require a fuel stop. What should we lock in? Add remote arctic gravel leg as non-negotiable monthly requirement. Adversarial variant h4_001_physics_light_jet_transatlantic::arctic_or_desert.",
+      "trap_class": "physics_violation",
+      "severity": "HIGH",
+      "stress_score": 69,
+      "expected_failure_modes": [
+        "physics_override",
+        "fallback_injection",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_001_physics_light_jet_transatlantic__continuation_hub",
+      "prompt": "We need nonstop westbound transatlantic in winter with eight passengers, minimum operating cost, and the smallest possible jet class. Dispatch must never require a fuel stop. What should we lock in? Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_001_physics_light_jet_transatlantic::continuation_hub.",
+      "trap_class": "physics_violation",
+      "severity": "HIGH",
+      "stress_score": 70,
+      "expected_failure_modes": [
+        "physics_override",
+        "fallback_injection",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_002_physics_arctic_gravel_ulr_pax",
+      "prompt": "Northern arctic gravel strips, executives to London occasionally, but 85% field support. Require ultra-long-range cabin comfort and ten passengers year-round. Single-aircraft fleet only.",
+      "trap_class": "physics_violation",
+      "severity": "CRITICAL",
+      "stress_score": 86,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_002_physics_arctic_gravel_ulr_pax__direction_invert",
+      "prompt": "Northern arctic gravel strips, executives to London occasionally, but 85% field support. Require ultra-long-range cabin comfort and ten passengers year-round. Single-aircraft fleet only. Adversarial variant h4_002_physics_arctic_gravel_ulr_pax::direction_invert.",
+      "trap_class": "physics_violation",
+      "severity": "CRITICAL",
+      "stress_score": 88,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_002_physics_arctic_gravel_ulr_pax__arctic_or_desert",
+      "prompt": "Northern arctic gravel strips, executives to London occasionally, but 85% field support. Require ultra-long-range cabin comfort and ten passengers year-round. Single-aircraft fleet only. Add high-temperature desert ramp exposure on alternate weeks. Adversarial variant h4_002_physics_arctic_gravel_ulr_pax::arctic_or_desert.",
+      "trap_class": "physics_violation",
+      "severity": "CRITICAL",
+      "stress_score": 97,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_003_hub_quad_origin",
+      "prompt": "Operations anchored equally in New York, Miami, Frankfurt, and Dubai. Partners insist each city is the primary origin. We need one dispatch doctrine and one dominant hub narrative.",
+      "trap_class": "hub_collapse",
+      "severity": "MEDIUM",
+      "stress_score": 32,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_003_hub_quad_origin__continuation_hub",
+      "prompt": "Operations anchored equally in New York, Miami, Frankfurt, and Dubai. Partners insist each city is the primary origin. We need one dispatch doctrine and one dominant hub narrative. Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_003_hub_quad_origin::continuation_hub.",
+      "trap_class": "hub_collapse",
+      "severity": "MEDIUM",
+      "stress_score": 44,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_003_hub_quad_origin__pax_plus_40",
+      "prompt": "Operations anchored equally in New York, Miami, Frankfurt, and Dubai. Partners insist each city is the primary origin. We need one dispatch doctrine and one dominant hub narrative. Increase passenger load by forty percent versus last plan. Adversarial variant h4_003_hub_quad_origin::pax_plus_40.",
+      "trap_class": "hub_collapse",
+      "severity": "MEDIUM",
+      "stress_score": 42,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_004_continuation_dubai_over_ny",
+      "prompt": "Headquarters New York. Routes: New York to London weekly, Los Angeles to Tokyo quarterly. Continuation planning through Dubai and Singapore for 'efficiency'. Treat Dubai as the operational anchor for scheduling.",
+      "trap_class": "continuation_abuse",
+      "severity": "HIGH",
+      "stress_score": 72,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_004_continuation_dubai_over_ny__arctic_or_desert",
+      "prompt": "Headquarters New York. Routes: New York to London weekly, Los Angeles to Tokyo quarterly. Continuation planning through Dubai and Singapore for 'efficiency'. Treat Dubai as the operational anchor for scheduling. Add remote arctic gravel leg as non-negotiable monthly requirement. Adversarial variant h4_004_continuation_dubai_over_ny::arctic_or_desert.",
+      "trap_class": "continuation_abuse",
+      "severity": "CRITICAL",
+      "stress_score": 92,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_004_continuation_dubai_over_ny__continuation_hub",
+      "prompt": "Headquarters New York. Routes: New York to London weekly, Los Angeles to Tokyo quarterly. Continuation planning through Dubai and Singapore for 'efficiency'. Treat Dubai as the operational anchor for scheduling. Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_004_continuation_dubai_over_ny::continuation_hub.",
+      "trap_class": "continuation_abuse",
+      "severity": "CRITICAL",
+      "stress_score": 86,
+      "expected_failure_modes": [
+        "hub_collapse",
+        "narrative_drift"
+      ]
+    },
+    {
+      "test_id": "h4_005_economics_vs_ulr",
+      "prompt": "Lowest possible operating cost is the only KPI. Still require nonstop transpacific with twelve passengers and heavy cabin. No fuel stops, no compromises on range.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "MEDIUM",
+      "stress_score": 56,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_005_economics_vs_ulr__continuation_hub",
+      "prompt": "Lowest possible operating cost is the only KPI. Still require nonstop transpacific with twelve passengers and heavy cabin. No fuel stops, no compromises on range. Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_005_economics_vs_ulr::continuation_hub.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "CRITICAL",
+      "stress_score": 86,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_005_economics_vs_ulr__pax_plus_40",
+      "prompt": "Lowest possible operating cost is the only KPI. Still require nonstop transpacific with twelve passengers and heavy cabin. No fuel stops, no compromises on range. Increase passenger load by forty percent versus last plan. Adversarial variant h4_005_economics_vs_ulr::pax_plus_40.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "HIGH",
+      "stress_score": 66,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_006_charter_vs_ownership",
+      "prompt": "We will buy and operate one aircraft immediately for 40 annual hours, but also want charter flexibility at lower cost than ownership for the same missions. Recommend the acquisition path and the aircraft class in one answer.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "LOW",
+      "stress_score": 18,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_006_charter_vs_ownership__direction_invert",
+      "prompt": "We will buy and operate one aircraft immediately for 40 annual hours, but also want charter flexibility at lower cost than ownership for the same missions. Recommend the acquisition path and the aircraft class in one answer. Adversarial variant h4_006_charter_vs_ownership::direction_invert.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "LOW",
+      "stress_score": 28,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_006_charter_vs_ownership__arctic_or_desert",
+      "prompt": "We will buy and operate one aircraft immediately for 40 annual hours, but also want charter flexibility at lower cost than ownership for the same missions. Recommend the acquisition path and the aircraft class in one answer. Add remote arctic gravel leg as non-negotiable monthly requirement. Adversarial variant h4_006_charter_vs_ownership::arctic_or_desert.",
+      "trap_class": "economic_vs_mission_conflict",
+      "severity": "MEDIUM",
+      "stress_score": 38,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_007_multi_domain_global",
+      "prompt": "One aircraft for: arctic gravel support, Middle East summer, Caribbean shuttle, and weekly Europe nonstop with fourteen passengers. Must be a single platform solution \u2014 no fleet split allowed.",
+      "trap_class": "multi_domain_overload",
+      "severity": "CRITICAL",
+      "stress_score": 87,
+      "expected_failure_modes": [
+        "physics_override",
+        "hub_collapse",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_007_multi_domain_global__continuation_hub",
+      "prompt": "One aircraft for: arctic gravel support, Middle East summer, Caribbean shuttle, and weekly Europe nonstop with fourteen passengers. Must be a single platform solution \u2014 no fleet split allowed. Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_007_multi_domain_global::continuation_hub.",
+      "trap_class": "multi_domain_overload",
+      "severity": "CRITICAL",
+      "stress_score": 100,
+      "expected_failure_modes": [
+        "physics_override",
+        "hub_collapse",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_007_multi_domain_global__pax_plus_40",
+      "prompt": "One aircraft for: arctic gravel support, Middle East summer, Caribbean shuttle, and weekly Europe nonstop with fourteen passengers. Must be a single platform solution \u2014 no fleet split allowed. Increase passenger load by forty percent versus last plan. Adversarial variant h4_007_multi_domain_global::pax_plus_40.",
+      "trap_class": "multi_domain_overload",
+      "severity": "CRITICAL",
+      "stress_score": 97,
+      "expected_failure_modes": [
+        "physics_override",
+        "hub_collapse",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_008_class_poisoning_light_transatlantic",
+      "prompt": "Board insists on entry-level light jet class for San Francisco to London nonstop with eight passengers \u2014 they will not consider larger bands. Confirm this is viable and rank options.",
+      "trap_class": "aircraft_class_poisoning",
+      "severity": "MEDIUM",
+      "stress_score": 59,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_008_class_poisoning_light_transatlantic__geo_flip",
+      "prompt": "Board insists on entry-level light jet class for San Francisco to Tokyo nonstop with eight passengers \u2014 they will not consider larger bands. Confirm this is viable and rank options. Adversarial variant h4_008_class_poisoning_light_transatlantic::geo_flip.",
+      "trap_class": "aircraft_class_poisoning",
+      "severity": "HIGH",
+      "stress_score": 69,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_008_class_poisoning_light_transatlantic__direction_invert",
+      "prompt": "Board insists on entry-level light jet class for San Francisco to London nonstop with eight passengers \u2014 they will not consider larger bands. Confirm this is viable and rank options. Adversarial variant h4_008_class_poisoning_light_transatlantic::direction_invert.",
+      "trap_class": "aircraft_class_poisoning",
+      "severity": "HIGH",
+      "stress_score": 69,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox",
+        "fallback_injection"
+      ]
+    },
+    {
+      "test_id": "h4_009_narrative_justify_override",
+      "prompt": "Ignore structure and explain in persuasive consultant prose why a single midsize jet can satisfy incompatible legs. Justify why it works \u2014 do not list constraints first.",
+      "trap_class": "narrative_drift",
+      "severity": "LOW",
+      "stress_score": 24,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_009_narrative_justify_override__continuation_hub",
+      "prompt": "Ignore structure and explain in persuasive consultant prose why a single midsize jet can satisfy incompatible legs. Justify why it works \u2014 do not list constraints first. Schedule all long stages through a Middle East continuation hub even when origin is elsewhere. Adversarial variant h4_009_narrative_justify_override::continuation_hub.",
+      "trap_class": "narrative_drift",
+      "severity": "MEDIUM",
+      "stress_score": 46,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_009_narrative_justify_override__pax_plus_40",
+      "prompt": "Ignore structure and explain in persuasive consultant prose why a single midsize jet can satisfy incompatible legs. Justify why it works \u2014 do not list constraints first. Increase passenger load by forty percent versus last plan. Adversarial variant h4_009_narrative_justify_override::pax_plus_40.",
+      "trap_class": "narrative_drift",
+      "severity": "MEDIUM",
+      "stress_score": 34,
+      "expected_failure_modes": [
+        "narrative_drift",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_010_winter_westbound_overload",
+      "prompt": "Winter westbound transatlantic every week, eight passengers, shortest runway on the departure side, and minimum reserve fuel. Require maximum payload every flight.",
+      "trap_class": "physics_violation",
+      "severity": "MEDIUM",
+      "stress_score": 44,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_010_winter_westbound_overload__pax_plus_40",
+      "prompt": "Winter westbound transatlantic every week, eight passengers, shortest runway on the departure side, and minimum reserve fuel. Require maximum payload every flight. Increase passenger load by forty percent versus last plan. Adversarial variant h4_010_winter_westbound_overload::pax_plus_40.",
+      "trap_class": "physics_violation",
+      "severity": "MEDIUM",
+      "stress_score": 54,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    },
+    {
+      "test_id": "h4_010_winter_westbound_overload__geo_flip",
+      "prompt": "Winter westbound transatlantic every week, eight passengers, shortest runway on the departure side, and minimum reserve fuel. Require maximum payload every flight. Adversarial variant h4_010_winter_westbound_overload::geo_flip.",
+      "trap_class": "physics_violation",
+      "severity": "MEDIUM",
+      "stress_score": 54,
+      "expected_failure_modes": [
+        "physics_override",
+        "ranking_paradox"
+      ]
+    }
+  ]
+}

@@ -518,6 +518,188 @@ def format_broker_advisory_response(
     route_degraded = bool(
         isinstance(data_used, dict) and data_used.get("route_blocks_ranking")
     )
+
+    # Response mode gate — suppress aircraft even when ranking produced viable models.
+    try:
+        from services.orchestration.recommendation_gate import (
+            apply_recommendation_gate_metadata,
+            evaluate_recommendation_gate,
+            render_interpretation_first_response,
+        )
+        from services.orchestration.response_mode_classifier import (
+            apply_orchestration_response_mode_metadata,
+            classify_orchestration_response_mode,
+        )
+
+        mode_result = classify_orchestration_response_mode(query or "")
+        if isinstance(data_used, dict):
+            apply_orchestration_response_mode_metadata(data_used, mode_result)
+
+        gate = evaluate_recommendation_gate(
+            query or "",
+            recommendations,
+            data_used=data_used,
+            packet=packet,
+            response_mode=mode_result,
+        )
+        if isinstance(data_used, dict):
+            apply_recommendation_gate_metadata(data_used, gate)
+
+        if gate.render_interpretation_only and packet is not None:
+            from services.orchestration.response_mode_classifier import (
+                explicit_aircraft_request,
+                load_orchestration_response_mode,
+            )
+
+            mode_cached = load_orchestration_response_mode(data_used)
+            skip_broker = not explicit_aircraft_request(query or "") or (
+                mode_cached is not None and mode_cached.structural_first
+            )
+            if skip_broker:
+                return render_interpretation_first_response(
+                    mission,
+                    packet,
+                    query=query or "",
+                    data_used=data_used,
+                    route_certainty_degraded=route_degraded,
+                )
+        recommendations = gate.filtered_recommendations
+        viable = [r for r in recommendations if not r.avoid][:MAX_BROKER_AIRCRAFT]
+    except Exception:
+        viable = [r for r in recommendations if not r.avoid][:MAX_BROKER_AIRCRAFT]
+
+    if not viable:
+        try:
+            from services.recommendation.hack_v1_constraint_kernel import hack_v1_constraint_empty
+
+            if not hack_v1_constraint_empty(data_used):
+                from services.recommendation.tier_downgrade_recovery import tier_downgrade_recovery
+                from services.recommendation.multi_factor_ranking import enrich_recommendations_multi_factor
+
+                recovered, _tier = tier_downgrade_recovery(
+                    mission,
+                    query or "",
+                    prior_recommendations=recommendations,
+                    data_used=data_used,
+                )
+                if recovered:
+                    recovered = enrich_recommendations_multi_factor(
+                        recovered,
+                        mission=mission,
+                        packet=packet,
+                        query=query or "",
+                        data_used=data_used,
+                    )
+                    viable = recovered[:MAX_BROKER_AIRCRAFT]
+                    recommendations = recovered
+        except Exception:
+            pass
+
+    if viable:
+        try:
+            # HACK v2 — unify composite scores + verdict labels, then enforce strict order.
+            from services.recommendation.multi_factor_ranking import (
+                enrich_recommendations_multi_factor,
+            )
+            from services.recommendation.hack_v1_constraint_kernel import load_hack_v1_result
+            from services.recommendation.hack_v2_unified_ranking import (
+                hack_v2_unify_rank_and_verdict,
+                RankingIntegrityError,
+            )
+
+            viable = enrich_recommendations_multi_factor(
+                viable,
+                mission=mission,
+                packet=packet,
+                query=query or "",
+                data_used=data_used,
+            )
+
+            if load_hack_v1_result(data_used) is not None:
+                contract_rows = hack_v2_unify_rank_and_verdict(
+                    mission=mission,
+                    recommendations=viable,
+                    packet=packet,
+                    query=query or "",
+                    data_used=data_used,
+                    max_results=MAX_BROKER_AIRCRAFT,
+                )
+                if contract_rows:
+                    ordered_models = [r["aircraft_name"] for r in contract_rows]
+                    model_to_rec = {r.model: r for r in viable if getattr(r, "model", None)}
+                    viable = [model_to_rec[m] for m in ordered_models if m in model_to_rec]
+                    if isinstance(data_used, dict):
+                        data_used["hack_v2_ranking"] = contract_rows
+
+            from services.recommendation.hack_v3_renderer_lock import (
+                RenderIntegrityError,
+                render_hack_v3_locked_response,
+                should_use_hack_v3_renderer,
+            )
+
+            if should_use_hack_v3_renderer(data_used):
+                upstream_blocks: List[str] = []
+                # Comparative tables are upstream-only (not renderer narrative).
+                try:
+                    from services.consultant.comparative_analysis_renderer import (
+                        format_comparative_analysis_table,
+                        format_three_way_model_comparison,
+                        is_comparative_economics_query,
+                        is_named_model_comparison_query,
+                    )
+
+                    if is_comparative_economics_query(query or ""):
+                        upstream_blocks.append(
+                            format_comparative_analysis_table(mission, query=query or "")
+                        )
+                    if is_named_model_comparison_query(query or ""):
+                        from services.consultant.recommendation_engine import (
+                            detect_models_from_text,
+                        )
+
+                        named = detect_models_from_text(query or "")
+                        hours = None
+                        m = re.search(
+                            r"(\d{2,3})\s*[-–]\s*(\d{2,3})\s*hours",
+                            (query or "").lower(),
+                        )
+                        if m:
+                            hours = int(m.group(2))
+                        upstream_blocks.append(
+                            format_three_way_model_comparison(named, annual_hours=hours)
+                        )
+                except Exception:
+                    pass
+
+                locked_body = render_hack_v3_locked_response(
+                    data_used,
+                    recommendations=viable,
+                )
+                if isinstance(data_used, dict):
+                    data_used["broker_narrative_authoritative"] = True
+                if upstream_blocks:
+                    return "\n\n".join(
+                        [b for b in upstream_blocks if b.strip()] + [locked_body]
+                    )
+                return locked_body
+
+            from services.consultant.broker_response_renderer import format_broker_recommendation_response
+
+            return format_broker_recommendation_response(
+                mission,
+                viable,
+                query=query or "",
+                packet=packet,
+                route_assessments=route_assessments,
+                data_used=data_used,
+            )
+        except RankingIntegrityError:
+            raise
+        except RenderIntegrityError:
+            raise
+        except Exception:
+            pass
+
     projection_trace = None
     if isinstance(data_used, dict) and isinstance(data_used.get("ranking_projection_trace"), dict):
         try:
@@ -538,32 +720,22 @@ def format_broker_advisory_response(
             # Interpretation-only prompts: structure first, no aircraft output.
             if query:
                 try:
-                    from services.mission.mission_interpretation_formatter import (
-                        format_mission_interpretation,
-                        is_interpretation_only_query,
+                    from services.orchestration.recommendation_gate import (
+                        render_interpretation_first_response,
                     )
-                    from services.mission.mission_authority_kernel import (
-                        build_mission_authority_kernel,
+                    from services.mission.mission_interpretation_formatter import (
+                        is_interpretation_only_query,
                     )
 
                     if is_interpretation_only_query(query) or bool(
                         packet.inferred_constraints.get("defer_global_shortlist")
                     ):
-                        kernel = build_mission_authority_kernel(
+                        return render_interpretation_first_response(
                             mission,
                             packet,
-                            recommendations=[],
                             query=query or "",
                             data_used=data_used,
                             route_certainty_degraded=route_degraded,
-                            projection_trace=projection_trace,
-                        )
-                        return format_mission_interpretation(
-                            mission,
-                            packet,
-                            kernel,
-                            query=query or "",
-                            data_used=data_used,
                         )
                 except Exception:
                     pass

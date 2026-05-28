@@ -1,0 +1,403 @@
+{
+  "summary": {
+    "router_pass": "15/15",
+    "e2e_pass": "15/15",
+    "stabilizer_overrides": 0,
+    "router_e2e_mismatch": 0
+  },
+  "results": [
+    {
+      "id": "T01",
+      "expected": "strategic_fleet_analysis",
+      "query_type": "strategic_fleet_analysis",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "hard_conflict_pre_filter",
+        "intent_type": "hard_conflict_pre_filter",
+        "pre_filter_triggered": true,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": true,
+        "long_range_detected": true,
+        "final_route": "strategic_fleet_analysis",
+        "signals": [
+          "hard_conflict_pre_filter"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "strategic_fleet_analysis",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T02",
+      "expected": "strategic_fleet_analysis",
+      "query_type": "strategic_fleet_analysis",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "hard_conflict_pre_filter",
+        "intent_type": "hard_conflict_pre_filter",
+        "pre_filter_triggered": true,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": true,
+        "long_range_detected": true,
+        "final_route": "strategic_fleet_analysis",
+        "signals": [
+          "hard_conflict_pre_filter"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "strategic_fleet_analysis",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T03",
+      "expected": "strategic_fleet_analysis",
+      "query_type": "strategic_fleet_analysis",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "hard_conflict_pre_filter",
+        "intent_type": "hard_conflict_pre_filter",
+        "pre_filter_triggered": true,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "strategic_fleet_analysis",
+        "signals": [
+          "hard_conflict_pre_filter"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "strategic_fleet_analysis",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T04",
+      "expected": "network_structure",
+      "query_type": "network_structure",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "network_structure",
+        "intent_type": "network_structure",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": true,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "network_structure",
+        "signals": [
+          "network_hierarchy_override"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "network_structure",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T05",
+      "expected": "network_structure",
+      "query_type": "network_structure",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "network_structure",
+        "intent_type": "network_structure",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": true,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "network_structure",
+        "signals": [
+          "network_hierarchy_override"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "network_structure",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T06",
+      "expected": "network_structure",
+      "query_type": "network_structure",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "network_structure",
+        "intent_type": "network_structure",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": true,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": false,
+        "final_route": "network_structure",
+        "signals": [
+          "network_hierarchy_override"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "network_structure",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T07",
+      "expected": "explicit_comparison",
+      "query_type": "explicit_comparison",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "explicit_comparison",
+        "intent_type": "explicit_comparison",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": true,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": false,
+        "final_route": "explicit_comparison",
+        "signals": [
+          "comparison_absolute_priority"
+        ]
+      },
+      "models": [
+        "Gulfstream G280",
+        "G280",
+        "Challenger 650",
+        "Praetor 600"
+      ],
+      "e2e_mode": "explicit_comparison",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T08",
+      "expected": "explicit_comparison",
+      "query_type": "explicit_comparison",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "explicit_comparison",
+        "intent_type": "explicit_comparison",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": true,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "explicit_comparison",
+        "signals": [
+          "comparison_absolute_priority"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "explicit_comparison",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T09",
+      "expected": "explicit_comparison",
+      "query_type": "explicit_comparison",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "explicit_comparison",
+        "intent_type": "explicit_comparison",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": true,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": false,
+        "final_route": "explicit_comparison",
+        "signals": [
+          "comparison_absolute_priority"
+        ]
+      },
+      "models": [
+        "Gulfstream G500",
+        "G500",
+        "Falcon 8X",
+        "G600",
+        "Falcon 8x"
+      ],
+      "e2e_mode": "explicit_comparison",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T10",
+      "expected": "named_aircraft_capability",
+      "query_type": "named_aircraft_capability",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "named_aircraft_capability",
+        "intent_type": "named_aircraft_capability",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": false,
+        "final_route": "named_aircraft_capability",
+        "signals": [
+          "named_aircraft_capability_override"
+        ]
+      },
+      "models": [
+        "Falcon 8X",
+        "Falcon 8x"
+      ],
+      "e2e_mode": "named_aircraft_capability",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T11",
+      "expected": "named_aircraft_capability",
+      "query_type": "named_aircraft_capability",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "named_aircraft_capability",
+        "intent_type": "named_aircraft_capability",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "named_aircraft_capability",
+        "signals": [
+          "named_aircraft_capability_override"
+        ]
+      },
+      "models": [
+        "Praetor 600"
+      ],
+      "e2e_mode": "named_aircraft_capability",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T12",
+      "expected": "named_aircraft_capability",
+      "query_type": "named_aircraft_capability",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "named_aircraft_capability",
+        "intent_type": "named_aircraft_capability",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "named_aircraft_capability",
+        "signals": [
+          "named_aircraft_capability_override"
+        ]
+      },
+      "models": [
+        "Global 5500"
+      ],
+      "e2e_mode": "named_aircraft_capability",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T13",
+      "expected": "strategic_fleet_analysis",
+      "query_type": "strategic_fleet_analysis",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "strategic_fleet_analysis",
+        "intent_type": "strategic_fleet_analysis",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": false,
+        "final_route": "strategic_fleet_analysis",
+        "signals": [
+          "strategic_fleet_analysis"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "strategic_fleet_analysis",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T14",
+      "expected": "strategic_fleet_analysis",
+      "query_type": "strategic_fleet_analysis",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "strategic_fleet_analysis",
+        "intent_type": "strategic_fleet_analysis",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "strategic_fleet_analysis",
+        "signals": [
+          "strategic_fleet_analysis"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "strategic_fleet_analysis",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    },
+    {
+      "id": "T15",
+      "expected": "recommendation_request",
+      "query_type": "recommendation_request",
+      "pass_router": true,
+      "routing_debug": {
+        "detected_intent": "acquisition_recommendation",
+        "intent_type": "acquisition_recommendation",
+        "pre_filter_triggered": false,
+        "comparison_override_triggered": false,
+        "network_override_triggered": false,
+        "stabilizer_modified_route": false,
+        "cost_constraint_detected": false,
+        "long_range_detected": true,
+        "final_route": "recommendation_request",
+        "signals": [
+          "acquisition_recommendation"
+        ]
+      },
+      "models": [],
+      "e2e_mode": "recommendation_request",
+      "pass_e2e": true,
+      "stabilizer_modified_route": false,
+      "router_vs_e2e_match": true
+    }
+  ]
+}

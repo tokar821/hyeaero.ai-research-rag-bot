@@ -1,0 +1,138 @@
+{
+  "suite": "recommendation_quality_final_hard_10",
+  "version": 1,
+  "description": "FINAL HARD — recommendation orchestration, empty-shortlist recovery, dispatch mismatch, comparative tables.",
+  "scenarios": [
+    {
+      "id": "h01_industrial_arctic_cost",
+      "title": "Industrial + Arctic + cost sensitivity",
+      "query": "We operate between: Northern Canada gravel strips, Alberta oil fields, Houston HQ. Executives travel occasionally to London, but 80% of flying is field support. We care about: runway flexibility, operating cost, winter dispatch reliability. What aircraft should we consider?",
+      "checks": [
+        "non_empty_shortlist",
+        "field_utilization_dominant",
+        "runway_winter_cost_emphasis",
+        "no_generic_ulr_dump",
+        "multi_factor_visible"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "h02_empty_shortlist_ulr_trap",
+      "title": "Empty shortlist trap (ULR suppression)",
+      "query": "We fly: San Francisco → Tokyo (rare), Los Angeles → Singapore (rare), Mostly LA–SF–Seattle shuttle flights. We previously used large long-range jets but costs are too high. Recommend aircraft.",
+      "checks": [
+        "non_empty_shortlist",
+        "no_generic_ulr_dump",
+        "realistic_midsize_shortlist",
+        "tier_recovery_signal"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "h03_structured_comparison",
+      "title": "Comparative evaluation required",
+      "query": "We are choosing between: Bombardier Challenger 650, Gulfstream G280, Embraer Praetor 600. We fly 150–220 hours per year. Give structured comparison and recommendation.",
+      "checks": [
+        "structured_comparison",
+        "mentions_named_comparison_models",
+        "structured_verdict",
+        "non_empty_shortlist"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "h04_cargo_passenger_variability",
+      "title": "Cargo + passenger variability",
+      "query": "We operate: West Africa offshore rigs, Houston executive HQ. We carry: 8–14 passengers, occasional cargo equipment. What aircraft class fits best?",
+      "checks": [
+        "payload_volatility",
+        "no_generic_ulr_dump",
+        "not_executive_only_framing",
+        "non_empty_shortlist_or_class_band"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "h05_dispatch_mismatch_one_aircraft",
+      "title": "Dispatch mismatch detection",
+      "query": "We run: Arctic gravel strips (Nunavut), Miami Caribbean flights, London executive HQ. Leadership wants ONE aircraft. Is this viable? If not, explain why and what breaks.",
+      "checks": [
+        "dispatch_mismatch",
+        "reject_single_platform_logic",
+        "what_breaks_language",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "h06_economics_ownership_trap",
+      "title": "Economics-first ownership evaluation",
+      "query": "We currently charter 180 hours/year. We are considering ownership of: Global 7500, G650ER, Challenger 350. Is ownership justified?",
+      "checks": [
+        "ownership_economics_critical",
+        "not_salesperson_tone",
+        "ownership_skepticism_for_low_hours",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false,
+      "allows_ownership_discussion": true
+    },
+    {
+      "id": "h07_converted_airliner_vs_bbj",
+      "title": "Converted airliner vs BBJ",
+      "query": "We fly: 12–16 executives, Chicago → Europe multiple times per quarter. We are considering: BBJ, Airbus ACJ319, Large business jet alternative. Which structure is economically and operationally correct?",
+      "checks": [
+        "structured_comparison",
+        "converted_airliner_analysis",
+        "structured_verdict"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "h08_continuation_hub_stress",
+      "title": "Continuation hub stress",
+      "query": "We operate: New York → London, Los Angeles → Tokyo, Miami → Caribbean. Occasional continuation through Dubai and Singapore. How should continuation be structured WITHOUT breaking origin integrity?",
+      "checks": [
+        "continuation_hub_secondary",
+        "origin_integrity_language",
+        "structured_verdict",
+        "suppress_premature_aircraft"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "h09_mountain_pacific_conflict",
+      "title": "Mountain + Pacific conflict",
+      "query": "We operate: Aspen / Jackson Hole winter access, Los Angeles → Tokyo / Seoul / Singapore. We want ONE aircraft solution. What breaks structurally?",
+      "checks": [
+        "what_breaks_language",
+        "reject_single_platform_logic",
+        "runway_or_performance_compromise",
+        "structural_conflict_first"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "h10_empty_shortlist_critical",
+      "title": "Empty shortlist stress (CRITICAL)",
+      "query": "We operate: Houston oil fields, Northern Canada Arctic gravel strips, West Africa rigs, Europe executive travel. We previously rejected all ULR jets due to cost. Now recommend aircraft.",
+      "checks": [
+        "non_empty_shortlist",
+        "no_generic_ulr_dump",
+        "tier_recovery_signal",
+        "field_or_industrial_awareness"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    }
+  ]
+}

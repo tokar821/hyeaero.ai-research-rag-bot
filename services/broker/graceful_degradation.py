@@ -192,6 +192,10 @@ def degraded_empty_shortlist_guidance(
     if pipeline is not None and getattr(pipeline, "feasible_models", None):
         feas = list(pipeline.feasible_models or [])[:4]
         if feas:
+            # Output safety: never surface banned light-jet fallback models in degraded guidance.
+            banned = {"CJ2", "CJ4", "Learjet 75", "Citation CJ2", "Citation CJ4"}
+            feas = [m for m in feas if (m or "") not in banned]
+            feas = [m for m in feas if (m or "")[:3] not in ("CJ2", "CJ4")]
             lines.append(
                 "Closest survivors before late elimination: " + ", ".join(feas) + "."
             )

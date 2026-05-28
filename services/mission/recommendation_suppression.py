@@ -49,10 +49,28 @@ def build_recommendation_suppression_policy(
     resolution: MissionStructureResolution,
     packet: Optional[MissionUnderstandingPacket],
     kernel: Optional[MissionAuthorityKernel] = None,
+    *,
+    query: str = "",
+    data_used: Optional[Dict[str, Any]] = None,
 ) -> RecommendationSuppressionPolicy:
     """Determine whether model-level recommendations may render."""
     reasons: List[str] = []
     suppress = False
+
+    try:
+        from services.orchestration.response_mode_classifier import (
+            classify_orchestration_response_mode,
+            load_orchestration_response_mode,
+        )
+
+        mode = load_orchestration_response_mode(data_used)
+        if mode is None and query:
+            mode = classify_orchestration_response_mode(query)
+        if mode and mode.suppresses_aircraft_recommendations:
+            suppress = True
+            reasons.append(f"response_mode:{mode.mode.value}")
+    except Exception:
+        pass
 
     if resolution.decomposition_required:
         suppress = True

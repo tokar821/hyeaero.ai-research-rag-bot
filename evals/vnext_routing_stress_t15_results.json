@@ -1,0 +1,746 @@
+[
+  {
+    "id": "T01",
+    "category": "cost_ulr",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "hard_conflict_pre_filter"
+    ],
+    "routing_debug": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": true,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": true,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n- **Peak corridor under review:** Los Angeles -> Tokyo\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely \u2014 mixed utilization rarely survives singl",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T02",
+    "category": "cost_ulr",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "hard_conflict_pre_filter"
+    ],
+    "routing_debug": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n- **Peak corridor under review:** New York -> Dubai\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely \u2014 mixed utilization rarely survives single-p",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T03",
+    "category": "cost_ulr",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "hard_conflict_pre_filter"
+    ],
+    "routing_debug": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": true,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "hard_conflict_pre_filter",
+      "intent_type": "hard_conflict_pre_filter",
+      "pre_filter_triggered": true,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": true,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "hard_conflict_pre_filter"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n- **Reserve-margin conflict:** westbound winter transatlantic pressure on dispatch reliability.\n- **Peak corridor under review:** Chicago -> London\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor c",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T04",
+    "category": "capability",
+    "query_type": "named_aircraft_capability",
+    "renderer": "named_aircraft_capability",
+    "signals": [
+      "named_aircraft_capability_override"
+    ],
+    "routing_debug": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "models": [
+      "Falcon 8X",
+      "Falcon 8x"
+    ],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Falcon 8X\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: 1456\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n\n### Capability Verdict\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Feasibility evaluation for the named airframe(s) ",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "named_aircraft_capability",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T05",
+    "category": "capability",
+    "query_type": "named_aircraft_capability",
+    "renderer": "named_aircraft_capability",
+    "signals": [
+      "named_aircraft_capability_override"
+    ],
+    "routing_debug": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "models": [
+      "Praetor 600"
+    ],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Praetor 600\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: -1358\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- reserve-margin conflict: exceeds practical range with NBAA reserve realism.\n- Winter westbound transatlantic \u2014 light and midsize jets cannot hold reserves and headwind margin",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "named_aircraft_capability",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T06",
+    "category": "capability",
+    "query_type": "named_aircraft_capability",
+    "renderer": "named_aircraft_capability",
+    "signals": [
+      "named_aircraft_capability_override"
+    ],
+    "routing_debug": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "named_aircraft_capability",
+      "intent_type": "named_aircraft_capability",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "named_aircraft_capability",
+      "signals": [
+        "named_aircraft_capability_override"
+      ]
+    },
+    "models": [
+      "Challenger 3500"
+    ],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Challenger 3500\n- **Verdict**: NOT REALISTIC\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- corridor infeasibility: aircraft not in operational catalog for evaluation.\n\n*Feasibility evaluation for the named airframe(s) only \u2014 verdict and constraint breakdown.*",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "named_aircraft_capability",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T07",
+    "category": "comparison",
+    "query_type": "explicit_comparison",
+    "renderer": "explicit_comparison_table",
+    "signals": [
+      "comparison_absolute_priority"
+    ],
+    "routing_debug": {
+      "detected_intent": "explicit_comparison",
+      "intent_type": "explicit_comparison",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": true,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "explicit_comparison",
+      "signals": [
+        "comparison_absolute_priority"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "explicit_comparison",
+      "intent_type": "explicit_comparison",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": true,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "explicit_comparison",
+      "signals": [
+        "comparison_absolute_priority"
+      ]
+    },
+    "models": [
+      "Gulfstream G650",
+      "G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Gulfstream G650er",
+      "Falcon 8x"
+    ],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nComparison Type: Aircraft vs Aircraft\n\n| Aircraft | Range Class | Cabin Class | Economics | Operational Fit | Verdict |\n|---|---|---|---|---|---|\n| Gulfstream G650 | ultra-long | heavy_cabin | higher_operating_cost | general_exec | GOOD FIT |\n| Falcon 8X | ultra-long | heavy_cabin | higher_operating_cost | general_exec | GOOD FIT |\n| Global 7500 | ultra-long | heavy_cabin | h",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "explicit_comparison",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T08",
+    "category": "comparison",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "strategic_fleet_analysis"
+    ],
+    "routing_debug": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely \u2014 mixed utilization rarely survives single-platform optimization.\n- **Maintenance profile diverge",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T09",
+    "category": "comparison",
+    "query_type": "explicit_comparison",
+    "renderer": "explicit_comparison_table",
+    "signals": [
+      "comparison_absolute_priority"
+    ],
+    "routing_debug": {
+      "detected_intent": "explicit_comparison",
+      "intent_type": "explicit_comparison",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": true,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "explicit_comparison",
+      "signals": [
+        "comparison_absolute_priority"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "explicit_comparison",
+      "intent_type": "explicit_comparison",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": true,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "explicit_comparison",
+      "signals": [
+        "comparison_absolute_priority"
+      ]
+    },
+    "models": [
+      "G500",
+      "Global 5500",
+      "G600"
+    ],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nINSUFFICIENT DATA FOR STRUCTURED COMPARISON",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "explicit_comparison",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T10",
+    "category": "network",
+    "query_type": "network_structure",
+    "renderer": "network_topology",
+    "signals": [
+      "network_hierarchy_override"
+    ],
+    "routing_debug": {
+      "detected_intent": "network_structure",
+      "intent_type": "network_structure",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": true,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "network_structure",
+      "signals": [
+        "network_hierarchy_override"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "network_structure",
+      "intent_type": "network_structure",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": true,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "network_structure",
+      "signals": [
+        "network_hierarchy_override"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## NETWORK STRUCTURE\n\nThis is a hierarchy/topology question \u2014 the correct answer is *how to represent the network*, not which aircraft to buy.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n- domestic_utilization\n- ULR continuation is secondary unless founder/CEO mandated\n\nContinuation Constraints\n- Dallas -> Dubai (Duba",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "network_structure",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T11",
+    "category": "network",
+    "query_type": "network_structure",
+    "renderer": "network_topology",
+    "signals": [
+      "network_hierarchy_override"
+    ],
+    "routing_debug": {
+      "detected_intent": "network_structure",
+      "intent_type": "network_structure",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": true,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "network_structure",
+      "signals": [
+        "network_hierarchy_override"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "network_structure",
+      "intent_type": "network_structure",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": true,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "network_structure",
+      "signals": [
+        "network_hierarchy_override"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## NETWORK STRUCTURE\n\nThis is a hierarchy/topology question \u2014 the correct answer is *how to represent the network*, not which aircraft to buy.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- domestic_utilization\n\nContinuation Constraints\n- none\n\n### Rule of representation\n- **Dominant utilization band** drives fleet sizing and dispatch-re",
+    "capability_leaks": [
+      "instead"
+    ],
+    "e2e_mode": "network_structure",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T12",
+    "category": "network",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "strategic_fleet_analysis"
+    ],
+    "routing_debug": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n- **Reserve-margin conflict:** westbound winter transatlantic pressure on dispatch reliability.\n- **Runway incompatibility:** field or short-runway legs conflict with large-cabin ULR assumptions.\n- **Peak corridor under review:** New York -> London\n\n### Struct",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T13",
+    "category": "strategic",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "strategic_fleet_analysis"
+    ],
+    "routing_debug": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": true,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n- **Peak corridor under review:** Miami -> Houston\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely \u2014 mixed utilization rarely survives single-pl",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T14",
+    "category": "strategic",
+    "query_type": "strategic_fleet_analysis",
+    "renderer": "strategic_analysis",
+    "signals": [
+      "strategic_fleet_analysis"
+    ],
+    "routing_debug": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "strategic_fleet_analysis",
+      "intent_type": "strategic_fleet_analysis",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "strategic_fleet_analysis",
+      "signals": [
+        "strategic_fleet_analysis"
+      ]
+    },
+    "models": [],
+    "allow_ranking": false,
+    "response_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## STRATEGIC ANALYSIS\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise.\n\n### Structural assessment\n- **Dispatch mismatch risk** if one airframe is forced across incompatible corridor classes.\n- **Fleet segmentation requirement** likely \u2014 mixed utilization rarely survives single-platform optimization.\n- **Maintenance profile diverge",
+    "capability_leaks": [
+      "instead",
+      "recommend",
+      "shortlist",
+      "ranked"
+    ],
+    "e2e_mode": "strategic_fleet_analysis",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": false
+  },
+  {
+    "id": "T15",
+    "category": "edge",
+    "query_type": "recommendation_request",
+    "renderer": "recommendation_broker",
+    "signals": [
+      "recommendation_request"
+    ],
+    "routing_debug": {
+      "detected_intent": "recommendation_request",
+      "intent_type": "recommendation_request",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "recommendation_request",
+      "signals": [
+        "recommendation_request"
+      ]
+    },
+    "router_v2_final": {
+      "detected_intent": "recommendation_request",
+      "intent_type": "recommendation_request",
+      "pre_filter_triggered": false,
+      "comparison_override_triggered": false,
+      "network_override_triggered": false,
+      "stabilizer_modified_route": false,
+      "cost_constraint_detected": false,
+      "long_range_detected": false,
+      "final_route": "recommendation_request",
+      "signals": [
+        "recommendation_request"
+      ]
+    },
+    "models": [],
+    "allow_ranking": true,
+    "response_preview": "## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Pilatus PC-12 | 0.6984 | ELIGIBLE | CONDITIONAL FIT | | 2 | Citation Latitude | 0.6849 | ELIGIBLE | CONDITIONAL FIT | | 3 | Pilatus PC-24 | 0.6765 | ELIGIBLE | CONDITIONAL FIT |",
+    "capability_leaks": [
+      "ranked"
+    ],
+    "e2e_mode": "recommendation_request",
+    "stabilizer_modified_route": false,
+    "router_vs_e2e_match": true,
+    "e2e_has_ranked_list": true
+  }
+]

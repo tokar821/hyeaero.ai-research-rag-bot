@@ -1,0 +1,157 @@
+{
+  "suite": "recommendation_quality_10",
+  "version": 1,
+  "description": "Final orchestration + recommendation quality stress — NOT geo tests.",
+  "focus": [
+    "recommendation_orchestration",
+    "aircraft_suppression_discipline",
+    "hierarchy_weighting",
+    "interpretation_first_behavior",
+    "broker_realism",
+    "anti_generic_behavior",
+    "structured_verdict_quality",
+    "mission_to_aircraft_coherence"
+  ],
+  "scenarios": [
+    {
+      "id": "q01_founder_mandate_overpowering",
+      "title": "Founder mandate overpowering utilization",
+      "query": "We fly executives mostly between New York, Boston, and Chicago, but the founder insists on nonstop Singapore capability twice per quarter. Leadership wants one aircraft. What actually fits this mission economically and operationally?",
+      "checks": [
+        "dominant_utilization_identified",
+        "no_generic_ulr_dump",
+        "split_or_compromise_strategy",
+        "no_prestige_bias",
+        "hierarchy_or_governance_signal"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "q02_industrial_executive_incompatibility",
+      "title": "Industrial + executive incompatibility",
+      "query": "We support Permian Basin drilling and West African offshore operations, but executives also fly Houston–London and Houston–Zurich. Dispatch reliability has suffered under a single-aircraft strategy. What is structurally wrong?",
+      "checks": [
+        "structural_conflict_first",
+        "segmentation_emphasis",
+        "dispatch_mismatch",
+        "suppress_premature_aircraft",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q03_mountain_pacific_ulr_contradiction",
+      "title": "Mountain + Pacific ULR contradiction",
+      "query": "We need Aspen winter access and Los Angeles–Tokyo nonstop westbound in winter. Leadership believes one flagship aircraft should handle both.",
+      "checks": [
+        "structural_conflict_first",
+        "no_generic_ulr_dump",
+        "reject_single_platform_logic",
+        "runway_or_performance_compromise",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q04_caribbean_regional_longhaul_misuse",
+      "title": "Caribbean regional vs long-haul executive misuse",
+      "query": "We're based in Miami and fly mostly Caribbean sectors with 6–8 passengers, but occasionally executives request nonstop Dubai or Riyadh. Should we optimize around those long-haul trips?",
+      "checks": [
+        "dominant_utilization_identified",
+        "no_generic_ulr_dump",
+        "split_or_compromise_strategy",
+        "no_prestige_bias",
+        "continuation_hub_secondary"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q05_cargo_passenger_variability",
+      "title": "Cargo + passenger variability stress",
+      "query": "We move engineering teams between Chicago, São Paulo, and Lagos with variable passenger counts from 4 to 16 plus equipment pallets. We also have quarterly Frankfurt executive meetings.",
+      "checks": [
+        "payload_volatility",
+        "no_generic_ulr_dump",
+        "structural_conflict_first",
+        "not_executive_only_framing",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q06_ownership_economics_trap",
+      "title": "Ownership economics trap",
+      "query": "I charter about 180 hours annually today, but leadership wants to acquire a jet because they dislike airline schedules. Most trips are Dallas–New York and Dallas–Chicago.",
+      "checks": [
+        "ownership_economics_critical",
+        "not_salesperson_tone",
+        "split_or_compromise_strategy",
+        "dominant_utilization_identified",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q07_converted_airliner_vs_bbj",
+      "title": "Converted airliner vs business jet",
+      "query": "We routinely move 14–18 executives from Chicago to London and Frankfurt several times per quarter. At what point does a converted airliner become more rational than a large business jet?",
+      "checks": [
+        "converted_airliner_analysis",
+        "ownership_economics_critical",
+        "no_prestige_bias",
+        "structured_verdict",
+        "mission_coherence_if_aircraft"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    },
+    {
+      "id": "q08_continuation_hub_confusion",
+      "title": "Continuation-hub confusion",
+      "query": "Executives fly Los Angeles–Tokyo, New York–London, and Miami–Caribbean, with occasional continuation through Dubai and Singapore. Which routes should actually drive aircraft selection?",
+      "checks": [
+        "dominant_utilization_identified",
+        "continuation_hub_secondary",
+        "hierarchy_or_governance_signal",
+        "suppress_premature_aircraft",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q09_multi_domain_impossibility",
+      "title": "Multi-domain impossibility test",
+      "query": "We operate: Arctic gravel strips, Miami Caribbean utilization, Houston energy logistics, London executive HQ, Singapore continuation traffic. Leadership still wants one aircraft category globally. Is that operationally coherent?",
+      "checks": [
+        "reject_single_category",
+        "segmentation_emphasis",
+        "no_generic_ulr_dump",
+        "structural_conflict_first",
+        "structured_verdict"
+      ],
+      "allows_aircraft": false,
+      "requires_explicit_recommendation": false
+    },
+    {
+      "id": "q10_recommendation_discipline_stress",
+      "title": "Recommendation discipline stress test",
+      "query": "I usually fly 8 passengers between San Francisco and Hawaii, occasionally Tokyo, and care far more about operating economics than prestige. What should I realistically shortlist?",
+      "checks": [
+        "economics_before_prestige",
+        "realistic_midsize_shortlist",
+        "no_generic_ulr_dump",
+        "structured_verdict",
+        "mission_coherence_if_aircraft"
+      ],
+      "allows_aircraft": true,
+      "requires_explicit_recommendation": true
+    }
+  ]
+}

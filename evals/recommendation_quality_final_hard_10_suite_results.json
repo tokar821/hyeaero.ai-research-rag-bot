@@ -1,0 +1,403 @@
+{
+  "suite": "recommendation_quality_final_hard_10",
+  "summary": {
+    "total": 10,
+    "PASS": 7,
+    "PARTIAL": 1,
+    "FAIL": 2,
+    "pass_rate": 0.7
+  },
+  "results": [
+    {
+      "id": "h01_industrial_arctic_cost",
+      "title": "Industrial + Arctic + cost sensitivity",
+      "grade": "FAIL",
+      "pass_count": 3,
+      "total_checks": 5,
+      "checks": {
+        "non_empty_shortlist": true,
+        "field_utilization_dominant": false,
+        "runway_winter_cost_emphasis": false,
+        "no_generic_ulr_dump": true,
+        "multi_factor_visible": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Citation Latitude"
+        ],
+        "recommendation_count": 1,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": true,
+        "tier_downgrade_recovery": {
+          "tier": "profile_fallback",
+          "source": "economics_fallback",
+          "count": 5
+        },
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Citation Latitude']"
+      ],
+      "errors": [],
+      "answer_preview": "## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Citation Latitude | 0.6387 | ELIGIBLE | CONDITIONAL FIT |",
+      "answer_len": 182
+    },
+    {
+      "id": "h02_empty_shortlist_ulr_trap",
+      "title": "Empty shortlist trap (ULR suppression)",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "non_empty_shortlist": true,
+        "no_generic_ulr_dump": true,
+        "realistic_midsize_shortlist": true,
+        "tier_recovery_signal": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Challenger 350",
+          "Gulfstream G280",
+          "Praetor 600"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": true,
+        "tier_downgrade_recovery": {
+          "tier": "profile_fallback",
+          "source": "economics_fallback",
+          "count": 5
+        },
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Challenger 350', 'Gulfstream G280', 'Praetor 600']"
+      ],
+      "errors": [],
+      "answer_preview": "## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Challenger 350 | 0.7086 | ELIGIBLE | CONDITIONAL FIT | | 2 | Gulfstream G280 | 0.6968 | ELIGIBLE | CONDITIONAL FIT | | 3 | Praetor 600 | 0.6846 | ELIGIBLE | CONDITIONAL FIT |",
+      "answer_len": 299
+    },
+    {
+      "id": "h03_structured_comparison",
+      "title": "Comparative evaluation required",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "structured_comparison": true,
+        "mentions_named_comparison_models": true,
+        "structured_verdict": true,
+        "non_empty_shortlist": true
+      },
+      "metrics": {
+        "response_mode": "comparison_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Citation CJ4",
+          "Learjet 75",
+          "Citation CJ2"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": true,
+        "tier_downgrade_recovery": null,
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=comparison_mode",
+        "recs=['Citation CJ4', 'Learjet 75', 'Citation CJ2']"
+      ],
+      "errors": [],
+      "answer_preview": "Structured Model Comparison\n\n| Factor | Gulfstream G280 | G280 | Challenger 650 | |--------|---|---|---| | Operating economics (220 annual hours) | Lower DOC \u2014 strong if hours stay regional | Balanced DOC \u2014 best all-round for mixed stage lengths | Efficient DOC \u2014 strong value if range need is moderate | | Runway / field flexibility | Moderate | Good | Good | | Dispatch agility | High | High | High | | Range margin vs brochure | High cabin, higher burn | Strong practical range | Strong value-range | | Ownership friction | Higher capital + crew cost | Mid capital band | Lower capital band |\n\nRecommendation discipline:\n- At 220 annual hours, none of these justify ULR-class capital unless peak legs require it.\n- Lead candidate on economics + flexibility: typically G280 unless runway or pax peaks dictate otherwise.\n\n## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Citation CJ4 | 0.8037 | ELIGIBLE | GOOD FIT | | 2 | Learjet 75 | 0.8028 | ELIGIBLE | GOOD FIT | | 3 | Citation CJ2 | 0.7976 | ELIGIBLE | CONDITIONAL FIT |",
+      "answer_len": 1102
+    },
+    {
+      "id": "h04_cargo_passenger_variability",
+      "title": "Cargo + passenger variability",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "payload_volatility": true,
+        "no_generic_ulr_dump": true,
+        "not_executive_only_framing": true,
+        "non_empty_shortlist_or_class_band": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Gulfstream G280",
+          "Challenger 350",
+          "Citation Latitude"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": true,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false,
+        "tier_downgrade_recovery": {
+          "tier": "hack_v1_feasible",
+          "source": "finalize_hack_v1_seed",
+          "count": 3
+        },
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Gulfstream G280', 'Challenger 350', 'Citation Latitude']"
+      ],
+      "errors": [],
+      "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Houston -> West Africa (peak planning); other legs: Houston -> Offshore Rigs; Houston -> Offshore Rigs\n- Pax: 8\u201314 (planning load 14)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: industrial_field executive_transport Credible aircraft class conversation starts in: Domestic field-access executive band, Executive planning band.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load.. Field and industrial airport access dominate cabin spec \u2014 runway length, climb gradient, and unpaved or short-strip capability set the planning floor before interior comfort...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Houston -> Offshore Rigs Routes: Houston -> Offshore Rigs Operational constraint: cargo\n- Operational Segment: Industrial Field\nAuthority: Industrial / remote field authority: Houston -> West Africa Routes: Houston -> West Africa Operational constraint: industrial, short_runway, cargo\n\nMulti-domain operational problem \u2014 mission decomposition preced",
+      "answer_len": 1907
+    },
+    {
+      "id": "h05_dispatch_mismatch_one_aircraft",
+      "title": "Dispatch mismatch detection",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "dispatch_mismatch": true,
+        "reject_single_platform_logic": true,
+        "what_breaks_language": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "structure_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false,
+        "tier_downgrade_recovery": null,
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": false
+      },
+      "notes": [
+        "mode=structure_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Industrial/remote field access and transatlantic executive nonstop are incompatible bands.\n\nUtilization Hierarchy\n- dominant: arctic_operations\n\nSecondary / Overlay Traffic\n- executive_transport\n- caribbean_regional\n\nContinuation Constraints\n- none\n\nPrimary Utilization\n- arctic_operations\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- arctic_operations (weight 0.98)\n- executive_transport (weight 0.82)\n- caribbean_regional (weight 0.55)\n\nStructural Conflicts\n- single_ulr_covers_arctic_gravel_and_transatlantic_executive\n- single_aircraft_preference_over_hard_domain_conflict\n- brochure_range_on_gravel_or_ice_strips\n- incompatible_mission_bands\n- Industrial/remote field access and transatlantic executive nonstop are incompatible bands.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: runway, payload, and season constraints do not align\n",
+      "answer_len": 1636
+    },
+    {
+      "id": "h06_economics_ownership_trap",
+      "title": "Economics-first ownership evaluation",
+      "grade": "FAIL",
+      "pass_count": 2,
+      "total_checks": 4,
+      "checks": {
+        "ownership_economics_critical": false,
+        "not_salesperson_tone": true,
+        "ownership_skepticism_for_low_hours": false,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Citation CJ4",
+          "Learjet 75",
+          "Citation CJ2"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": true,
+        "tier_downgrade_recovery": null,
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Citation CJ4', 'Learjet 75', 'Citation CJ2']"
+      ],
+      "errors": [],
+      "answer_preview": "## Ranked Aircraft List\n\n| Rank | Aircraft | Composite Score | Eligibility | Verdict | | --- | --- | --- | --- | --- | | 1 | Citation CJ4 | 0.8037 | ELIGIBLE | GOOD FIT | | 2 | Learjet 75 | 0.8028 | ELIGIBLE | GOOD FIT | | 3 | Citation CJ2 | 0.7976 | ELIGIBLE | CONDITIONAL FIT |",
+      "answer_len": 279
+    },
+    {
+      "id": "h07_converted_airliner_vs_bbj",
+      "title": "Converted airliner vs BBJ",
+      "grade": "PARTIAL",
+      "pass_count": 2,
+      "total_checks": 3,
+      "checks": {
+        "structured_comparison": false,
+        "converted_airliner_analysis": true,
+        "structured_verdict": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Gulfstream G280",
+          "Challenger 350",
+          "Citation Latitude"
+        ],
+        "recommendation_count": 3,
+        "structural_decomposition": false,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false,
+        "tier_downgrade_recovery": {
+          "tier": "hack_v1_feasible",
+          "source": "finalize_hack_v1_seed",
+          "count": 3
+        },
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Gulfstream G280', 'Challenger 350', 'Citation Latitude']"
+      ],
+      "errors": [],
+      "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Chicago -> Perth (peak planning); other legs: Chicago -> Europe; Chicago -> Europe\n- Pax: 12\u201316 (planning load 16)\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: executive_transport domestic_utilization Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Transatlantic ultra-long-range executive band.. Operational band: ultra-long-range \u2014 this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops.. Planning assumption: 16 passengers with executive baggage \u2014 payload-range tradeoffs materially tighten the shortlist versus brochure range.. Multi-leg ULR portfolio from a single hub \u2014 one capable ULR platform can cover these corridors; ranking should prioritize worst-case stage (longest leg + winter westbound if stated).. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not serious for this passenger load...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Chicago -> Perth (+1 supporting legs) Routes: Chicago -> Perth; Chicago -> Europe\n\nVerdict:\n\n- VIABLE WITH COMPROMISE",
+      "answer_len": 1433
+    },
+    {
+      "id": "h08_continuation_hub_stress",
+      "title": "Continuation hub stress",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "continuation_hub_secondary": true,
+        "origin_integrity_language": true,
+        "structured_verdict": true,
+        "suppress_premature_aircraft": true
+      },
+      "metrics": {
+        "response_mode": "structure_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false,
+        "tier_downgrade_recovery": null,
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": false
+      },
+      "notes": [
+        "mode=structure_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Multi-domain operational problem: no single aircraft passes all domain hard gates. A single platform spanning every domain is structurally invalid \u2014 not a ranking preference.\n\nUtilization Hierarchy\n- dominant: executive_transport\n\nSecondary / Overlay Traffic\n- ulr_continuation\n- caribbean_regional\n\nContinuation Constraints\n- Los Angeles -> Dubai (Dubai continuation)\n- New York -> London\n- Los Angeles -> Tokyo\n\nContinuation Hub Discipline\n- Continuation hubs remain secondary to dominant origin structure and utilization hierarchy.\n\nPrimary Utilization\n- executive_transport\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- executive_transport (weight 0.82)\n- ulr_continuation (weight 0.78)\n- caribbean_regional (weight 0.55)\n\nStructural Conflicts\n- Multi-domain operational problem: no single aircraft passes all domain hard gates. A single platform spanning every domain is structurally invalid \u2014 not a ranking preference.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability ca",
+      "answer_len": 1670
+    },
+    {
+      "id": "h09_mountain_pacific_conflict",
+      "title": "Mountain + Pacific conflict",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "what_breaks_language": true,
+        "reject_single_platform_logic": true,
+        "runway_or_performance_compromise": true,
+        "structural_conflict_first": true
+      },
+      "metrics": {
+        "response_mode": "structure_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": true,
+        "recommendations": [],
+        "recommendation_count": 0,
+        "structural_decomposition": null,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": false,
+        "aircraft_in_answer": false,
+        "tier_downgrade_recovery": null,
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": false
+      },
+      "notes": [
+        "mode=structure_mode"
+      ],
+      "errors": [],
+      "answer_preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\nOperational Interpretation\n- This is structurally multiple missions \u2014 single-platform optimization is unstable.\n\nOperational Structure\n- decomposition: yes\n- structural_reason: Mountain field-access and oceanic ULR/transatlantic stages cannot share one airframe.\n\nUtilization Hierarchy\n- dominant: ulr_continuation\n\nSecondary / Overlay Traffic\n- mountain_leisure\n\nContinuation Constraints\n- New York -> London\n\nContinuation Hub Discipline\n- Continuation hubs remain secondary to dominant origin structure and utilization hierarchy.\n\nPrimary Utilization\n- ulr_continuation\n\nSecondary / Continuation Traffic\n\nOperational Domains\n- ulr_continuation (weight 0.78)\n- mountain_leisure (weight 0.38)\n\nStructural Conflicts\n- mountain_leisure_equated_with_ulr_mandate\n- incompatible_mission_bands\n- Mountain field-access and oceanic ULR/transatlantic stages cannot share one airframe.\n\nInterpretation Verdict\n- This is structurally a decomposed fleet problem.\n\nOperational Conflict Summary\n- dispatch mismatch: single-aircraft dispatch reliability cannot span these bands\n- utilization conflict: primary utilization and peak-leg requirements diverge\n- operational incompatibility: runway, payload, and season constraints do not align\n- fleet segmentation required: treat as separate oper",
+      "answer_len": 1433
+    },
+    {
+      "id": "h10_empty_shortlist_critical",
+      "title": "Empty shortlist stress (CRITICAL)",
+      "grade": "PASS",
+      "pass_count": 4,
+      "total_checks": 4,
+      "checks": {
+        "non_empty_shortlist": true,
+        "no_generic_ulr_dump": true,
+        "tier_recovery_signal": true,
+        "field_or_industrial_awareness": true
+      },
+      "metrics": {
+        "response_mode": "recommendation_mode",
+        "suppresses_aircraft": false,
+        "render_interpretation_only": false,
+        "recommendations": [
+          "Citation Latitude"
+        ],
+        "recommendation_count": 1,
+        "structural_decomposition": true,
+        "dominant_utilization": null,
+        "suppression_active": null,
+        "generic_models_in_answer": true,
+        "aircraft_in_answer": true,
+        "tier_downgrade_recovery": {
+          "tier": "hack_v1_feasible",
+          "source": "finalize_hack_v1_seed",
+          "count": 1
+        },
+        "tier_downgrade_applied": null,
+        "multi_factor_ranking": true
+      },
+      "notes": [
+        "mode=recommendation_mode",
+        "recs=['Citation Latitude']"
+      ],
+      "errors": [],
+      "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n- Route: Houston -> Remote Gravel Strips (peak planning); other legs: Houston -> West Africa; Yellowknife -> Remote Gravel Strips; Houston -> Europe\n- Pax: Not stated\n- Route certainty: degraded \u2014 kernel segment structure remains binding.\n- Operational read: arctic_field industrial_field Credible aircraft class conversation starts in: Domestic field-access executive band, Transatlantic / heavy-cabin executive band, Transatlantic / heavy-cabin band \u2014 modest passenger load rarely justifies ULR-class capital; supplemental charter on peak legs is often more rational than G650-class ownership... Transatlantic / Europe executive band \u2014 planning centers on or heavy-cabin with realistic winter reserves; light-jet economics are not credible at full passenger load.. Fleet composition: incompatible operational bands \u2014 ULR oceanic legs and short-field domestic access cannot share one platform without structural compromise.. Field and industrial airport access dominate cabin spec \u2014 runway length, climb gradient, and unpaved or short-strip capability set the planning floor before interior comfort...\n\nOperational segments:\n\n- Operational Segment: Domestic Executive\nAuthority: Direct route authority: Houston -> Europe Routes: Houston -> Europe\n- Operational Segment: Industrial Field\nAuthority: Industrial / remote field authority: Houston -> ",
+      "answer_len": 2105
+    }
+  ]
+}
