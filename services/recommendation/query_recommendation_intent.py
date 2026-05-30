@@ -311,25 +311,6 @@ def classify_query_recommendation_intent(
     """
     q = (query or "").strip()
     ql = q.lower()
-
-    try:
-        from services.orchestration.response_mode_classifier import (
-            classify_orchestration_response_mode,
-        )
-
-        orm = classify_orchestration_response_mode(q, history=history)
-        if orm.suppresses_aircraft_recommendations:
-            return QueryRecommendationIntentResult(
-                intent=QueryRecommendationIntent.OPERATIONAL_TRADEOFF_ANALYSIS,
-                confidence=max(0.88, orm.confidence),
-                source="orchestration_response_mode",
-                signals=[orm.mode.value],
-                requires_ranked_pipeline=True,
-                allows_acquisition_framing=False,
-            )
-    except Exception:
-        pass
-
     models = _mentioned_models(q)
     has_route = bool(_ROUTE_HINT_RE.search(ql))
 

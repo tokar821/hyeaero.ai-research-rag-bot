@@ -41,10 +41,6 @@ class AircraftRecommendation:
     avoid: bool = False
     fit: str = ""  # Strong Fit | Good Fit | Partial Fit | Not Recommended
     fit_verdict: str = ""  # BEST FIT | CONDITIONAL FIT | NOT A FIT (broker-style)
-    suitability_score: float = 0.0
-    economics_score: float = 0.0
-    operational_flexibility_score: float = 0.0
-    mission_conflict_penalty: float = 0.0
     scores: List[RecommendationScore] = field(default_factory=list)
     explanation: Optional[RecommendationExplanation] = None
 
@@ -56,16 +52,12 @@ class AircraftRecommendation:
         )
 
         fit = normalize_fit_label(self.fit or score_to_fit_label(self.total_score, avoid=self.avoid))
-        payload: Dict[str, Any] = {
+        return {
             "model": self.model,
             "category": self.category,
             "fit": fit,
             "fit_verdict": self.fit_verdict or None,
             "avoid": self.avoid,
-            "suitability_score": round(float(self.suitability_score), 4) or None,
-            "economics_score": round(float(self.economics_score), 4) or None,
-            "operational_flexibility_score": round(float(self.operational_flexibility_score), 4) or None,
-            "mission_conflict_penalty": round(float(self.mission_conflict_penalty), 4) or None,
             "scores": [
                 {
                     "dimension": s.dimension,
@@ -94,7 +86,6 @@ class AircraftRecommendation:
                 else None
             ),
         }
-        return payload
 
 
 from services.mission.aircraft_profiles import AIRCRAFT_PROFILES as _AIRCRAFT_PROFILES

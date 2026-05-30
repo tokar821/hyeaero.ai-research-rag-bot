@@ -1,9 +1,5 @@
 """
 Structured comparative analysis for consultant advisory turns.
-
-DEPRECATED for user-facing structured output.
-Use `services.comparison.comparison_pipeline_v2` (via comparison_structured_output)
-for explicit_comparison. This legacy engine is NOT used on the orchestration v2 path.
 """
 
 from __future__ import annotations
@@ -98,11 +94,10 @@ def build_structured_comparison(
     mission: MissionState,
     *,
     recommendations: Optional[List[AircraftRecommendation]] = None,
-    locked_models_only: bool = False,
 ) -> StructuredComparison:
     """Side-by-side comparison with mission-fit table and visual-ready JSON."""
     uniq = list(dict.fromkeys(m for m in models if m))[:4]
-    if len(uniq) < 2 and not locked_models_only:
+    if len(uniq) < 2:
         ranked = rank_aircraft_recommendations(mission, max_results=4)
         uniq = [r.model for r in ranked[:4]]
 

@@ -6,6 +6,18 @@ from services.broker.broker_language import broker_refusal_message
 
 UNVERIFIED_AIRCRAFT_MESSAGE = broker_refusal_message(context="aircraft_specs")
 
+# Phase 5 unified intent — terse refusals without advisory pivot or mission follow-up.
+UNIFIED_FACT_UNVERIFIED_MESSAGE = (
+    "This specification is not available in verified catalog data."
+)
+UNIFIED_CATALOG_MISS_MESSAGE = "Aircraft not found in verified catalog."
+UNIFIED_CAPABILITY_UNVERIFIED_MESSAGE = (
+    "Cannot evaluate corridor feasibility without verified model data."
+)
+UNIFIED_COMPARISON_INSUFFICIENT_MESSAGE = (
+    "Insufficient verified aircraft data to produce a comparison for those aircraft."
+)
+
 # Speculative claims blocked unless explicitly verified in catalog + supplement.
 FORBIDDEN_UNVERIFIED_CLAIM_KEYS = frozenset(
     {

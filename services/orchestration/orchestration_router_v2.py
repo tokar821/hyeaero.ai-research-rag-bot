@@ -78,24 +78,41 @@ _STRONG_COMPARISON_RE = re.compile(
 _STRATEGIC_RE = re.compile(
     r"\b(?:"
     r"what\s+(?:structurally\s+)?breaks\b|"
+    r"why\s+does\s+that\s+logic\b|"
     r"structural(?:ly)?\s+(?:wrong|incoherent|impossible)\b|"
     r"single[\s-]platform|one\s+aircraft\s+(?:realistically\s+)?cover|"
     r"one\s+aircraft\s+for\s+everything|"
     r"one\s+aircraft\s+realistically|"
+    r"one[\s-]aircraft\s+ownership|"
     r"mixed\s+fleet|fleet\s+segmentation|"
+    r"segmented\s+fleets?|"
+    r"hero\s+aircraft|"
     r"aircraft\s+strategy|"
+    r"fleet[\s-]strategy|"
     r"fleet\s+planning|"
     r"operational\s+tradeoffs?\b|"
+    r"operational\s+problems?\s+emerge|"
+    r"operational\s+compromises?\b|"
+    r"planning\s+distortion|"
     r"dispatch\s+reliability\b|"
     r"utilization\s+(?:mismatch|conflict)\b|"
     r"maintenance\s+(?:profile\s+)?divergence\b|"
     r"scheduling\s+incoherence\b|"
     r"should\s+we\s+(?:run|operate)\s+(?:one|a\s+single)\b|"
+    r"should\s+(?:hong\s+kong|aspen|geneva|tokyo)\b|"
     r"leadership\s+(?:wants|believes)\s+one\b|"
     r"super-midsize\s+fleet\s+strategy|"
     r"ultra-long-range\s+flagship|"
     r"one\s+aircraft\s+to\s+cover|"
-    r"structurally\s+feasible"
+    r"structurally\s+feasible|"
+    r"constraints?\s+begin\s+colliding|"
+    r"which\s+constraints?\s+begin\b|"
+    r"what\s+aircraft\s+category\b|"
+    r"losing\s+credibility\b|"
+    r"enough\s+aircraft\b|"
+    r"standardiz(?:e|ing)\b.*\b(?:one|onto\s+one)\b|"
+    r"materially\s+influence\s+fleet|"
+    r"drive\s+aircraft\s+selection\b"
     r")\b",
     re.I,
 )
@@ -135,13 +152,22 @@ _RECOMMENDATION_RE = re.compile(
     r"what\s+(?:jet|aircraft)\s+fits\b|"
     r"options\s+for\s+this\s+mission\b|"
     r"what\s+is\s+the\s+best\s+aircraft\b|"
-    r"what\s+aircraft\s+realistically\s+remain\b"
+    r"what\s+aircraft\s+realistically\s+remain\b|"
+    r"what\s+aircraft\s+actually\s+survive|"
+    r"which\s+is\s+operationally\s+smarter\b"
     r")\b",
     re.I,
 )
 
 _OWNERSHIP_RE = re.compile(
-    r"\b(?:ownership\s+economics|cost\s+of\s+ownership|fractional\s+vs|charter\s+transition)\b",
+    r"\b(?:"
+    r"ownership\s+economics|cost\s+of\s+ownership|fractional\s+vs|charter\s+transition|"
+    r"fractional\s+ownership\s+(?:now\s+)?make\s+more\s+sense|"
+    r"fractional\s+ownership\s+stop\s+making\s+sense|"
+    r"at\s+what\s+utilization\s+level\s+does\s+fractional|"
+    r"fractional\s+(?:vs\.?|versus)\s+full\s+ownership|"
+    r"does\s+fractional\s+ownership\b"
+    r")\b",
     re.I,
 )
 
@@ -156,8 +182,19 @@ _ACQUISITION_RECOMMENDATION_RE = re.compile(
 _STRATEGIC_FILTERING_RE = re.compile(
     r"\b(?:"
     r"what\s+options\s+remain|options\s+remain\s+after|excluding\s+marginal|"
-    r"survives\s+filtering|what\s+aircraft\s+actually\s+survives"
+    r"survives?\s+filtering|what\s+aircraft\s+actually\s+survive"
     r")\b",
+    re.I,
+)
+
+_SURVIVAL_FILTER_RE = re.compile(
+    r"\bwhat\s+(?:aircraft\s+)?(?:actually\s+)?(?:realistically\s+)?survive[s]?\b",
+    re.I,
+)
+
+_G500_CREDIBILITY_RE = re.compile(
+    r"\b(?:gulfstream\s+)?g500\b.*\b(?:enough\s+aircraft|losing\s+credibility|credibility)\b|"
+    r"\b(?:enough\s+aircraft|losing\s+credibility).*\b(?:gulfstream\s+)?g500\b",
     re.I,
 )
 
@@ -165,7 +202,12 @@ _ARCHETYPE_COMPARISON_RE = re.compile(
     r"\b(?:"
     r"tradeoffs?\s+between|"
     r"(?:single\s+ultra-long-range|mixed\s+fleet|super-midsize)\b.*\bvs\b|"
-    r"\bvs\b.*\b(?:single\s+ultra-long-range|mixed\s+fleet|super-midsize|charter\s+support)"
+    r"\bvs\b.*\b(?:single\s+ultra-long-range|mixed\s+fleet|super-midsize|charter\s+support)|"
+    r"one[\s-]aircraft\s+ownership\b.*\bvs\b|"
+    r"\bvs\b.*\bsegmented\s+fleet|"
+    r"one\s+large[\s-]cabin\b.*\bvs\b.*\bsuper[\s-]mid|"
+    r"one\s+large[\s-]cabin\b.*\bor\b.*\bsuper[\s-]mid|"
+    r"which\s+is\s+operationally\s+smarter\b"
     r")\b",
     re.I,
 )
@@ -280,6 +322,8 @@ def detect_hard_conflict_query(text: str) -> bool:
     ql = (text or "").strip().lower()
     if not ql:
         return False
+    if _SURVIVAL_FILTER_RE.search(ql):
+        return False
     if _ACQUISITION_RECOMMENDATION_RE.search(ql):
         return False
     if _STRATEGIC_FILTERING_RE.search(ql):
@@ -347,9 +391,21 @@ def _is_archetype_explicit_comparison(ql: str) -> bool:
 
 
 def _blocks_named_capability_routing(ql: str) -> bool:
+    try:
+        from services.orchestration.query_archetype import is_replacement_query
+
+        replacement_block = is_replacement_query(ql)
+    except Exception:
+        replacement_block = bool(
+            re.search(
+                r"credible\s+replacements?|down[- ]market|lower[- ]cost\s+alternative",
+                ql,
+            )
+        )
     return bool(
         detect_hard_conflict_query(ql)
         or _STRATEGIC_FILTERING_RE.search(ql)
+        or replacement_block
         or re.search(r"what\s+options\s+remain|excluding\s+marginal-range", ql)
     )
 
@@ -450,7 +506,7 @@ def route_orchestration_v2(
     signals: List[str] = []
 
     # Edge case: acquisition / charter vs buy (T15) — before cost+ULR pre-filter
-    if _ACQUISITION_RECOMMENDATION_RE.search(ql):
+    if _ACQUISITION_RECOMMENDATION_RE.search(ql) and not _OWNERSHIP_RE.search(ql):
         ctx.detected_intent = "acquisition_recommendation"
         signals.append("acquisition_recommendation")
         return _finalize(
@@ -461,6 +517,24 @@ def route_orchestration_v2(
                 signals=signals,
                 allow_recommendation_ranking=True,
                 allow_tier_fallback=True,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=False,
+                requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    if _SURVIVAL_FILTER_RE.search(ql):
+        ctx.detected_intent = "survival_filter_recommendation"
+        signals.append("survival_filter_recommendation")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.RECOMMENDATION_REQUEST,
+                renderer=OrchestrationRendererV2.RECOMMENDATION_BROKER,
+                confidence=0.91,
+                signals=signals,
+                allow_recommendation_ranking=True,
+                allow_tier_fallback=False,
                 allow_operational_synthesis=False,
                 suppress_generic_shortlist=False,
                 requires_deterministic_pipeline=True,
@@ -484,6 +558,25 @@ def route_orchestration_v2(
                 allow_operational_synthesis=False,
                 suppress_generic_shortlist=True,
                 requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    if _G500_CREDIBILITY_RE.search(ql):
+        ctx.detected_intent = "g500_credibility_strategic"
+        signals.append("g500_credibility_strategic")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
+                renderer=OrchestrationRendererV2.STRATEGIC_ANALYSIS,
+                confidence=0.89,
+                signals=signals,
+                allow_recommendation_ranking=False,
+                allow_tier_fallback=False,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=True,
+                requires_deterministic_pipeline=True,
+                named_aircraft_models=("Gulfstream G500",),
             ),
             ctx,
         )
@@ -516,12 +609,17 @@ def route_orchestration_v2(
     if _should_route_explicit_comparison(ql, models):
         ctx.comparison_override_triggered = True
         ctx.detected_intent = "explicit_comparison"
-        preserved = () if _is_archetype_explicit_comparison(ql) else tuple(dict.fromkeys(models))[:6]
+        archetype_cmp = _is_archetype_explicit_comparison(ql)
+        preserved = () if archetype_cmp else tuple(dict.fromkeys(models))[:6]
         signals.append("comparison_absolute_priority")
         return _finalize(
             OrchestrationRouterV2Result(
                 query_type=OrchestrationQueryTypeV2.EXPLICIT_COMPARISON,
-                renderer=OrchestrationRendererV2.COMPARISON_TABLE,
+                renderer=(
+                    OrchestrationRendererV2.STRATEGIC_COMPARISON
+                    if archetype_cmp
+                    else OrchestrationRendererV2.COMPARISON_TABLE
+                ),
                 confidence=0.93,
                 signals=signals,
                 allow_recommendation_ranking=False,
@@ -533,6 +631,161 @@ def route_orchestration_v2(
             ),
             ctx,
         )
+
+    try:
+        from services.orchestration.query_archetype import (
+            is_broker_acquisition_query,
+            is_cog_strategic_query,
+            is_conflict_explain_query,
+            is_downsizing_strategic_query,
+            is_ownership_structure_query,
+            is_replacement_query,
+        )
+    except Exception:
+        is_broker_acquisition_query = lambda _q: False  # type: ignore[assignment,misc]
+        is_cog_strategic_query = lambda _q: False  # type: ignore[assignment,misc]
+        is_conflict_explain_query = lambda _q: False  # type: ignore[assignment,misc]
+        is_downsizing_strategic_query = lambda _q: False  # type: ignore[assignment,misc]
+        is_ownership_structure_query = lambda _q: False  # type: ignore[assignment,misc]
+        is_replacement_query = lambda _q: False  # type: ignore[assignment,misc]
+
+    if is_broker_acquisition_query(q):
+        ctx.detected_intent = "broker_acquisition_summary"
+        signals.append("broker_acquisition_summary")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.RECOMMENDATION_REQUEST,
+                renderer=OrchestrationRendererV2.RECOMMENDATION_BROKER,
+                confidence=0.92,
+                signals=signals,
+                allow_recommendation_ranking=True,
+                allow_tier_fallback=True,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=False,
+                requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    if is_replacement_query(q) or (
+        _RECOMMENDATION_RE.search(ql) and re.search(r"credible\s+replacements?", ql)
+    ):
+        ctx.detected_intent = "replacement_recommendation"
+        signals.append("replacement_recommendation")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.RECOMMENDATION_REQUEST,
+                renderer=OrchestrationRendererV2.RECOMMENDATION_BROKER,
+                confidence=0.91,
+                signals=signals,
+                allow_recommendation_ranking=True,
+                allow_tier_fallback=False,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=False,
+                requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    if is_cog_strategic_query(q) or is_downsizing_strategic_query(q):
+        ctx.detected_intent = "center_of_gravity_strategic"
+        signals.append("center_of_gravity_strategic")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
+                renderer=OrchestrationRendererV2.STRATEGIC_ANALYSIS,
+                confidence=0.90,
+                signals=signals,
+                allow_recommendation_ranking=False,
+                allow_tier_fallback=False,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=True,
+                requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    try:
+        from services.orchestration.query_archetype import is_mission_evolution_query
+
+        if is_mission_evolution_query(q):
+            ctx.detected_intent = "mission_evolution"
+            signals.append("mission_evolution")
+            return _finalize(
+                OrchestrationRouterV2Result(
+                    query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
+                    renderer=OrchestrationRendererV2.STRATEGIC_ANALYSIS,
+                    confidence=0.88,
+                    signals=signals,
+                    allow_recommendation_ranking=False,
+                    allow_tier_fallback=False,
+                    allow_operational_synthesis=False,
+                    suppress_generic_shortlist=True,
+                    requires_deterministic_pipeline=True,
+                ),
+                ctx,
+            )
+    except Exception:
+        pass
+
+    if is_ownership_structure_query(q):
+        ctx.detected_intent = "ownership_structure"
+        signals.append("ownership_structure")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
+                renderer=OrchestrationRendererV2.OWNERSHIP_ECONOMICS,
+                confidence=0.90,
+                signals=signals,
+                allow_recommendation_ranking=False,
+                allow_tier_fallback=False,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=True,
+                requires_deterministic_pipeline=False,
+            ),
+            ctx,
+        )
+
+    if is_conflict_explain_query(q):
+        ctx.detected_intent = "strategic_fleet_analysis"
+        signals.append("strategic_requirement_conflict")
+        return _finalize(
+            OrchestrationRouterV2Result(
+                query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
+                renderer=OrchestrationRendererV2.STRATEGIC_ANALYSIS,
+                confidence=0.89,
+                signals=signals,
+                allow_recommendation_ranking=False,
+                allow_tier_fallback=False,
+                allow_operational_synthesis=False,
+                suppress_generic_shortlist=True,
+                requires_deterministic_pipeline=True,
+            ),
+            ctx,
+        )
+
+    try:
+        from services.orchestration.query_archetype import is_image_request_query
+
+        if is_image_request_query(q) and not _COMPARISON_RE.search(ql):
+            ctx.detected_intent = "image_verification"
+            signals.append("image_verification")
+            return _finalize(
+                OrchestrationRouterV2Result(
+                    query_type=OrchestrationQueryTypeV2.RECOMMENDATION_REQUEST,
+                    renderer=OrchestrationRendererV2.RECOMMENDATION_BROKER,
+                    confidence=0.88,
+                    signals=signals,
+                    allow_recommendation_ranking=False,
+                    allow_tier_fallback=False,
+                    allow_operational_synthesis=False,
+                    suppress_generic_shortlist=True,
+                    requires_deterministic_pipeline=False,
+                ),
+                ctx,
+            )
+    except Exception:
+        pass
 
     if _OWNERSHIP_RE.search(ql) and not _RECOMMENDATION_RE.search(ql):
         ctx.detected_intent = "ownership_economics"

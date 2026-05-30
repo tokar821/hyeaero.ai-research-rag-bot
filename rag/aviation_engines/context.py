@@ -86,11 +86,59 @@ def _model_hints_from_entities(entities: Dict[str, Any], query: str) -> List[str
     return list(dict.fromkeys(h for h in hints if h))
 
 
-def build_aviation_engines_block(
+def _build_authority_mission_context_only(
     fine: ConsultantFineIntentResult,
     query: str,
 ) -> str:
+    """Mission physics context only — no RAG catalog aircraft recommendations."""
+    ent = fine.entities if isinstance(fine.entities, dict) else {}
+    q = (query or "").strip()
+    lines: List[str] = [
+        "[AVIATION REASONING — AUTHORITY MODE]",
+        "Deterministic recommendation pipeline is the ONLY source for aircraft names on this turn.",
+        "Do NOT list aircraft from reference catalogs, RAG snippets, or general knowledge substitutes.",
+        "Explain mission distance, reserves, runway, and payload constraints only.",
+        "If the pipeline shortlist is empty, state that no aircraft passed mission filters and explain why.",
+    ]
+    icaos_entity = ent.get("icaos")
+    icaos_list: Optional[List[str]] = list(icaos_entity) if isinstance(icaos_entity, list) else None
+    endpoint = mission_endpoints_from_text(q, icaos_list)
+    if endpoint:
+        _c0, _c1, mission_nm = endpoint[0], endpoint[1], endpoint[2]
+        low_hi_pr = (mission_nm * 1.15, mission_nm * 1.20)
+        lines.append(
+            f"[Segment {_c0}–{_c1}: ≈ {mission_nm:.0f} nm GC; practical band ≈ {low_hi_pr[0]:.0f}–{low_hi_pr[1]:.0f} nm]"
+        )
+    pax = _parse_passengers(q, ent.get("passengers"))
+    bud = _parse_budget_usd(q, ent.get("budget_usd"))
+    if pax is not None:
+        lines.append(f"- Passengers stated: {pax}")
+    if bud is not None:
+        lines.append(f"- Budget stated: ${bud:,.0f}")
+    return "\n".join(lines).strip()
+
+
+def build_aviation_engines_block(
+    fine: ConsultantFineIntentResult,
+    query: str,
+    *,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> str:
     """Structured block for context assembly; instructs LLM to cite as typical performance data."""
+    try:
+        from services.consultant.recommendation_authority import (
+            should_suppress_aviation_engines_catalog,
+        )
+
+        if should_suppress_aviation_engines_catalog(
+            query,
+            data_used,
+            fine_intent=fine.intent.value,
+        ):
+            return _build_authority_mission_context_only(fine, query)
+    except Exception:
+        pass
+
     fi = fine.intent
     ent = fine.entities if isinstance(fine.entities, dict) else {}
     q = (query or "").strip()

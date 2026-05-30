@@ -18,14 +18,9 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Optional
 
-from typing import TYPE_CHECKING
-
 from services.consultant.mission_state import MissionState
 from services.mission.mission_authority_kernel import MissionAuthorityKernel
 from services.mission.mission_understanding_engine import MissionUnderstandingPacket
-
-if TYPE_CHECKING:
-    from services.orchestration.hierarchy_weighting import HierarchyWeightingResult
 
 _BANNED_GENERIC_RE = re.compile(
     r"\b(?:to optimize your operations|here's a breakdown|you should consider|"
@@ -116,18 +111,6 @@ def _verdict(kernel: MissionAuthorityKernel, packet: MissionUnderstandingPacket)
     return "This is a coherent single-mission utilization profile (structure-first; no aircraft yet)."
 
 
-def _structural_conflict_statement(
-    kernel: MissionAuthorityKernel,
-    packet: MissionUnderstandingPacket,
-) -> Optional[str]:
-    inf = packet.inferred_constraints or {}
-    if kernel.structural_decomposition or inf.get("multi_hard_domain_mission"):
-        return "This is structurally multiple missions — single-platform optimization is operationally unstable."
-    if inf.get("incompatible_mission_bands"):
-        return "Incompatible operational domains coexist — this is not a single optimization problem."
-    return None
-
-
 def format_mission_interpretation(
     mission: MissionState,
     packet: MissionUnderstandingPacket,
@@ -135,18 +118,11 @@ def format_mission_interpretation(
     *,
     query: str = "",
     data_used: Optional[Dict[str, Any]] = None,
-    hierarchy: Optional["HierarchyWeightingResult"] = None,
 ) -> str:
     """Render structured mission interpretation only (no aircraft, no route dumps)."""
-    del mission, query, data_used, hierarchy
+    del mission, query, data_used
 
     lines: List[str] = []
-    lines.append("Operational Interpretation")
-    conflict_headline = _structural_conflict_statement(kernel, packet)
-    if conflict_headline:
-        lines.append(f"- {conflict_headline}")
-
-    lines.append("")
     lines.append("Operational Structure")
     lines.append(f"- decomposition: {'yes' if kernel.structural_decomposition else 'no'}")
     if kernel.structural_reason:
@@ -198,32 +174,14 @@ def format_mission_interpretation(
 
 def is_interpretation_only_query(query: str) -> bool:
     """Heuristic: user asked for structure/interpretation, not aircraft options."""
-    try:
-        from services.orchestration.response_mode_classifier import (
-            classify_orchestration_response_mode,
-            explicit_aircraft_request,
-        )
-
-        if explicit_aircraft_request(query):
-            return False
-        result = classify_orchestration_response_mode(query)
-        return result.suppresses_aircraft_recommendations
-    except Exception:
-        pass
-
     q = (query or "").lower()
     if re.search(r"\b(?:which\s+aircraft|which\s+jet|recommend|shortlist|models?)\b", q):
         return False
     return bool(
         re.search(
-            r"\b(?:"
-            r"mission\s+structure|how\s+should\s+this\s+be\s+(?:understood|interpreted)|"
-            r"how\s+should\s+(?:this|the)\s+network\s+be\s+(?:interpreted|represented)|"
-            r"what\s+structure\s+fits|is\s+this\s+(?:structurally\s+)?coherent|"
-            r"what\s+operational\s+domains\s+exist|what\s+(?:actually\s+)?dominates?\s+utilization|"
-            r"continuation\s+hubs?\s+be\s+represented|dominant\s+mission\s+domains|"
-            r"interpret|classification|decomposed|structural\s+conflict|utilization"
-            r")\b",
+            r"\b(?:mission\s+structure|how\s+should\s+this\s+be\s+understood|"
+            r"dominant\s+mission\s+domains|interpret|classification|decomposed|"
+            r"structural\s+conflict|utilization)\b",
             q,
         )
     )

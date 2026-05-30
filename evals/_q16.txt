@@ -1,0 +1,17 @@
+Some details below are directional rather than catalog-verified — I am narrowing scope instead of overstating certainty:
+
+## Strategic Fleet Analysis
+
+Your operational center of gravity is still regional North American executive traffic (Denver, Los Angeles, New York). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.
+
+### What structurally conflicts
+- episodic ulr distortion risk
+
+### Dominant operational domains
+- hub:Denver
+- hub:Los Angeles
+- hub:New York
+
+**Do not procure around:** London — treat as episodic continuation, not the utilization center.
+
+No ranked acquisition shortlist is produced for this structural question unless you explicitly request aircraft recommendations.

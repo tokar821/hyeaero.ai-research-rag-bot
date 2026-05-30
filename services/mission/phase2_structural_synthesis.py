@@ -71,9 +71,7 @@ def apply_phase2_structural_synthesis(
     if resolution.decomposition_required:
         graph.structural_incompatibility = True
 
-    suppression = build_recommendation_suppression_policy(
-        resolution, packet, query=query, data_used=data_used
-    )
+    suppression = build_recommendation_suppression_policy(resolution, packet)
 
     if isinstance(data_used, dict):
         save_structure_resolution(data_used, resolution)

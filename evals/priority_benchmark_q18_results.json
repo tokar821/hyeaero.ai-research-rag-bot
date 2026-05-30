@@ -1,0 +1,360 @@
+{
+  "summary": {
+    "pass": "18/18",
+    "graded": 18
+  },
+  "results": [
+    {
+      "id": "Q1",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "component": "broker_recommendation_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Ranked Shortlist\n\n| Rank | Aircraft | Fit | Procurement credibility |\n| --- | --- | --- | --- |\n| 1 | Falcon 8X | VIABLE_WITH_COMPROMISES | conditional |\n| 2 | Global 6500 | VIABLE_WITH_COMPROMISES | conditional |\n| 3 | Gulfstream G650ER | VIABLE_WITH_COMPROMISES | conditional |\n\n**Mission corridor:** New York -> London"
+    },
+    {
+      "id": "Q2",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (New York, Miami). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n**Dubai / Singapore-style continuation nodes** should be treated as **episodic continuation missions**, not procurement drivers. They are too infrequent to justify distorting the domestic utilization profile.\n\n### What struct"
+    },
+    {
+      "id": "Q3",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Houston, Atlanta, Dallas). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n**Dubai / Singapore-style continuation nodes** should be treated as **episodic continuation missions**, not procurement drivers. They are too infrequent to justify distorting the domestic utilization profile.\n\n### Do"
+    },
+    {
+      "id": "Q4",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Chicago, Denver, Los Angeles). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n**Dubai / Singapore-style continuation nodes** should be treated as **episodic continuation missions**, not procurement drivers. They are too infrequent to justify distorting the domestic utilization profile.\n\n##"
+    },
+    {
+      "id": "Q5",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Falcon 8X | ULR | 5600 | ultra | True | conditional |\n| Global 6500 | ULR | 5800 | ultra | True | conditional |\n| Gulfstream G500 | ULR | 4500 | high | True | conditional |\n\n**Overall:** Falcon 8X\n\n### Operational tradeoffs\n\n**Falcon 8X**\n- Maintenance / support: trijet_specialist_network\n- Dispatch maturity: strong_ulr_with_westbound_caveats\n- Cab"
+    },
+    {
+      "id": "Q6",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Citation Longitude | super-midsize | 3500 | medium | \u2014 | strong |\n| Legacy 600 | large-cabin | 3100 | high | conditional | strong |\n\n**Overall:** Citation Longitude\n\n### Operational tradeoffs\n\n**Citation Longitude**\n- Maintenance / support: standard\n- Dispatch maturity: standard\n- Cabin usability: standard\n- Airport flexibility: standard\n\n**Legacy "
+    },
+    {
+      "id": "Q7",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "component": "capability_verdict_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 6000\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: 700\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constraint breakdown\n- Effective range with reserves does not support dependable nonstop operations as stated.\n- Required ~6010 nm (NBAA reserves, payload, wind) exceeds practical available ~5394 nm \u2014 hard reject, not conditional fit.\n\n*"
+    },
+    {
+      "id": "Q8",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "component": "capability_verdict_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Falcon 8X\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: 150\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constraint breakdown\n- dispatch reliability: marginal fuel/payload margin \u2014 winter or westbound pressure may block dispatch.\n- Required ~6395 nm (NBAA reserves, payload, wind) exceeds practical available ~5208 nm \u2014 hard reject, not conditi"
+    },
+    {
+      "id": "Q9",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (New York, Houston, Miami). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n**Dubai / Singapore-style continuation nodes** should be treated as **episodic continuation missions**, not procurement drivers. They are too infrequent to justify distorting the domestic utilization profile.\n\n### Wh"
+    },
+    {
+      "id": "Q10",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "Global 7500",
+        "cost_ceiling_reference": "Global 7500",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [
+          "reference_aircraft:Global 7500",
+          "cost_ceiling_active"
+        ],
+        "apply_to_ranking": true
+      },
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Los Angeles, New York). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n### Dominant operational domains\n- hub:Los Angeles\n- hub:New York\n\n**Do not procure around:** Tokyo, Singapore, London \u2014 treat as episodic continuation, not the utilization center.\n\nNo ranked acquisition shortlist is pr"
+    },
+    {
+      "id": "Q11",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Praetor 600 | super-midsize | 3400 | medium | \u2014 | strong |\n| Challenger 650 | large-cabin | 3500 | high | conditional | strong |\n| Gulfstream G280 | super-midsize | 3000 | medium | \u2014 | strong |\n\n**Overall:** Praetor 600\n\n### Operational tradeoffs\n\n**Praetor 600**\n- Maintenance / support: embraer_efficient_support\n- Dispatch maturity: super_mid_disp"
+    },
+    {
+      "id": "Q12",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Gulfstream G500 | ULR | 4500 | high | True | strong |\n| Falcon 8X | ULR | 5600 | ultra | True | strong |\n| Global 6500 | ULR | 5800 | ultra | True | strong |\n\n**Overall:** Gulfstream G500\n\n### Operational tradeoffs\n\n**Gulfstream G500**\n- Maintenance / support: standard\n- Dispatch maturity: standard\n- Cabin usability: standard\n- Airport flexibility:"
+    },
+    {
+      "id": "Q13",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "component": "broker_recommendation_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Ranked Shortlist\n\n| Rank | Aircraft | Fit | Procurement credibility |\n| --- | --- | --- | --- |\n| 1 | Challenger 650 | VIABLE_WITH_COMPROMISES | conditional |\n| 2 | Gulfstream G280 | VIABLE_WITH_COMPROMISES | conditional |\n| 3 | Gulfstream G500 | VIABLE_WITH_COMPROMISES | conditional |\n\n**Mission corridor:** Los Angeles -> London"
+    },
+    {
+      "id": "Q14",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": true
+      },
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Gulfstream G500 | ULR | 4500 | high | True | strong |\n| Falcon 8X | ULR | 5600 | ultra | True | strong |\n| Global 6500 | ULR | 5800 | ultra | True | strong |\n\n**Overall:** Gulfstream G500\n\n### Operational tradeoffs\n\n**Gulfstream G500**\n- Maintenance / support: standard\n- Dispatch maturity: standard\n- Cabin usability: standard\n- Airport flexibility:"
+    },
+    {
+      "id": "Q15a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup_turn",
+      "mode": "recommendation_request",
+      "preview": "No aircraft in the current validated catalog pass all hard mission constraints as stated.\n\nThis usually means:\n- range + reserve requirements\n- payload\n- runway limitations\n- operating-cost ceiling\nare structurally conflicting.\n\nClosest accurate guidance:\n\nNothing in the catalog passed every hard gate as stated \u2014 that usually means range with reserves, runway, or passenger load is fighting the req"
+    },
+    {
+      "id": "Q15",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "Gulfstream G650",
+        "cost_ceiling_reference": "Gulfstream G650",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [
+          "new york -> london"
+        ],
+        "continuity_phrases": [
+          "reference_aircraft:Gulfstream G650",
+          "cost_ceiling_active"
+        ],
+        "apply_to_ranking": true
+      },
+      "preview": "_Continuing from prior turn: still evaluating against ****._\n\nOwnership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: structure tbd\n- Planning economics @ 250 hr/year: ~$9,800/hr variable + ~$1,900,000/yr fixed \u2192 ~$17,400/hr all-in (directional, not a quote).\n\nAnalysis: Dispatch tradeoff: charter/card preserves peak-day flexibility without fixed crew idle; ownership or higher fractional share buys schedule control when ad-hoc lift fails . Capital effi"
+    },
+    {
+      "id": "Q16a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup_turn",
+      "mode": "recommendation_request",
+      "preview": "No aircraft in the current validated catalog pass all hard mission constraints as stated.\n\nThis usually means:\n- range + reserve requirements\n- payload\n- runway limitations\n- operating-cost ceiling\nare structurally conflicting.\n\nClosest accurate guidance:\n\nNothing in the catalog passed every hard gate as stated \u2014 that usually means range with reserves, runway, or passenger load is fighting the req"
+    },
+    {
+      "id": "Q16",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "has_images": false,
+      "context_continuity": {
+        "reference_aircraft": "",
+        "cost_ceiling_reference": "",
+        "network_phrase": "",
+        "passenger_anchor": null,
+        "carry_forward_routes": [],
+        "continuity_phrases": [],
+        "apply_to_ranking": false
+      },
+      "preview": "## Mission evolution \u2014 recommendation shift\n\nYes \u2014 **frequent Aspen / high-altitude winter operations** would change the recommendation versus a warm-climate domestic + episodic London profile alone.\n\n### What changes\n- **Field performance becomes binding:** ASE-style runways, winter density altitude, and de-icing / FBO reliability move from edge-case to procurement drivers.\n- **Category floor rises:** light and entry types lose credibility for reliable winter mountain dispatch; strong hot/high "
+    },
+    {
+      "id": "Q17",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "component": null,
+      "has_images": false,
+      "context_continuity": null,
+      "preview": "## Exterior imagery \u2014 Challenger 3500\n\nVerified exterior imagery for **Bombardier Challenger 3500** is **not available** in the current trusted gallery for this turn.\n\nDo not substitute generic Challenger 300/350 cabin marketing photos \u2014 request serial-specific or OEM-verified exterior references for brokerage presentation.\n"
+    },
+    {
+      "id": "Q18",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "component": null,
+      "has_images": false,
+      "context_continuity": null,
+      "preview": "## Tail imagery verification\n\nExact-aircraft verification for **N628TS** is **not available** in the current trusted gallery.\n\nClosest verified reference: use the aircraft model associated with that registration in your maintenance records, or request OEM / operator-provided exterior photos for brokerage use.\n"
+    }
+  ]
+}

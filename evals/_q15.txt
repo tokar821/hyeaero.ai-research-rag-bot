@@ -1,0 +1,15 @@
+Some details below are directional rather than catalog-verified — I am narrowing scope instead of overstating certainty:
+
+_Continuing from prior turn: still evaluating against ****._
+
+Ownership Economics (simulated):
+
+- Utilization: unspecified (planning 150–400 hr/year)
+- Structure: structure tbd
+- Planning economics @ 250 hr/year: ~$9,800/hr variable + ~$1,900,000/yr fixed → ~$17,400/hr all-in (directional, not a quote).
+
+Analysis: Dispatch tradeoff: charter/card preserves peak-day flexibility without fixed crew idle; ownership or higher fractional share buys schedule control when ad-hoc lift fails . Capital efficiency: compare burdened all-in hourly (fixed + variable amortized) to fractional card pricing at your peak month — crossover is often utilization-driven, not average-hours driven. Peak-day conflicts: charter pools thin on holidays and major events; ownership/fractional addresses availability risk that average annual hours understate. Deadhead reality: hub-and-spoke or multi-city programs add empty reposition legs — burdened economics must include reposition, not just occupied block hours. In the 200–400 hr band, compare burdened DOC to fractional all-in hourly before selecting airframe — structure precedes model. Operating cost is a stated priority — weight variable hour and fixed burden heavily.
+- Dispatch: schedule-critical — favor ownership or higher fractional share
+- Liquidity: Exit liquidity tracks program status, engine horizon, and narrow market depth — not model marketing. ULR inventory is deep but serial-specific.
+
+Verdict: Size utilization and structure first; aircraft model follows once the ownership band is credible (verify tax posture with counsel).

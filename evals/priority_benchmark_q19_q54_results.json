@@ -1,0 +1,335 @@
+{
+  "summary": {
+    "pass": "36/36",
+    "graded": 36,
+    "by_priority": {
+      "1": "4/4",
+      "2": "4/4",
+      "3": "4/4",
+      "4": "4/4",
+      "5": "4/4",
+      "6": "4/4",
+      "7": "4/4",
+      "8": "4/4",
+      "9": "4/4"
+    }
+  },
+  "results": [
+    {
+      "id": "Q19",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "preview": "## Ranked Shortlist\n\n| Rank | Aircraft | Fit | Procurement credibility |\n| --- | --- | --- | --- |\n| 1 | Falcon 8X | VIABLE_WITH_COMPROMISES | conditional |\n| 2 | Falcon 7X | VIABLE_WITH_COMPROMISES | conditional |\n| 3 | Challenger 650 | VIABLE_WITH_COMPROMISES | conditional |\n\n*"
+    },
+    {
+      "id": "Q20",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise."
+    },
+    {
+      "id": "Q21",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (New York). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n### What str"
+    },
+    {
+      "id": "Q22",
+      "priority": 1,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Los Angeles). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n### \u2014 whe"
+    },
+    {
+      "id": "Q23",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Houston, Miami). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n### Wh"
+    },
+    {
+      "id": "Q24",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Chicago, Dallas, Denver). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg"
+    },
+    {
+      "id": "Q25",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "network_structure",
+      "preview": "## Network Utilization Hierarchy\n\n### Primary hubs (dominant utilization)\n- executive_transport\n\n### Secondary / executive traffic\n- ulr_continuation\n- domestic_utilization\n- ULR continuation is secondary unless founder/CEO mandated\n\n### Episodic continuation routes (must not dri"
+    },
+    {
+      "id": "Q26",
+      "priority": 2,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (New York, Boston, Miami). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg"
+    },
+    {
+      "id": "Q27",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Falcon 7X | large-cabin | 4752 | low | conditional | strong |\n| Global 6500 | large-cabin | 5808 | medium | conditional | strong |"
+    },
+    {
+      "id": "Q28",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Citation Longitude | super-midsize | 2992 | low | \u2014 | strong |\n| Praetor 600 | super-midsize | 3256 | low | \u2014 | strong |\n| Challen"
+    },
+    {
+      "id": "Q29",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_comparison",
+      "preview": "## STRATEGIC COMPARISON\n\nThis is a fleet-structure question \u2014 comparing *operational coherence* and *dispatch reliability*, not brochure range.\n\n### Option A: One ultra-long-range flagship\n- **Strength:** minimizes tech stops and protects the longest oceanic legs.\n- **Weakness:**"
+    },
+    {
+      "id": "Q30",
+      "priority": 3,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Gulfstream G650ER | large-cabin | 6160 | medium | conditional | strong |\n| Global 7500 | large-cabin | 6600 | low | conditional | "
+    },
+    {
+      "id": "Q31",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Praetor 600\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: -1450\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constraint brea"
+    },
+    {
+      "id": "Q32",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Challenger 3500\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: -300\n- **Reserves**: NBAA IFR (assumed)\n\n### Constraint breakdown\n- Effective range with reserves does not support dependable nonstop operati"
+    },
+    {
+      "id": "Q33",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 5500\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: 936\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constraint breakd"
+    },
+    {
+      "id": "Q34",
+      "priority": 4,
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "preview": "## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Citation Longitude\n- **Verdict**: NOT REALISTIC\n- **Range margin (nm)**: -1415\n- **Reserves**: NBAA IFR (assumed)\n- **Wind sensitivity**: westbound winter penalty applies (dispatch margin tighter).\n\n### Constrai"
+    },
+    {
+      "id": "Q35",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (New York). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n### Dominant"
+    },
+    {
+      "id": "Q36",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise."
+    },
+    {
+      "id": "Q37",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nYour operational center of gravity is still regional North American executive traffic (Denver, Los Angeles). That favors **super-midsize or large-cabin domestic optimization** rather than forcing a single ultra-long-range platform across every leg.\n\n*"
+    },
+    {
+      "id": "Q38",
+      "priority": 5,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\nThis is a fleet-structure and utilization question \u2014 not a single-aircraft shopping exercise."
+    },
+    {
+      "id": "Q39",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Falcon 8X | large-cabin | 5544 | low | conditional | strong |\n| Global 7500 | large-cabin | 6600 | low | conditional | strong |\n| "
+    },
+    {
+      "id": "Q40",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Praetor 600 | super-midsize | 3256 | low | \u2014 | strong |\n| Gulfstream G280 | super-midsize | 2992 | low | \u2014 | strong |\n| Challenger"
+    },
+    {
+      "id": "Q41",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_comparison",
+      "preview": "## STRATEGIC COMPARISON\n\nThis is a fleet-structure question \u2014 comparing *operational coherence* and *dispatch reliability*, not brochure range.\n\n### Option A: One ultra-long-range flagship\n- **Strength:** minimizes tech stops and protects the longest oceanic legs.\n- **Weakness:**"
+    },
+    {
+      "id": "Q42",
+      "priority": 6,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Global 6500 | large-cabin | 5808 | medium | conditional | strong |\n| Falcon 8X | large-cabin | 5544 | low | conditional | strong |"
+    },
+    {
+      "id": "Q43",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "preview": "_Continuing from prior turn: still evaluating against **Global 7500**._\n\n\n## Ranked Shortlist\n\n| Rank | Aircraft | Fit | Procurement credibility |\n| --- | --- | --- | --- |\n| 1 | Challenger 650 | VIABLE_WITH_COMPROMISES | conditional |\n| 2 | Falcon 8X | VIABLE_WITH_COMPROMISES | "
+    },
+    {
+      "id": "Q44",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Citation Longitude | super-midsize | 2992 | low | \u2014 | strong |\n| Praetor 600 | super-midsize | 3256 | low | \u2014 | strong |\n| Challen"
+    },
+    {
+      "id": "Q45",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_comparison",
+      "preview": "## STRATEGIC COMPARISON\n\nThis is a fleet-structure question \u2014 comparing *operational coherence* and *dispatch reliability*, not brochure range.\n\n### Option A: One ultra-long-range flagship\n- **Strength:** minimizes tech stops and protects the longest oceanic legs.\n- **Weakness:**"
+    },
+    {
+      "id": "Q46",
+      "priority": 7,
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "preview": "No aircraft in the current validated catalog pass all hard mission constraints as stated.\n\nThis usually means:\n- range + reserve requirements\n- payload\n- runway limitations\n- operating-cost ceiling\nare structurally conflicting.\n\nClosest accurate guidance:\n\nNothing in the catalog "
+    },
+    {
+      "id": "Q47a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup"
+    },
+    {
+      "id": "Q47",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Mission evolution \u2014 recommendation shift\n\nYes \u2014 **quarterly Tokyo (or similar ULR continuation)** would change the recommendation versus a Texas\u2013Florida + episodic London profile alone.\n\n### What changes\n- **Peak stage becomes binding:** westbound Pacific winter reserves and p"
+    },
+    {
+      "id": "Q48a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup"
+    },
+    {
+      "id": "Q48",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "Ownership Economics (simulated):\n\n- Utilization: unspecified (planning 150\u2013400 hr/year)\n- Structure: fractional vs full tradeoff\n- Planning economics @ 250 hr/year: ~$4,200/hr variable + ~$850,000/yr fixed \u2192 ~$7,600/hr all-in (directional, not a quote).\n\nAnalysis: Dispatch tradeo"
+    },
+    {
+      "id": "Q49a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup"
+    },
+    {
+      "id": "Q49",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\n**Dubai / Singapore-style continuation nodes** should be treated as **episodic continuation missions**, not procurement drivers. They are too infrequent to justify distorting the domestic utilization profile.\n\n### What structurally conflicts\n- Edge-ca"
+    },
+    {
+      "id": "Q50a",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "note": "setup"
+    },
+    {
+      "id": "Q50",
+      "priority": 8,
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "preview": "## Strategic Fleet Analysis\n\n### What structurally conflicts\n- westbound winter reserve-margin pressure\n\nNo ranked acquisition shortlist is produced for this structural question unless you explicitly request aircraft recommendations."
+    },
+    {
+      "id": "Q51",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "preview": "## Verified aircraft imagery\n\n- **Dassault Falcon 8X** (confidence 72%): https://www.dassaultfalcon.com/app/uploads/2025/07/8X432-1-Exterior.jpg\n- **Dassault Falcon 8X** (confidence 72%): https://www.dassaultfalcon.com/app/uploads/2025/10/8X-416-1-Exterior.jpg\n- **Dassault Falcon"
+    },
+    {
+      "id": "Q52",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "preview": "## Tail imagery verification\n\nExact-aircraft verification for **N750LX** is **not available** in the current trusted gallery.\n\nClosest verified reference: use the aircraft model associated with that registration in your maintenance records, or request OEM / operator-provided exte"
+    },
+    {
+      "id": "Q53",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "preview": "## Verified aircraft imagery\n\n- **Bombardier Global 6500** (confidence 72%): https://bombardier.com/sites/default/files/styles/gallery_media_slideshow_desktop/public/2025-01/Global%206500%2060003%20Cockpit.jpg.webp?itok=cIlmeR1I\n- **Bombardier Global 6500** (confidence 72%): http"
+    },
+    {
+      "id": "Q54",
+      "priority": 9,
+      "pass": true,
+      "issues": [],
+      "mode": null,
+      "preview": "## Tail imagery verification \u2014 VP-CBA\n\nNo verified images found for this exact aircraft.\n\nConfidence is insufficient to present registry-specific imagery \u2014 do not use generic stock photos as a substitute for this tail.\n"
+    }
+  ]
+}

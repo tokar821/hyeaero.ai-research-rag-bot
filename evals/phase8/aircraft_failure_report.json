@@ -1,0 +1,12 @@
+{
+  "aircraft_failures": {
+    "Challenger Longitude": {
+      "failures": 2,
+      "categories": [
+        "ALTERNATIVE"
+      ]
+    }
+  },
+  "total_aircraft_with_failures": 1,
+  "total_failure_events": 2
+}

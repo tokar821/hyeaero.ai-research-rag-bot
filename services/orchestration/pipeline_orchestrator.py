@@ -646,48 +646,6 @@ def run_deterministic_stages(
                 mission_margin_nm=0,
                 operational_risk_level="low",
             )
-
-        # HACK v1 — hard aviation constraint kernel (authoritative; no downstream override)
-        try:
-            from services.recommendation.hack_v1_constraint_kernel import (
-                HACK_V1_EMPTY_MESSAGE,
-                apply_hack_v1_gate,
-            )
-
-            pre_hack = list(feasible_models)
-            feasible_models, hack_v1 = apply_hack_v1_gate(
-                mission_profile_out,
-                feasible_models,
-                all_candidates=candidates,
-                query=query,
-                mission_state=mission_state,
-                data_used=data_used,
-            )
-            for rej in hack_v1.rejection_log:
-                feasibility_map[rej.model] = FeasibilityResult(
-                    feasible=False,
-                    elimination_reasons=[rej.reason],
-                    operational_risk_level="eliminated",
-                    notes=[f"HACK v1 [{rej.rule_id}]"],
-                )
-                if rej.model in pre_hack:
-                    elimination_log.append(
-                        {
-                            "model": rej.model,
-                            "rule": rej.rule_id,
-                            "source": "hack_v1",
-                            "reason": rej.reason,
-                        }
-                    )
-            s2.details["hack_v1_feasible"] = len(feasible_models)
-            s2.details["hack_v1_rejected"] = len(hack_v1.rejection_log)
-            if hack_v1.constraint_empty:
-                s2.details["hack_v1_constraint_empty"] = True
-                if isinstance(data_used, dict):
-                    data_used["hack_v1_realism_block"] = HACK_V1_EMPTY_MESSAGE
-        except Exception as exc:
-            logger.warning("HACK v1 constraint kernel failed (non-fatal): %s", exc)
-
         s2.details = {
             "candidate_count": len(candidates),
             "feasible_after_graph": len(feasible_models),
@@ -716,14 +674,6 @@ def run_deterministic_stages(
             )
 
         if not feasible_models and hard_ctx is None:
-            hack_empty = bool(
-                isinstance(data_used, dict) and data_used.get("hack_v1_constraint_empty")
-            )
-            realism = (
-                str(data_used.get("hack_v1_realism_block") or "")
-                if isinstance(data_used, dict)
-                else ""
-            )
             graph_snapshot = evaluate_capability_graph(mission_profile_out, candidates)
             early_eliminated = [
                 m
@@ -734,14 +684,10 @@ def run_deterministic_stages(
             ]
             mv = dict(validation.to_dict() or {})
             mv["no_feasible_aircraft"] = True
-            if hack_empty and realism:
-                mv["realism_block"] = realism
-                mv["hack_v1_constraint_empty"] = True
-            else:
-                mv["realism_block"] = (
-                    "No aircraft in the operational catalog can realistically satisfy this mission as stated "
-                    "(NBAA IFR reserves, realistic payload/baggage, and seasonal/westbound margins)."
-                )
+            mv["realism_block"] = (
+                "No aircraft in the operational catalog can realistically satisfy this mission as stated "
+                "(NBAA IFR reserves, realistic payload/baggage, and seasonal/westbound margins)."
+            )
             recommendations: List[AircraftRecommendation] = []
             recommendations = _attach_fleet_composition_plan(
                 mission_profile=mission_profile_out,
@@ -985,16 +931,6 @@ def run_deterministic_stages(
             eliminated_set,
             context="pipeline_ranking",
         )
-        try:
-            from services.recommendation.hack_v1_constraint_kernel import (
-                hack_v1_permanent_exclusions,
-            )
-
-            hack_excl = hack_v1_permanent_exclusions(data_used)
-            if hack_excl:
-                recommendations = [r for r in recommendations if r.model not in hack_excl]
-        except Exception:
-            pass
         stripped = [m for m in pre_rank if m not in {r.model for r in recommendations}]
         if stripped:
             s4.details["elimination_stripped_from_ranking"] = stripped
@@ -1158,28 +1094,6 @@ def run_consultant_orchestration(
             }
         )
 
-    from services.orchestration.orchestration_router_v2 import (
-        OrchestrationQueryTypeV2,
-        OrchestrationRendererV2,
-        OrchestrationRouterV2Result,
-        apply_orchestration_v2_metadata,
-        orchestration_v2_locked_comparison_models,
-        route_orchestration_v2,
-    )
-
-    v2_route = route_orchestration_v2(query, history=history)
-    try:
-        from services.orchestration.orchestration_stabilization import OrchestrationStabilizer
-
-        _stab = OrchestrationStabilizer().stabilize(query, v2_route)
-        v2_route = _stab.route
-        du.update(_stab.to_patch())
-        patch.update(_stab.to_patch())
-    except Exception:
-        pass
-    apply_orchestration_v2_metadata(du, v2_route)
-    apply_orchestration_v2_metadata(patch, v2_route)
-
     qri = classify_query_recommendation_intent(query, history=history)
     if query_intent:
         try:
@@ -1190,53 +1104,7 @@ def run_consultant_orchestration(
     apply_query_intent_metadata(patch, qri)
     apply_query_intent_metadata(du, qri)
 
-    from services.orchestration.response_mode_classifier import (
-        apply_orchestration_response_mode_metadata,
-        classify_orchestration_response_mode,
-    )
-
-    orm = classify_orchestration_response_mode(query, history=history)
-    # V2 router is authoritative — sync legacy response mode flags.
-    if v2_route.query_type == OrchestrationQueryTypeV2.EXPLICIT_COMPARISON:
-        from services.orchestration.response_mode_classifier import OrchestrationResponseMode
-
-        orm.mode = OrchestrationResponseMode.COMPARISON_MODE
-        orm.suppresses_aircraft_recommendations = False
-        orm.explicit_aircraft_request = True
-    elif v2_route.query_type == OrchestrationQueryTypeV2.RECOMMENDATION_REQUEST:
-        from services.orchestration.response_mode_classifier import OrchestrationResponseMode
-
-        orm.mode = OrchestrationResponseMode.RECOMMENDATION_MODE
-        orm.suppresses_aircraft_recommendations = False
-        orm.explicit_aircraft_request = True
-    elif v2_route.query_type in (
-        OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
-        OrchestrationQueryTypeV2.NETWORK_STRUCTURE,
-    ):
-        from services.orchestration.response_mode_classifier import OrchestrationResponseMode
-
-        orm.mode = OrchestrationResponseMode.STRUCTURE_MODE
-        orm.suppresses_aircraft_recommendations = not v2_route.allow_recommendation_ranking
-        orm.structural_first = True
-    elif v2_route.query_type == OrchestrationQueryTypeV2.NAMED_AIRCRAFT_CAPABILITY:
-        orm.suppresses_aircraft_recommendations = True
-        orm.structural_first = False
-
-    apply_orchestration_response_mode_metadata(patch, orm)
-    apply_orchestration_response_mode_metadata(du, orm)
-    if orm.suppresses_aircraft_recommendations or v2_route.suppress_generic_shortlist:
-        qri.allows_acquisition_framing = False
-        if not v2_route.allow_recommendation_ranking:
-            qri.requires_ranked_pipeline = v2_route.requires_deterministic_pipeline
-    else:
-        if isinstance(du, dict):
-            du.pop("orchestration_suppresses_aircraft", None)
-            du["defer_global_shortlist"] = False
-
-    if (
-        not qri.requires_ranked_pipeline
-        and v2_route.renderer != OrchestrationRendererV2.OWNERSHIP_ECONOMICS
-    ):
+    if not qri.requires_ranked_pipeline:
         tr.record("mission_extraction", "skipped", details={"reason": qri.intent.value})
         for stage in ORCHESTRATION_STAGES[1:]:
             tr.record(stage, "skipped", details={"reason": "non_ranked_intent"})
@@ -1293,17 +1161,6 @@ def run_consultant_orchestration(
         "structural_decomposition",
         "structural_representation",
         "fleet_strategy_required",
-        "hack_v1",
-        "hack_v1_constraint_empty",
-        "hack_v1_feasible_aircraft",
-        "hack_v1_permanent_exclusions",
-        "hack_v2_ranking",
-        "hack_v3_renderer",
-        "hack_v3_renderer_locked",
-        "freeze_frame",
-        "multi_factor_ranking",
-        "broker_narrative_authoritative",
-        "tier_downgrade_blocked",
     ):
         if isinstance(du, dict) and k in du:
             patch[k] = du.get(k)
@@ -1338,97 +1195,12 @@ def run_consultant_orchestration(
     recommendations = list(pipeline.recommendations)
     route_assessments = _build_route_assessments(mission, recommendations)
 
-    from services.orchestration.recommendation_gate import (
-        apply_recommendation_gate_metadata,
-        finalize_recommendations,
-        strip_aircraft_from_response,
-    )
-    from services.mission.mission_understanding_engine import load_mission_understanding
-
-    _gate_pkt = load_mission_understanding(du)
-    rec_gate = finalize_recommendations(
-        query,
-        recommendations,
-        mission,
-        data_used=du,
-        packet=_gate_pkt,
-        max_results=max_results,
-    )
-    apply_recommendation_gate_metadata(patch, rec_gate)
-    apply_recommendation_gate_metadata(du, rec_gate)
-    if rec_gate.suppress_aircraft:
-        recommendations = []
-        if _gate_pkt is not None:
-            _gate_pkt.recommend_aircraft = False
-            patch["recommend_aircraft_gated"] = 0
-    else:
-        recommendations = list(rec_gate.filtered_recommendations)
-
-    # Stabilization: shortlist validation gate.
-    # EMPTY SHORTLIST != permission to recover via lower-tier fallback hallucinations.
-    if isinstance(du, dict) and du.get("mission_hard_invalid"):
-        recommendations = []
-
-    # Alternatives query: if stabilization set a reference aircraft, do not "recommend" the reference.
-    if recommendations and isinstance(du, dict):
-        try:
-            stab = du.get("orchestration_stabilization") or {}
-            if isinstance(stab, dict):
-                ref = str(stab.get("reference_aircraft") or "").strip()
-                if ref:
-                    recommendations = [r for r in recommendations if (r.model or "") != ref]
-        except Exception:
-            pass
-
-    if recommendations and isinstance(du, dict):
-        try:
-            v1_feasible = set(du.get("hack_v1_feasible_aircraft") or [])
-            if v1_feasible:
-                recommendations = [r for r in recommendations if (r.model or "") in v1_feasible]
-        except Exception:
-            pass
-
-    if not recommendations and isinstance(du, dict) and not rec_gate.suppress_aircraft:
-        # If validation strips everything, do not invent a new shortlist.
-        # Force strategic analysis renderer for this turn.
-        du["tier_downgrade_blocked"] = du.get("tier_downgrade_blocked") or "shortlist_validation_empty"
-        v2_route = OrchestrationRouterV2Result(
-            query_type=OrchestrationQueryTypeV2.STRATEGIC_FLEET_ANALYSIS,
-            renderer=OrchestrationRendererV2.STRATEGIC_ANALYSIS,
-            confidence=0.90,
-            signals=list((v2_route.signals or [])) + ["stabilizer:shortlist_validation_empty"],
-            authoritative=True,
-            allow_recommendation_ranking=False,
-            allow_tier_fallback=False,
-            allow_operational_synthesis=False,
-            preserve_comparison_models=(),
-            named_aircraft_models=(),
-            suppress_generic_shortlist=True,
-            requires_deterministic_pipeline=True,
-            physics_first_priority=True,
-        )
-        from services.orchestration.orchestration_router_v2 import apply_orchestration_v2_metadata
-
-        apply_orchestration_v2_metadata(du, v2_route)
-        apply_orchestration_v2_metadata(patch, v2_route)
-
     mentioned = detect_models_from_text(query)
     ql = (query or "").lower()
     comparison = None
-    locked_compare = orchestration_v2_locked_comparison_models(du)
-    compare_models = locked_compare if locked_compare else mentioned
-    if (
-        len(compare_models) >= 2
-        or v2_route.query_type == OrchestrationQueryTypeV2.EXPLICIT_COMPARISON
-        or "compare" in ql
-        or " vs " in ql
-        or "versus" in ql
-    ):
+    if len(mentioned) >= 2 or "compare" in ql or " vs " in ql or "versus" in ql:
         comparison = build_structured_comparison(
-            compare_models,
-            mission,
-            recommendations=recommendations,
-            locked_models_only=bool(locked_compare),
+            mentioned, mission, recommendations=recommendations
         )
         patch["consultant_comparison"] = comparison.to_dict()
 
@@ -1468,86 +1240,7 @@ def run_consultant_orchestration(
         )
 
         _pkt = load_mission_understanding(du)
-        if (
-            v2_route.renderer == OrchestrationRendererV2.NAMED_CAPABILITY
-            and v2_route.named_aircraft_models
-        ):
-            from services.consultant.named_aircraft_capability import (
-                format_named_aircraft_capability_response,
-            )
-
-            answer = format_named_aircraft_capability_response(
-                v2_route.named_aircraft_models,
-                mission,
-                mission_profile=pipeline.mission_profile,
-                data_used=du,
-                query=query,
-            )
-            recommendations = []
-            du["broker_narrative_authoritative"] = True
-            s5.details = {"mode": "named_aircraft_capability_v2"}
-        elif v2_route.renderer == OrchestrationRendererV2.STRATEGIC_ANALYSIS:
-            from services.consultant.strategic_analysis_renderer import (
-                format_strategic_analysis_response,
-            )
-            from services.mission.mission_understanding_engine import load_mission_understanding
-
-            answer = format_strategic_analysis_response(
-                mission,
-                load_mission_understanding(du),
-                query=query,
-                data_used=du,
-            )
-            recommendations = []
-            s5.details = {"mode": "strategic_analysis_v2"}
-        elif v2_route.renderer == OrchestrationRendererV2.NETWORK_TOPOLOGY:
-            from services.consultant.network_topology_renderer import (
-                format_network_topology_response,
-            )
-
-            answer = format_network_topology_response(
-                mission,
-                query=query,
-                data_used=du,
-                packet=_pkt,
-            )
-            recommendations = []
-            du["broker_narrative_authoritative"] = True
-            s5.details = {"mode": "network_topology_v2"}
-        elif v2_route.renderer == OrchestrationRendererV2.STRATEGIC_COMPARISON:
-            from services.consultant.strategic_comparison_renderer import (
-                format_strategic_comparison_response,
-            )
-
-            answer = format_strategic_comparison_response(
-                mission,
-                query=query,
-                data_used=du,
-            )
-            recommendations = []
-            du["broker_narrative_authoritative"] = True
-            s5.details = {"mode": "strategic_comparison_v2"}
-        elif v2_route.query_type == OrchestrationQueryTypeV2.EXPLICIT_COMPARISON:
-            from services.consultant.comparison_structured_output import (
-                format_comparison_response,
-            )
-
-            locked_compare = orchestration_v2_locked_comparison_models(du)
-            mentioned_models = detect_models_from_text(query)
-            compare_models = locked_compare if locked_compare else mentioned_models
-            answer = format_comparison_response(
-                query=query,
-                mission=mission,
-                compare_models=compare_models,
-                data_used=du,
-            )
-            recommendations = []
-            du["broker_narrative_authoritative"] = True
-            s5.details = {"mode": "comparison_structured_engine", "count": len(compare_models)}
-        elif validation.get("needs_route_clarification") or (
-            validation.get("synthesis_first_required")
-            and v2_route.allow_operational_synthesis
-        ):
+        if validation.get("needs_route_clarification") or validation.get("synthesis_first_required"):
             # Reasoning-first: provide operational synthesis + class band even when city pair is missing.
             clarifying = str(validation.get("clarifying_question") or "").strip()
             if _pkt is not None:
@@ -1572,36 +1265,19 @@ def run_consultant_orchestration(
                 )
                 s5.details = {"mode": "route_clarification"}
         elif recommendations:
-            from services.orchestration.response_mode_classifier import (
-                explicit_aircraft_request,
-                load_orchestration_response_mode,
-            )
-            from services.orchestration.recommendation_gate import _comparative_economics_query
-            from services.consultant.comparative_analysis_renderer import is_named_model_comparison_query
-
-            force_broker = (
-                explicit_aircraft_request(query)
-                or _comparative_economics_query(query)
-                or is_named_model_comparison_query(query)
-            )
-            mode_cached = load_orchestration_response_mode(du)
-            if mode_cached and mode_cached.structural_first and not explicit_aircraft_request(query):
-                force_broker = False
-            if rec_gate.render_interpretation_only and _pkt is not None and not force_broker:
-                from services.orchestration.recommendation_gate import (
-                    render_interpretation_first_response,
-                )
-
-                answer = render_interpretation_first_response(
+            # Recommendation gating: avoid aircraft options unless mission understanding has enough operational evidence.
+            if _pkt is not None and not _pkt.recommend_aircraft:
+                answer = format_understanding_first_advisory(
                     mission,
                     _pkt,
+                    recommendations=[],
                     query=query,
                     data_used=du,
                     route_certainty_degraded=bool(validation.get("route_certainty_degraded")),
                 )
                 recommendations = []
-                s5.degraded("interpretation_mode", confidence=_pkt.overall_confidence)
-                s5.details = {"mode": "interpretation_first"}
+                s5.degraded("mission_understanding_gate", confidence=_pkt.overall_confidence)
+                s5.details = {"mode": "mission_understanding_synthesis_only"}
             else:
                 broker_body = format_broker_advisory_response(
                     mission,
@@ -1609,43 +1285,21 @@ def run_consultant_orchestration(
                     route_assessments=route_assessments,
                     eliminated_models=list(pipeline.eliminated_models),
                     data_used=du,
-                    query=query,
                 )
                 answer = broker_body or ""
-                du["broker_narrative_authoritative"] = True
                 s5.details = {
                     "mode": "broker_deterministic",
                     "models": [r.model for r in recommendations[:3]],
                 }
         else:
             if _pkt is not None:
-                if rec_gate.render_interpretation_only:
-                    from services.orchestration.recommendation_gate import (
-                        render_interpretation_first_response,
-                    )
-
-                    answer = render_interpretation_first_response(
-                        mission,
-                        _pkt,
-                        query=query,
-                        data_used=du,
-                        route_certainty_degraded=bool(validation.get("route_certainty_degraded")),
-                    )
-                    s5.details = {"mode": "interpretation_first_empty_shortlist"}
-                else:
-                    # Renderer contamination block: do not leak OPERATIONAL SYNTHESIS into
-                    # broker/strategic flows when synthesis is suppressed by router/stabilizer.
-                    if isinstance(du, dict) and du.get("kernel_synthesis_blocked"):
-                        answer = degraded_empty_shortlist_guidance(mission, pipeline, query)
-                        s5.details = {"mode": "empty_shortlist_degraded_no_synthesis"}
-                    else:
-                        answer = format_understanding_first_advisory(
-                            mission,
-                            _pkt,
-                            query=query,
-                            data_used=du,
-                            route_certainty_degraded=bool(validation.get("route_certainty_degraded")),
-                        )
+                answer = format_understanding_first_advisory(
+                    mission,
+                    _pkt,
+                    query=query,
+                    data_used=du,
+                    route_certainty_degraded=bool(validation.get("route_certainty_degraded")),
+                )
             else:
                 answer = degraded_empty_shortlist_guidance(mission, pipeline, query)
             s5.degraded("empty_shortlist", confidence=0.45)
@@ -1692,15 +1346,14 @@ def run_consultant_orchestration(
                 s6.degraded("image_pipeline_failed", confidence=0.4)
 
     # --- Stage 7: Final Response Formatting ---
+    formatter_ok = use_structured_formatter
+    if formatter_ok is None:
+        formatter_ok = should_use_structured_formatter(du, mission, query)
+
     with StageRunner(tr, ORCHESTRATION_STAGES[6]) as s7:
-        formatter_ok = use_structured_formatter
-        if formatter_ok is None:
-            formatter_ok = should_use_structured_formatter(du, mission, query)
         try:
             if validation.get("needs_route_clarification"):
                 pass  # answer already set
-            elif du.get("broker_narrative_authoritative") or du.get("hack_v3_renderer_locked"):
-                pass  # broker / HACK v3 locked output — no kernel or formatter overwrite
             elif formatter_ok and recommendations:
                 pipeline_body = format_consultant_response(
                     mission=mission,
@@ -1814,7 +1467,7 @@ def run_consultant_orchestration(
                     )
 
                     _syn_pkt = load_mission_understanding(du)
-                    if _syn_pkt is not None and not du.get("kernel_synthesis_blocked"):
+                    if _syn_pkt is not None:
                         _kernel = load_mission_authority_kernel(du) or build_mission_authority_kernel(
                             mission,
                             _syn_pkt,
@@ -1860,24 +1513,14 @@ def run_consultant_orchestration(
                 )
                 s7.degraded("empty_answer", confidence=0.4)
 
-            # Comparison + capability outputs must preserve strict structure (tables/newlines).
-            if isinstance(du, dict) and (
-                du.get("comparison_v2")
-                or du.get("comparison_structured_engine")
-                or du.get("network_topology_renderer")
-                or du.get("strategic_comparison_renderer")
-                or du.get("strategic_analysis_renderer")
-            ):
-                answer = (answer or "").strip()
-            else:
-                suppressed = suppress_templates(answer)
-                answer = sanitize_advisor_output(suppressed.text)
-                try:
-                    from services.consultant.response_cleanup import cleanResponseText
+            suppressed = suppress_templates(answer)
+            answer = sanitize_advisor_output(suppressed.text)
+            try:
+                from services.consultant.response_cleanup import cleanResponseText
 
-                    answer = cleanResponseText(answer)
-                except Exception:
-                    pass
+                answer = cleanResponseText(answer)
+            except Exception:
+                pass
             s7.details = {"formatter": bool(formatter_ok and recommendations)}
         except Exception as exc:
             logger.exception("orchestration final_response_formatting failed")
@@ -1905,54 +1548,13 @@ def run_consultant_orchestration(
         recommendations=recommendations,
         image_confidence=image_confidence,
     )
-    # Comparison v2 contract: JSON-only output — no degradation prefix or prose wrapper.
-    if (
-        v2_route.query_type == OrchestrationQueryTypeV2.EXPLICIT_COMPARISON
-        and isinstance(du, dict)
-        and (du.get("comparison_v2") or du.get("comparison_structured_engine"))
-    ):
-        answer = (answer or "").strip()
-        low = False
-    else:
-        answer, low = apply_low_confidence_guidance(answer, conf)
+    answer, low = apply_low_confidence_guidance(answer, conf)
     tr.low_confidence = low
-
-    if rec_gate.suppress_aircraft and (answer or "").strip():
-        # Output safety: never strip aircraft identifiers from capability/comparison modes
-        # (would corrupt structured tables and named-aircraft verdicts).
-        try:
-            from services.orchestration.orchestration_router_v2 import OrchestrationQueryTypeV2
-
-            if v2_route.query_type not in (
-                OrchestrationQueryTypeV2.EXPLICIT_COMPARISON,
-                OrchestrationQueryTypeV2.NAMED_AIRCRAFT_CAPABILITY,
-            ):
-                answer = strip_aircraft_from_response(answer)
-        except Exception:
-            answer = strip_aircraft_from_response(answer)
 
     patch["orchestration"] = tr.to_dict()
     patch["consultant_recommendations"] = [r.to_dict() for r in recommendations]
     if route_assessments:
         patch["consultant_route_feasibility"] = [a.to_dict() for a in route_assessments[:8]]
-    for _meta_key in (
-        "hack_v1",
-        "hack_v1_constraint_empty",
-        "hack_v1_feasible_aircraft",
-        "hack_v2_ranking",
-        "hack_v3_renderer",
-        "hack_v3_renderer_locked",
-        "freeze_frame",
-        "multi_factor_ranking",
-        "broker_narrative_authoritative",
-        "tier_downgrade_recovery",
-        "orchestration_v2",
-        "orchestration_v2_query_type",
-        "orchestration_v2_renderer",
-        "kernel_synthesis_blocked",
-    ):
-        if isinstance(du, dict) and _meta_key in du:
-            patch[_meta_key] = du.get(_meta_key)
 
     return ConsultantOrchestrationResult(
         answer=answer,

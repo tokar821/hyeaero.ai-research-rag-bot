@@ -74,6 +74,11 @@ def _route_distance_nm(mission: MissionState) -> float:
     if not mission.routes:
         return 0.0
     try:
+        from services.mission.route_distance_authority import resolve_route_distance
+
+        res = resolve_route_distance(mission.routes[0])
+        if res.distance_nm > 0:
+            return float(res.distance_nm)
         from services.mission.feasibility_engine import estimate_route_distance_nm
 
         return float(estimate_route_distance_nm(mission.routes[0]))
@@ -89,15 +94,41 @@ def evaluate_named_aircraft_capability(
     data_used: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Physics-first feasibility for a single named aircraft."""
-    spec = AIRCRAFT_PROFILES.get(model) or {}
-    if not spec:
-        return {
-            "model": model,
-            "verdict": _VERDICT_NOT_REALISTIC,
-            "reasons": [
-                "corridor infeasibility: aircraft not in operational catalog for evaluation.",
-            ],
-        }
+    from services.catalog.catalog_alias_resolver import (
+        resolve_canonical_display_name,
+        resolve_catalog_profile_key,
+    )
+
+    display_name = resolve_canonical_display_name(model)
+    profile_key = resolve_catalog_profile_key(model) or display_name
+    spec: Dict[str, Any] = {}
+    try:
+        from services.data_authority.aircraft_spec_repository import (
+            INSUFFICIENT_VERIFIED_AIRCRAFT_DATA,
+            get_verified_spec,
+        )
+
+        verified = get_verified_spec(model)
+        if verified is None:
+            return {
+                "model": display_name or model,
+                "verdict": _VERDICT_NOT_REALISTIC,
+                "reasons": [
+                    f"{INSUFFICIENT_VERIFIED_AIRCRAFT_DATA} — no verified PostgreSQL specification for this airframe.",
+                ],
+            }
+        spec = verified.to_profile_dict()
+        profile_key = verified.canonical_name
+    except Exception:
+        spec = AIRCRAFT_PROFILES.get(profile_key) or {}
+        if not spec:
+            return {
+                "model": display_name or model,
+                "verdict": _VERDICT_NOT_REALISTIC,
+                "reasons": [
+                    "corridor infeasibility: insufficient verified performance data for this airframe in-band.",
+                ],
+            }
 
     required_nm = _route_distance_nm(mission)
     practical_nm = float(spec.get("practical_nm") or spec.get("range_nm") or 0)
@@ -107,6 +138,7 @@ def evaluate_named_aircraft_capability(
     reasons: List[str] = []
     verdict = _VERDICT_FEASIBLE
 
+    category = str(spec.get("category") or "").lower()
     if required_nm > 0 and practical_nm > 0:
         margin = practical_nm - required_nm
         if margin < -400:
@@ -118,6 +150,12 @@ def evaluate_named_aircraft_capability(
             verdict = _VERDICT_MARGINAL
             reasons.append(
                 "dispatch reliability: marginal fuel/payload margin — winter or westbound pressure may block dispatch."
+            )
+        if required_nm >= 4500 and category in ("super-midsize", "midsize", "light"):
+            verdict = _VERDICT_NOT_REALISTIC
+            reasons.insert(
+                0,
+                "corridor class mismatch: transpacific ULR stage — super-midsize cannot hold NBAA reserves with executive payload.",
             )
 
     if pax > max_pax:
@@ -132,11 +170,11 @@ def evaluate_named_aircraft_capability(
 
             hack = run_hack_v1_constraint_kernel(
                 mission_profile,
-                [model],
+                [profile_key],
                 query="",
             )
-            if model not in (hack.feasible_aircraft_list or []):
-                rej = next((r for r in hack.rejection_log if r.model == model), None)
+            if profile_key not in (hack.feasible_aircraft_list or []):
+                rej = next((r for r in hack.rejection_log if r.model == profile_key), None)
                 verdict = _VERDICT_NOT_REALISTIC
                 reasons.append(
                     rej.reason
@@ -151,7 +189,30 @@ def evaluate_named_aircraft_capability(
             "Stage length, passenger load, and reserve assumptions align with this airframe for the corridor."
         )
 
-    return {"model": model, "verdict": verdict, "reasons": reasons}
+    result = {
+        "model": display_name or model,
+        "verdict": verdict,
+        "reasons": reasons,
+        "category": category,
+    }
+    try:
+        from services.operations.operational_realism_bridge import (
+            assess_mission_operational_realism,
+            merge_operational_realism_into_capability,
+        )
+
+        realism = assess_mission_operational_realism(
+            mission,
+            profile_key,
+            spec,
+            query=str((data_used or {}).get("orchestration_query") or ""),
+            mission_profile=mission_profile,
+            data_used=data_used,
+        )
+        result = merge_operational_realism_into_capability(result, realism)
+    except Exception:
+        pass
+    return result
 
 
 def format_named_aircraft_capability_response(
@@ -181,7 +242,10 @@ def format_named_aircraft_capability_response(
         lines.append(f"- **Aircraft**: {model}")
         lines.append(f"- **Verdict**: {ev['verdict']}")
         # Constraint breakdown (deterministic, best-effort)
-        spec = AIRCRAFT_PROFILES.get(model) or {}
+        from services.catalog.catalog_alias_resolver import resolve_catalog_profile_key
+
+        profile_key = resolve_catalog_profile_key(model) or model
+        spec = AIRCRAFT_PROFILES.get(profile_key) or {}
         practical_nm = float(spec.get("practical_nm") or 0.0)
         required_nm = _route_distance_nm(mission)
         if practical_nm and required_nm:

@@ -1,0 +1,2809 @@
+{
+  "summary": {
+    "aircraft_profiles_count": 22,
+    "postgres_aviacost_count": 228,
+    "postgres_connection": "ok",
+    "display_aliases_count": 23,
+    "benchmark_models_checked": 20
+  },
+  "coverage_report": [
+    {
+      "aircraft_name": "Challenger 350",
+      "category": "super-midsize",
+      "range_nm": 2700,
+      "seats": 9,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Challenger 650",
+      "category": "large",
+      "range_nm": 3500,
+      "seats": 10,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Challenger Longitude",
+      "category": "large",
+      "range_nm": 3600,
+      "seats": 12,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": false
+    },
+    {
+      "aircraft_name": "Citation CJ2",
+      "category": "light",
+      "range_nm": 1400,
+      "seats": 6,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Citation CJ4",
+      "category": "light",
+      "range_nm": 1750,
+      "seats": 7,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Citation Latitude",
+      "category": "super-midsize",
+      "range_nm": 2300,
+      "seats": 8,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Citation Longitude",
+      "category": "super-midsize",
+      "range_nm": 3500,
+      "seats": 9,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Falcon 2000",
+      "category": "large",
+      "range_nm": 3000,
+      "seats": 10,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Falcon 7X",
+      "category": "large",
+      "range_nm": 5000,
+      "seats": 12,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Falcon 8X",
+      "category": "ultra-long",
+      "range_nm": 5600,
+      "seats": 12,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Global 5500",
+      "category": "ultra-long",
+      "range_nm": 5100,
+      "seats": 13,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Global 6500",
+      "category": "ultra-long",
+      "range_nm": 5800,
+      "seats": 13,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Global 7500",
+      "category": "ultra-long",
+      "range_nm": 6600,
+      "seats": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G280",
+      "category": "super-midsize",
+      "range_nm": 3000,
+      "seats": 10,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G500",
+      "category": "ultra-long",
+      "range_nm": 4500,
+      "seats": 13,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G650",
+      "category": "ultra-long",
+      "range_nm": 6000,
+      "seats": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G650ER",
+      "category": "ultra-long",
+      "range_nm": 6300,
+      "seats": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Learjet 75",
+      "category": "light",
+      "range_nm": 1650,
+      "seats": 7,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Legacy 600",
+      "category": "large",
+      "range_nm": 3100,
+      "seats": 12,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-12",
+      "category": "turboprop",
+      "range_nm": 1500,
+      "seats": 8,
+      "acquisition_band": "~$5M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-24",
+      "category": "light",
+      "range_nm": 1900,
+      "seats": 8,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Praetor 600",
+      "category": "super-midsize",
+      "range_nm": 3400,
+      "seats": 8,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus ACJ319 neo",
+      "category": "Large Jet",
+      "range_nm": 6800.0,
+      "seats": 19,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus ACJ320 neo",
+      "category": "Large Jet",
+      "range_nm": 6100.0,
+      "seats": 19,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus AS365N3+ Dauphin",
+      "category": "Helicopter",
+      "range_nm": 365.0,
+      "seats": 12,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H125",
+      "category": "Helicopter",
+      "range_nm": 300.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H130",
+      "category": "Helicopter",
+      "range_nm": 260.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H135 (P3)",
+      "category": "Helicopter",
+      "range_nm": 280.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H135 (T3)",
+      "category": "Helicopter",
+      "range_nm": 250.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H145",
+      "category": "Helicopter",
+      "range_nm": 330.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H155",
+      "category": "Helicopter",
+      "range_nm": 430.0,
+      "seats": 13,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H175",
+      "category": "Helicopter",
+      "range_nm": 385.0,
+      "seats": 18,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Airbus H225",
+      "category": "Helicopter",
+      "range_nm": 370.0,
+      "seats": 24,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft 1900D",
+      "category": "Turboprops",
+      "range_nm": 1300.0,
+      "seats": 19,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 1000",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2900.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 4000",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3150.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 400XP",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 750",
+      "category": "Midsize Jet",
+      "range_nm": 2100.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 800A",
+      "category": "Midsize Jet",
+      "range_nm": 2400.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 800XP",
+      "category": "Midsize Jet",
+      "range_nm": 2500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 850XP",
+      "category": "Midsize Jet",
+      "range_nm": 2500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker 900XP",
+      "category": "Midsize Jet",
+      "range_nm": 2700.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker Beechjet 400A",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker Premier I",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft Hawker Premier IA",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 200",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 200 Raisbeck",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "unknown",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 250",
+      "category": "Turboprops",
+      "range_nm": 635.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 260",
+      "category": "Turboprops",
+      "range_nm": 635.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 300",
+      "category": "Turboprops",
+      "range_nm": 1500.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 350",
+      "category": "Turboprops",
+      "range_nm": 1400.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 350i",
+      "category": "Turboprops",
+      "range_nm": 1400.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air 360",
+      "category": "Turboprops",
+      "range_nm": 1400.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air B100",
+      "category": "Turboprops",
+      "range_nm": 800.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air B200",
+      "category": "Turboprops",
+      "range_nm": 930.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air B200GT",
+      "category": "Turboprops",
+      "range_nm": 975.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air B200 Raisbeck",
+      "category": "Turboprops",
+      "range_nm": 860.0,
+      "seats": 6,
+      "acquisition_band": "unknown",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90",
+      "category": "Turboprops",
+      "range_nm": 850.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90A",
+      "category": "Turboprops",
+      "range_nm": 840.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90B",
+      "category": "Turboprops",
+      "range_nm": 650.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90GT",
+      "category": "Turboprops",
+      "range_nm": 750.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90GTi",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air C90GTx",
+      "category": "Turboprops",
+      "range_nm": 925.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Beechcraft King Air F90",
+      "category": "Turboprops",
+      "range_nm": 940.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bell 407GXi",
+      "category": "Helicopter",
+      "range_nm": 285.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Blackhawk King Air 350 XP67",
+      "category": "Turboprops",
+      "range_nm": 1400.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Blackhawk King Air B200 XP61",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Boeing BBJ2 737",
+      "category": "Large Jet",
+      "range_nm": 5700.0,
+      "seats": 19,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Boeing BBJ3 737",
+      "category": "Large Jet",
+      "range_nm": 4800.0,
+      "seats": 19,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Boeing BBJ 737",
+      "category": "Large Jet",
+      "range_nm": 6100.0,
+      "seats": 19,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 300",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3100.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 350",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3300.0,
+      "seats": 9,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 3500",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3300.0,
+      "seats": 9,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 600",
+      "category": "Large Jet",
+      "range_nm": 2800.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 601-1A",
+      "category": "Large Jet",
+      "range_nm": 3200.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 601-3A",
+      "category": "Large Jet",
+      "range_nm": 3100.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 601-3A/ER",
+      "category": "Large Jet",
+      "range_nm": 3400.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 601-3R",
+      "category": "Large Jet",
+      "range_nm": 3400.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 604",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 605",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 650",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Challenger 850",
+      "category": "Large Jet",
+      "range_nm": 2400.0,
+      "seats": 15,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier DHC Dash 8-100",
+      "category": "Turboprops",
+      "range_nm": 975.0,
+      "seats": 37,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier DHC Dash 8-300",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 54,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 5000",
+      "category": "Large Jet",
+      "range_nm": 5200.0,
+      "seats": 13,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 5500",
+      "category": "Large Jet",
+      "range_nm": 5900.0,
+      "seats": 13,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 6000",
+      "category": "Large Jet",
+      "range_nm": 5800.0,
+      "seats": 14,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 6500",
+      "category": "Large Jet",
+      "range_nm": 6600.0,
+      "seats": 14,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 7500",
+      "category": "Large Jet",
+      "range_nm": "\u2014",
+      "seats": "\u2014",
+      "acquisition_band": "unknown",
+      "operating_cost_band": "unknown",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global 8000",
+      "category": "Large Jet",
+      "range_nm": 8000.0,
+      "seats": 19,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global Express",
+      "category": "Large Jet",
+      "range_nm": 6000.0,
+      "seats": 13,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Global Express XRS",
+      "category": "Large Jet",
+      "range_nm": 6000.0,
+      "seats": 13,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 31",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 31A",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 31A/ER",
+      "category": "Light Jet",
+      "range_nm": 1500.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 31ER",
+      "category": "Light Jet",
+      "range_nm": 1500.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 35A",
+      "category": "Light Jet",
+      "range_nm": 1900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 36A",
+      "category": "Light Jet",
+      "range_nm": 2400.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 40",
+      "category": "Light Jet",
+      "range_nm": 1600.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 40XR",
+      "category": "Light Jet",
+      "range_nm": 1800.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 45",
+      "category": "Light Jet",
+      "range_nm": 1400.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 45XR",
+      "category": "Light Jet",
+      "range_nm": 1700.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 55/55B",
+      "category": "Midsize Jet",
+      "range_nm": 1850.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 55C",
+      "category": "Midsize Jet",
+      "range_nm": 1900.0,
+      "seats": 7,
+      "acquisition_band": "unknown",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 60",
+      "category": "Midsize Jet",
+      "range_nm": 2100.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 60XR",
+      "category": "Midsize Jet",
+      "range_nm": 2000.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 70",
+      "category": "Light Jet",
+      "range_nm": 1850.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Bombardier Learjet 75",
+      "category": "Light Jet",
+      "range_nm": 1800.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna 182T Skylane",
+      "category": "Piston",
+      "range_nm": 650.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna 208B Grand Caravan",
+      "category": "Turboprops",
+      "range_nm": 550.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna 208B Grand Caravan EX",
+      "category": "Turboprops",
+      "range_nm": 500.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna 208 Caravan",
+      "category": "Turboprops",
+      "range_nm": 350.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna 210N",
+      "category": "Piston",
+      "range_nm": 450.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Ascend",
+      "category": "Midsize Jet",
+      "range_nm": 1700.0,
+      "seats": 8,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Bravo",
+      "category": "Light Jet",
+      "range_nm": 1300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ1",
+      "category": "Light Jet",
+      "range_nm": 800.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ1+",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ2",
+      "category": "Light Jet",
+      "range_nm": 1100.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ2+",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ3",
+      "category": "Light Jet",
+      "range_nm": 1400.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ3+",
+      "category": "Light Jet",
+      "range_nm": 1400.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ4",
+      "category": "Midsize Jet",
+      "range_nm": 1700.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation CJ4 Gen2",
+      "category": "Midsize Jet",
+      "range_nm": 1700.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Encore",
+      "category": "Light Jet",
+      "range_nm": 1400.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Encore+",
+      "category": "Light Jet",
+      "range_nm": 1500.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Excel",
+      "category": "Midsize Jet",
+      "range_nm": 1500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation III",
+      "category": "Midsize Jet",
+      "range_nm": 1800.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation II/IISP",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Jet 525",
+      "category": "Light Jet",
+      "range_nm": 725.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Latitude",
+      "category": "Midsize Jet",
+      "range_nm": 2500.0,
+      "seats": 9,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Longitude",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3400.0,
+      "seats": 9,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Longitude (Preliminary)",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3400.0,
+      "seats": "\u2014",
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation M2",
+      "category": "Light Jet",
+      "range_nm": 700.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation M2 Gen2",
+      "category": "Light Jet",
+      "range_nm": 700.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Mustang",
+      "category": "Light Jet",
+      "range_nm": 700.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Sovereign",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2600.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Sovereign+",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2800.0,
+      "seats": 9,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation Ultra",
+      "category": "Light Jet",
+      "range_nm": 1300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation V",
+      "category": "Light Jet",
+      "range_nm": 1300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation VI",
+      "category": "Midsize Jet",
+      "range_nm": 1700.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation VII",
+      "category": "Midsize Jet",
+      "range_nm": 1700.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation X",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2900.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation X+",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3200.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation XLS",
+      "category": "Midsize Jet",
+      "range_nm": 1500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation XLS+",
+      "category": "Midsize Jet",
+      "range_nm": 1500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Citation XLS Gen2",
+      "category": "Midsize Jet",
+      "range_nm": 1600.0,
+      "seats": 8,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Conquest I",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Conquest II-10",
+      "category": "Turboprops",
+      "range_nm": 1500.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Conquest II-8",
+      "category": "Turboprops",
+      "range_nm": 1200.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Corvalis 350",
+      "category": "Piston",
+      "range_nm": 1100.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cessna Corvalis 400TT",
+      "category": "Piston",
+      "range_nm": 650.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cirrus SR22T G6",
+      "category": "Piston",
+      "range_nm": 300.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cirrus SR22T G7",
+      "category": "Piston",
+      "range_nm": 300.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cirrus Vision SF50",
+      "category": "Light Jet",
+      "range_nm": 700.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Cirrus Vision SF50 G2",
+      "category": "Light Jet",
+      "range_nm": 800.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata (Quest) Kodiak",
+      "category": "Turboprops",
+      "range_nm": 525.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM700C2",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 850",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 900",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 910",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 930",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 940",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Daher-Socata TBM 960",
+      "category": "Turboprops",
+      "range_nm": 1300.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000",
+      "category": "Large Jet",
+      "range_nm": 2800.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000DX",
+      "category": "Large Jet",
+      "range_nm": 3300.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000EX",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000EX EASy",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000LX",
+      "category": "Large Jet",
+      "range_nm": 3900.0,
+      "seats": 10,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000LXS",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 10,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 2000S",
+      "category": "Large Jet",
+      "range_nm": 3300.0,
+      "seats": 10,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 50",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3000.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 50EX",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3200.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 6X",
+      "category": "Large Jet",
+      "range_nm": 5500.0,
+      "seats": 14,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 7X",
+      "category": "Large Jet",
+      "range_nm": 5400.0,
+      "seats": 12,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 8X",
+      "category": "Large Jet",
+      "range_nm": 6300.0,
+      "seats": 12,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900",
+      "category": "Large Jet",
+      "range_nm": 3600.0,
+      "seats": 12,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900B",
+      "category": "Large Jet",
+      "range_nm": 3400.0,
+      "seats": 12,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900C",
+      "category": "Large Jet",
+      "range_nm": 3500.0,
+      "seats": 12,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900DX",
+      "category": "Large Jet",
+      "range_nm": 4100.0,
+      "seats": 12,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900EX",
+      "category": "Large Jet",
+      "range_nm": 4500.0,
+      "seats": 12,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900EX EASy",
+      "category": "Large Jet",
+      "range_nm": 4500.0,
+      "seats": 12,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Dassault Falcon 900LX",
+      "category": "Large Jet",
+      "range_nm": 4750.0,
+      "seats": 12,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Legacy 450",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2500.0,
+      "seats": 7,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Legacy 500",
+      "category": "Super-Midsize Jet",
+      "range_nm": 2800.0,
+      "seats": 8,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Legacy 600",
+      "category": "Large Jet",
+      "range_nm": 3100.0,
+      "seats": 13,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Legacy 650",
+      "category": "Large Jet",
+      "range_nm": 3700.0,
+      "seats": 13,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Legacy 650E",
+      "category": "Large Jet",
+      "range_nm": 3700.0,
+      "seats": 13,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Lineage 1000",
+      "category": "Large Jet",
+      "range_nm": 4200.0,
+      "seats": 19,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Lineage 1000E",
+      "category": "Large Jet",
+      "range_nm": 4200.0,
+      "seats": 19,
+      "acquisition_band": "unknown",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 100",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 100E",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 100EV",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 100EX",
+      "category": "Light Jet",
+      "range_nm": 1200.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 300",
+      "category": "Midsize Jet",
+      "range_nm": 1800.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Phenom 300E",
+      "category": "Midsize Jet",
+      "range_nm": 1800.0,
+      "seats": 7,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Praetor 500",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3100.0,
+      "seats": 8,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Embraer Praetor 600",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3700.0,
+      "seats": 9,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Epic E1000AX",
+      "category": "Turboprops",
+      "range_nm": 1200.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G100",
+      "category": "Midsize Jet",
+      "range_nm": 2500.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G150",
+      "category": "Midsize Jet",
+      "range_nm": 2700.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G200",
+      "category": "Super-Midsize Jet",
+      "range_nm": 3100.0,
+      "seats": 9,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G300",
+      "category": "Large Jet",
+      "range_nm": 3400.0,
+      "seats": 14,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G400 (2026)",
+      "category": "Large Jet",
+      "range_nm": 4200.0,
+      "seats": 12,
+      "acquisition_band": "$25-45M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G450",
+      "category": "Large Jet",
+      "range_nm": 4000.0,
+      "seats": 14,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G550",
+      "category": "Large Jet",
+      "range_nm": 6500.0,
+      "seats": 18,
+      "acquisition_band": "$12-25M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G600",
+      "category": "Large Jet",
+      "range_nm": 6300.0,
+      "seats": 13,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G700",
+      "category": "Large Jet",
+      "range_nm": 7200.0,
+      "seats": 16,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream G800",
+      "category": "Large Jet",
+      "range_nm": 7700.0,
+      "seats": 16,
+      "acquisition_band": ">$45M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream GIV",
+      "category": "Large Jet",
+      "range_nm": 3800.0,
+      "seats": 13,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream GIV SP",
+      "category": "Large Jet",
+      "range_nm": 3900.0,
+      "seats": 13,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Gulfstream GV",
+      "category": "Large Jet",
+      "range_nm": 6200.0,
+      "seats": 14,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Honda Jet",
+      "category": "Light Jet",
+      "range_nm": 800.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Honda Jet Elite",
+      "category": "Light Jet",
+      "range_nm": 900.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Honda Jet Elite II",
+      "category": "Light Jet",
+      "range_nm": 1100.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Honda Jet Elite S",
+      "category": "Light Jet",
+      "range_nm": 1100.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "IAI Astra SP/X",
+      "category": "Midsize Jet",
+      "range_nm": 2300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Leonardo AW109 Grand",
+      "category": "Helicopter",
+      "range_nm": 350.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Leonardo AW109 Power",
+      "category": "Helicopter",
+      "range_nm": 250.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Nextant Aerospace 400XTi",
+      "category": "Light Jet",
+      "range_nm": 1500.0,
+      "seats": 8,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piaggio Avanti P180",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piaggio Avanti P180 EVO",
+      "category": "Turboprops",
+      "range_nm": 800.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piaggio Avanti P180 II",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-12NG",
+      "category": "Turboprops",
+      "range_nm": 1300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-12 NGx",
+      "category": "Turboprops",
+      "range_nm": 1300.0,
+      "seats": 7,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne 400LS",
+      "category": "Turboprops",
+      "range_nm": 1100.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne I",
+      "category": "Turboprops",
+      "range_nm": 800.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne IA",
+      "category": "Turboprops",
+      "range_nm": 650.0,
+      "seats": 5,
+      "acquisition_band": "unknown",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne II",
+      "category": "Turboprops",
+      "range_nm": 740.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne III",
+      "category": "Turboprops",
+      "range_nm": 1000.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne IIIA",
+      "category": "Turboprops",
+      "range_nm": 900.0,
+      "seats": 6,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Cheyenne IIXL",
+      "category": "Turboprops",
+      "range_nm": 800.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper M500",
+      "category": "Turboprops",
+      "range_nm": 225.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper M600",
+      "category": "Turboprops",
+      "range_nm": 635.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Piper Meridian",
+      "category": "Turboprops",
+      "range_nm": 500.0,
+      "seats": 5,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Robinson R44 Raven I",
+      "category": "Helicopter",
+      "range_nm": 200.0,
+      "seats": 3,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Robinson R44 Raven II",
+      "category": "Helicopter",
+      "range_nm": 250.0,
+      "seats": 3,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Robinson R66 Turbine",
+      "category": "Helicopter",
+      "range_nm": 260.0,
+      "seats": 4,
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Test1",
+      "category": "Helicopter",
+      "range_nm": "\u2014",
+      "seats": "\u2014",
+      "acquisition_band": "unknown",
+      "operating_cost_band": "unknown",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Test Aircraft 01",
+      "category": "My Aircraft",
+      "range_nm": 1.0,
+      "seats": "\u2014",
+      "acquisition_band": "<$12M",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    },
+    {
+      "aircraft_name": "Test DOERR",
+      "category": "Light Jet",
+      "range_nm": "\u2014",
+      "seats": "\u2014",
+      "acquisition_band": "unknown",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": false,
+      "in_postgres_aviacost": true
+    }
+  ],
+  "aircraft_profiles_detail": [
+    {
+      "aircraft_name": "Challenger 350",
+      "category": "super-midsize",
+      "range_nm": 2700,
+      "brochure_nm": 3200,
+      "seats": 9,
+      "seats_max": 9,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Challenger 650",
+      "category": "large",
+      "range_nm": 3500,
+      "brochure_nm": 4000,
+      "seats": 10,
+      "seats_max": 11,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Challenger Longitude",
+      "category": "large",
+      "range_nm": 3600,
+      "brochure_nm": 4300,
+      "seats": 12,
+      "seats_max": 11,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Citation CJ2",
+      "category": "light",
+      "range_nm": 1400,
+      "brochure_nm": 1700,
+      "seats": 6,
+      "seats_max": 6,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Citation CJ4",
+      "category": "light",
+      "range_nm": 1750,
+      "brochure_nm": 2100,
+      "seats": 7,
+      "seats_max": 7,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Citation Latitude",
+      "category": "super-midsize",
+      "range_nm": 2300,
+      "brochure_nm": 2700,
+      "seats": 8,
+      "seats_max": 8,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Citation Longitude",
+      "category": "super-midsize",
+      "range_nm": 3500,
+      "brochure_nm": 4000,
+      "seats": 9,
+      "seats_max": 9,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Falcon 2000",
+      "category": "large",
+      "range_nm": 3000,
+      "brochure_nm": 3500,
+      "seats": 10,
+      "seats_max": 10,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Falcon 7X",
+      "category": "large",
+      "range_nm": 5000,
+      "brochure_nm": 5900,
+      "seats": 12,
+      "seats_max": 12,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Falcon 8X",
+      "category": "ultra-long",
+      "range_nm": 5600,
+      "brochure_nm": 6450,
+      "seats": 12,
+      "seats_max": 13,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Global 5500",
+      "category": "ultra-long",
+      "range_nm": 5100,
+      "brochure_nm": 5900,
+      "seats": 13,
+      "seats_max": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Global 6500",
+      "category": "ultra-long",
+      "range_nm": 5800,
+      "brochure_nm": 6600,
+      "seats": 13,
+      "seats_max": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Global 7500",
+      "category": "ultra-long",
+      "range_nm": 6600,
+      "brochure_nm": 7700,
+      "seats": 14,
+      "seats_max": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Gulfstream G280",
+      "category": "super-midsize",
+      "range_nm": 3000,
+      "brochure_nm": 3600,
+      "seats": 10,
+      "seats_max": 10,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Gulfstream G500",
+      "category": "ultra-long",
+      "range_nm": 4500,
+      "brochure_nm": 5200,
+      "seats": 13,
+      "seats_max": 13,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Gulfstream G650",
+      "category": "ultra-long",
+      "range_nm": 6000,
+      "brochure_nm": 7000,
+      "seats": 14,
+      "seats_max": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Gulfstream G650ER",
+      "category": "ultra-long",
+      "range_nm": 6300,
+      "brochure_nm": 7500,
+      "seats": 14,
+      "seats_max": 14,
+      "acquisition_band": "~$45M (curated est.)",
+      "operating_cost_band": "ultra",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Learjet 75",
+      "category": "light",
+      "range_nm": 1650,
+      "brochure_nm": 2000,
+      "seats": 7,
+      "seats_max": 7,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Legacy 600",
+      "category": "large",
+      "range_nm": 3100,
+      "brochure_nm": 3900,
+      "seats": 12,
+      "seats_max": 13,
+      "acquisition_band": "~$28M (curated est.)",
+      "operating_cost_band": "high",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-12",
+      "category": "turboprop",
+      "range_nm": 1500,
+      "brochure_nm": 1800,
+      "seats": 8,
+      "seats_max": 8,
+      "acquisition_band": "~$5M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Pilatus PC-24",
+      "category": "light",
+      "range_nm": 1900,
+      "brochure_nm": 2200,
+      "seats": 8,
+      "seats_max": 8,
+      "acquisition_band": "~$8M (curated est.)",
+      "operating_cost_band": "low",
+      "in_aircraft_profiles": true
+    },
+    {
+      "aircraft_name": "Praetor 600",
+      "category": "super-midsize",
+      "range_nm": 3400,
+      "brochure_nm": 4000,
+      "seats": 8,
+      "seats_max": 9,
+      "acquisition_band": "~$18M (curated est.)",
+      "operating_cost_band": "medium",
+      "in_aircraft_profiles": true
+    }
+  ],
+  "postgres_aviacost_sample_count": 228,
+  "gap_report": {
+    "missing_aircraft": [],
+    "curated_only_no_postgres": [],
+    "postgres_only_no_profile": [
+      {
+        "segment": "Ultra Long Range",
+        "requested_name": "Global 6000",
+        "canonical_name": "Bombardier Global 6000",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Bombardier Global 6000",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Ultra Long Range",
+        "requested_name": "Gulfstream G700",
+        "canonical_name": "Gulfstream G700",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Gulfstream G700",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Ultra Long Range",
+        "requested_name": "Gulfstream G600",
+        "canonical_name": "Gulfstream G600",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Gulfstream G600",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Large Cabin",
+        "requested_name": "Falcon 2000LXS",
+        "canonical_name": "Falcon 2000LXS",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Dassault Falcon 2000LXS",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Super Mid",
+        "requested_name": "Praetor 500",
+        "canonical_name": "Praetor 500",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Embraer Praetor 500",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Light / Utility",
+        "requested_name": "PC-24",
+        "canonical_name": "PC-24",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Pilatus PC-24",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Light / Utility",
+        "requested_name": "PC-12 NGX",
+        "canonical_name": "PC-12 NGX",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Pilatus PC-12 NGx",
+        "verified_source": "postgres_aviacost"
+      },
+      {
+        "segment": "Light / Utility",
+        "requested_name": "King Air 360",
+        "canonical_name": "King Air 360",
+        "in_aircraft_profiles": false,
+        "in_postgres_aviacost": true,
+        "postgres_match_name": "Beechcraft King Air 360",
+        "verified_source": "postgres_aviacost"
+      }
+    ],
+    "incomplete_benchmark_entries": [],
+    "duplicate_aliases": [
+      {
+        "alias": "bombardier global 6000",
+        "canonical_target": "Bombardier Global 6000",
+        "issues": [
+          "target_missing_from_profiles",
+          "alias_target_not_in_profiles"
+        ]
+      },
+      {
+        "alias": "challenger 3500",
+        "canonical_target": "Challenger 350",
+        "issues": [
+          "marketing_name_maps_to_different_profile_key"
+        ]
+      },
+      {
+        "alias": "cl3500",
+        "canonical_target": "Challenger 350",
+        "issues": [
+          "marketing_name_maps_to_different_profile_key"
+        ]
+      },
+      {
+        "alias": "g600",
+        "canonical_target": "Gulfstream G600",
+        "issues": [
+          "target_missing_from_profiles",
+          "alias_target_not_in_profiles"
+        ]
+      },
+      {
+        "alias": "global 6000",
+        "canonical_target": "Bombardier Global 6000",
+        "issues": [
+          "target_missing_from_profiles",
+          "alias_target_not_in_profiles"
+        ]
+      },
+      {
+        "alias": "gulfstream g600",
+        "canonical_target": "Gulfstream G600",
+        "issues": [
+          "target_missing_from_profiles",
+          "alias_target_not_in_profiles"
+        ]
+      }
+    ],
+    "invalid_categories": [],
+    "incomplete_profiles": [],
+    "postgres_duplicate_names": [
+      {
+        "normalized": "bombardier challenger 850",
+        "variants": [
+          "Bombardier Challenger 850",
+          "Bombardier Challenger 850"
+        ]
+      },
+      {
+        "normalized": "bombardier global 7500",
+        "variants": [
+          "Bombardier Global 7500",
+          "Bombardier Global 7500",
+          "Bombardier Global 7500"
+        ]
+      },
+      {
+        "normalized": "gulfstream g600",
+        "variants": [
+          "Gulfstream G600",
+          "Gulfstream G600"
+        ]
+      }
+    ]
+  }
+}

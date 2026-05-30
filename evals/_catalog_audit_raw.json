@@ -1,0 +1,10 @@
+﻿python :   File "<string>", line 37
+At C:\Users\Administrator\AppData\Local\Temp\2\ps-script-dab7fd38-fd11-491f-88a7-16bdbd1a67c7.ps1:76 char:75
++ ... nistrator\Downloads\chatbot\backend; $env:PYTHONPATH="."; python -c "
++                                                               ~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  File "<string>", line 37:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    if m < 12: return '<\'
+                      ^
+SyntaxError: unterminated string literal (detected at line 37); perhaps you escaped the end quote?

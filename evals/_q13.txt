@@ -1,0 +1,20 @@
+OPERATIONAL SYNTHESIS (AUTHORITATIVE)
+
+Mission Fit:
+
+- Route: Los Angeles -> London
+- Pax: Not stated
+- Operational read: executive_transport Europe / intercontinental stage — light-jet and entry-level midsize bands lack consistent winter margin, pressurization comfort, and dispatch practicality at full passenger load. Credible aircraft class conversation starts in: Transatlantic / heavy-cabin executive band, Multi-leg ultra-long-range executive band.. Operational band: ultra-long-range — this mission is not solvable with or large-cabin aircraft on the longest stages without tech stops...
+
+Operational segments:
+
+- Operational Segment: Pacific Ulr [peak planning leg]
+Authority: Pacific / Asia ULR corridor: Los Angeles -> London Routes: Los Angeles -> London Operational constraint: continuation_ulr Implication: Oceanic stages require worst-case leg planning — not a domestic jet problem.
+
+Aircraft Class Band:
+
+- [Pacific Ulr] Multi-leg ultra-long-range executive band
+
+Verdict:
+
+- VIABLE WITH COMPROMISES: segment class bands above

@@ -110,10 +110,19 @@ def _build_aircraft_entries(
     canonical_names: Sequence[str],
     mission: MissionState,
 ) -> Optional[List[AircraftEntryV2]]:
+    from services.data_authority.aircraft_spec_repository import (
+        INSUFFICIENT_VERIFIED_COMPARISON,
+        require_verified_specs,
+    )
+
+    verified, missing = require_verified_specs(canonical_names)
+    if missing:
+        return None
     entries: List[AircraftEntryV2] = []
-    for name in canonical_names:
-        spec = AIRCRAFT_PROFILES.get(name)
-        if not isinstance(spec, dict) or not spec:
+    for v in verified:
+        name = v.canonical_name
+        spec = v.to_profile_dict()
+        if not spec:
             return None
         range_nm = spec.get("practical_nm") or spec.get("range_nm")
         seats = spec.get("pax_typical") or spec.get("max_pax")
@@ -166,7 +175,11 @@ def build_comparison_payload_v2(
 
     entries = _build_aircraft_entries(lock.canonical, mission)
     if entries is None or len(entries) < 2:
-        return insufficient_comparison("missing catalog data for canonical aircraft set")
+        from services.data_authority.aircraft_spec_repository import (
+            INSUFFICIENT_VERIFIED_COMPARISON,
+        )
+
+        return insufficient_comparison(INSUFFICIENT_VERIFIED_COMPARISON)
 
     verdict = _build_verdict(entries)
     payload: ComparisonPayloadV2 = {

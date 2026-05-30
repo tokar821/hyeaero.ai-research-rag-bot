@@ -278,7 +278,7 @@ def build_consultant_tool_router(
     )
     pf = pinecone_filter_for_fine_intent(fine.intent.value)
     hint = build_mission_reasoning_hint(query, fine.intent.value, fine.entities)
-    engines = build_aviation_engines_block(fine, query)
+    engines = build_aviation_engines_block(fine, query, data_used=None)
     return ConsultantToolRouterState(
         registry_sql=registry,
         pinecone_filter=pf,

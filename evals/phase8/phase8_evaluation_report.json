@@ -1,0 +1,151 @@
+{
+  "dataset_summary": {
+    "FACT": 50,
+    "MARKET": 25,
+    "CAPABILITY": 25,
+    "COMPARISON": 25,
+    "ALTERNATIVE": 25,
+    "MISSION": 25,
+    "BUY_DECISION": 25,
+    "total": 200
+  },
+  "path_accuracy": {
+    "overall": {
+      "total": 200,
+      "pass_rate": 0.955,
+      "full_pass": 191
+    },
+    "by_category": {
+      "ALTERNATIVE": {
+        "category": "ALTERNATIVE",
+        "total": 25,
+        "pass_rate": 0.92,
+        "route_pass_rate": 0.92,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 0.92,
+        "route_pass": 23,
+        "model_pass": 25,
+        "behavior_pass": 23,
+        "full_pass": 23
+      },
+      "BUY_DECISION": {
+        "category": "BUY_DECISION",
+        "total": 25,
+        "pass_rate": 0.72,
+        "route_pass_rate": 0.72,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 0.72,
+        "route_pass": 18,
+        "model_pass": 25,
+        "behavior_pass": 18,
+        "full_pass": 18
+      },
+      "CAPABILITY": {
+        "category": "CAPABILITY",
+        "total": 25,
+        "pass_rate": 1.0,
+        "route_pass_rate": 1.0,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 1.0,
+        "route_pass": 25,
+        "model_pass": 25,
+        "behavior_pass": 25,
+        "full_pass": 25
+      },
+      "COMPARISON": {
+        "category": "COMPARISON",
+        "total": 25,
+        "pass_rate": 1.0,
+        "route_pass_rate": 1.0,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 1.0,
+        "route_pass": 25,
+        "model_pass": 25,
+        "behavior_pass": 25,
+        "full_pass": 25
+      },
+      "FACT": {
+        "category": "FACT",
+        "total": 50,
+        "pass_rate": 1.0,
+        "route_pass_rate": 1.0,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 1.0,
+        "route_pass": 50,
+        "model_pass": 50,
+        "behavior_pass": 50,
+        "full_pass": 50
+      },
+      "MARKET": {
+        "category": "MARKET",
+        "total": 25,
+        "pass_rate": 1.0,
+        "route_pass_rate": 1.0,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 1.0,
+        "route_pass": 25,
+        "model_pass": 25,
+        "behavior_pass": 25,
+        "full_pass": 25
+      },
+      "MISSION": {
+        "category": "MISSION",
+        "total": 25,
+        "pass_rate": 1.0,
+        "route_pass_rate": 1.0,
+        "model_pass_rate": 1.0,
+        "behavior_pass_rate": 1.0,
+        "route_pass": 25,
+        "model_pass": 25,
+        "behavior_pass": 25,
+        "full_pass": 25
+      }
+    }
+  },
+  "aircraft_failures": {
+    "aircraft_failures": {
+      "Challenger Longitude": {
+        "failures": 2,
+        "categories": [
+          "ALTERNATIVE"
+        ]
+      }
+    },
+    "total_aircraft_with_failures": 1,
+    "total_failure_events": 2
+  },
+  "legacy_unified_benchmark": {
+    "total": 200,
+    "legacy_wins": 0,
+    "legacy_win_rate": 0.0,
+    "unified_wins": 159,
+    "unified_win_rate": 0.795,
+    "ties": 41,
+    "tie_rate": 0.205,
+    "mean_legacy_score": 0.6731,
+    "mean_unified_score": 0.97
+  },
+  "rollout_readiness": {
+    "score": 0.9294,
+    "recommendation": "SAFE_FOR_100_PERCENT",
+    "routing_accuracy": 0.955,
+    "behavior_compliance": 0.9486,
+    "unified_win_rate": 0.795,
+    "failure_concentration": 0.01,
+    "rollback_risk": 0.0
+  },
+  "rollback_metrics_snapshot": {
+    "hardening_failure_count": 0,
+    "execution_path_none_count": 0,
+    "ambiguity_rate_by_intent": {},
+    "legacy_fallback_rate": 0,
+    "capability_without_model_rate": 0,
+    "rollout_percentage": 0,
+    "unified_selected_count": 0,
+    "legacy_selected_count": 0,
+    "authority_divergence_count": 0,
+    "rollback_trigger_count": 0,
+    "authority_divergence_rate": 0.0,
+    "total_rollout_events": 0
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "summary": {
+    "pass": "16/16",
+    "graded": 16
+  },
+  "sections": {
+    "environment": [
+      {
+        "check": "OPENAI_API_KEY",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "check": "PINECONE_API_KEY",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "check": "POSTGRES_CONNECTION_STRING",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "check": "SEARCHAPI_API_KEY",
+        "pass": true,
+        "detail": "optional \u2014 images"
+      }
+    ],
+    "orchestration": [
+      {
+        "check": "Q31 Praetor SD\u2013Tokyo not FEASIBLE",
+        "pass": true,
+        "detail": "renderer=named_aircraft_capability snippet=## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Praetor 600\n- **Verdict**: NOT REALISTIC\n- **Range "
+      },
+      {
+        "check": "Q31 no directional disclaimer",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "check": "Q48 fractional ownership economics",
+        "pass": true,
+        "detail": "renderer=ownership_economics"
+      },
+      {
+        "check": "Q47 Tokyo evolution (not Aspen-only)",
+        "pass": true,
+        "detail": "## Mission evolution \u2014 recommendation shift\n\nYes \u2014 **quarterly Tokyo (or similar ULR continuation)** would change the recommendation versus a Texas\u2013Florida + ep"
+      },
+      {
+        "check": "Q43 broker shortlist",
+        "pass": true,
+        "detail": ""
+      },
+      {
+        "check": "Q49 Singapore follow-up strategic",
+        "pass": true,
+        "detail": "strategic_analysis"
+      }
+    ],
+    "images": [
+      {
+        "check": "Falcon 8X image URLs returned",
+        "pass": true,
+        "detail": "count=2"
+      },
+      {
+        "check": "Image URL http(s)",
+        "pass": true,
+        "detail": "https://www.dassaultfalcon.com/app/uploads/2025/07/8X432-1-Exterior.jpg"
+      },
+      {
+        "check": "Image prose not fail-closed only",
+        "pass": true,
+        "detail": "## Verified aircraft imagery\n\n- **Dassault Falcon 8X** (confidence 72%): https://www.dassaultfalcon."
+      }
+    ],
+    "rag": [
+      {
+        "check": "RAG LLM answer non-empty",
+        "pass": true,
+        "detail": "len=118"
+      },
+      {
+        "check": "RAG Pinecone/SQL sources",
+        "pass": true,
+        "detail": "sources=3"
+      },
+      {
+        "check": "RAG retrieve() returns chunks",
+        "pass": true,
+        "detail": "chunks=18"
+      }
+    ]
+  }
+}

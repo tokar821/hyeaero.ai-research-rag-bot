@@ -2,48 +2,6 @@
 
 Production evaluation framework for HyeAero consultant mission intelligence.
 
-## Orchestration Router V2
-
-Deterministic query-type routing runs **before** recommendation generation and controls renderer selection, fallback authority, and OPERATIONAL SYNTHESIS activation.
-
-Query types: `named_aircraft_capability`, `explicit_comparison`, `strategic_fleet_analysis`, `network_structure`, `recommendation_request`.
-
-```bash
-pytest tests/test_orchestration_router_v2.py -q
-```
-
-## HACK v4 — adversarial test generation (no inference)
-
-Generates fresh adversarial mission prompts for CI stress harnesses. Does **not** run orchestration, ranking, or aircraft recommendations.
-
-```bash
-cd backend
-python runners/run_hack_v4_adversarial_suite.py
-pytest tests/test_hack_v4_adversarial_generator.py -q
-```
-
-Output: `evals/hack_v4_adversarial_suite.json` — contract fields only: `test_id`, `prompt`, `trap_class`, `severity`, `stress_score`, `expected_failure_modes`.
-
-## Recommendation quality (orchestration) — FINAL 10
-
-`recommendation_quality_10_suite.json` — **not geo tests**. Stresses final orchestration:
-
-- Response mode / aircraft suppression discipline
-- Hierarchy weighting and interpretation-first behavior
-- Anti-generic ULR dumping
-- Broker realism and structured verdict quality
-- Mission-to-aircraft coherence
-
-Run:
-
-```bash
-cd backend
-python runners/run_recommendation_quality_10.py
-pytest tests/test_recommendation_quality_10.py -q
-```
-
-Results: `evals/recommendation_quality_10_results.json`
-
 ## Dataset
 
 `aviation_mission_suite.json` — 24 real buyer/advisor cases across:

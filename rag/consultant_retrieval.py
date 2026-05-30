@@ -51,6 +51,39 @@ def _env_truthy(key: str) -> bool:
     return (os.getenv(key) or "").strip().lower() in ("1", "true", "yes")
 
 
+def _unified_intent_shadow_enabled() -> bool:
+    raw = os.getenv("UNIFIED_INTENT_SHADOW_MODE")
+    if raw is None or not str(raw).strip():
+        return True
+    return _env_truthy("UNIFIED_INTENT_SHADOW_MODE")
+
+
+def _unified_intent_enforce_fact() -> bool:
+    return _env_truthy("UNIFIED_INTENT_ENFORCE_FACT")
+
+
+def _unified_intent_enforce_capability() -> bool:
+    return _env_truthy("UNIFIED_INTENT_ENFORCE_CAPABILITY")
+
+
+def _unified_intent_enforce_comparison() -> bool:
+    return _env_truthy("UNIFIED_INTENT_ENFORCE_COMPARISON")
+
+
+def _unified_intent_enforce_alternative() -> bool:
+    return _env_truthy("UNIFIED_INTENT_ENFORCE_ALTERNATIVE")
+
+
+def _unified_intent_router_active() -> bool:
+    return (
+        _unified_intent_shadow_enabled()
+        or _unified_intent_enforce_fact()
+        or _unified_intent_enforce_capability()
+        or _unified_intent_enforce_comparison()
+        or _unified_intent_enforce_alternative()
+    )
+
+
 def _filter_phly_rows_for_shopping_pivot(
     rows: List[Dict[str, Any]],
     query: str,
@@ -482,6 +515,10 @@ def run_consultant_retrieval_bundle(
     _aviation_engines_ctx = (_router.aviation_engines_block or "").strip()
     _pre_llm_pipeline_patch: Dict[str, Any] = {}
     _pipeline_authority_block = ""
+    _unified_route = None
+    _qri = None
+    _unified_gate_obs = None
+    _rollout_decision = None
     try:
         from services.consultant.pre_llm_recommendation import (
             run_pre_llm_recommendation,
@@ -493,6 +530,51 @@ def run_consultant_retrieval_bundle(
         )
 
         _qri = classify_query_recommendation_intent(query, _history_original)
+
+        if _unified_intent_router_active():
+            from services.routing.unified_intent_router import (
+                classify_unified_intent,
+            )
+
+            _unified_route = classify_unified_intent(query)
+            if _unified_intent_shadow_enabled():
+                from services.routing.unified_intent_router import build_unified_intent_shadow
+
+                _pre_llm_pipeline_patch["unified_intent_shadow"] = build_unified_intent_shadow(
+                    _unified_route,
+                    _qri.intent.value,
+                    enforce_fact=_unified_intent_enforce_fact(),
+                )
+
+            from services.routing.unified_intent_hardening_guard import attach_hardening_layer
+
+            attach_hardening_layer(
+                _pre_llm_pipeline_patch,
+                query=query or "",
+                route=_unified_route,
+                qri_intent=_qri.intent.value,
+                enforce_fact=_unified_intent_enforce_fact(),
+            )
+
+            from services.routing.unified_emergency_rollback import evaluate_emergency_rollback
+            from services.routing.unified_rollout_controller import (
+                attach_rollout_decision,
+                evaluate_rollout,
+                extract_rollout_session_keys,
+            )
+
+            _rollout_uid, _rollout_cid = extract_rollout_session_keys(client_conversation_state)
+            _rollback_status = evaluate_emergency_rollback(
+                production_metrics=_pre_llm_pipeline_patch.get("unified_intent_production_metrics"),
+            )
+            _rollout_decision = evaluate_rollout(
+                user_id=_rollout_uid,
+                conversation_id=_rollout_cid,
+                rollback_status=_rollback_status,
+            )
+            attach_rollout_decision(_pre_llm_pipeline_patch, _rollout_decision)
+            _pre_llm_pipeline_patch["unified_emergency_rollback"] = _rollback_status.to_dict()
+
         apply_query_intent_metadata(_pre_llm_pipeline_patch, _qri)
 
         if should_run_pre_llm_pipeline(
@@ -536,6 +618,169 @@ def run_consultant_retrieval_bundle(
             )
     except Exception as _pipe_e:
         logger.warning("pre-LLM recommendation pipeline skipped: %s", _pipe_e)
+
+    if _unified_route is not None:
+        _obs_timer = None
+        try:
+            from services.routing.unified_intent_observability import (
+                ObservabilityTimer,
+                attach_unified_intent_observability,
+            )
+            from services.routing.unified_authority_comparator import compare_authority
+            from services.routing.unified_pipeline_gate import evaluate_pipeline_gate
+            from services.telemetry.unified_rollout_telemetry import (
+                get_rollout_telemetry_snapshot,
+                record_rollout_event,
+            )
+
+            _rollout_enabled = bool(_rollout_decision is not None and _rollout_decision.enabled)
+
+            _unified_gate_obs = evaluate_pipeline_gate(
+                _unified_route,
+                enforce_fact=_unified_intent_enforce_fact() and _rollout_enabled,
+                enforce_capability=_unified_intent_enforce_capability() and _rollout_enabled,
+                enforce_comparison=_unified_intent_enforce_comparison() and _rollout_enabled,
+                enforce_alternative=_unified_intent_enforce_alternative() and _rollout_enabled,
+            )
+            _obs_timer = ObservabilityTimer()
+            attach_unified_intent_observability(
+                _pre_llm_pipeline_patch,
+                query=query or "",
+                route=_unified_route,
+                gate=_unified_gate_obs,
+                qri_intent=(_qri.intent.value if _qri is not None else ""),
+                shadow_mode=_unified_intent_shadow_enabled(),
+                enforce_fact=_unified_intent_enforce_fact() and _rollout_enabled,
+                enforce_capability=_unified_intent_enforce_capability() and _rollout_enabled,
+                enforce_comparison=_unified_intent_enforce_comparison() and _rollout_enabled,
+                enforce_alternative=_unified_intent_enforce_alternative() and _rollout_enabled,
+                latency_ms=_obs_timer.elapsed_ms(),
+            )
+            if _rollout_decision is not None:
+                _authority_comparison = compare_authority(
+                    _unified_route,
+                    _unified_gate_obs,
+                    qri_intent=(_qri.intent.value if _qri is not None else ""),
+                    unified_selected=_rollout_enabled and _unified_gate_obs.enforce,
+                    unified_latency_ms=_obs_timer.elapsed_ms(),
+                )
+                _pre_llm_pipeline_patch["unified_authority_comparison"] = (
+                    _authority_comparison.to_dict()
+                )
+                _pre_llm_pipeline_patch["unified_rollout_telemetry"] = record_rollout_event(
+                    _rollout_decision,
+                    comparison=_authority_comparison,
+                    rollback_triggered=bool(
+                        (_pre_llm_pipeline_patch.get("unified_emergency_rollback") or {}).get(
+                            "active"
+                        )
+                    ),
+                )
+            else:
+                _pre_llm_pipeline_patch["unified_rollout_telemetry"] = (
+                    get_rollout_telemetry_snapshot()
+                )
+        except Exception as _obs_e:
+            logger.debug("unified intent observability skipped: %s", _obs_e)
+
+        try:
+            from monitoring.production_event_bus import ingest_consultant_turn
+
+            _rollout_enabled_mon = bool(_rollout_decision is not None and _rollout_decision.enabled)
+            _gate_mon = _unified_gate_obs
+            _enforced_mon = bool(_gate_mon and _gate_mon.enforce)
+            _lat_mon = _obs_timer.elapsed_ms() if _obs_timer is not None else 0.0
+            ingest_consultant_turn(
+                _pre_llm_pipeline_patch,
+                query=query or "",
+                qri_intent=(_qri.intent.value if _qri is not None else ""),
+                latency_ms=_lat_mon,
+                unified_selected=_rollout_enabled_mon,
+                unified_enforced=_enforced_mon,
+                execution_path=(
+                    _unified_route.execution_path.value if _unified_route is not None else ""
+                ),
+            )
+        except Exception as _mon_e:
+            logger.debug("phase9 production monitoring ingest skipped: %s", _mon_e)
+
+    _rollout_enabled = bool(_rollout_decision is not None and _rollout_decision.enabled)
+    if _unified_route is not None and _rollout_enabled and (
+        _unified_intent_enforce_fact()
+        or _unified_intent_enforce_capability()
+        or _unified_intent_enforce_alternative()
+        or _unified_intent_enforce_comparison()
+    ):
+        from services.routing.unified_pipeline_gate import (
+            evaluate_pipeline_gate,
+            execute_unified_pipeline_handler,
+        )
+
+        _gate = _unified_gate_obs or evaluate_pipeline_gate(
+            _unified_route,
+            enforce_fact=_unified_intent_enforce_fact() and _rollout_enabled,
+            enforce_capability=_unified_intent_enforce_capability() and _rollout_enabled,
+            enforce_comparison=_unified_intent_enforce_comparison() and _rollout_enabled,
+            enforce_alternative=_unified_intent_enforce_alternative() and _rollout_enabled,
+        )
+        if _gate.enforce:
+            _handler_answer, _handler_du, _handler_log = execute_unified_pipeline_handler(
+                _unified_route,
+                _gate,
+                query or "",
+                shadow_payload=_pre_llm_pipeline_patch.get("unified_intent_shadow"),
+            )
+            for _obs_key in (
+                "unified_intent_drift",
+                "unified_intent_flag_validation",
+                "unified_intent_telemetry",
+                "unified_intent_hardening",
+                "unified_intent_production_metrics",
+                "unified_rollout_decision",
+                "unified_emergency_rollback",
+                "unified_authority_comparison",
+                "unified_rollout_telemetry",
+            ):
+                if _obs_key in _pre_llm_pipeline_patch:
+                    _handler_du[_obs_key] = _pre_llm_pipeline_patch[_obs_key]
+            if progress and _gate.progress_step:
+                progress.step(
+                    _gate.progress_step,
+                    unified_execution_path=_gate.execution_path.value,
+                    model=_unified_route.model,
+                    field=_unified_route.field,
+                )
+            logger.info("%s", _handler_log)
+            try:
+                from monitoring.production_event_bus import ingest_consultant_turn
+
+                ingest_consultant_turn(
+                    _handler_du,
+                    query=query or "",
+                    qri_intent=(_qri.intent.value if _qri is not None else ""),
+                    latency_ms=_obs_timer.elapsed_ms() if _obs_timer is not None else 0.0,
+                    unified_selected=True,
+                    unified_enforced=True,
+                    execution_path=_gate.execution_path.value,
+                    unified_output_length=len(_handler_answer or ""),
+                )
+            except Exception:
+                pass
+            finalize_consultant_conversation_state(
+                _handler_du,
+                client_conversation_state,
+                query=query or "",
+                history=_history_original,
+                fine_intent=_fine.intent.value,
+                continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+            )
+            return "professional", {
+                "answer": _handler_answer,
+                "sources": [],
+                "data_used": _handler_du,
+                "aircraft_images": [],
+                "error": None,
+            }
 
     _consultant_aviation_prefix = "\n\n".join(
         p for p in (_mission_hint, _pipeline_authority_block, _aviation_engines_ctx) if p

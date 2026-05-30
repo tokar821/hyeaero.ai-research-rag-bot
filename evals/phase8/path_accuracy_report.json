@@ -1,0 +1,93 @@
+{
+  "overall": {
+    "total": 200,
+    "pass_rate": 0.955,
+    "full_pass": 191
+  },
+  "by_category": {
+    "ALTERNATIVE": {
+      "category": "ALTERNATIVE",
+      "total": 25,
+      "pass_rate": 0.92,
+      "route_pass_rate": 0.92,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 0.92,
+      "route_pass": 23,
+      "model_pass": 25,
+      "behavior_pass": 23,
+      "full_pass": 23
+    },
+    "BUY_DECISION": {
+      "category": "BUY_DECISION",
+      "total": 25,
+      "pass_rate": 0.72,
+      "route_pass_rate": 0.72,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 0.72,
+      "route_pass": 18,
+      "model_pass": 25,
+      "behavior_pass": 18,
+      "full_pass": 18
+    },
+    "CAPABILITY": {
+      "category": "CAPABILITY",
+      "total": 25,
+      "pass_rate": 1.0,
+      "route_pass_rate": 1.0,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 1.0,
+      "route_pass": 25,
+      "model_pass": 25,
+      "behavior_pass": 25,
+      "full_pass": 25
+    },
+    "COMPARISON": {
+      "category": "COMPARISON",
+      "total": 25,
+      "pass_rate": 1.0,
+      "route_pass_rate": 1.0,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 1.0,
+      "route_pass": 25,
+      "model_pass": 25,
+      "behavior_pass": 25,
+      "full_pass": 25
+    },
+    "FACT": {
+      "category": "FACT",
+      "total": 50,
+      "pass_rate": 1.0,
+      "route_pass_rate": 1.0,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 1.0,
+      "route_pass": 50,
+      "model_pass": 50,
+      "behavior_pass": 50,
+      "full_pass": 50
+    },
+    "MARKET": {
+      "category": "MARKET",
+      "total": 25,
+      "pass_rate": 1.0,
+      "route_pass_rate": 1.0,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 1.0,
+      "route_pass": 25,
+      "model_pass": 25,
+      "behavior_pass": 25,
+      "full_pass": 25
+    },
+    "MISSION": {
+      "category": "MISSION",
+      "total": 25,
+      "pass_rate": 1.0,
+      "route_pass_rate": 1.0,
+      "model_pass_rate": 1.0,
+      "behavior_pass_rate": 1.0,
+      "route_pass": 25,
+      "model_pass": 25,
+      "behavior_pass": 25,
+      "full_pass": 25
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "total": 200,
+  "legacy_wins": 0,
+  "legacy_win_rate": 0.0,
+  "unified_wins": 159,
+  "unified_win_rate": 0.795,
+  "ties": 41,
+  "tie_rate": 0.205,
+  "mean_legacy_score": 0.6731,
+  "mean_unified_score": 0.97
+}

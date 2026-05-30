@@ -26,6 +26,11 @@ _SPOKEN_ALIASES: Dict[str, str] = {
     "bombardier global seven five zero zero": "Global 7500",
     "eight x extended range": "Falcon 8X",
     "falcon eight x extended range": "Falcon 8X",
+    "falcon eight x": "Falcon 8X",
+    "citation longitude": "Citation Longitude",
+    "cessna citation longitude": "Citation Longitude",
+    "legacy 600": "Legacy 600",
+    "embraer legacy 600": "Legacy 600",
 }
 
 
@@ -49,17 +54,31 @@ def _is_valid_canonical_name(name: str) -> bool:
 
 def resolve_to_registry_name(raw: str) -> Optional[str]:
     """Map raw token to a single canonical catalog name, or None."""
+    from services.catalog.catalog_alias_resolver import (
+        resolve_canonical_display_name,
+        resolve_catalog_profile_key,
+    )
+
     raw = (raw or "").strip()
     if not raw:
         return None
     if _BANNED_NAME_RE.search(raw):
         return None
 
+    canonical = resolve_canonical_display_name(raw)
+    profile_key = resolve_catalog_profile_key(raw)
+    if profile_key and profile_key in CANONICAL_COMPARISON_REGISTRY:
+        return profile_key
+    if canonical in CANONICAL_COMPARISON_REGISTRY:
+        return canonical
+
     spoken = re.sub(r"[^\w\s]", " ", raw.lower())
     spoken = re.sub(r"\s+", " ", spoken).strip()
     if spoken in _SPOKEN_ALIASES:
         return _SPOKEN_ALIASES[spoken]
-    if "eight x" in spoken and "extended" in spoken:
+    if spoken in ("falcon eight x", "eight x"):
+        return "Falcon 8X"
+    if "eight x" in spoken and ("extended" in spoken or spoken.startswith("falcon")):
         return "Falcon 8X"
     if spoken == "global seven five zero zero" or (
         "global" in spoken and "seven five zero zero" in spoken

@@ -11,7 +11,6 @@ FORBIDDEN_BROCHURE_RE = re.compile(
     r"\b(?:"
     r"supports\s+(?:the\s+)?mission|"
     r"excellent\s+range|"
-    r"ideal\s+solution|"
     r"ideal\s+aircraft|"
     r"great\s+choice|"
     r"luxurious|"

@@ -450,11 +450,9 @@ def sanitize_advisor_output(text: str) -> str:
         return ""
 
     try:
-        # Preserve markdown tables: upstream boilerplate stripping can reflow text.
-        if "|---|" not in (text or ""):
-            from rag.pinpoint_answer import strip_advisory_boilerplate
+        from rag.pinpoint_answer import strip_advisory_boilerplate
 
-            text = strip_advisory_boilerplate(text)
+        text = strip_advisory_boilerplate(text)
     except Exception:
         pass
 
@@ -491,12 +489,9 @@ def sanitize_advisor_output(text: str) -> str:
     except Exception:
         pass
     try:
-        # Preserve markdown tables: sentence de-dupe can corrupt structured tables by
-        # collapsing newlines into spaces.
-        if "|---|" not in out:
-            from services.consultant.response_cleanup import cleanResponseText
+        from services.consultant.response_cleanup import cleanResponseText
 
-            out = cleanResponseText(out)
+        out = cleanResponseText(out)
     except Exception:
         pass
     return out
@@ -1005,8 +1000,6 @@ def should_use_structured_formatter(
     query: str,
 ) -> bool:
     du = data_used if isinstance(data_used, dict) else {}
-    if du.get("broker_narrative_authoritative") or du.get("hack_v3_renderer_locked"):
-        return False
     qri = str(du.get("query_recommendation_intent") or "").strip().lower()
     if qri in (
         "aircraft_critique",

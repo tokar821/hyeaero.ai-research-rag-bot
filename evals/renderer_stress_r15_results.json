@@ -1,0 +1,175 @@
+{
+  "summary": {
+    "pass": "15/15"
+  },
+  "results": [
+    {
+      "id": "R01",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 3,
+      "names": [
+        "Praetor 600",
+        "Gulfstream G280",
+        "Challenger 650"
+      ],
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Praetor 600 | super-midsize | 3400 | medium | cond"
+    },
+    {
+      "id": "R02",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 3,
+      "names": [
+        "Global 7500",
+        "Gulfstream G650ER",
+        "Falcon 8X"
+      ],
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Global 7500 | ULR | 6600 | ultra | True | conditio"
+    },
+    {
+      "id": "R03",
+      "pass": true,
+      "issues": [],
+      "mode": "error",
+      "component": "renderer_failure",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "I don't have reliable structured output for this request yet.\nHere's the closest accurate guidance:\nINSUFFICIENT DATA FOR STRUCTURED COMPARISON"
+    },
+    {
+      "id": "R04",
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "component": "capability_verdict_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Falcon 8X"
+    },
+    {
+      "id": "R05",
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Strategic Fleet Analysis\n\nYour operational center of gravity is still regio"
+    },
+    {
+      "id": "R06",
+      "pass": true,
+      "issues": [],
+      "mode": "network_structure",
+      "component": "network_topology_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "## Network Utilization Hierarchy\n\n### Primary hubs (dominant utilization)\n- executive_transport\n\n### Secondary / executive traffic\n- ulr_continuation\n- domestic_utilization\n- ULR continuation is secon"
+    },
+    {
+      "id": "R07",
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Strategic Fleet Analysis\n\nYour operational center of gravity is still regio"
+    },
+    {
+      "id": "R08",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 2,
+      "names": [
+        "Global 7500",
+        "Falcon 8X"
+      ],
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Global 7500 | ULR | 6600 | ultra | True | strong |"
+    },
+    {
+      "id": "R09",
+      "pass": true,
+      "issues": [],
+      "mode": "error",
+      "component": "renderer_failure",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "I don't have reliable structured output for this request yet.\nHere's the closest accurate guidance:\nNothing in the catalog passed every hard gate as stated \u2014 that usually means range with reserves, ru"
+    },
+    {
+      "id": "R10",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "## Fleet Strategy Comparison\n\nThis is an archetype tradeoff \u2014 not a spec-sheet aircraft shopping list.\n\n### Dispatch Reliability\n- **Single ULR flagship:** high_peak_leg\n- **Mixed fleet + charter:** s"
+    },
+    {
+      "id": "R11",
+      "pass": true,
+      "issues": [],
+      "mode": "named_aircraft_capability",
+      "component": "capability_verdict_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 60"
+    },
+    {
+      "id": "R12",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 3,
+      "names": [
+        "Challenger 650",
+        "Gulfstream G280",
+        "Praetor 600"
+      ],
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Challenger 650 | large-cabin | 3500 | high | condi"
+    },
+    {
+      "id": "R13",
+      "pass": true,
+      "issues": [],
+      "mode": "recommendation_request",
+      "component": "broker_recommendation_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Strategic Fleet Analysis\n\nYour operational center of gravity is still regio"
+    },
+    {
+      "id": "R14",
+      "pass": true,
+      "issues": [],
+      "mode": "explicit_comparison",
+      "component": "comparison_table_v2",
+      "aircraft_count": 2,
+      "names": [
+        "Gulfstream G650ER",
+        "Global 7500"
+      ],
+      "preview": "## Aircraft Comparison\n\n| Aircraft | Cabin | Range (nm) | Operating economics | Field performance | Verdict |\n| --- | --- | --- | --- | --- | --- |\n| Gulfstream G650ER | ULR | 6300 | ultra | True | st"
+    },
+    {
+      "id": "R15",
+      "pass": true,
+      "issues": [],
+      "mode": "strategic_fleet_analysis",
+      "component": "strategic_analysis_v2",
+      "aircraft_count": 0,
+      "names": [],
+      "preview": "Some details below are directional rather than catalog-verified \u2014 I am narrowing scope instead of overstating certainty:\n\n## Named Aircraft Capability\n\n### Capability Verdict\n- **Aircraft**: Global 75"
+    }
+  ]
+}

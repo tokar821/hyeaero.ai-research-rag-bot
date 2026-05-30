@@ -601,25 +601,6 @@ def rank_missions(
     profile = mission_profile or mission_state_to_profile(mission)
     models = candidate_models or list(_AIRCRAFT_PROFILES.keys())
 
-    if isinstance(data_used, dict):
-        from services.recommendation.hack_v1_constraint_kernel import (
-            filter_models_by_hack_v1,
-            hack_v1_constraint_empty,
-            load_hack_v1_result,
-        )
-
-        if hack_v1_constraint_empty(data_used):
-            empty_cat = classify_mission_category(mission)
-            return empty_cat, [], {}, None
-        hack_loaded = load_hack_v1_result(data_used)
-        if hack_loaded and hack_loaded.feasible_aircraft_list and candidate_models is None:
-            allowed = set(hack_loaded.feasible_aircraft_list)
-            models = [m for m in models if m in allowed]
-        else:
-            models = filter_models_by_hack_v1(models, data_used)
-        if not models:
-            return classify_mission_category(mission), [], {}, None
-
     try:
         from services.aircraft_truth import filter_truth_verified_models
 

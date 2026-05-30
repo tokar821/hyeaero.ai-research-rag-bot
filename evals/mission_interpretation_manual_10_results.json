@@ -1,0 +1,69 @@
+{
+  "summary": {
+    "pass": 8,
+    "partial": 2,
+    "note": "Semantic interpretation formatter path; no aircraft or route dumps in any response"
+  },
+  "results": [
+    {
+      "id": "Q1",
+      "decomposition": true,
+      "verdict": "decomposed fleet problem",
+      "highlights": ["arctic_operations primary weight", "domestic_utilization in secondary", "Chicago-NY as utilization-dominant in prose constraint"]
+    },
+    {
+      "id": "Q2",
+      "decomposition": false,
+      "verdict": "coherent single-mission (structure-first)",
+      "highlights": ["executive/ULR ranked above domestic_utilization weight", "Dubai continuation = secondary traffic called out"]
+    },
+    {
+      "id": "Q3",
+      "decomposition": false,
+      "verdict": "coherent single-mission",
+      "note": "User asked one vs multiple — should ideally say decomposed (Lagos industrial + Caribbean + founder Riyadh)"
+    },
+    {
+      "id": "Q4",
+      "decomposition": true,
+      "verdict": "decomposed fleet problem",
+      "highlights": ["arctic + industrial hard domains dominate", "winter/dispatch conflict surfaced"]
+    },
+    {
+      "id": "Q5",
+      "decomposition": false,
+      "verdict": "industrial/mining dominates acquisition",
+      "highlights": ["mining_logistics primary", "London/Zurich as executive/ULR overlay", "regional Australia implied by domain mix"]
+    },
+    {
+      "id": "Q6",
+      "decomposition": true,
+      "verdict": "decomposed fleet problem",
+      "highlights": ["tri-continent industrial/executive mix triggers band proof"]
+    },
+    {
+      "id": "Q7",
+      "decomposition": true,
+      "verdict": "decomposed fleet problem",
+      "highlights": ["mountain_leisure lowest weight", "same-aircraft realism rejected via incompatible bands"]
+    },
+    {
+      "id": "Q8",
+      "decomposition": false,
+      "verdict": "coherent single-mission",
+      "highlights": ["domestic_utilization in secondary", "founder Singapore = ULR secondary unless mandated"]
+    },
+    {
+      "id": "Q9",
+      "decomposition": true,
+      "verdict": "decomposed fleet problem",
+      "highlights": ["five domains listed without flattening to one hub", "multi_hard_domain conflicts listed"]
+    },
+    {
+      "id": "Q10",
+      "decomposition": false,
+      "verdict": "coherent single-mission",
+      "highlights": ["ULR continuation as primary utilization label", "corrects hub-as-primary distortion semantically"]
+    }
+  ]
+}
