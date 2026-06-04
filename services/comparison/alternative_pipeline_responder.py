@@ -7,7 +7,7 @@ Uses replacement hierarchy only. No mission orchestration or kernel synthesis.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from services.aircraft_truth.constants import UNVERIFIED_AIRCRAFT_MESSAGE
 from services.consultant.mission_state import MissionState, build_mission_from_current_turn
@@ -27,13 +27,22 @@ _ALTERNATIVE_EXECUTION_RE = re.compile(
     r"\b(?:"
     r"alternatives?\s+to|"
     r"alternative\s+to|"
+    r"replacement\s+options\s+for|"
+    r"similar\s+aircraft\s+to|"
     r"instead\s+of\s+(?:a|an|the)\s+|"
     r"what\s+(?:aircraft|jet|plane)\s+should\s+i\s+consider\s+instead\s+of|"
     r"should\s+i\s+consider\s+instead\s+of|"
     r"replace\s+.+\s+with|"
-    r"better\s+than\s+.+\s+for"
+    r"better\s+than\s+.+\s+for|"
+    r"cheap\s+gulfstream|"
+    r"best\s+jet\s+under|"
+    r"best\s+super-?midsize"
     r")\b",
     re.I,
+)
+
+_REPLACEMENT_FOR_RE = re.compile(
+    r"(?is)(?:replacement\s+options\s+for|similar\s+aircraft\s+to)\s+(.+)$",
 )
 
 _INSTEAD_OF_TARGET_RE = re.compile(
@@ -68,24 +77,43 @@ def is_alternative_execution_query(query: str) -> bool:
 
 
 def _resolve_alternative_target(query: str) -> Optional[str]:
+    from services.aircraft.aircraft_authority_service import (
+        get_aircraft_authority_record,
+        resolve_aircraft_alias,
+    )
     from services.catalog.catalog_alias_resolver import resolve_canonical_display_name
     from services.consultant.recommendation_engine import detect_models_from_text
     from services.recommendation.replacement_hierarchy import extract_replacement_target
 
+    def _canonicalize(raw: str) -> Optional[str]:
+        token = (raw or "").strip().rstrip("?.!")
+        if not token:
+            return None
+        for candidate in (token, f"Citation {token}"):
+            canonical = resolve_aircraft_alias(candidate) or resolve_canonical_display_name(candidate) or candidate
+            if get_aircraft_authority_record(aircraft_model=canonical):
+                return canonical
+        return None
+
     target = extract_replacement_target(query or "")
     if target:
-        return target
+        return _canonicalize(target) or target
+    m = _REPLACEMENT_FOR_RE.search(query or "")
+    if m:
+        resolved = _canonicalize(m.group(1))
+        if resolved:
+            return resolved
     m = _INSTEAD_OF_TARGET_RE.search(query or "")
     if m:
-        raw = m.group(1).strip()
-        if raw:
-            return resolve_canonical_display_name(raw) or raw
+        resolved = _canonicalize(m.group(1))
+        if resolved:
+            return resolved
     if not is_alternative_execution_query(query):
         return None
     found = detect_models_from_text(query or "")
     if not found:
         return None
-    return resolve_canonical_display_name(found[0]) or found[0]
+    return _canonicalize(found[0]) or resolve_canonical_display_name(found[0]) or found[0]
 
 
 def respond_aircraft_alternative(
@@ -103,8 +131,24 @@ def respond_aircraft_alternative(
     if not target:
         return UNVERIFIED_AIRCRAFT_MESSAGE
 
+    from services.aircraft.aircraft_authority_service import get_aircraft_authority_record
+
+    authority_rec = get_aircraft_authority_record(aircraft_model=target)
+    if authority_rec is not None:
+        target = authority_rec.canonical_name
+
     ms = mission if mission is not None else build_mission_from_current_turn(query or "")
     candidates: List[str] = realistic_replacement_candidates(target, ms, query=query or "")[:4]
+    if authority_rec and authority_rec.direct_competitors:
+        merged: List[str] = []
+        seen: Set[str] = set()
+        for name in list(authority_rec.direct_competitors) + candidates:
+            key = name.lower()
+            if key in seen or key == target.lower():
+                continue
+            seen.add(key)
+            merged.append(name)
+        candidates = merged[:4]
     if not candidates:
         return UNVERIFIED_AIRCRAFT_MESSAGE
 

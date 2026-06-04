@@ -20,7 +20,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 
 
-from services.consultant.llm_explanation_layer import build_pipeline_authority_block
+from services.consultant.consultant_llm_policy import consultant_llm_narration_enabled
+from services.consultant.llm_explanation_layer import build_pipeline_llm_fact_block
 
 from services.consultant.recommendation_engine import detect_models_from_text
 
@@ -264,7 +265,7 @@ def run_pre_llm_recommendation(
 
 
 
-    block = build_pipeline_authority_block(
+    fact_block = build_pipeline_llm_fact_block(
         result,
         query=query,
         query_intent=qri.intent.value,
@@ -281,9 +282,27 @@ def run_pre_llm_recommendation(
 
         "pre_llm_pipeline_authority": 1,
 
+        "pipeline_llm_facts": fact_block,
+
     }
 
     patch.update(du)
 
-    return block, patch, result
+    try:
+        from services.consultant.model_authority_guard import (
+            register_mission_ranking_candidates,
+            register_recovery_authority,
+        )
+
+        ranked = [r.model for r in result.recommendations if not getattr(r, "avoid", False)]
+        register_mission_ranking_candidates(patch, ranked)
+        register_recovery_authority(patch, ranked)
+    except Exception:
+        pass
+
+    # LLM-primary path: facts flow through fact pack — not phly/RAG prefix injection.
+    if consultant_llm_narration_enabled():
+        return "", patch, result
+
+    return fact_block, patch, result
 

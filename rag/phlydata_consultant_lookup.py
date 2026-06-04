@@ -522,6 +522,8 @@ def extract_phlydata_lookup_tokens(query: str) -> List[str]:
 def extract_us_registration_tail_candidates(
     query: str,
     history: Optional[List[Dict[str, str]]] = None,
+    *,
+    allow_history: bool = True,
 ) -> List[str]:
     """
     Scan the **current message** and (when provided) **recent chat** for U.S. civil registration marks
@@ -534,6 +536,8 @@ def extract_us_registration_tail_candidates(
     """
     from rag.aviation_tail import find_strict_tail_candidates
 
+    if not allow_history:
+        history = None
     return find_strict_tail_candidates(query, history, max_history_messages=16)
 
 
@@ -576,9 +580,7 @@ def consultant_phly_lookup_token_list(
     do not merge older thread tokens (prevents repeating N678PS when they ask about 000017).
     If the current message has no aircraft tokens, fall back to recent chat (e.g. "thanks", "and the hours?").
 
-    **Strict civil tails** from the current message are **prepended** to extracted tokens so casual phrasing
-    (e.g. "Have you N807JS now?") still resolves the registration even when tokenization would otherwise
-    pair noisy fragments with the tail.
+    When the latest message anchors a **different aircraft model**, history tail fallback is skipped.
     """
     from rag.aviation_tail import find_strict_tail_candidates_in_text
 
@@ -596,6 +598,15 @@ def consultant_phly_lookup_token_list(
     merged = _refine_phly_lookup_tokens(merged)
     if merged:
         return merged
+
+    try:
+        from rag.consultant_query_anchor import latest_message_anchors_aircraft_identity
+
+        if latest_message_anchors_aircraft_identity(q):
+            return []
+    except Exception:
+        pass
+
     # Follow-up lines often omit the tail; anchor on the last user-cited registration, not every
     # token ever mentioned (AND-match would drop all rows).
     anchor = _strict_tails_latest_from_user_thread(q, history)

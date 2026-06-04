@@ -29,6 +29,11 @@ _SPOKEN_ALIASES: Dict[str, str] = {
     "falcon eight x": "Falcon 8X",
     "citation longitude": "Citation Longitude",
     "cessna citation longitude": "Citation Longitude",
+    "longitude": "Citation Longitude",
+    "g700": "Gulfstream G700",
+    "gulfstream g700": "Gulfstream G700",
+    "g650": "Gulfstream G650",
+    "gulfstream g650": "Gulfstream G650",
     "legacy 600": "Legacy 600",
     "embraer legacy 600": "Legacy 600",
 }
@@ -54,6 +59,7 @@ def _is_valid_canonical_name(name: str) -> bool:
 
 def resolve_to_registry_name(raw: str) -> Optional[str]:
     """Map raw token to a single canonical catalog name, or None."""
+    from services.aircraft.aircraft_authority_service import resolve_aircraft_alias
     from services.catalog.catalog_alias_resolver import (
         resolve_canonical_display_name,
         resolve_catalog_profile_key,
@@ -64,6 +70,10 @@ def resolve_to_registry_name(raw: str) -> Optional[str]:
         return None
     if _BANNED_NAME_RE.search(raw):
         return None
+
+    alias_canonical = resolve_aircraft_alias(raw)
+    if alias_canonical and alias_canonical in CANONICAL_COMPARISON_REGISTRY:
+        return alias_canonical
 
     canonical = resolve_canonical_display_name(raw)
     profile_key = resolve_catalog_profile_key(raw)

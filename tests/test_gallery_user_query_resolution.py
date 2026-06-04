@@ -8,6 +8,8 @@ def test_appends_resolved_tail_for_deictic():
     assert "that" in out.lower()
 
 
-def test_no_duplicate_when_tail_already_in_line():
+def test_tail_in_line_becomes_tail_led_gallery_query():
     q = "Show me N878BW cabin"
-    assert gallery_user_query_for_image_pipeline(q, resolved_tail="N878BW") == q
+    out = gallery_user_query_for_image_pipeline(q, resolved_tail="N878BW")
+    assert "N878BW" in out.upper()
+    assert "cabin" in out.lower() or "interior" in out.lower()

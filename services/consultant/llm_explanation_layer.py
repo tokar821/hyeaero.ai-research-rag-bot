@@ -26,7 +26,7 @@ def intents_requiring_deterministic_pipeline(fine_intent_value: str) -> bool:
     )
 
 
-def build_pipeline_authority_block(
+def build_pipeline_llm_fact_block(
     result: AdvisoryPipelineResult,
     *,
     query: str = "",
@@ -34,17 +34,18 @@ def build_pipeline_authority_block(
     data_used: Optional[dict] = None,
 ) -> str:
     """
-    Mandatory pre-LLM context: mission + feasible aircraft + metadata only.
+    Facts-only context for the LLM final renderer.
 
-    The LLM narrates; the deterministic engine decides feasibility and ranking.
+    No report scaffolds, operational-synthesis prose, or copy-paste section templates.
     """
-    del query, query_intent
+    del query_intent
 
     validation = result.mission_validation or {}
     if validation.get("needs_route_clarification"):
         return (
-            "[BROKER ADVISORY — CLARIFICATION ONLY]\n"
-            "Do not recommend aircraft yet. Ask one focused question:\n"
+            "[VERIFIED MISSION FACTS — clarification required]\n"
+            "needs_route_clarification: true\n"
+            "clarifying_question: "
             + str(validation.get("clarifying_question") or "What's the primary city pair?")
         ).strip()
 
@@ -52,28 +53,30 @@ def build_pipeline_authority_block(
     if not recs:
         if isinstance(data_used, dict) and data_used.get("mission_understanding_authority"):
             return (
-                "[BROKER ADVISORY — OPERATIONAL SYNTHESIS FIRST]\n"
-                + str(data_used.get("mission_understanding_authority"))
-                + "\n\nNo aircraft passed every hard gate — use fallback class band from understanding. "
-                "Do NOT leave Aircraft Options empty. Do NOT invent brochure performance."
+                "[VERIFIED MISSION FACTS — class band only; no aircraft passed hard gates]\n"
+                "mission_understanding: "
+                + str(data_used.get("mission_understanding_authority"))[:3000]
+                + "\nrules: Explain conservatively; do not invent models or brochure performance."
             ).strip()
         return (
-            "[BROKER ADVISORY — NO FEASIBLE AIRCRAFT]\n"
-            "No aircraft passed hard feasibility for this mission as stated.\n"
-            "Explain why conservatively (range, runway, payload) and ask what constraint could change.\n"
-            "Do NOT invent models. Do NOT use middleware phrasing."
+            "[VERIFIED MISSION FACTS — no feasible aircraft]\n"
+            "feasible_aircraft: []\n"
+            "rules: Explain why (range, runway, payload) and ask what constraint could change. "
+            "Do not invent models."
         ).strip()
 
     block = build_broker_llm_context_block(
         result.mission_state,
         recs,
         route_assessments=[],
+        data_used=data_used,
     )
 
     lines: List[str] = [
         block,
         "",
-        f"Decision source: {DECISION_SOURCE} (feasibility already evaluated — do not re-score).",
+        f"decision_source: {DECISION_SOURCE}",
+        "rules: Feasibility and ranking are final — narrate only; do not re-score or add aircraft.",
     ]
 
     try:
@@ -81,7 +84,7 @@ def build_pipeline_authority_block(
 
         if query:
             lines.append("")
-            lines.append("[PREPROCESSED MISSION JSON — facts only, do not invent routes]")
+            lines.append("[PREPROCESSED MISSION JSON — facts only]")
             lines.append(preprocess_mission_json(query))
     except Exception:
         pass
@@ -96,8 +99,8 @@ def build_pipeline_authority_block(
         if hard_ctx is not None:
             hard_set = hard_excluded_model_set(result.mission_profile)
             lines.append("")
-            lines.append("HARD-EXCLUDED (mention only if asked — never recommend):")
-            lines.append(f"  {hard_ctx.summary}")
+            lines.append("hard_excluded_models:")
+            lines.append(f"  summary: {hard_ctx.summary}")
             for model in sorted(hard_set)[:8]:
                 lines.append(f"  - {model}")
     except Exception:
@@ -119,21 +122,35 @@ def build_pipeline_authority_block(
     return "\n".join(lines).strip()
 
 
+def build_pipeline_authority_block(
+    result: AdvisoryPipelineResult,
+    *,
+    query: str = "",
+    query_intent: str = "",
+    data_used: Optional[dict] = None,
+) -> str:
+    """Alias for fact-only LLM context (legacy name retained for callers)."""
+    return build_pipeline_llm_fact_block(
+        result,
+        query=query,
+        query_intent=query_intent,
+        data_used=data_used,
+    )
+
+
 def build_narration_system_addendum(*, query_intent: str = "") -> str:
-    """Broker-style system addendum for advisory turns."""
+    """System addendum for LLM-primary turns — natural prose, no report templates."""
     base = (
-        "You are a top-tier aircraft acquisition consultant — not middleware, not a report generator. "
-        "Aircraft names come ONLY from the [BROKER ADVISORY CONTEXT] and [IMMUTABLE REASONING PACKET] blocks when present. "
-        "You explain and critique; the engine decides feasibility and broker verdicts. "
-        "You MUST NOT add aircraft beyond PRESENTED, recommend ELIMINATED aircraft, or upgrade verdicts "
-        "(e.g. never call a MISSION-RISKY aircraft PRIMARY RECOMMENDATION or 'best fit'). "
-        "Be concise, factual, decisive; slightly critical when appropriate. "
-        "No marketing language. No generic AI phrasing. Maximum 3 aircraft. "
-        "Use fixed structure: Mission Fit (Route, Pax, Priorities), "
-        "Aircraft Options (Why it fits, Key compromise), Verdict (broker verdict labels exactly as given). "
-        "Comparisons: only range, cabin, operating cost, runway capability, liquidity — no other dimensions. "
-        "Never use: mission profile, mission score, confidence score, operationally, "
-        "worth considering, if priorities shift, stage length, balanced capability, Mission Summary."
+        "You are the sole author of the client-facing answer — one expert aircraft broker voice. "
+        "Structured context blocks contain verified facts only; turn them into clear, direct prose. "
+        "Do NOT mirror internal labels, bullet scaffolds, or report section headings in the reply. "
+        "Forbidden in the user-visible answer: Mission Fit, Aircraft Options, Verdict, "
+        "Operational synthesis, Key risk, What I would do, Before treating it as a bargain, "
+        "mission profile, mission score, confidence score. "
+        "Lead with the direct answer to the latest question; short paragraphs; no spec dumps unless asked. "
+        "Aircraft names only from verified context — never invent feasibility, range, or models. "
+        "At most three aircraft when recommending. No marketing or generic AI phrasing. "
+        "Comparisons: range, cabin, operating cost, runway capability, liquidity only."
     )
     qi = (query_intent or "").strip().lower()
     if qi in ("aircraft_critique", "ownership_economics", "payload_range_analysis"):

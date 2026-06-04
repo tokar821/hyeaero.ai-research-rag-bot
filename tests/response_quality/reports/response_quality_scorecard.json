@@ -1,0 +1,623 @@
+{
+  "total_audited": 100,
+  "overall_broker_quality_score": 100.0,
+  "broker_recommendation_accuracy_pct": 100.0,
+  "mission_feasibility_accuracy_pct": 100.0,
+  "valuation_accuracy_pct": 100.0,
+  "comparison_quality_pct": 100.0,
+  "answer_consistency_pct": 100.0,
+  "stop_condition_hits": 0,
+  "finding_counts": {},
+  "top_risk": [
+    {
+      "query_id": "cmp-001",
+      "category": "comparison",
+      "query": "G650 vs Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-002",
+      "category": "comparison",
+      "query": "Compare G650 and Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-003",
+      "category": "comparison",
+      "query": "How does G650 compare to Falcon 8X?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-004",
+      "category": "comparison",
+      "query": "G650 versus Falcon 8X for charter operations",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-005",
+      "category": "comparison",
+      "query": "Which is better, G650 or Falcon 8X?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-006",
+      "category": "comparison",
+      "query": "G650 vs Global 7500",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-007",
+      "category": "comparison",
+      "query": "Compare G650 and Global 7500",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-008",
+      "category": "comparison",
+      "query": "How does G650 compare to Global 7500?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-009",
+      "category": "comparison",
+      "query": "G650 versus Global 7500 for charter operations",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-010",
+      "category": "comparison",
+      "query": "Which is better, G650 or Global 7500?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-011",
+      "category": "comparison",
+      "query": "G650 vs G700",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-012",
+      "category": "comparison",
+      "query": "Compare G650 and G700",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-013",
+      "category": "comparison",
+      "query": "How does G650 compare to G700?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-014",
+      "category": "comparison",
+      "query": "G650 versus G700 for charter operations",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-015",
+      "category": "comparison",
+      "query": "Which is better, G650 or G700?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-016",
+      "category": "comparison",
+      "query": "G650 vs Longitude",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "cmp-017",
+      "category": "comparison",
+      "query": "Compare G650 and Longitude",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "cmp-018",
+      "category": "comparison",
+      "query": "How does G650 compare to Longitude?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "cmp-019",
+      "category": "comparison",
+      "query": "G650 versus Longitude for charter operations",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "cmp-020",
+      "category": "comparison",
+      "query": "Which is better, G650 or Longitude?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-001",
+      "category": "valuation",
+      "query": "What is a 2019 Falcon 8X worth?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-002",
+      "category": "valuation",
+      "query": "Estimate market value of a 2019 Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-003",
+      "category": "valuation",
+      "query": "What is the value of a 2019 Falcon 8X?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-004",
+      "category": "valuation",
+      "query": "2019 Falcon 8X valuation",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-005",
+      "category": "valuation",
+      "query": "How much is a 2019 Falcon 8X worth today?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-006",
+      "category": "valuation",
+      "query": "What is a 2017 Citation Longitude worth?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-007",
+      "category": "valuation",
+      "query": "Estimate market value of a 2017 Citation Longitude",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-008",
+      "category": "valuation",
+      "query": "What is the value of a 2017 Citation Longitude?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-009",
+      "category": "valuation",
+      "query": "2017 Citation Longitude valuation",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-010",
+      "category": "valuation",
+      "query": "How much is a 2017 Citation Longitude worth today?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Citation Longitude"
+      ]
+    },
+    {
+      "query_id": "val-011",
+      "category": "valuation",
+      "query": "What is a 2018 Challenger 3500 worth?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Challenger 3500"
+      ]
+    },
+    {
+      "query_id": "val-012",
+      "category": "valuation",
+      "query": "Estimate market value of a 2018 Challenger 3500",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Challenger 3500"
+      ]
+    },
+    {
+      "query_id": "val-013",
+      "category": "valuation",
+      "query": "What is the value of a 2018 Challenger 3500?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Challenger 3500"
+      ]
+    },
+    {
+      "query_id": "val-014",
+      "category": "valuation",
+      "query": "2018 Challenger 3500 valuation",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Challenger 3500"
+      ]
+    },
+    {
+      "query_id": "val-015",
+      "category": "valuation",
+      "query": "How much is a 2018 Challenger 3500 worth today?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Challenger 3500"
+      ]
+    },
+    {
+      "query_id": "val-016",
+      "category": "valuation",
+      "query": "What is a 2020 Praetor 600 worth?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-017",
+      "category": "valuation",
+      "query": "Estimate market value of a 2020 Praetor 600",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-018",
+      "category": "valuation",
+      "query": "What is the value of a 2020 Praetor 600?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-019",
+      "category": "valuation",
+      "query": "2020 Praetor 600 valuation",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-020",
+      "category": "valuation",
+      "query": "How much is a 2020 Praetor 600 worth today?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "alt-001",
+      "category": "alternative",
+      "query": "Alternatives to G650",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Global 6500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-002",
+      "category": "alternative",
+      "query": "Show me alternatives to G650",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Global 6500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-003",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to G650?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Global 6500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-004",
+      "category": "alternative",
+      "query": "Replacement options for G650",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Global 6500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-005",
+      "category": "alternative",
+      "query": "Similar aircraft to G650",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Gulfstream G650",
+        "Falcon 8X",
+        "Global 7500",
+        "Global 6500",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-006",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X",
+        "Gulfstream G650",
+        "Global 6500",
+        "Challenger 650",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-007",
+      "category": "alternative",
+      "query": "Show me alternatives to Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X",
+        "Gulfstream G650",
+        "Global 6500",
+        "Challenger 650",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-008",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Falcon 8X?",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X",
+        "Gulfstream G650",
+        "Global 6500",
+        "Challenger 650",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-009",
+      "category": "alternative",
+      "query": "Replacement options for Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X",
+        "Gulfstream G650",
+        "Global 6500",
+        "Challenger 650",
+        "Gulfstream G650ER"
+      ]
+    },
+    {
+      "query_id": "alt-010",
+      "category": "alternative",
+      "query": "Similar aircraft to Falcon 8X",
+      "score": 100.0,
+      "stop_condition_hit": false,
+      "findings": [],
+      "authority_models": [
+        "Falcon 8X",
+        "Gulfstream G650",
+        "Global 6500",
+        "Challenger 650",
+        "Gulfstream G650ER"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1170 @@
+{
+  "total_queries": 500,
+  "routing_accuracy_pct": 100.0,
+  "dispatch_accuracy_pct": 100.0,
+  "fail_closed_accuracy_pct": 100.0,
+  "mission_fit_accuracy_pct": 100.0,
+  "hallucination_rate_pct": 0.0,
+  "broker_quality_score": 100.0,
+  "category_scores": {
+    "aircraft_accuracy": 100.0,
+    "mission_accuracy": 100.0,
+    "valuation_accuracy": 100.0,
+    "comparison_accuracy": 100.0,
+    "constraint_compliance": 100.0,
+    "fail_closed_correctness": 100.0
+  },
+  "category_breakdown": {
+    "comparison": {
+      "total": 100,
+      "routing_accuracy_pct": 100.0,
+      "authority_accuracy_pct": 100.0,
+      "model_accuracy_pct": 100.0
+    },
+    "buy_decision": {
+      "total": 100,
+      "routing_accuracy_pct": 100.0,
+      "authority_accuracy_pct": 100.0,
+      "model_accuracy_pct": 100.0
+    },
+    "mission": {
+      "total": 100,
+      "routing_accuracy_pct": 100.0,
+      "authority_accuracy_pct": 100.0,
+      "model_accuracy_pct": 100.0
+    },
+    "alternative": {
+      "total": 100,
+      "routing_accuracy_pct": 100.0,
+      "authority_accuracy_pct": 100.0,
+      "model_accuracy_pct": 100.0
+    },
+    "valuation": {
+      "total": 100,
+      "routing_accuracy_pct": 100.0,
+      "authority_accuracy_pct": 100.0,
+      "model_accuracy_pct": 100.0
+    }
+  },
+  "hallucination_audit": {
+    "total_audited": 500,
+    "hallucination_count": 0,
+    "hallucination_rate_pct": 0.0,
+    "details": []
+  },
+  "mission_fit_audit": {
+    "total_mission_queries": 100,
+    "mission_fit_accuracy_pct": 100.0,
+    "mismatches": []
+  },
+  "failed_query_ids": [
+    "alt-004",
+    "alt-005",
+    "alt-009",
+    "alt-010",
+    "alt-014",
+    "alt-015",
+    "alt-019",
+    "alt-020",
+    "alt-024",
+    "alt-025",
+    "alt-029",
+    "alt-030",
+    "alt-034",
+    "alt-035",
+    "alt-039",
+    "alt-040",
+    "alt-044",
+    "alt-045",
+    "alt-049",
+    "alt-050",
+    "alt-054",
+    "alt-055",
+    "alt-059",
+    "alt-060",
+    "val-003",
+    "val-004",
+    "val-008",
+    "val-009",
+    "val-013",
+    "val-014",
+    "val-018",
+    "val-019",
+    "val-023",
+    "val-024",
+    "val-028",
+    "val-029",
+    "val-033",
+    "val-034",
+    "val-038",
+    "val-039",
+    "val-043",
+    "val-044",
+    "val-048",
+    "val-049"
+  ],
+  "high_risk_queries": [
+    {
+      "query_id": "alt-004",
+      "query": "Replacement options for G650",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G650]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "alt-005",
+      "query": "Similar aircraft to G650",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G650]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "alt-009",
+      "query": "Replacement options for Falcon 8X",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 8X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "alt-010",
+      "query": "Similar aircraft to Falcon 8X",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 8X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "alt-014",
+      "query": "Replacement options for Global 7500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 7500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "alt-015",
+      "query": "Similar aircraft to Global 7500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 7500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "alt-019",
+      "query": "Replacement options for Longitude",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-020",
+      "query": "Similar aircraft to Longitude",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-024",
+      "query": "Replacement options for Challenger 3500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-025",
+      "query": "Similar aircraft to Challenger 3500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-029",
+      "query": "Replacement options for PC-24",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-030",
+      "query": "Similar aircraft to PC-24",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-034",
+      "query": "Replacement options for Praetor 600",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Praetor 600]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "alt-035",
+      "query": "Similar aircraft to Praetor 600",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Praetor 600]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "alt-039",
+      "query": "Replacement options for Citation Latitude",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Citation Latitude]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Citation Latitude"
+      ]
+    },
+    {
+      "query_id": "alt-040",
+      "query": "Similar aircraft to Citation Latitude",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Citation Latitude]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Citation Latitude"
+      ]
+    },
+    {
+      "query_id": "alt-044",
+      "query": "Replacement options for G280",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G280]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G280"
+      ]
+    },
+    {
+      "query_id": "alt-045",
+      "query": "Similar aircraft to G280",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G280]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G280"
+      ]
+    },
+    {
+      "query_id": "alt-049",
+      "query": "Replacement options for G550",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-050",
+      "query": "Similar aircraft to G550",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-054",
+      "query": "Replacement options for CJ3+",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-055",
+      "query": "Similar aircraft to CJ3+",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "alt-059",
+      "query": "Replacement options for Global 6500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 6500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 6500"
+      ]
+    },
+    {
+      "query_id": "alt-060",
+      "query": "Similar aircraft to Global 6500",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 6500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 6500"
+      ]
+    },
+    {
+      "query_id": "val-003",
+      "query": "What is the value of a 2019 Falcon 8X?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 8X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-004",
+      "query": "2019 Falcon 8X valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 8X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "val-008",
+      "query": "What is the value of a 2017 Citation Longitude?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-009",
+      "query": "2017 Citation Longitude valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-013",
+      "query": "What is the value of a 2018 Challenger 3500?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-014",
+      "query": "2018 Challenger 3500 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-018",
+      "query": "What is the value of a 2020 Praetor 600?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Praetor 600]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-019",
+      "query": "2020 Praetor 600 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Praetor 600]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "val-023",
+      "query": "What is the value of a 2016 Citation Latitude?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Citation Latitude]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Citation Latitude"
+      ]
+    },
+    {
+      "query_id": "val-024",
+      "query": "2016 Citation Latitude valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Citation Latitude]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Citation Latitude"
+      ]
+    },
+    {
+      "query_id": "val-028",
+      "query": "What is the value of a 2019 G650?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G650]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "val-029",
+      "query": "2019 G650 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G650]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "val-033",
+      "query": "What is the value of a 2018 PC-24?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-034",
+      "query": "2018 PC-24 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": []
+    },
+    {
+      "query_id": "val-038",
+      "query": "What is the value of a 2017 G280?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G280]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G280"
+      ]
+    },
+    {
+      "query_id": "val-039",
+      "query": "2017 G280 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Gulfstream G280]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Gulfstream G280"
+      ]
+    },
+    {
+      "query_id": "val-043",
+      "query": "What is the value of a 2021 Global 7500?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 7500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "val-044",
+      "query": "2021 Global 7500 valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Global 7500]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "val-048",
+      "query": "What is the value of a 2015 Falcon 7X?",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 7X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 7X"
+      ]
+    },
+    {
+      "query_id": "val-049",
+      "query": "2015 Falcon 7X valuation",
+      "issues": [
+        "intent_mismatch"
+      ],
+      "execution_path": "hybrid_unified",
+      "intent_lock_summary": "intent=mission; models=[Falcon 7X]; flags=qri_intent, execution_path, akal_version; auth_id=",
+      "recommendation": "",
+      "models": [
+        "Falcon 7X"
+      ]
+    }
+  ],
+  "high_confidence_queries": [
+    {
+      "query_id": "cmp-001",
+      "query": "G650 vs Falcon 8X",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Falcon 8X]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=7d455aa22b0eb600",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified ran",
+      "models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-002",
+      "query": "Compare G650 and Falcon 8X",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Falcon 8X]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=afa62bbcbc8974c4",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified ran",
+      "models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-003",
+      "query": "How does G650 compare to Falcon 8X?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Falcon 8X]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=6b858896f05ff9e6",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified ran",
+      "models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-004",
+      "query": "G650 versus Falcon 8X for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Falcon 8X]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=a89a272bbdfc827d",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified ran",
+      "models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-005",
+      "query": "Which is better, G650 or Falcon 8X?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Falcon 8X]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=89330bc5a986dbbb",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified ran",
+      "models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ]
+    },
+    {
+      "query_id": "cmp-006",
+      "query": "G650 vs Global 7500",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Global 7500]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=f7d9e71398cb8556",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-007",
+      "query": "Compare G650 and Global 7500",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Global 7500]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=15f4dd6e4d9eee84",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-008",
+      "query": "How does G650 compare to Global 7500?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Global 7500]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=d647515269cdeafc",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-009",
+      "query": "G650 versus Global 7500 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Global 7500]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=5f86f0d09a5610c7",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-010",
+      "query": "Which is better, G650 or Global 7500?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Global 7500]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=813d68fc542c942c",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ]
+    },
+    {
+      "query_id": "cmp-011",
+      "query": "G650 vs G700",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=a53d33774121300e",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-012",
+      "query": "Compare G650 and G700",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=6a544f5d9931c642",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-013",
+      "query": "How does G650 compare to G700?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=49ddd9ea4530abb1",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-014",
+      "query": "G650 versus G700 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=49410eaa8936fc9a",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-015",
+      "query": "Which is better, G650 or G700?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=25dc7e19e0159323",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-016",
+      "query": "G650 vs Longitude",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=22eec0f004dd64e5",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-017",
+      "query": "Compare G650 and Longitude",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=f83406af1d54fb17",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-018",
+      "query": "How does G650 compare to Longitude?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=f63c384349058b17",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-019",
+      "query": "G650 versus Longitude for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=a173d154a56347f7",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-020",
+      "query": "Which is better, G650 or Longitude?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=787362a644e3d35d",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-021",
+      "query": "G650 vs Challenger 3500",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=3294d1716d09a230",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-022",
+      "query": "Compare G650 and Challenger 3500",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=303f92aedb8aff92",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-023",
+      "query": "How does G650 compare to Challenger 3500?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=17a2e902dc0be17d",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-024",
+      "query": "G650 versus Challenger 3500 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=e7020ad04801d789",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-025",
+      "query": "Which is better, G650 or Challenger 3500?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=d5a5565cc74bdc92",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-026",
+      "query": "G650 vs Citation CJ3+",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=6db0277c2acf949c",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-027",
+      "query": "Compare G650 and Citation CJ3+",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=224d84ae6b36c68d",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-028",
+      "query": "How does G650 compare to Citation CJ3+?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=92d8e9e042607f93",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-029",
+      "query": "G650 versus Citation CJ3+ for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=33277d955d0ccec1",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-030",
+      "query": "Which is better, G650 or Citation CJ3+?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=6208df44eeb1cf0d",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-031",
+      "query": "G650 vs Citation CJ4",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Citation CJ4]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=1a5cec86fe3f1c78",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation CJ4: large-cabin class; practical range 1496 nm; seats 7; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ]
+    },
+    {
+      "query_id": "cmp-032",
+      "query": "Compare G650 and Citation CJ4",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Citation CJ4]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=1cd7b479cb3e5d63",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation CJ4: large-cabin class; practical range 1496 nm; seats 7; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ]
+    },
+    {
+      "query_id": "cmp-033",
+      "query": "How does G650 compare to Citation CJ4?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Citation CJ4]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=cd7c2a9ac0deca14",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation CJ4: large-cabin class; practical range 1496 nm; seats 7; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ]
+    },
+    {
+      "query_id": "cmp-034",
+      "query": "G650 versus Citation CJ4 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Citation CJ4]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=c704bc14e3b6b79d",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation CJ4: large-cabin class; practical range 1496 nm; seats 7; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ]
+    },
+    {
+      "query_id": "cmp-035",
+      "query": "Which is better, G650 or Citation CJ4?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Citation CJ4]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=bc1d33c11cfd3cf5",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation CJ4: large-cabin class; practical range 1496 nm; seats 7; operating cost band medium.\nOn verified r",
+      "models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ]
+    },
+    {
+      "query_id": "cmp-036",
+      "query": "G650 vs Praetor 600",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Praetor 600]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=b57940de64a1ee7c",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified ",
+      "models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "cmp-037",
+      "query": "Compare G650 and Praetor 600",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Praetor 600]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=fbf6386f828d6dbd",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified ",
+      "models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "cmp-038",
+      "query": "How does G650 compare to Praetor 600?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Praetor 600]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=e7b063b77cd349d2",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified ",
+      "models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "cmp-039",
+      "query": "G650 versus Praetor 600 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Praetor 600]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=ed0a7d7ff55f7833",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified ",
+      "models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "cmp-040",
+      "query": "Which is better, G650 or Praetor 600?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650, Praetor 600]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=df01be27b490a021",
+      "recommendation": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified ",
+      "models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ]
+    },
+    {
+      "query_id": "cmp-041",
+      "query": "G650 vs PC-24",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=30fea8da5f2671c6",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-042",
+      "query": "Compare G650 and PC-24",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=8bf3e71b71e606fe",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-043",
+      "query": "How does G650 compare to PC-24?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=d0e26e802b4f6061",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-044",
+      "query": "G650 versus PC-24 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=f92fce1d9a96fbbf",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-045",
+      "query": "Which is better, G650 or PC-24?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=deff9122242b2579",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-046",
+      "query": "G650 vs G550",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=54d4fa32f19fa228",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-047",
+      "query": "Compare G650 and G550",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=242e29c0866047c9",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-048",
+      "query": "How does G650 compare to G550?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=8d66e0d242ae0c76",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-049",
+      "query": "G650 versus G550 for charter operations",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=b6140078887b49bc",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    },
+    {
+      "query_id": "cmp-050",
+      "query": "Which is better, G650 or G550?",
+      "execution_path": "authority_dispatch",
+      "intent_lock_summary": "intent=comparison; models=[Gulfstream G650]; flags=hard_routing, qri_intent, execution_path, akal_version, dispatch_kind; auth_id=ccd10f51b3cb0324",
+      "recommendation": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "models": [
+        "Gulfstream G650"
+      ]
+    }
+  ]
+}

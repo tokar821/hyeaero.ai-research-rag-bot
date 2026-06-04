@@ -452,5 +452,20 @@ def finalize_consultant_conversation_state(
     except Exception:
         pass
 
+    try:
+        from services.client_context.client_context_layer import finalize_client_context
+
+        finalize_client_context(
+            data_used,
+            merged,
+            query=query or "",
+            history=history,
+        )
+        cc = data_used.get("client_context_state")
+        if isinstance(cc, dict):
+            merged["client_context_state"] = cc
+    except Exception:
+        pass
+
     data_used["consultant_conversation_state"] = merged
     return merged

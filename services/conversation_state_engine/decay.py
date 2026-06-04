@@ -6,7 +6,7 @@ import copy
 from typing import List, Set
 
 from .priority import MEMORY_PRIORITY_STACK
-from .schemas import ConversationMemoryState
+from .schemas import AircraftCategory, ConversationGoal, ConversationMemoryState, ResponseMode
 
 
 def apply_memory_decay(state: ConversationMemoryState, *, explicit_reset: bool) -> List[str]:
@@ -45,15 +45,15 @@ def apply_memory_decay(state: ConversationMemoryState, *, explicit_reset: bool) 
         elif key == "active_tail":
             state.active_tail = None
         elif key == "response_mode":
-            state.response_mode = state.response_mode.CONSULTANT
+            state.response_mode = ResponseMode.CONSULTANT
         elif key == "aesthetic_preferences":
             state.aesthetic_preferences = []
         elif key == "negative_preferences":
             state.negative_preferences = []
         elif key == "active_category":
-            state.active_category = state.active_category.UNKNOWN
+            state.active_category = AircraftCategory.UNKNOWN
         elif key == "conversation_goal":
-            state.conversation_goal = state.conversation_goal.UNKNOWN
+            state.conversation_goal = ConversationGoal.UNKNOWN
         elif key == "active_budget_usd":
             if state.conversation_goal.value in ("refinement", "visual_gallery") and (
                 state.active_aircraft or state.active_topic

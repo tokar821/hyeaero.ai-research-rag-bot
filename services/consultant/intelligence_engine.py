@@ -85,6 +85,52 @@ def run_consultant_intelligence_layer(
     attach_mission_preprocessing(du, query)
     raw_answer = (answer or "").strip()
 
+    try:
+        from services.broker_execution.output_governance import is_llm_primary_output
+
+        if is_llm_primary_output(du):
+            prior_assistant = _merge_prior_answer(history)
+            suppressed = suppress_templates(raw_answer)
+            cleaned, hygiene = apply_prompt_hygiene(
+                suppressed.text,
+                prior_answer=prior_assistant,
+                history=history,
+                turn_seed=query,
+            )
+            working = cleaned
+            patch: Dict[str, Any] = {
+                "consultant_intelligence_layer": 1,
+                "consultant_intelligence_llm_primary_hygiene_only": 1,
+                "consultant_template_suppression": {
+                    "removed_blocks": suppressed.removed_blocks,
+                    "duplicate_paragraphs_removed": suppressed.duplicate_paragraphs_removed,
+                    "fallback_contamination_score": round(
+                        suppressed.fallback_contamination_score, 3
+                    ),
+                },
+                "consultant_prompt_hygiene": hygiene.to_dict(),
+            }
+            try:
+                from services.consultant.phrase_repetition_guard import apply_phrase_repetition_guard
+
+                working, phrase_report = apply_phrase_repetition_guard(
+                    working,
+                    history=history,
+                    prior_answer=prior_assistant,
+                    turn_seed=query,
+                )
+                patch["phrase_repetition_guard"] = phrase_report.to_dict()
+            except Exception:
+                pass
+            return ConsultantIntelligenceResult(
+                answer=working,
+                mission_state=MissionState(),
+                data_used_patch=patch,
+                applied=True,
+            )
+    except Exception:
+        pass
+
     if not consultant_intelligence_enabled():
         return ConsultantIntelligenceResult(
             answer=raw_answer,

@@ -109,7 +109,9 @@ def build_structured_comparison(
 
     for model in uniq:
         truth = validate_aircraft_truth(model)
-        prof = _AIRCRAFT_PROFILES.get(model)
+        from services.aircraft.aircraft_authority_service import get_authority_profile_dict
+
+        prof = get_authority_profile_dict(model) or _AIRCRAFT_PROFILES.get(model)
         rec = rec_by_model.get(model)
         if truth.verified and truth.facts and prof:
             if not rec:

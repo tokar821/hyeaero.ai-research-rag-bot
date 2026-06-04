@@ -92,6 +92,13 @@ def sanitize_user_facing_answer(
     if not s:
         return s
 
+    try:
+        from services.consultant.broker_advisory_layer import sanitize_llm_output
+
+        s = sanitize_llm_output(s)
+    except Exception:
+        pass
+
     s = _drop_internal_lines(s)
 
     # Hard disallow visual refusals — executive advisor delivers best-available visuals, not apologies.
@@ -222,6 +229,61 @@ def _apply_response_mode_enforcement(answer: str, data_used: Dict[str, Any]) -> 
         return answer
 
 
+def _enforce_consultant_quality_llm_primary(
+    answer: str,
+    *,
+    query: str,
+    data_used: Dict[str, Any],
+) -> str:
+    """
+    Hygiene-only safety when the LLM already authored the answer.
+
+    No template overrides, buyer-journey rewrites, or reasoning-packet replacement.
+    """
+    a = _strip_stock_advisory_templates((answer or "").strip())
+    if not a:
+        return a
+
+    try:
+        from services.consultant.consultant_validity import (
+            build_invalid_model_user_facing_reply,
+            validate_aircraft_model,
+        )
+
+        v = validate_aircraft_model(query or "")
+        if v and v.status == "invalid_model":
+            low = a.lower()
+            if not re.search(
+                r"\b(no\s+such|does\s+not\s+exist|isn'?t\s+real|not\s+a\s+production)\b",
+                low,
+            ):
+                return build_invalid_model_user_facing_reply(v)
+    except Exception:
+        pass
+
+    try:
+        from rag.pinpoint_answer import (
+            enforce_pinpoint_answer,
+            is_pinpoint_factual_turn,
+        )
+
+        if is_pinpoint_factual_turn(query or "", data_used):
+            a = _scrub_implausible_market_price_in_pinpoint(a, query or "")
+            a = enforce_pinpoint_answer(a, query=query or "", data_used=data_used)
+    except Exception:
+        pass
+
+    try:
+        from services.consultant.response_cleanup import cleanResponseText
+
+        a = cleanResponseText(a)
+    except Exception:
+        pass
+
+    data_used["consultant_quality_llm_primary_hygiene"] = 1
+    return _strip_stock_advisory_templates(a)
+
+
 def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, Any]) -> str:
     """
     Last-mile quality firewall (deterministic).
@@ -234,6 +296,16 @@ def enforce_consultant_quality(answer: str, *, query: str, data_used: Dict[str, 
     a = _strip_stock_advisory_templates((answer or "").strip())
     if not a:
         return a
+
+    try:
+        from services.broker_execution.output_governance import is_llm_primary_output
+
+        if is_llm_primary_output(data_used):
+            return _enforce_consultant_quality_llm_primary(
+                a, query=query, data_used=data_used
+            )
+    except Exception:
+        pass
 
     # 1) Invalid model firewall (query-driven)
     try:

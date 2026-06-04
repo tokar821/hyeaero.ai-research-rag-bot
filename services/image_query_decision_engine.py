@@ -444,6 +444,12 @@ def _build_query_variants(
 
 def _default_discovery_facets(*, user_low: str) -> List[str]:
     """When the user did not name a facet, issue disciplined discovery queries (one per facet)."""
+    if re.search(r"(?is)\b(?:cabin|interior|salon|layout)\b", user_low):
+        return ["cabin", "interior", "salon"]
+    if re.search(r"(?is)\bcockpit\b", user_low):
+        return ["cockpit", "flight deck"]
+    if re.search(r"(?is)\b(?:exterior|outside)\b", user_low):
+        return ["exterior", "aircraft"]
     return ["exterior", "cabin", "interior", "cockpit"]
 
 

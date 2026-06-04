@@ -22,7 +22,7 @@ _US_N_NUMBER_AFTER_LOWER = re.compile(
 # International: hyphenated civil marks (not digit-leading MSN like 525-0444).
 # Includes Brazil (PR/PP/PT), Liechtenstein-style FL-, etc.; TC- (Turkey) and many others.
 _INTL_MARK = re.compile(
-    r"\b(?:G|D|F|I|OO|LX|TC|CN|HK|SX|9V|VH|XA|V|ZK|JA|ZS|HA|OE|YR|B|CF|PR|PP|PT|FL)-[A-Z0-9]{2,5}\b",
+    r"\b(?:G|D|F|I|OO|LX|TC|CN|HK|SX|9V|VH|XA|V|ZK|JA|ZS|HA|OE|VP|YR|B|CF|PR|PP|PT|FL)-[A-Z0-9]{2,5}\b",
     re.IGNORECASE,
 )
 
@@ -51,6 +51,16 @@ def normalize_history_role_for_tail_scan(role: Optional[str]) -> str:
     if r in ("consultant", "bot", "ai"):
         return "assistant"
     return r
+
+
+def primary_registration_from_query(query: str) -> Optional[str]:
+    """
+    First credible civil registration in ``query`` — strict patterns only (requires digit in U.S. marks).
+
+    Avoids false positives like ``NONSTOP`` from loose ``N[A-Z0-9]{3,6}`` fallbacks.
+    """
+    regs = find_strict_tail_candidates_in_text(query or "")
+    return regs[0] if regs else None
 
 
 _THREAD_ROLES_EXCLUDED = frozenset({"system", "tool", "function"})

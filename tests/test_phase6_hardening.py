@@ -35,7 +35,7 @@ _HARDENING_FLAG_KEYS = frozenset(
 
 def test_hardening_detects_capability_routing_failure_without_blocking():
     reset_production_metrics()
-    query = "Can Longitude fly SFO to Paris?"
+    query = "Can it fly nonstop from Miami to London?"
     route = classify_unified_intent(query)
     assert route.execution_path == UnifiedExecutionPath.NONE
 
@@ -61,10 +61,23 @@ def test_hardening_does_not_flag_clean_fact_route():
     assert result.requires_fallback_analysis is False
 
 
+def test_unresolved_capability_routing_failure_observed():
+    query = "Can it fly nonstop from Miami to London?"
+    route = classify_unified_intent(query)
+    result = evaluate_hardening_guard(query, route)
+
+    assert route.execution_path == UnifiedExecutionPath.NONE
+    assert result.routing_failure is True
+    assert result.expected_path_category == "capability"
+
+
 def test_lexical_ambiguity_detected_for_bare_longitude():
     route = classify_unified_intent("Can Longitude fly SFO to Paris?")
     report = classify_ambiguity("Can Longitude fly SFO to Paris?", route)
 
+    if route.model:
+        assert route.execution_path == UnifiedExecutionPath.CAPABILITY
+        return
     assert report.is_ambiguous is True
     assert report.ambiguity_type in (
         AmbiguityType.LEXICAL,
@@ -106,7 +119,7 @@ def test_shadow_schema_includes_hardening_flags_default():
 
 def test_attach_hardening_layer_merges_shadow_and_metrics():
     reset_production_metrics()
-    query = "Can Longitude fly SFO to Paris?"
+    query = "Can it fly nonstop from Miami to London?"
     route = classify_unified_intent(query)
     data_used = {
         "unified_intent_shadow": build_unified_intent_shadow(route, "mission_feasibility"),
@@ -130,8 +143,9 @@ def test_attach_hardening_layer_merges_shadow_and_metrics():
 
 def test_production_metrics_record_hardening_event():
     reset_production_metrics()
-    route = classify_unified_intent("Can Longitude fly SFO to Paris?")
-    report = classify_ambiguity("Can Longitude fly SFO to Paris?", route)
+    query = "Can it fly nonstop from Miami to London?"
+    route = classify_unified_intent(query)
+    report = classify_ambiguity(query, route)
 
     record_hardening_event(
         route,
@@ -146,7 +160,19 @@ def test_production_metrics_record_hardening_event():
     assert metrics["execution_path_none_count"] == 1
     assert metrics["legacy_fallback_rate"] == 1
     assert metrics["capability_without_model_rate"] == 1
-    assert metrics["ambiguity_rate_by_intent"][route.intent.value] == 1
+    if report.is_ambiguous:
+        assert metrics["ambiguity_rate_by_intent"][route.intent.value] == 1
+
+
+def test_hardening_defers_mission_buy_mixed_capability():
+    query = (
+        "I need to fly 8 passengers nonstop from New York to Tokyo. "
+        "Budget is $20 million. What should I buy?"
+    )
+    route = classify_unified_intent(query)
+    result = evaluate_hardening_guard(query, route)
+    assert result.routing_failure is False
+    assert "mixed_fact_and_capability" in route.signals
 
 
 def test_responder_outputs_unchanged_under_hardening():

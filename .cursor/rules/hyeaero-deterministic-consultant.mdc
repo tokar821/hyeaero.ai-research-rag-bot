@@ -1,0 +1,56 @@
+---
+description: HyeAero deterministic execution vs adaptive presentation charter (Phases 11–27)
+alwaysApply: true
+---
+
+# HyeAero.AI — Deterministic Consultant Charter
+
+You are working on a production-grade Aircraft Consultant backend. **Execution is deterministic; presentation is adaptive.**
+
+## Execution Layer (NEVER modify casually)
+
+These layers are code-owned and must not be bypassed by LLM logic:
+
+- QRI → Authority Dispatch (AKAL) → ICRL → Deterministic Guard
+- Advisory layers: justification, confidence, optimization, market, ownership, fleet, executive synthesis
+- Evaluation, replay, API contract versioning
+
+**Hard intents** (`comparison`, `alternative`, `buy_decision`):
+
+- NEVER LLM fallback when dispatch/ICRL resolved
+- NEVER hallucinate specs, pricing, or market data
+- Fail-closed safety fallback on resolution failure — not LLM improvisation
+
+## Presentation Layer (flexible)
+
+Adapt response structure by intent — no fixed template:
+
+| Intent | Structure |
+|--------|-----------|
+| Comparison / Alternative | Ranked/matrix, AKAL specs, minimal narrative |
+| Buy Decision | Verdict + market/ownership/risk signals |
+| Mission Advisory | Broker tone, AKAL/ICRL outputs only |
+| Intelligence panels | Report-style using `data_used.*_panel` fields |
+| Fleet Strategy | Coverage, redundancy, upgrade path, cost overlap |
+
+## Forbidden
+
+- Hallucinated aircraft specs, pricing, range
+- Marketing language ("great aircraft", "excellent choice")
+- Overriding AKAL or bypassing deterministic guard paths
+- Changing routing/dispatch/ICRL for observability or synthesis phases
+
+## Key files
+
+- Charter: `backend/rag/deterministic_consultant_charter.py`
+- System prompt: `backend/rag/query_service.py` → `CONSULTANT_SYSTEM_PROMPT`
+- Pipeline attachment: `backend/rag/query_service.py` → `_apply_api_contract_versioning()`
+- Fail-closed: `backend/rag/consultant_retrieval.py` Phase 15 safety fallback
+
+## Phase attachment order (data_used)
+
+```
+replay → justification → confidence → optimization → market → ownership → fleet → synthesis → evaluation
+```
+
+All advisory flags default **OFF**; enable via `ENABLE_*=1` env vars.

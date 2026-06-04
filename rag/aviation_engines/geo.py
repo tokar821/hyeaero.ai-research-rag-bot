@@ -36,6 +36,8 @@ ICAO_COORDS: Dict[str, Tuple[float, float]] = {
     "PANC": (61.1743, -149.9962),
     "CYQX": (48.9369, -54.5681),
     "OMDB": (25.2532, 55.3657),
+    "RJTT": (35.5523, 139.7798),
+    "RJAA": (35.7647, 140.3864),
 }
 
 _ICAO_RE = re.compile(r"\b([A-Z]{4})\b")
@@ -61,6 +63,9 @@ CITY_ALIASES: List[Tuple[str, str]] = [
     ("phoenix", "KPHX"),
     ("seattle", "KSEA"),
     ("dubai", "OMDB"),
+    ("tokyo", "RJTT"),
+    ("narita", "RJAA"),
+    ("haneda", "RJTT"),
 ]
 
 
@@ -101,10 +106,20 @@ def resolve_city_icaos(low: str) -> List[str]:
     return found
 
 
+def _icao_for_city_phrase(phrase: str) -> Optional[str]:
+    low = (phrase or "").strip().lower()
+    if not low:
+        return None
+    for alias, icao in CITY_ALIASES:
+        if re.search(rf"\b{re.escape(alias)}\b", low) and icao in ICAO_COORDS:
+            return icao
+    return None
+
+
 def mission_endpoints_from_text(query: str, icaos_from_entities: Optional[List[str]] = None) -> Optional[Tuple[str, str, float]]:
     """
     Return (code_a, code_b, nm) if two distinct reference points are found, else None.
-    Prefers ICAO codes, then city aliases.
+    Prefers ICAO codes, then ordered from/to city phrases, then city alias list.
     """
     q = (query or "").strip()
     low = q.lower()
@@ -116,6 +131,17 @@ def mission_endpoints_from_text(query: str, icaos_from_entities: Optional[List[s
                 icaos.append(u)
     icaos.extend(extract_icaos(q))
     icaos = list(dict.fromkeys(icaos))
+
+    route_m = re.search(
+        r"(?is)\b(?:from|between)\s+(.+?)\s+(?:to|and)\s+(.+?)(?:\s+nonstop|\s+under|\s+with|\s*$|[\.,;])",
+        q,
+    )
+    if route_m:
+        c0 = _icao_for_city_phrase(route_m.group(1))
+        c1 = _icao_for_city_phrase(route_m.group(2))
+        if c0 and c1 and c0 != c1:
+            return (c0, c1, nm_between(ICAO_COORDS[c0], ICAO_COORDS[c1]))
+
     cities = resolve_city_icaos(low)
     combined: List[str] = []
     for c in icaos + cities:

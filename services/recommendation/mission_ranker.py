@@ -641,6 +641,10 @@ def rank_missions(
     if mission.mountain_airport_requirement or category == MissionCategory.MOUNTAIN_AIRPORT:
         models = [m for m in models if m not in _MOUNTAIN_FORBIDDEN_MODELS]
 
+    from services.consultant.recommendation_engine import apply_budget_gate
+
+    models = apply_budget_gate(mission, list(models))
+
     # When the pipeline passes an explicit feasible shortlist, trust it — do not re-eliminate
     # every candidate on a second overbuy pass (e.g. Tokyo–Seoul killing all large-cabin survivors).
     if candidate_models is not None:

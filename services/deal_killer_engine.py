@@ -244,7 +244,10 @@ def run_deal_killer_engine(
         prog_flags.append("No recognized digital maintenance tracking (CAMP/CESCOM-class) called out — records discipline is a diligence item.")
 
     comp_n = int(market_data.get("comp_row_count") or 0)
-    liq_score, liq_flags = _liquidity_score(market_data, comp_n)
+    if market_data.get("authority_band") and comp_n == 0:
+        liq_score, liq_flags = 0.72, []
+    else:
+        liq_score, liq_flags = _liquidity_score(market_data, comp_n)
 
     mission_dict = buyer_context.get("mission_profile") if isinstance(buyer_context.get("mission_profile"), dict) else {}
     mm = str(aircraft.get("model") or "").strip()
@@ -279,6 +282,10 @@ def run_deal_killer_engine(
     elif pos == "over_range_high":
         verdict = VERDICT_OVERPRICED
         confidence = 0.74 if ask and high else 0.6
+    elif pos == "suspiciously_low" and mission_score >= 0.60:
+        verdict = VERDICT_GOOD_DEAL
+        confidence = 0.58
+        price_score = max(price_score, 0.80)
     elif risk_flag_n >= 4 or (price_score < 0.35 and condition_score < 0.45):
         verdict = VERDICT_HIGH_RISK
         confidence = 0.7

@@ -14,8 +14,8 @@ from services.mission.aircraft_profiles import AIRCRAFT_PROFILES
 
 # User-facing canonical display names (stable broker vocabulary).
 _DISPLAY_ALIASES: Dict[str, str] = {
-    "challenger 3500": "Challenger 350",
-    "cl3500": "Challenger 350",
+    "challenger 3500": "Challenger 3500",
+    "cl3500": "Challenger 3500",
     "g500": "Gulfstream G500",
     "gulfstream g500": "Gulfstream G500",
     "g600": "Gulfstream G600",

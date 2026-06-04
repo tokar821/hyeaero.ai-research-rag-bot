@@ -26,6 +26,98 @@ from rag.semantic_reranker import effective_reranker_model_name_from_env
 logger = logging.getLogger(__name__)
 
 
+def _build_deterministic_guard_ctx(
+    *,
+    query: str,
+    qri: Any,
+    unified_route: Any,
+    authority_dispatch_result: Any,
+    pre_llm_pipeline_patch: Dict[str, Any],
+    pipeline_authority_block: str,
+    data_used: Optional[Dict[str, Any]] = None,
+    svc: Any = None,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Dict[str, Any]:
+    from services.routing.deterministic_execution_guard import build_deterministic_guard_context
+
+    return build_deterministic_guard_context(
+        query=query or "",
+        qri=qri,
+        unified_route=unified_route,
+        authority_dispatch_result=authority_dispatch_result,
+        pre_llm_pipeline_patch=pre_llm_pipeline_patch,
+        pipeline_authority_block=pipeline_authority_block or "",
+        data_used=data_used,
+        db=getattr(svc, "db", None) if svc is not None else None,
+        history=history,
+    )
+
+
+def _assert_deterministic_trace(trace: Dict[str, Any]) -> None:
+    try:
+        from services.routing.deterministic_execution_assertion import assert_no_llm_leak
+
+        assert_no_llm_leak(trace)
+    except Exception as exc:
+        if exc.__class__.__name__ == "DeterministicExecutionViolation":
+            raise
+        logger.debug("deterministic execution assertion skipped: %s", exc)
+
+
+_NON_EMPTY_ANSWER_FALLBACK = "INSUFFICIENT_DATA: No verified aircraft available."
+
+
+def _ensure_non_empty_answer(payload: Any) -> Any:
+    """Guarantee professional/LLM payloads never return a blank or weak client-facing answer."""
+    if not isinstance(payload, dict):
+        return payload
+    answer = str(payload.get("answer") or "").strip()
+    query = str(payload.get("query") or "").strip()
+    du = payload.get("data_used") if isinstance(payload.get("data_used"), dict) else {}
+    try:
+        from services.broker_execution.output_governance import apply_governed_client_answer
+
+        answer = apply_governed_client_answer(answer, query=query, data_used=du)
+    except Exception as exc:
+        logger.debug("output governance skipped: %s", exc)
+    if not answer:
+        answer = _NON_EMPTY_ANSWER_FALLBACK
+    if answer == payload.get("answer"):
+        return payload
+    out = dict(payload)
+    out["answer"] = answer
+    return out
+
+
+def _build_hard_deterministic_safety_fallback(
+    guard_ctx: Dict[str, Any],
+    *,
+    pre_llm_pipeline_patch: Optional[Dict[str, Any]] = None,
+) -> Tuple[str, Dict[str, Any]]:
+    """Fail-closed professional response when hard deterministic intent cannot resolve."""
+    from services.routing.authority_dispatch import _SAFETY_FALLBACK_ANSWERS
+
+    intent = str(guard_ctx.get("deterministic_intent") or "").strip().lower()
+    if intent not in _SAFETY_FALLBACK_ANSWERS:
+        intent = "comparison"
+
+    du = dict(pre_llm_pipeline_patch or guard_ctx.get("pre_llm_pipeline_patch") or {})
+    du["deterministic_execution"] = {
+        "bypassed_llm": True,
+        "trigger_reason": "hard_intent_insufficient_resolution",
+        "final_responder": "deterministic_safety_fallback",
+        "deterministic_intent": intent,
+    }
+    du["authority_dispatch_safety_fallback"] = intent
+    return "professional", {
+        "answer": _SAFETY_FALLBACK_ANSWERS.get(intent, "Insufficient verified data for deterministic execution."),
+        "sources": [],
+        "data_used": du,
+        "aircraft_images": [],
+        "error": None,
+    }
+
+
 def _fmt_q_preview(q: str, n: int = 72) -> str:
     s = (q or "").strip().replace("\n", " ")
     if not s:
@@ -33,6 +125,34 @@ def _fmt_q_preview(q: str, n: int = 72) -> str:
     if len(s) <= n:
         return s
     return s[: n - 1] + "…"
+
+
+def _return_with_execution_trace(
+    capture: Any,
+    kind: str,
+    payload: Any,
+    *,
+    path_override: Optional[str] = None,
+    unified_enforced: bool = False,
+    llm_invoked: Optional[bool] = None,
+) -> Tuple[str, Any]:
+    from services.routing.intent_execution_trace import attach_intent_execution_trace
+
+    if isinstance(payload, dict) and "answer" in payload and kind != "llm":
+        raw_query = str(getattr(capture, "raw_query", None) or "").strip()
+        if raw_query and not payload.get("query"):
+            payload = dict(payload)
+            payload["query"] = raw_query
+        payload = _ensure_non_empty_answer(payload)
+
+    return kind, attach_intent_execution_trace(
+        capture,
+        kind,
+        payload,
+        path_override=path_override,
+        unified_enforced=unified_enforced,
+        llm_invoked=llm_invoked,
+    )
 
 
 def _counter_entity_mix(results: List[Any], limit: int = 8) -> str:
@@ -122,6 +242,12 @@ def run_consultant_retrieval_bundle(
     from rag.consultant_progress_log import new_progress_logger
 
     progress = progress or new_progress_logger()
+    from services.routing.intent_execution_trace import IntentExecutionTraceCapture
+
+    _exec_trace = IntentExecutionTraceCapture(
+        raw_query=query or "",
+        request_id=getattr(progress, "request_id", None) if progress else None,
+    )
     if progress:
         progress.step(
             "request_start",
@@ -200,44 +326,64 @@ def run_consultant_retrieval_bundle(
 
     # Guard must see the real transcript so short aesthetic follow-ups are not misrouted when
     # :mod:`rag.query_isolation_engine` clears ``history`` for retrieval-only isolation.
-    _cg = evaluate_conversation_guard(
-        query,
-        _history_original,
-        openai_api_key=_api_key,
-        chat_model=_chat_model,
-    )
-    if _cg.message_type != ConversationMessageType.AVIATION_QUERY:
-        if progress:
-            progress.step(
-                "path_conversation_guard",
-                short_circuit=1,
-                conversation_message_type=_cg.message_type.value,
-            )
-        _du: Dict[str, Any] = {
-            "consultant_conversation_guard": 1,
-            "conversation_message_type": _cg.message_type.value,
-        }
-        if _cg.message_type == ConversationMessageType.NON_AVIATION_GENERAL:
-            _du["consultant_non_aviation_general"] = 1
-        finalize_consultant_conversation_state(
-            _du,
-            client_conversation_state,
-            query=query or "",
-            history=_history_original,
-            conversation_guard_type=_cg.message_type.value,
+    # Hard deterministic queries skip guard — IntentLock + dispatch must run first (Phase 29A).
+    from services.routing.deterministic_execution_guard import query_requires_hard_deterministic_pipeline
+
+    _hard_det_pipeline_early = query_requires_hard_deterministic_pipeline(query or "")
+    if not _hard_det_pipeline_early:
+        _cg = evaluate_conversation_guard(
+            query,
+            _history_original,
+            openai_api_key=_api_key,
+            chat_model=_chat_model,
         )
-        return "small_talk", {
-            "answer": _cg.reply or "",
-            "sources": [],
-            "data_used": _du,
-            "aircraft_images": [],
-            "error": None,
-        }
+        if _cg.message_type != ConversationMessageType.AVIATION_QUERY:
+            if progress:
+                progress.step(
+                    "path_conversation_guard",
+                    short_circuit=1,
+                    conversation_message_type=_cg.message_type.value,
+                )
+            _du: Dict[str, Any] = {
+                "consultant_conversation_guard": 1,
+                "conversation_message_type": _cg.message_type.value,
+            }
+            if _cg.message_type == ConversationMessageType.NON_AVIATION_GENERAL:
+                _du["consultant_non_aviation_general"] = 1
+            finalize_consultant_conversation_state(
+                _du,
+                client_conversation_state,
+                query=query or "",
+                history=_history_original,
+                conversation_guard_type=_cg.message_type.value,
+            )
+            return "small_talk", {
+                "answer": _cg.reply or "",
+                "sources": [],
+                "data_used": _du,
+                "aircraft_images": [],
+                "error": None,
+            }
+    elif progress:
+        progress.step(
+            "path_conversation_guard",
+            skipped=1,
+            hard_deterministic=1,
+        )
 
     # 1b) Intent Persistence Engine — inherit aircraft/visual context before fine intent & retrieval.
     from rag.aviation_tail import find_strict_tail_candidates
 
-    _strict_tails = find_strict_tail_candidates(query, _history_original)
+    try:
+        from services.entity_scope.scope import history_allowed_for_tail_resolution
+
+        if not history_allowed_for_tail_resolution(_latest_user_query_raw or query or ""):
+            _tail_hist = None
+        else:
+            _tail_hist = _history_original
+        _strict_tails = find_strict_tail_candidates(_latest_user_query_raw or query or "", _tail_hist)
+    except Exception:
+        _strict_tails = find_strict_tail_candidates(query, _history_original)
     _intent_bundle = None
     try:
         from services.conversation_continuity.schemas import RefinementInterpretation
@@ -281,6 +427,37 @@ def run_consultant_retrieval_bundle(
     except Exception as _ipe:
         logger.debug("intent_persistence skipped: %s", _ipe)
 
+    _entity_scope_diag: Dict[str, Any] = {}
+    try:
+        from services.entity_scope.scope import resolve_entity_scope
+        from services.entity_scope.validation import attach_entity_scope_observability
+
+        _scope = resolve_entity_scope(
+            _latest_user_query_raw or "",
+            isolated_message=query or "",
+            history_allowed=history is not None,
+        )
+        _lock_src = "none"
+        if _intent_bundle is not None:
+            _resolved = _intent_bundle.resolved_intent or {}
+            _cont = _intent_bundle.continuity_serialized or {}
+            _locked = _cont.get("locked_entity") if isinstance(_cont, dict) else None
+            if isinstance(_locked, dict) and _locked.get("type") == "tail" and _locked.get("value"):
+                _lock_src = "entity_lock"
+            elif (_resolved.get("active_tail") or "").strip():
+                _lock_src = "continuity_tail"
+            elif not (_resolved.get("active_tail") or "").strip() and (_resolved.get("active_aircraft") or "").strip():
+                _lock_src = "released_on_model_switch"
+        attach_entity_scope_observability(
+            _entity_scope_diag,
+            scope=_scope,
+            tail_lock_source=_lock_src,
+            effective_query=query or "",
+            original_query=_latest_user_query_raw or "",
+        )
+    except Exception as _es_e:
+        logger.debug("entity_scope diagnostics skipped: %s", _es_e)
+
     _shopping_pivot = False
     try:
         from services.intent_persistence.pivot import is_visual_budget_shopping_pivot
@@ -303,9 +480,12 @@ def run_consultant_retrieval_bundle(
         should_run_aviation_tools,
     )
     from rag.consultant_llm_intent import generate_general_chat_reply_llm
+    from services.routing.deterministic_execution_guard import query_requires_hard_deterministic_pipeline
+
+    _hard_det_pipeline = query_requires_hard_deterministic_pipeline(query or "")
 
     _fi_thr = fine_intent_confidence_threshold()
-    if llm_fine_intent_disabled() or not (_api_key or "").strip():
+    if _hard_det_pipeline or llm_fine_intent_disabled() or not (_api_key or "").strip():
         _fine = apply_fine_intent_heuristics(
             heuristic_fine_intent(query, _strict_tails),
             query,
@@ -317,7 +497,7 @@ def run_consultant_retrieval_bundle(
                 intent=_fine.intent.value,
                 confidence=round(_fine.confidence, 4),
                 threshold=_fi_thr,
-                source="heuristic",
+                source="heuristic_hard_deterministic" if _hard_det_pipeline else "heuristic",
             )
     else:
         _t_fi = time.perf_counter()
@@ -387,7 +567,7 @@ def run_consultant_retrieval_bundle(
         except Exception:
             pass
 
-    if is_conversational_fine_intent(_fine):
+    if is_conversational_fine_intent(_fine) and not _hard_det_pipeline:
         if progress:
             progress.step(
                 "path_fine_intent_conversational",
@@ -440,7 +620,7 @@ def run_consultant_retrieval_bundle(
             "error": None,
         }
 
-    if not should_run_aviation_tools(_fine, _fi_thr):
+    if not should_run_aviation_tools(_fine, _fi_thr) and not _hard_det_pipeline:
         if progress:
             progress.step(
                 "path_general_chat_llm",
@@ -519,6 +699,8 @@ def run_consultant_retrieval_bundle(
     _qri = None
     _unified_gate_obs = None
     _rollout_decision = None
+    _authority_dispatch_result = None
+    _intent_resolution = None
     try:
         from services.consultant.pre_llm_recommendation import (
             run_pre_llm_recommendation,
@@ -575,13 +757,207 @@ def run_consultant_retrieval_bundle(
             attach_rollout_decision(_pre_llm_pipeline_patch, _rollout_decision)
             _pre_llm_pipeline_patch["unified_emergency_rollback"] = _rollback_status.to_dict()
 
-        apply_query_intent_metadata(_pre_llm_pipeline_patch, _qri)
+        _exec_trace.capture_qri_unified(_qri, _unified_route)
 
-        if should_run_pre_llm_pipeline(
+        apply_query_intent_metadata(_pre_llm_pipeline_patch, _qri)
+        try:
+            from services.broker_execution.execution_intent_lock import attach_execution_intent_lock
+
+            attach_execution_intent_lock(_pre_llm_pipeline_patch, query or "")
+        except Exception as _eil:
+            logger.debug("execution intent lock skipped: %s", _eil)
+
+        if _intent_bundle is not None:
+            _at = str((_intent_bundle.resolved_intent or {}).get("active_tail") or "").strip().upper()
+            if _at:
+                _pre_llm_pipeline_patch["active_tail"] = _at
+                _pre_llm_pipeline_patch["tail_registration"] = _at
+
+        from services.adversarial.adversarial_preprocessor import preprocess_adversarial_query
+
+        _clean_query_bundle = preprocess_adversarial_query(
+            query or "",
+            data_used=_pre_llm_pipeline_patch,
+        )
+        query = _clean_query_bundle.normalized_query
+        _pre_llm_pipeline_patch["adversarial"] = {
+            "severity": _clean_query_bundle.conflict_report.severity.value,
+            "conflict_types": [c.value for c in _clean_query_bundle.conflict_report.conflict_type],
+            "budget_feasibility": _clean_query_bundle.budget_state.feasibility.value,
+        }
+
+        try:
+            from services.client_context.client_context_layer import apply_client_context_turn
+
+            apply_client_context_turn(
+                query or "",
+                data_used=_pre_llm_pipeline_patch,
+                history=_history_original,
+                client_conversation_state=client_conversation_state,
+            )
+        except Exception as _cce:
+            logger.debug("client context turn skipped: %s", _cce)
+
+        try:
+            from services.intent_collapse.intent_collapse_engine import apply_intent_collapse
+
+            apply_intent_collapse(
+                query or "",
+                data_used=_pre_llm_pipeline_patch,
+                normalized_query=query,
+            )
+        except Exception as _ice:
+            logger.debug("intent collapse skipped: %s", _ice)
+
+        from services.broker_reasoning.broker_reasoning_layer import apply_broker_reasoning_layer
+
+        apply_broker_reasoning_layer(query or "", data_used=_pre_llm_pipeline_patch)
+
+        from services.core.semantic_intent_lock_engine import (
+            bind_dispatch_authority,
+            build_intent_lock,
+            validate_intent_lock_consistency,
+        )
+
+        _intent_lock = build_intent_lock(
+            query or "",
+            qri=_qri,
+            unified_route=_unified_route,
+        )
+        _pre_llm_pipeline_patch["intent_lock"] = _intent_lock.to_dict()
+        _exec_trace.capture_intent_lock(_intent_lock)
+
+        from services.routing.authority_dispatch import consult_authority_dispatch
+
+        _authority_dispatch_result = consult_authority_dispatch(
+            query or "",
+            qri=_qri,
+            unified_route=_unified_route,
+            context={
+                "db": getattr(svc, "db", None),
+                "history": _history_original,
+                "intent_lock": _intent_lock,
+                "clean_normalized_query": _clean_query_bundle.to_dict(),
+                "broker_reasoning": _pre_llm_pipeline_patch.get("broker_reasoning"),
+                "pre_llm_pipeline_patch": _pre_llm_pipeline_patch,
+            },
+        )
+        if _authority_dispatch_result is not None:
+            _intent_lock = bind_dispatch_authority(_intent_lock, _authority_dispatch_result)
+            _pre_llm_pipeline_patch["intent_lock"] = _intent_lock.to_dict()
+            _exec_trace.capture_intent_lock(_intent_lock)
+        _exec_trace.capture_authority_dispatch(_authority_dispatch_result)
+
+        from services.routing.intent_conflict_resolution import (
+            execute_icrl_plan,
+            resolve_intent_conflicts,
+        )
+
+        _intent_resolution = resolve_intent_conflicts(
+            {
+                "query": query or "",
+                "qri": _qri,
+                "unified_route": _unified_route,
+                "authority_dispatch_result": _authority_dispatch_result,
+                "intent_lock": _intent_lock,
+                "pre_llm_pipeline_patch": _pre_llm_pipeline_patch,
+                "db": getattr(svc, "db", None),
+                "history": _history_original,
+            }
+        )
+        _pre_llm_pipeline_patch["intent_conflict_resolution"] = _intent_resolution.to_dict()
+        _lock_failures = validate_intent_lock_consistency(
+            _intent_lock,
+            data_used=_pre_llm_pipeline_patch,
+            dispatch_result=_authority_dispatch_result,
+            icrl_resolution=_intent_resolution,
+        )
+        if _lock_failures:
+            _pre_llm_pipeline_patch["intent_lock_consistency_failures"] = _lock_failures
+        _exec_trace.capture_icrl(_intent_resolution)
+
+        if _intent_resolution.handled_by_icrl and _authority_dispatch_result is None:
+            _icrl_out = execute_icrl_plan(
+                {
+                    "query": query or "",
+                    "qri": _qri,
+                    "unified_route": _unified_route,
+                    "authority_dispatch_result": _authority_dispatch_result,
+                    "pre_llm_pipeline_patch": _pre_llm_pipeline_patch,
+                    "db": getattr(svc, "db", None),
+                    "history": _history_original,
+                },
+                _intent_resolution,
+            )
+            if _icrl_out is not None:
+                _icrl_kind, _icrl_payload = _icrl_out
+                if progress:
+                    progress.step(
+                        "path_intent_conflict_resolution",
+                        conflict_type=_intent_resolution.conflict_type.value,
+                        layout_type=_intent_resolution.plan.layout_type,
+                    )
+                logger.info(
+                    "ICRL deterministic execution: conflict=%s layout=%s query=%r",
+                    _intent_resolution.conflict_type.value,
+                    _intent_resolution.plan.layout_type,
+                    (query or "")[:120],
+                )
+                _assert_deterministic_trace(
+                    {
+                        "query": query or "",
+                        "deterministic_intent": "comparison",
+                        "llm_executed": False,
+                        "pre_llm_executed": False,
+                        "data_used": _icrl_payload.get("data_used"),
+                        "answer": _icrl_payload.get("answer"),
+                    }
+                )
+                finalize_consultant_conversation_state(
+                    _icrl_payload.get("data_used") or {},
+                    client_conversation_state,
+                    query=query or "",
+                    history=_history_original,
+                    fine_intent=_fine.intent.value,
+                    continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+                )
+                _exec_trace.capture_deterministic_guard(should_bypass=True, resolve_hit=True)
+                return _return_with_execution_trace(
+                    _exec_trace,
+                    _icrl_kind,
+                    _icrl_payload,
+                    path_override="icrl_deterministic",
+                    llm_invoked=False,
+                )
+
+        _guard_ctx_pre = _build_deterministic_guard_ctx(
+            query=query or "",
+            qri=_qri,
+            unified_route=_unified_route,
+            authority_dispatch_result=_authority_dispatch_result,
+            pre_llm_pipeline_patch=_pre_llm_pipeline_patch,
+            pipeline_authority_block=_pipeline_authority_block,
+            svc=svc,
+            history=_history_original,
+        )
+
+        from services.routing.deterministic_execution_guard import requires_hard_deterministic_responder
+
+        _icrl_deterministic_only = bool(
+            _intent_resolution is not None
+            and _intent_resolution.execution_strategy == "deterministic_only"
+        )
+        _pre_llm_executed = False
+        if (
+            _authority_dispatch_result is None
+            and not _icrl_deterministic_only
+            and not requires_hard_deterministic_responder(_guard_ctx_pre)
+            and should_run_pre_llm_pipeline(
             _fine.intent.value,
             query,
             query_intent=_qri.intent.value,
             history=_history_original,
+        )
         ):
             _pipeline_authority_block, _pre_llm_pipeline_patch, _ = run_pre_llm_recommendation(
                 query,
@@ -590,7 +966,18 @@ def run_consultant_retrieval_bundle(
                 fine_intent=_fine.intent.value,
                 history=_history_original,
             )
-        elif _pipeline_authority_block == "":
+            _pre_llm_executed = True
+            _pre_llm_pipeline_patch["deterministic_pre_llm_executed"] = 1
+            _exec_trace.mark_pre_llm_executed()
+            try:
+                from services.consultant._reconstructed_authority import (
+                    enforce_orchestration_recommendation_authority,
+                )
+
+                enforce_orchestration_recommendation_authority(_pre_llm_pipeline_patch, query or "")
+            except Exception:
+                pass
+        elif _pipeline_authority_block == "" and not _icrl_deterministic_only and not requires_hard_deterministic_responder(_guard_ctx_pre):
             if _qri.intent.value == "visualization_request":
                 from services.consultant.mission_state import MissionState
                 from services.consultant.visualization_handler import (
@@ -610,14 +997,161 @@ def run_consultant_retrieval_bundle(
                 from services.recommendation.query_recommendation_intent import build_intent_authority_note
 
                 _pipeline_authority_block = build_intent_authority_note(_qri)
-            _aviation_engines_ctx = (
-                "[Legacy catalog hints below are secondary — use AUTHORITATIVE pipeline list above.]\n\n"
-                + _aviation_engines_ctx
-                if _aviation_engines_ctx
-                else ""
-            )
+            try:
+                from services.consultant.consultant_llm_policy import consultant_llm_narration_enabled
+
+                if consultant_llm_narration_enabled() and _pipeline_authority_block:
+                    _pre_llm_pipeline_patch["pipeline_llm_facts"] = (
+                        str(_pre_llm_pipeline_patch.get("pipeline_llm_facts") or "").strip()
+                        + ("\n\n" if _pre_llm_pipeline_patch.get("pipeline_llm_facts") else "")
+                        + _pipeline_authority_block
+                    ).strip()
+                    _pipeline_authority_block = ""
+            except Exception:
+                pass
+            if _pipeline_authority_block:
+                _aviation_engines_ctx = (
+                    "[Legacy catalog hints below are secondary — use AUTHORITATIVE pipeline list above.]\n\n"
+                    + _aviation_engines_ctx
+                    if _aviation_engines_ctx
+                    else ""
+                )
+            elif _pre_llm_pipeline_patch.get("pipeline_llm_facts") and _aviation_engines_ctx:
+                _aviation_engines_ctx = (
+                    "[Catalog hints below are secondary to verified mission facts in context.]\n\n"
+                    + _aviation_engines_ctx
+                )
     except Exception as _pipe_e:
         logger.warning("pre-LLM recommendation pipeline skipped: %s", _pipe_e)
+
+    if _authority_dispatch_result is None:
+        from types import SimpleNamespace
+
+        from services.consultant.consultant_llm_policy import (
+            authority_dispatch_defer_to_llm,
+            structured_dispatch_llm_block,
+        )
+
+        _defer_answer = (
+            str(_pre_llm_pipeline_patch.get("comparison_structured_for_llm") or "").strip()
+            or str(_pre_llm_pipeline_patch.get("alternative_structured_for_llm") or "").strip()
+        )
+        if _defer_answer:
+            _defer_kind = (
+                "comparison"
+                if _pre_llm_pipeline_patch.get("comparison_structured_for_llm")
+                else "alternative"
+            )
+            _defer_proxy = SimpleNamespace(
+                answer=_defer_answer,
+                dispatch_kind=_defer_kind,
+                data_used=_pre_llm_pipeline_patch,
+            )
+            if authority_dispatch_defer_to_llm(_defer_proxy):
+                _block = structured_dispatch_llm_block(_defer_proxy)
+                if _block:
+                    _existing_sd = str(
+                        _pre_llm_pipeline_patch.get("structured_dispatch_llm_facts") or ""
+                    ).strip()
+                    _pre_llm_pipeline_patch["structured_dispatch_llm_facts"] = (
+                        f"{_existing_sd}\n\n{_block}".strip() if _existing_sd else _block
+                    )
+                _pre_llm_pipeline_patch["authority_dispatch_deferred_llm"] = 1
+                _pre_llm_pipeline_patch["authority_dispatch_kind"] = _defer_kind
+
+    if _authority_dispatch_result is not None:
+        from services.consultant.consultant_llm_policy import (
+            authority_dispatch_defer_to_llm,
+            structured_dispatch_llm_block,
+        )
+
+        if authority_dispatch_defer_to_llm(_authority_dispatch_result):
+            _pre_llm_pipeline_patch.update(
+                dict(getattr(_authority_dispatch_result, "data_used", None) or {})
+            )
+            _block = structured_dispatch_llm_block(_authority_dispatch_result)
+            if _block:
+                _existing_sd = str(
+                    _pre_llm_pipeline_patch.get("structured_dispatch_llm_facts") or ""
+                ).strip()
+                _pre_llm_pipeline_patch["structured_dispatch_llm_facts"] = (
+                    f"{_existing_sd}\n\n{_block}".strip() if _existing_sd else _block
+                )
+            _pre_llm_pipeline_patch["authority_dispatch_deferred_llm"] = 1
+            _pre_llm_pipeline_patch["authority_dispatch_kind"] = getattr(
+                _authority_dispatch_result, "dispatch_kind", ""
+            )
+            _authority_dispatch_result = None
+        else:
+            from services.routing.deterministic_execution_guard import (
+                build_deterministic_execution_metadata,
+                resolve_deterministic_bypass_response,
+            )
+
+            _guard_ctx_auth = _build_deterministic_guard_ctx(
+                query=query or "",
+                qri=_qri,
+                unified_route=_unified_route,
+                authority_dispatch_result=_authority_dispatch_result,
+                pre_llm_pipeline_patch=_pre_llm_pipeline_patch,
+                pipeline_authority_block=_pipeline_authority_block,
+                svc=svc,
+                history=_history_original,
+            )
+            _bypass = resolve_deterministic_bypass_response(_guard_ctx_auth)
+            if _bypass:
+                _kind, _payload = _bypass
+            else:
+                _handler_du = dict(_pre_llm_pipeline_patch)
+                _handler_du.update(_authority_dispatch_result.data_used)
+                _handler_du["deterministic_execution"] = build_deterministic_execution_metadata(
+                    _guard_ctx_auth,
+                    final_responder=f"respond_{_authority_dispatch_result.dispatch_kind}",
+                )
+                _kind, _payload = "professional", {
+                    "answer": _authority_dispatch_result.answer,
+                    "sources": [],
+                    "data_used": _handler_du,
+                    "aircraft_images": [],
+                    "error": None,
+                }
+            if progress:
+                progress.step(
+                    _authority_dispatch_result.progress_step,
+                    authority_dispatch_kind=_authority_dispatch_result.dispatch_kind,
+                )
+            logger.info(
+                "consultant authority dispatch: kind=%s query=%r",
+                _authority_dispatch_result.dispatch_kind,
+                (query or "")[:120],
+            )
+            _assert_deterministic_trace(
+                {
+                    "query": query or "",
+                    "deterministic_intent": _authority_dispatch_result.dispatch_kind,
+                    "authority_dispatch_kind": _authority_dispatch_result.dispatch_kind,
+                    "llm_executed": False,
+                    "pre_llm_executed": bool(_pre_llm_pipeline_patch.get("deterministic_pre_llm_executed")),
+                    "data_used": _payload.get("data_used"),
+                    "answer": _payload.get("answer"),
+                }
+            )
+            finalize_consultant_conversation_state(
+                _payload.get("data_used") or {},
+                client_conversation_state,
+                query=query or "",
+                history=_history_original,
+                fine_intent=_fine.intent.value,
+                continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+            )
+            _exec_trace.capture_deterministic_guard(should_bypass=True, resolve_hit=bool(_bypass))
+            return _return_with_execution_trace(
+                _exec_trace,
+                _kind,
+                _payload,
+                path_override="authority_dispatch",
+                llm_invoked=False,
+            )
 
     if _unified_route is not None:
         _obs_timer = None
@@ -774,16 +1308,31 @@ def run_consultant_retrieval_bundle(
                 fine_intent=_fine.intent.value,
                 continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
             )
-            return "professional", {
-                "answer": _handler_answer,
-                "sources": [],
-                "data_used": _handler_du,
-                "aircraft_images": [],
-                "error": None,
-            }
+            return _return_with_execution_trace(
+                _exec_trace,
+                "professional",
+                {
+                    "answer": _handler_answer,
+                    "sources": [],
+                    "data_used": _handler_du,
+                    "aircraft_images": [],
+                    "error": None,
+                },
+                unified_enforced=True,
+                llm_invoked=False,
+            )
 
+    try:
+        from services.consultant.consultant_llm_policy import consultant_llm_narration_enabled
+
+        _llm_narration_primary = consultant_llm_narration_enabled()
+    except Exception:
+        _llm_narration_primary = True
+    _prefix_pipeline = (
+        "" if _llm_narration_primary else (_pipeline_authority_block or "").strip()
+    )
     _consultant_aviation_prefix = "\n\n".join(
-        p for p in (_mission_hint, _pipeline_authority_block, _aviation_engines_ctx) if p
+        p for p in (_mission_hint, _prefix_pipeline, _aviation_engines_ctx) if p
     ).strip()
 
     _t_block = time.perf_counter()
@@ -807,6 +1356,11 @@ def run_consultant_retrieval_bundle(
             fine_intent=_fine.intent.value,
             continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
         )
+        if isinstance(prof, dict) and "answer" in prof:
+            if query and not prof.get("query"):
+                prof = dict(prof)
+                prof["query"] = query or ""
+            prof = _ensure_non_empty_answer(prof)
         return "professional", prof
 
 
@@ -1029,6 +1583,13 @@ def run_consultant_retrieval_bundle(
             AviationIntent.OPERATOR_LOOKUP,
         )
     )
+    try:
+        from services.broker_execution.execution_intent_lock import should_skip_market_block
+
+        if should_skip_market_block(_pre_llm_pipeline_patch):
+            skip_reg_market = True
+    except Exception:
+        pass
     market_block, market_meta = build_consultant_market_authority_block(
         svc.db,
         query,
@@ -1040,6 +1601,13 @@ def run_consultant_retrieval_bundle(
 
     hybrid_plan: HybridRetrievalPlan = classify_hybrid_retrieval(query, _fine, _strict_tails)
     sql_nonempty = bool((phly_authority or "").strip()) or bool((market_block or "").strip())
+    _tail_registry_ctx = str(
+        _pre_llm_pipeline_patch.get("tail_registry_llm_context") or ""
+    ).strip()
+    if _tail_registry_ctx:
+        phly_authority = f"{_tail_registry_ctx}\n\n{phly_authority or ''}".strip()
+        _pre_llm_pipeline_patch["tail_registry_llm_context"] = _tail_registry_ctx
+
     phly_authority = prepend_hybrid_structured_context(
         phly_authority or "",
         phly_rows,
@@ -1195,9 +1763,11 @@ def run_consultant_retrieval_bundle(
     if user_wants_gallery:
         try:
             from rag.aviation_tail import (
+                find_loose_us_n_tail_tokens_in_text,
                 find_strict_tail_candidates,
                 find_strict_tail_candidates_in_text,
                 find_visual_gallery_tail_candidates,
+                normalize_tail_token,
             )
             from rag.consultant_query_anchor import effective_history_for_gallery_tail
 
@@ -1205,6 +1775,7 @@ def run_consultant_retrieval_bundle(
             # in the **latest** message. If the tail is only inferred from prior turns ("show me that"),
             # we still anchor the gallery to that tail, but allow model-based fallback imagery.
             tails_typed_now = find_strict_tail_candidates_in_text(_latest_user_query_raw or "")
+            tails_loose_now = find_loose_us_n_tail_tokens_in_text(_latest_user_query_raw or "")
 
             tails_in_query = find_visual_gallery_tail_candidates(
                 query or "",
@@ -1220,8 +1791,14 @@ def run_consultant_retrieval_bundle(
                 )
             if tails_in_query:
                 requested_tail_for_images = tails_in_query[0]
-                # Option B: explicit tail typed now => tail-verified images only (no model fallback).
-                strict_tail_image_request = bool(tails_typed_now)
+                resolved_tail = normalize_tail_token(requested_tail_for_images)
+                latest_tails = {
+                    normalize_tail_token(t) for t in (tails_typed_now + tails_loose_now) if t
+                }
+                # Tail typed on the latest line (strict or loose) => tail-verified images only.
+                strict_tail_image_request = bool(
+                    tails_typed_now or (resolved_tail and resolved_tail in latest_tails)
+                )
         except Exception:
             pass
         if requested_tail_for_images:
@@ -1274,7 +1851,7 @@ def run_consultant_retrieval_bundle(
                 from services.intent_persistence.pivot import shopping_gallery_models
 
                 _sgm = shopping_gallery_models(_latest_user_query_raw or query or "")
-                inferred_marketing_type_for_images = _sgm[0] if _sgm else "Challenger 350"
+                inferred_marketing_type_for_images = _sgm[0] if _sgm else None
             elif re.search(
                 r"\b(best\s+cabin|luxury|premium|hotel\s+feel|like\s+a\s+hotel|"
                 r"modern\s+cabin|under\s+\$?\d+\s*m)\b",
@@ -1596,6 +2173,13 @@ def run_consultant_retrieval_bundle(
         except Exception:
             _history_for_images = history or _history_original
 
+        try:
+            from rag.consultant_query_anchor import user_wants_full_gallery
+
+            _gallery_cap = 20 if user_wants_full_gallery(gallery_user_query or query or "") else None
+        except Exception:
+            _gallery_cap = None
+
         aircraft_images = build_consultant_aircraft_images(
             tavily_payload,
             phly_rows,
@@ -1608,6 +2192,7 @@ def run_consultant_retrieval_bundle(
             strict_model_title_alt_match=bool(inferred_marketing_type_for_images) and not strict_tail_image_request,
             user_query=gallery_user_query,
             history=_history_for_images,
+            max_gallery_images=_gallery_cap,
             gallery_meta_out=searchapi_gallery_meta,
         )
         if requested_tail_for_images:
@@ -1698,9 +2283,14 @@ def run_consultant_retrieval_bundle(
     has_phly = bool((phly_authority or "").strip())
     has_market = bool((market_block or "").strip())
     has_rag = bool(results)
+    has_pipeline_facts = bool(
+        str(_pre_llm_pipeline_patch.get("pipeline_llm_facts") or "").strip()
+        or _pre_llm_pipeline_patch.get("deterministic_recommendation_pipeline")
+        or _pre_llm_pipeline_patch.get("deterministic_pre_llm_executed")
+    )
     # SearchAPI/Bing gallery images are not Tavily hits — still count as retrievable web media for gating.
     has_tavily = tavily_hits > 0 or tavily_image_n > 0 or bool(aircraft_images)
-    if not (has_phly or has_market or has_rag or has_tavily):
+    if not (has_phly or has_market or has_rag or has_tavily or has_pipeline_facts):
         if progress:
             progress.step(
                 "path_general_knowledge",
@@ -1712,6 +2302,21 @@ def run_consultant_retrieval_bundle(
         )
         return "gk", None
     
+    try:
+        from services.broker_execution.fact_pack_builder import attach_fact_pack_to_data_used
+
+        _fp_du: Dict[str, Any] = dict(_pre_llm_pipeline_patch)
+        if isinstance(phly_meta, dict):
+            _fp_du = {**phly_meta, **_fp_du}
+        _fact_pack_block = attach_fact_pack_to_data_used(query, _fp_du)
+        for _fk in ("fact_pack", "fact_pack_fact_count", "fact_pack_context_applied"):
+            if _fk in _fp_du:
+                _pre_llm_pipeline_patch[_fk] = _fp_du[_fk]
+        if _fact_pack_block:
+            phly_authority = f"{_fact_pack_block}\n\n{phly_authority or ''}".strip()
+    except Exception as _fp_e:
+        logger.debug("fact pack context skipped: %s", _fp_e)
+
     context, _context_parts, ctx_meta = build_consultant_llm_context(
         phly_authority=phly_authority,
         market_block=market_block,
@@ -1722,13 +2327,18 @@ def run_consultant_retrieval_bundle(
     )
     included = set(ctx_meta.get("sections_included") or [])
     if not context.strip():
-        if progress:
-            progress.step("path_general_knowledge", reason="context_empty_after_assembly")
-        logger.info(
-            "RAG answer: no PhlyData, Tavily text, or Pinecone context; general knowledge (len=%d)",
-            len(query),
-        )
-        return "gk", None
+        _pipeline_ctx = str(_pre_llm_pipeline_patch.get("pipeline_llm_facts") or "").strip()
+        if _pipeline_ctx:
+            context = _pipeline_ctx
+            _pre_llm_pipeline_patch["mission_context_from_pipeline_only"] = 1
+        else:
+            if progress:
+                progress.step("path_general_knowledge", reason="context_empty_after_assembly")
+            logger.info(
+                "RAG answer: no PhlyData, Tavily text, or Pinecone context; general knowledge (len=%d)",
+                len(query),
+            )
+            return "gk", None
 
     if progress:
         progress.step(
@@ -1746,11 +2356,27 @@ def run_consultant_retrieval_bundle(
     from services.orchestration.image_session import advisory_image_context_patch
 
     data_used: Dict[str, Any] = dict(phly_meta)
+    if _entity_scope_diag:
+        data_used.update(_entity_scope_diag)
+        if phly_meta.get("phly_lookup_tokens") is not None:
+            data_used["phly_lookup_tokens"] = phly_meta.get("phly_lookup_tokens")
+        if phly_meta.get("phly_row_identity") is not None:
+            data_used["phly_row_identity"] = phly_meta.get("phly_row_identity")
+        if phly_meta.get("entity_scope_validation") is not None:
+            data_used["entity_scope_validation"] = phly_meta.get("entity_scope_validation")
+        if phly_meta.get("entity_scope") is not None:
+            data_used["entity_scope"] = phly_meta.get("entity_scope")
     data_used.update(advisory_image_context_patch(query or ""))
     if _du_preprocess:
         data_used.update(_du_preprocess)
     if _pre_llm_pipeline_patch:
         data_used.update(_pre_llm_pipeline_patch)
+    try:
+        from services.broker_execution.execution_intent_lock import attach_execution_intent_lock
+
+        attach_execution_intent_lock(data_used, query or "")
+    except Exception:
+        pass
     data_used["consultant_query"] = (query or "").strip()
     for k, v in strip_market_meta_zeros(market_meta).items():
         data_used[k] = v
@@ -1780,6 +2406,9 @@ def run_consultant_retrieval_bundle(
             "routing_decision": _intent_bundle.routing_decision.value,
             "standalone_confidence": _intent_bundle.standalone_confidence,
         }
+        _at_final = str((_intent_bundle.resolved_intent or {}).get("active_tail") or "").strip().upper()
+        if _at_final:
+            data_used["active_tail"] = _at_final
         if _intent_bundle.suppress_faa_registry_lookup:
             data_used["intent_persistence_suppress_faa"] = 1
         if _intent_bundle.suppress_generic_vector_rag:
@@ -1965,10 +2594,23 @@ def run_consultant_retrieval_bundle(
         intent_classification.primary,
         intent_classification.aviation_intent,
     )
-    if _pipeline_authority_block:
+    if _authority_dispatch_result is not None:
+        from rag.deterministic_consultant_charter import adaptive_presentation_suffix
+
+        system_prompt += adaptive_presentation_suffix(
+            getattr(_authority_dispatch_result, "dispatch_kind", None),
+            icrl_handled=bool(_exec_trace.icrl_handled if _exec_trace else False),
+        )
+    if (
+        _pre_llm_executed
+        or _pre_llm_pipeline_patch.get("pipeline_llm_facts")
+        or _pre_llm_pipeline_patch.get("structured_dispatch_llm_facts")
+    ):
         from services.consultant.llm_explanation_layer import build_narration_system_addendum
 
-        system_prompt += "\n\n" + build_narration_system_addendum()
+        system_prompt += "\n\n" + build_narration_system_addendum(
+            query_intent=str(_qri.intent.value if _qri else "")
+        )
     # User-facing safety: never expose internal datasets/pipelines; treat bracketed context tags as internal-only.
     system_prompt += (
         "\n\n**Client-facing safety (strict):** Never mention or imply internal systems, datasets, or infrastructure. "
@@ -1988,6 +2630,20 @@ def run_consultant_retrieval_bundle(
         "Recommendations: short conversational opening first—no essay or spec dump unless the user asks. "
         "Avoid philosophical aviation one-liners. Do not list serials/regs as the main thrust unless detailed data was requested.\n"
     )
+
+    try:
+        from services.broker_execution.intent_answer_contract import build_intent_answer_contract_suffix
+        from services.broker_execution.response_mode_classifier import classify_response_mode
+
+        _exec_mode = classify_response_mode(query, data_used=data_used)
+        data_used["consultant_response_mode_canonical"] = _exec_mode.value
+        system_prompt += build_intent_answer_contract_suffix(
+            query,
+            data_used=data_used,
+            response_mode=_exec_mode,
+        )
+    except Exception as _iac_e:
+        logger.debug("intent answer contract skipped: %s", _iac_e)
 
     system_prompt += response_depth_prompt_suffix(_response_depth_kind)
 
@@ -2524,8 +3180,142 @@ def run_consultant_retrieval_bundle(
             "retrieval_bundle_complete",
             system_prompt_chars=len(system_prompt),
         )
-    
-    return "llm", {
+
+    # Phase 15 safety invariant:
+    # Hard deterministic intents must fail closed, never fall back to LLM
+    _guard_ctx_final = _build_deterministic_guard_ctx(
+        query=query or "",
+        qri=_qri,
+        unified_route=_unified_route,
+        authority_dispatch_result=_authority_dispatch_result,
+        pre_llm_pipeline_patch=_pre_llm_pipeline_patch,
+        pipeline_authority_block=_pipeline_authority_block,
+        data_used=data_used,
+        svc=svc,
+        history=_history_original,
+    )
+    from services.routing.deterministic_execution_guard import (
+        requires_hard_deterministic_responder,
+        resolve_deterministic_bypass_response,
+        should_bypass_llm_execution,
+    )
+    from services.core.semantic_intent_lock_engine import enforce_intent_lock_at_guard
+
+    _intent_lock_guard = enforce_intent_lock_at_guard(_guard_ctx_final)
+    if _intent_lock_guard is not None:
+        _il_kind, _il_payload = _intent_lock_guard
+        if progress:
+            progress.step("path_intent_lock_guard", fail_closed=1)
+        _exec_trace.capture_deterministic_guard(should_bypass=True, resolve_hit=True)
+        return _return_with_execution_trace(
+            _exec_trace,
+            _il_kind,
+            _il_payload,
+            path_override="hybrid_unified",
+            llm_invoked=False,
+        )
+
+    _should_bypass_final = should_bypass_llm_execution(_guard_ctx_final)
+    _exec_trace.capture_deterministic_guard(should_bypass=_should_bypass_final)
+
+    if _should_bypass_final:
+        _bypass_final = resolve_deterministic_bypass_response(_guard_ctx_final)
+        if _bypass_final is not None:
+            _det_kind, _det_payload = _bypass_final
+            if progress:
+                progress.step(
+                    "path_deterministic_execution_guard",
+                    deterministic_intent=_guard_ctx_final.get("deterministic_intent"),
+                )
+            logger.info(
+                "deterministic execution guard blocked LLM: intent=%s query=%r",
+                _guard_ctx_final.get("deterministic_intent"),
+                (query or "")[:120],
+            )
+            _assert_deterministic_trace(
+                {
+                    "query": query or "",
+                    "deterministic_intent": _guard_ctx_final.get("deterministic_intent"),
+                    "llm_executed": False,
+                    "pre_llm_executed": bool(_pre_llm_pipeline_patch.get("deterministic_pre_llm_executed")),
+                    "pipeline_authority_block": _pipeline_authority_block,
+                    "data_used": _det_payload.get("data_used"),
+                    "answer": _det_payload.get("answer"),
+                }
+            )
+            _du_det = _det_payload.get("data_used")
+            if isinstance(_du_det, dict):
+                finalize_consultant_conversation_state(
+                    _du_det,
+                    client_conversation_state,
+                    query=query or "",
+                    history=_history_original,
+                    fine_intent=_fine.intent.value,
+                    continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+                )
+            _exec_trace.capture_deterministic_guard(should_bypass=True, resolve_hit=True)
+            return _return_with_execution_trace(
+                _exec_trace,
+                _det_kind,
+                _det_payload,
+                path_override="hybrid_unified",
+                llm_invoked=False,
+            )
+
+        if requires_hard_deterministic_responder(_guard_ctx_final):
+            _safe_kind, _safe_payload = _build_hard_deterministic_safety_fallback(
+                _guard_ctx_final,
+                pre_llm_pipeline_patch=_pre_llm_pipeline_patch,
+            )
+            if progress:
+                progress.step(
+                    "path_deterministic_safety_fallback",
+                    deterministic_intent=_guard_ctx_final.get("deterministic_intent"),
+                )
+            logger.warning(
+                "deterministic safety fallback (fail-closed): intent=%s query=%r",
+                _guard_ctx_final.get("deterministic_intent"),
+                (query or "")[:120],
+            )
+            _assert_deterministic_trace(
+                {
+                    "query": query or "",
+                    "deterministic_intent": _guard_ctx_final.get("deterministic_intent"),
+                    "llm_executed": False,
+                    "pre_llm_executed": bool(_pre_llm_pipeline_patch.get("deterministic_pre_llm_executed")),
+                    "data_used": _safe_payload.get("data_used"),
+                    "answer": _safe_payload.get("answer"),
+                }
+            )
+            _du_safe = _safe_payload.get("data_used")
+            if isinstance(_du_safe, dict):
+                finalize_consultant_conversation_state(
+                    _du_safe,
+                    client_conversation_state,
+                    query=query or "",
+                    history=_history_original,
+                    fine_intent=_fine.intent.value,
+                    continuity_state=(_continuity_bundle.serialized if _continuity_bundle else None),
+                )
+            _exec_trace.capture_deterministic_guard(should_bypass=True, safety_fallback=True)
+            return _return_with_execution_trace(
+                _exec_trace,
+                _safe_kind,
+                _safe_payload,
+                path_override="hybrid_unified",
+                llm_invoked=False,
+            )
+
+    if isinstance(data_used, dict):
+        data_used["llm_executed"] = True
+        data_used["consultant_llm_draft"] = 1
+        data_used["execution_trace"] = {
+            "llm_executed": True,
+            "pre_llm_executed": bool(_pre_llm_pipeline_patch.get("deterministic_pre_llm_executed")),
+            "deterministic_intent": _guard_ctx_final.get("deterministic_intent"),
+        }
+
+    _llm_payload = {
         "context": context,
         "phly_authority": phly_authority,
         "phly_meta": phly_meta,
@@ -2540,3 +3330,22 @@ def run_consultant_retrieval_bundle(
         "purchase_context": purchase_ctx,
         "aircraft_images": aircraft_images,
     }
+    try:
+        from services.consultant.answer_recovery import materialize_llm_bundle_answer
+
+        _llm_payload["answer"] = materialize_llm_bundle_answer(
+            query=query or "",
+            data_used=data_used if isinstance(data_used, dict) else {},
+            pipeline_authority_block=_pipeline_authority_block,
+            pre_llm_pipeline_patch=_pre_llm_pipeline_patch,
+        )
+    except Exception as _mat_e:
+        logger.warning("llm bundle answer materialization skipped: %s", _mat_e)
+        _llm_payload["answer"] = ""
+    _exec_trace.capture_deterministic_guard(should_bypass=False, resolve_hit=False)
+    return _return_with_execution_trace(
+        _exec_trace,
+        "llm",
+        _llm_payload,
+        llm_invoked=True,
+    )

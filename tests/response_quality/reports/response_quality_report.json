@@ -1,0 +1,690 @@
+{
+  "total_queries": 100,
+  "broker_recommendation_accuracy_pct": 73.33,
+  "mission_feasibility_accuracy_pct": 45.0,
+  "valuation_accuracy_pct": 30.0,
+  "comparison_quality_pct": 100.0,
+  "answer_consistency_pct": 95.0,
+  "overall_broker_quality": 67.58,
+  "category_scores": {
+    "broker_recommendation": 73.33,
+    "mission_feasibility": 45.0,
+    "valuation_accuracy": 30.0,
+    "comparison_quality": 100.0,
+    "answer_consistency": 95.0
+  },
+  "stop_condition_violations": [
+    {
+      "query_id": "br-mis-001",
+      "query": "8 pax TEB-LAX",
+      "flags": [
+        "VERDICT_DRIFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-002",
+      "query": "6 pax NYC to Miami nonstop",
+      "flags": [
+        "VERDICT_DRIFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-003",
+      "query": "12 pax London to Singapore nonstop",
+      "flags": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ]
+    },
+    {
+      "query_id": "br-mis-004",
+      "query": "4 pax Van Nuys to Aspen",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-006",
+      "query": "8 pax Chicago to Miami under $15M",
+      "flags": [
+        "VERDICT_DRIFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-007",
+      "query": "6 pax Dallas to New York",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-009",
+      "query": "10 pax Seattle to Honolulu nonstop",
+      "flags": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ]
+    },
+    {
+      "query_id": "br-mis-010",
+      "query": "12 pax Los Angeles to Tokyo nonstop",
+      "flags": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ]
+    },
+    {
+      "query_id": "br-mis-012",
+      "query": "6 pax TEB to Aspen winter",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-013",
+      "query": "8 pax Miami to Paris nonstop",
+      "flags": [
+        "MISSION_INFEASIBLE_RECOMMENDATION",
+        "VERDICT_DRIFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-014",
+      "query": "4 pax under $8M for regional trips",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-016",
+      "query": "8 pax New York to Los Angeles nonstop",
+      "flags": [
+        "VERDICT_DRIFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-017",
+      "query": "6 pax Chicago to Denver",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-018",
+      "query": "12 pax under $40M ultra-long range",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-mis-020",
+      "query": "6 pax Houston to Las Vegas",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-002",
+      "query": "Is this Challenger 350 overpriced at $9M?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-008",
+      "query": "Is a 2019 Longitude at $14M overpriced?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-011",
+      "query": "Should I buy a 2019 CJ4 for $5M?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-013",
+      "query": "2018 Challenger 3500 for $16M \u2014 good deal?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-015",
+      "query": "Should I buy a 2017 Legacy 650 at $11M?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    },
+    {
+      "query_id": "br-acq-017",
+      "query": "2018 Phenom 300E at $4.5M \u2014 good buy?",
+      "flags": [
+        "BROKER_BAD_AIRCRAFT"
+      ]
+    }
+  ],
+  "hallucinated_aircraft_count": 13,
+  "cross_model_valuation_count": 0,
+  "mission_infeasible_count": 4,
+  "verdict_drift_count": 5,
+  "success_criteria": {
+    "broker_recommendation_accuracy_pct": {
+      "value": 73.33,
+      "target": 95.0,
+      "pass": false
+    },
+    "mission_feasibility_accuracy_pct": {
+      "value": 45.0,
+      "target": 98.0,
+      "pass": false
+    },
+    "valuation_accuracy_pct": {
+      "value": 30.0,
+      "target": 95.0,
+      "pass": false
+    },
+    "comparison_quality_pct": {
+      "value": 100.0,
+      "target": 95.0,
+      "pass": true
+    },
+    "answer_consistency_pct": {
+      "value": 95.0,
+      "target": 99.0,
+      "pass": false
+    },
+    "overall_broker_quality": {
+      "value": 67.58,
+      "target": 95.0,
+      "pass": false
+    },
+    "hallucinated_aircraft_zero": {
+      "value": 13,
+      "target": 0,
+      "pass": false
+    },
+    "cross_model_valuation_zero": {
+      "value": 0,
+      "target": 0,
+      "pass": true
+    },
+    "mission_infeasible_zero": {
+      "value": 4,
+      "target": 0,
+      "pass": false
+    }
+  },
+  "best_answers": [
+    {
+      "query_id": "br-cmp-001",
+      "category": "comparison",
+      "query": "G650 vs Falcon 8X",
+      "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm cata",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-002",
+      "category": "comparison",
+      "query": "Longitude vs Challenger 3500",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-003",
+      "category": "comparison",
+      "query": "Global 7500 vs G700",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-004",
+      "category": "comparison",
+      "query": "Citation CJ3+ vs Citation CJ4",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-005",
+      "category": "comparison",
+      "query": "Praetor 600 vs Citation Latitude",
+      "answer_preview": "Verified catalog comparison:\n- Citation Latitude: large-cabin class; practical range 2200 nm; seats 8; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified range, Praetor 600 leads Citation Latitude (3256 nm vs 2200",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-006",
+      "category": "comparison",
+      "query": "PC-24 vs Phenom 300E",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-007",
+      "category": "comparison",
+      "query": "G550 vs Challenger 650",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-008",
+      "category": "comparison",
+      "query": "Falcon 7X vs Falcon 8X",
+      "answer_preview": "Verified catalog comparison:\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\n- Falcon 7X: large-cabin class; practical range 4752 nm; seats 12; operating cost band medium.\nOn verified range, Falcon 8X leads Falcon 7X (5544 nm vs 4752 nm catalog practica",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-009",
+      "category": "comparison",
+      "query": "G280 vs Praetor 500",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-010",
+      "category": "comparison",
+      "query": "Citation Longitude vs Challenger 350",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-011",
+      "category": "comparison",
+      "query": "Global 6500 vs Global 7500",
+      "answer_preview": "Verified catalog comparison:\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\n- Global 6500: large-cabin class; practical range 5808 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Global 6500 (6600 nm vs 5808 nm catalog ",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-012",
+      "category": "comparison",
+      "query": "G650 vs Global 7500",
+      "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm ",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-013",
+      "category": "comparison",
+      "query": "Challenger 350 vs Challenger 3500",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-014",
+      "category": "comparison",
+      "query": "Legacy 650 vs Challenger 650",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-015",
+      "category": "comparison",
+      "query": "G650 vs Falcon 7X for transatlantic",
+      "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 7X: large-cabin class; practical range 4752 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 7X (5720 nm vs 4752 nm cata",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-016",
+      "category": "comparison",
+      "query": "Compare G650 and Falcon 8X for charter operations",
+      "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm cata",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-017",
+      "category": "comparison",
+      "query": "Which is better, Longitude or Challenger 3500?",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-018",
+      "category": "comparison",
+      "query": "G700 vs Global 7500 for ultra-long range",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nVerified catalog comparison requires two recognized aircraft models.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-019",
+      "category": "comparison",
+      "query": "Citation Latitude vs Praetor 600",
+      "answer_preview": "Verified catalog comparison:\n- Citation Latitude: large-cabin class; practical range 2200 nm; seats 8; operating cost band medium.\n- Praetor 600: super-midsize class; practical range 3256 nm; seats 9; operating cost band medium.\nOn verified range, Praetor 600 leads Citation Latitude (3256 nm vs 2200",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-cmp-020",
+      "category": "comparison",
+      "query": "Falcon 2000 vs Challenger 350",
+      "answer_preview": "Verified catalog comparison:\n- Challenger 350: super-midsize class; practical range 2904 nm; seats 9; operating cost band medium.\n- Falcon 2000: large-cabin class; practical range 2464 nm; seats 10; operating cost band medium.\nOn verified range, Challenger 350 leads Falcon 2000 (2904 nm vs 2464 nm c",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-val-001",
+      "category": "valuation",
+      "query": "What is a 2019 Falcon 8X worth?",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nStructured valuation requires a resolved aircraft model and verified market context.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-val-002",
+      "category": "valuation",
+      "query": "Estimate market value of a 2017 Citation Longitude",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nStructured valuation requires a resolved aircraft model and verified market context.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-val-004",
+      "category": "valuation",
+      "query": "What is a 2020 Praetor 600 worth?",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nStructured valuation requires a resolved aircraft model and verified market context.",
+      "execution_path": "authority_dispatch"
+    },
+    {
+      "query_id": "br-val-007",
+      "category": "valuation",
+      "query": "2018 PC-24 worth?",
+      "answer_preview": "Understood \u2014 talk soon.",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-011",
+      "category": "valuation",
+      "query": "What is a 2019 Challenger 350 worth?",
+      "answer_preview": "Insufficient verified data for deterministic execution.\n\nStructured valuation requires a resolved aircraft model and verified market context.",
+      "execution_path": "authority_dispatch"
+    }
+  ],
+  "highest_risk_answers": [
+    {
+      "query_id": "br-mis-003",
+      "category": "mission_planning",
+      "query": "12 pax London to Singapore nonstop",
+      "issues": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~7000 nm\n- Passengers: 12\n\nRecommended aircraft:\n- Gulfstream G650: range ~7000 nm; seats up to 16\n- Global 7500: range ~7700 nm; seats up to 17\n\nFinal Verdict: Gulfstream G650 is the primary recommendation for this mission.",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-009",
+      "category": "mission_planning",
+      "query": "10 pax Seattle to Honolulu nonstop",
+      "issues": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~7000 nm\n- Passengers: 10\n\nRecommended aircraft:\n- Gulfstream G650: range ~7000 nm; seats up to 16\n- Global 7500: range ~7700 nm; seats up to 17\n\nFinal Verdict: Gulfstream G650 is the primary recommendation for this mission.",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-010",
+      "category": "mission_planning",
+      "query": "12 pax Los Angeles to Tokyo nonstop",
+      "issues": [
+        "BROKER_ROUTE_MISMATCH",
+        "MISSION_INFEASIBLE_RECOMMENDATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~7000 nm\n- Passengers: 12\n\nRecommended aircraft:\n- Gulfstream G650: range ~7000 nm; seats up to 16\n- Global 7500: range ~7700 nm; seats up to 17\n\nFinal Verdict: Gulfstream G650 is the primary recommendation for this mission.",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-013",
+      "category": "mission_planning",
+      "query": "8 pax Miami to Paris nonstop",
+      "issues": [
+        "MISSION_INFEASIBLE_RECOMMENDATION",
+        "VERDICT_DRIFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~2500 nm\n- Passengers: 8\n\nRecommended aircraft:\n- Hawker 800XP: range ~2500 nm; seats up to 8\n- Citation Latitude: range ~2700 nm; seats up to 9\n- Citation Sovereign+: range ~2800 nm; seats up to 9\n- Hawker 900XP: range ~2900 nm; seats up to 8\n-",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-003",
+      "category": "valuation",
+      "query": "2018 Challenger 3500 valuation",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-005",
+      "category": "valuation",
+      "query": "2016 Citation Latitude market value",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-006",
+      "category": "valuation",
+      "query": "Value of a 2019 G650",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-008",
+      "category": "valuation",
+      "query": "2017 G280 valuation estimate",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-009",
+      "category": "valuation",
+      "query": "2021 Global 7500 market value",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-010",
+      "category": "valuation",
+      "query": "2015 Falcon 7X worth",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-012",
+      "category": "valuation",
+      "query": "2018 Citation CJ4 valuation",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-013",
+      "category": "valuation",
+      "query": "Market value 2020 G550",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-014",
+      "category": "valuation",
+      "query": "2017 Legacy 650 worth",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-015",
+      "category": "valuation",
+      "query": "2019 Global 6500 valuation",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-017",
+      "category": "valuation",
+      "query": "2018 Praetor 500 market value",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-018",
+      "category": "valuation",
+      "query": "2020 Citation Longitude worth",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-019",
+      "category": "valuation",
+      "query": "2017 Challenger 650 valuation",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-val-020",
+      "category": "valuation",
+      "query": "2019 HondaJet Elite II worth",
+      "issues": [
+        "WRONG_YEAR_VALUATION"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: unspecified\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Cit",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-001",
+      "category": "mission_planning",
+      "query": "8 pax TEB-LAX",
+      "issues": [
+        "VERDICT_DRIFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~2500 nm\n- Passengers: 8\n\nRecommended aircraft:\n- Hawker 800XP: range ~2500 nm; seats up to 8\n- Citation Latitude: range ~2700 nm; seats up to 9\n- Citation Sovereign+: range ~2800 nm; seats up to 9\n- Hawker 900XP: range ~2900 nm; seats up to 8\n-",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-002",
+      "category": "mission_planning",
+      "query": "6 pax NYC to Miami nonstop",
+      "issues": [
+        "VERDICT_DRIFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~2500 nm\n- Passengers: 6\n\nRecommended aircraft:\n- Hawker 800XP: range ~2500 nm; seats up to 8\n- Citation Latitude: range ~2700 nm; seats up to 9\n- Citation Sovereign+: range ~2800 nm; seats up to 9\n- Hawker 900XP: range ~2900 nm; seats up to 8\n-",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-004",
+      "category": "mission_planning",
+      "query": "4 pax Van Nuys to Aspen",
+      "issues": [
+        "BROKER_BAD_AIRCRAFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: 4\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Citation XLS+",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-006",
+      "category": "mission_planning",
+      "query": "8 pax Chicago to Miami under $15M",
+      "issues": [
+        "VERDICT_DRIFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~2500 nm\n- Passengers: 8\n- Budget: $15.0M\n\nRecommended aircraft:\n- Hawker 800XP: range ~2500 nm; seats up to 8\n- Citation Latitude: range ~2700 nm; seats up to 9\n- Citation Sovereign+: range ~2800 nm; seats up to 9\n- Hawker 900XP: range ~2900 nm",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-007",
+      "category": "mission_planning",
+      "query": "6 pax Dallas to New York",
+      "issues": [
+        "BROKER_BAD_AIRCRAFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: 6\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Citation XLS+",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-012",
+      "category": "mission_planning",
+      "query": "6 pax TEB to Aspen winter",
+      "issues": [
+        "BROKER_BAD_AIRCRAFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: 6\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7\n- Citation XLS+",
+      "execution_path": ""
+    },
+    {
+      "query_id": "br-mis-014",
+      "category": "mission_planning",
+      "query": "4 pax under $8M for regional trips",
+      "issues": [
+        "BROKER_BAD_AIRCRAFT"
+      ],
+      "answer_preview": "Mission feasibility (catalog-based):\n- Route estimate: ~1200 nm\n- Passengers: 4\n- Budget: $8.0M\n\nRecommended aircraft:\n- Citation CJ2: range ~1550 nm; seats up to 6\n- Citation Ultra: range ~1700 nm; seats up to 7\n- Learjet 45: range ~1900 nm; seats up to 8\n- Phenom 300: range ~2000 nm; seats up to 7",
+      "execution_path": ""
+    }
+  ],
+  "failed_query_ids": [
+    "br-val-003",
+    "br-val-005",
+    "br-val-006",
+    "br-val-008",
+    "br-val-009",
+    "br-val-010",
+    "br-val-012",
+    "br-val-013",
+    "br-val-014",
+    "br-val-015",
+    "br-val-017",
+    "br-val-018",
+    "br-val-019",
+    "br-val-020",
+    "br-mis-001",
+    "br-mis-002",
+    "br-mis-003",
+    "br-mis-004",
+    "br-mis-006",
+    "br-mis-007",
+    "br-mis-009",
+    "br-mis-010",
+    "br-mis-012",
+    "br-mis-013",
+    "br-mis-014",
+    "br-mis-016",
+    "br-mis-017",
+    "br-mis-018",
+    "br-mis-020",
+    "br-acq-002",
+    "br-acq-008",
+    "br-acq-011",
+    "br-acq-013",
+    "br-acq-015",
+    "br-acq-017"
+  ]
+}

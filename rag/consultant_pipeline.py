@@ -1,9 +1,15 @@
 """
-Ask Consultant pipeline — router config and **re-exports** for the layered RAG layout::
+Ask Consultant pipeline — target architecture (production)::
 
-    User Query → :mod:`rag.intent` → :mod:`rag.entities` → router (this module's config)
-    → :mod:`rag.consultant_retrieval` (SQL + Pinecone + Tavily)
-    → :mod:`rag.ranking` → :mod:`rag.context` → LLM (+ :mod:`rag.answer`)
+    User Query
+       → [1] Intent Router (fine intent + broker execution category)
+       → [2] Context Builder (SQL, tools, Pinecone, Tavily)
+       → [3] Fact Pack Builder (:mod:`services.broker_execution.fact_pack_builder`)
+       → [4] LLM Final Renderer (:mod:`rag.query_service` draft + review) — **only** client prose author
+       → [5] Output Sanitizer (intelligence hygiene + :mod:`rag.response_safety` + output governance)
+
+Legacy deterministic short-circuits (authority dispatch, professional bundle) remain for
+fail-closed / no-API paths only; tail/comparison defer to LLM when ``CONSULTANT_FORCE_LLM=1``.
 
 End-to-end orchestration: :func:`rag.consultant_retrieval.run_consultant_retrieval_bundle`.
 """

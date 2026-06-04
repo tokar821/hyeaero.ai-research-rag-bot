@@ -19,6 +19,31 @@ from services.recommendation.fit_policy import FIT_GOOD, FIT_PARTIAL, FIT_STRONG
 
 MAX_BROKER_AIRCRAFT = STANDARD_RECOMMENDATION_LIMIT  # 3
 
+FINAL_OUTPUT_MARKER = "===FINAL_BROKER_OUTPUT==="
+_LLM_SANITIZE_FALLBACK = "INSUFFICIENT_DATA: No verified aircraft available."
+_ADVISORY_CONTEXT_LEAK_RE = re.compile(r"\[BROKER\s+ADVISORY\s+CONTEXT", re.I)
+
+
+def sanitize_llm_output(text: str) -> str:
+    """
+    Strip prompt-injected advisory blocks and return only post-marker client prose.
+    """
+    raw = (text or "").strip()
+    if not raw:
+        return _LLM_SANITIZE_FALLBACK
+    if _ADVISORY_CONTEXT_LEAK_RE.search(raw) and FINAL_OUTPUT_MARKER not in raw:
+        return _LLM_SANITIZE_FALLBACK
+    if FINAL_OUTPUT_MARKER in raw:
+        raw = raw.split(FINAL_OUTPUT_MARKER, 1)[-1].strip()
+    if not raw or _ADVISORY_CONTEXT_LEAK_RE.search(raw):
+        return _LLM_SANITIZE_FALLBACK
+    return raw
+
+
+def extract_final_broker_output(text: str) -> str:
+    """Return client-facing segment after FINAL_OUTPUT_MARKER when present."""
+    return sanitize_llm_output(text)
+
 
 def _append_mission_portfolio_sections(
     body: str,
@@ -180,59 +205,31 @@ class BrokerAdvisoryContext:
     feasible_aircraft: List[BrokerAircraftBrief] = field(default_factory=list)
 
     def to_llm_block(self) -> str:
+        """Structured facts for the LLM context layer — not a client-facing template."""
         lines = [
-            "[BROKER ADVISORY CONTEXT — narrate only; do not invent aircraft or feasibility]",
-            "",
-            "YOUR ROLE: Top-tier aircraft acquisition consultant. Concise, factual, decisive.",
-            "You may be slightly critical. No marketing language. No generic AI phrasing.",
-            "You MUST NOT add, remove, or swap aircraft. You MUST NOT invent range/feasibility.",
-            "",
-            f"Mission: {self.mission_summary}",
+            "[VERIFIED MISSION FACTS — pre-validated shortlist; narrate in natural broker prose]",
+            f"mission_summary: {self.mission_summary}",
         ]
         if self.route_label:
-            lines.append(f"Route: {self.route_label}")
+            lines.append(f"route: {self.route_label}")
         if self.passengers is not None:
-            lines.append(f"Passengers: {self.passengers}")
+            lines.append(f"passengers: {self.passengers}")
         if self.constraints:
-            lines.append("Constraints: " + "; ".join(self.constraints))
-        lines.append("")
-        lines.append(f"FEASIBLE AIRCRAFT (maximum {MAX_BROKER_AIRCRAFT} — narrate these only):")
-        for i, ac in enumerate(self.feasible_aircraft[:MAX_BROKER_AIRCRAFT], 1):
-            lines.append(
-                f"  {i}. {ac.model} ({ac.category}, ~{int(ac.practical_nm)} nm practical, "
-                f"{ac.pax_typical} pax typical, ~{int(ac.runway_ft)} ft runway)"
+            lines.append("constraints: " + "; ".join(self.constraints))
+        lines.append(f"feasible_aircraft_max: {MAX_BROKER_AIRCRAFT}")
+        for ac in self.feasible_aircraft[:MAX_BROKER_AIRCRAFT]:
+            row = (
+                f"- model={ac.model!r} class={ac.category!r} practical_nm={int(ac.practical_nm)} "
+                f"pax_typical={ac.pax_typical} runway_ft={int(ac.runway_ft)} "
+                f"broker_verdict={ac.fit_verdict!r}"
             )
             if ac.critique:
-                lines.append(f"     Note: {ac.critique[:200]}")
-            lines.append(f"     Pipeline fit: {ac.fit_verdict}")
-        lines.append("")
-        lines.append("Use this exact structure (no extra sections, no marketing language):")
-        lines.append("  Mission Fit:")
-        lines.append("    * Route: ...")
-        lines.append("    * Pax: ...")
-        lines.append("    * Priorities: ...")
-        lines.append("  Aircraft Options:")
-        lines.append("    * <Aircraft> — Why it fits: ... Key compromise: ...")
-        lines.append("  Verdict:")
-        lines.append(f"    * {_VERDICT_PRIMARY}: <names>")
-        lines.append(f"    * {_VERDICT_VIABLE}: <names, if any>")
-        lines.append(f"    * {_VERDICT_RISKY}: <names with thin margin, if any>")
-        lines.append(f"    * {_VERDICT_NOT}: <only if discussing rejected options>")
-        lines.append("")
-        lines.append("FORBIDDEN: " + ", ".join(
-            p.replace(r"\b", "").replace("\\", "")
-            for p in (
-                "mission profile",
-                "mission score",
-                "confidence score",
-                "operationally",
-                "worth considering",
-                "if priorities shift",
-                "stage length",
-                "balanced capability",
-                "Mission Summary",
-            )
-        ))
+                row += f" note={ac.critique[:240]!r}"
+            lines.append(row)
+        lines.append(
+            "rules: Use only these aircraft; do not add/remove/re-score. "
+            "Write one cohesive answer — no Mission Fit / Aircraft Options / Verdict headings."
+        )
         return "\n".join(lines).strip()
 
 
@@ -409,7 +406,9 @@ def sanitize_broker_prose(text: str) -> str:
 
     if not (text or "").strip():
         return ""
-    out = text
+    out = sanitize_llm_output(text)
+    if out == _LLM_SANITIZE_FALLBACK:
+        return out
     out = _BROKER_FORBIDDEN_RE.sub("", out)
     out = re.sub(r"\bMission Summary\b.*", "", out, flags=re.I)
     out = re.sub(r"\n{3,}", "\n\n", out)
@@ -577,7 +576,18 @@ def format_broker_advisory_response(
             )
         from services.broker.graceful_degradation import degraded_empty_shortlist_guidance
 
-        return degraded_empty_shortlist_guidance(mission, None, query)
+        guidance = degraded_empty_shortlist_guidance(mission, None, query)
+        if guidance.strip():
+            return guidance
+        route = ", ".join(mission.routes or []) or "stated route"
+        pax = mission.passenger_count if mission.passenger_count is not None else "—"
+        return (
+            "INSUFFICIENT_DATA: No verified aircraft meet stated mission constraints.\n\n"
+            f"Mission Fit:\n* Route: {route}\n* Pax: {pax}\n"
+            "* Constraints: hard feasibility eliminated all catalog candidates.\n\n"
+            "Aircraft Options:\n(none)\n\n"
+            "Verdict:\n* NOT A FIT: No verified shortlist for this mission as stated."
+        )
 
     if packet is not None:
         from services.mission.mission_synthesis_contract import (

@@ -402,11 +402,10 @@ def test_photo_focus_prefers_phly_make_model():
     ]
     q = build_aircraft_photo_focus_tavily_query("show me N807JS", rows, None)
     assert q
-    assert "Citation Excel" in q
-    assert "N807JS" not in q.replace("n807js", "")
+    assert "N807JS" in q.upper()
+    assert "Citation Excel" not in q
     low = q.lower()
-    assert "aircraft exterior" in low
-    assert "private jet" in low
+    assert "photos" in low or "jetphotos" in low
 
 
 def test_suspicious_falcon_9000_note():

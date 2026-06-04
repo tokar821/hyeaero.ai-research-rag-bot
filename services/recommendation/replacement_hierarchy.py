@@ -17,9 +17,14 @@ from services.recommendation.aircraft_positioning import (
 from services.sanity.aircraft_class_guard import violates_class_sanity
 
 _REPLACEMENT_RE = re.compile(
-    r"\b(?:replace|replacing|instead\s+of|alternative\s+to|step\s+down\s+from|"
+    r"\b(?:replace|replacing|instead\s+of|alternative\s+to|replacement\s+options\s+for|"
+    r"similar\s+aircraft\s+to|step\s+down\s+from|"
     r"lower\s+cost\s+than|cheaper\s+than|below\s+)(?:a|an|the|our)?\s*",
     re.I,
+)
+
+_REPLACEMENT_TAIL_RE = re.compile(
+    r"(?is)(?:replacement\s+options\s+for|similar\s+aircraft\s+to)\s+(.+)$",
 )
 
 # Credible same-mission replacements by target tier (catalog names only).
@@ -56,12 +61,29 @@ def extract_replacement_target(query: str) -> Optional[str]:
     q = query or ""
     if not _REPLACEMENT_RE.search(q):
         return None
+    m = _REPLACEMENT_TAIL_RE.search(q)
+    if m:
+        raw = m.group(1).strip().rstrip("?.!")
+        try:
+            from services.aircraft.aircraft_authority_service import (
+                get_aircraft_authority_record,
+                resolve_aircraft_alias,
+            )
+
+            for candidate in (raw, f"Citation {raw}"):
+                canonical = resolve_aircraft_alias(candidate) or resolve_canonical_display_name(candidate) or candidate
+                if get_aircraft_authority_record(aircraft_model=canonical):
+                    return canonical
+        except Exception:
+            pass
     try:
         from services.consultant.recommendation_engine import detect_models_from_text
 
         found = detect_models_from_text(q)
         if found:
-            return resolve_canonical_display_name(found[0]) or found[0]
+            from services.aircraft.aircraft_authority_service import resolve_aircraft_alias
+
+            return resolve_aircraft_alias(found[0]) or resolve_canonical_display_name(found[0]) or found[0]
     except Exception:
         pass
     for token in ("Global 7500", "Gulfstream G650ER", "Gulfstream G650", "Falcon 8X", "Global 6500"):

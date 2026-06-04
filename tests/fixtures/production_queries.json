@@ -1,0 +1,2506 @@
+{
+  "version": "1",
+  "total": 500,
+  "queries": [
+    {
+      "id": "cmp-001",
+      "category": "comparison",
+      "query": "G650 vs Falcon 8X"
+    },
+    {
+      "id": "cmp-002",
+      "category": "comparison",
+      "query": "Compare G650 and Falcon 8X"
+    },
+    {
+      "id": "cmp-003",
+      "category": "comparison",
+      "query": "How does G650 compare to Falcon 8X?"
+    },
+    {
+      "id": "cmp-004",
+      "category": "comparison",
+      "query": "G650 versus Falcon 8X for charter operations"
+    },
+    {
+      "id": "cmp-005",
+      "category": "comparison",
+      "query": "Which is better, G650 or Falcon 8X?"
+    },
+    {
+      "id": "cmp-006",
+      "category": "comparison",
+      "query": "G650 vs Global 7500"
+    },
+    {
+      "id": "cmp-007",
+      "category": "comparison",
+      "query": "Compare G650 and Global 7500"
+    },
+    {
+      "id": "cmp-008",
+      "category": "comparison",
+      "query": "How does G650 compare to Global 7500?"
+    },
+    {
+      "id": "cmp-009",
+      "category": "comparison",
+      "query": "G650 versus Global 7500 for charter operations"
+    },
+    {
+      "id": "cmp-010",
+      "category": "comparison",
+      "query": "Which is better, G650 or Global 7500?"
+    },
+    {
+      "id": "cmp-011",
+      "category": "comparison",
+      "query": "G650 vs G700"
+    },
+    {
+      "id": "cmp-012",
+      "category": "comparison",
+      "query": "Compare G650 and G700"
+    },
+    {
+      "id": "cmp-013",
+      "category": "comparison",
+      "query": "How does G650 compare to G700?"
+    },
+    {
+      "id": "cmp-014",
+      "category": "comparison",
+      "query": "G650 versus G700 for charter operations"
+    },
+    {
+      "id": "cmp-015",
+      "category": "comparison",
+      "query": "Which is better, G650 or G700?"
+    },
+    {
+      "id": "cmp-016",
+      "category": "comparison",
+      "query": "G650 vs Longitude"
+    },
+    {
+      "id": "cmp-017",
+      "category": "comparison",
+      "query": "Compare G650 and Longitude"
+    },
+    {
+      "id": "cmp-018",
+      "category": "comparison",
+      "query": "How does G650 compare to Longitude?"
+    },
+    {
+      "id": "cmp-019",
+      "category": "comparison",
+      "query": "G650 versus Longitude for charter operations"
+    },
+    {
+      "id": "cmp-020",
+      "category": "comparison",
+      "query": "Which is better, G650 or Longitude?"
+    },
+    {
+      "id": "cmp-021",
+      "category": "comparison",
+      "query": "G650 vs Challenger 3500"
+    },
+    {
+      "id": "cmp-022",
+      "category": "comparison",
+      "query": "Compare G650 and Challenger 3500"
+    },
+    {
+      "id": "cmp-023",
+      "category": "comparison",
+      "query": "How does G650 compare to Challenger 3500?"
+    },
+    {
+      "id": "cmp-024",
+      "category": "comparison",
+      "query": "G650 versus Challenger 3500 for charter operations"
+    },
+    {
+      "id": "cmp-025",
+      "category": "comparison",
+      "query": "Which is better, G650 or Challenger 3500?"
+    },
+    {
+      "id": "cmp-026",
+      "category": "comparison",
+      "query": "G650 vs Citation CJ3+"
+    },
+    {
+      "id": "cmp-027",
+      "category": "comparison",
+      "query": "Compare G650 and Citation CJ3+"
+    },
+    {
+      "id": "cmp-028",
+      "category": "comparison",
+      "query": "How does G650 compare to Citation CJ3+?"
+    },
+    {
+      "id": "cmp-029",
+      "category": "comparison",
+      "query": "G650 versus Citation CJ3+ for charter operations"
+    },
+    {
+      "id": "cmp-030",
+      "category": "comparison",
+      "query": "Which is better, G650 or Citation CJ3+?"
+    },
+    {
+      "id": "cmp-031",
+      "category": "comparison",
+      "query": "G650 vs Citation CJ4"
+    },
+    {
+      "id": "cmp-032",
+      "category": "comparison",
+      "query": "Compare G650 and Citation CJ4"
+    },
+    {
+      "id": "cmp-033",
+      "category": "comparison",
+      "query": "How does G650 compare to Citation CJ4?"
+    },
+    {
+      "id": "cmp-034",
+      "category": "comparison",
+      "query": "G650 versus Citation CJ4 for charter operations"
+    },
+    {
+      "id": "cmp-035",
+      "category": "comparison",
+      "query": "Which is better, G650 or Citation CJ4?"
+    },
+    {
+      "id": "cmp-036",
+      "category": "comparison",
+      "query": "G650 vs Praetor 600"
+    },
+    {
+      "id": "cmp-037",
+      "category": "comparison",
+      "query": "Compare G650 and Praetor 600"
+    },
+    {
+      "id": "cmp-038",
+      "category": "comparison",
+      "query": "How does G650 compare to Praetor 600?"
+    },
+    {
+      "id": "cmp-039",
+      "category": "comparison",
+      "query": "G650 versus Praetor 600 for charter operations"
+    },
+    {
+      "id": "cmp-040",
+      "category": "comparison",
+      "query": "Which is better, G650 or Praetor 600?"
+    },
+    {
+      "id": "cmp-041",
+      "category": "comparison",
+      "query": "G650 vs PC-24"
+    },
+    {
+      "id": "cmp-042",
+      "category": "comparison",
+      "query": "Compare G650 and PC-24"
+    },
+    {
+      "id": "cmp-043",
+      "category": "comparison",
+      "query": "How does G650 compare to PC-24?"
+    },
+    {
+      "id": "cmp-044",
+      "category": "comparison",
+      "query": "G650 versus PC-24 for charter operations"
+    },
+    {
+      "id": "cmp-045",
+      "category": "comparison",
+      "query": "Which is better, G650 or PC-24?"
+    },
+    {
+      "id": "cmp-046",
+      "category": "comparison",
+      "query": "G650 vs G550"
+    },
+    {
+      "id": "cmp-047",
+      "category": "comparison",
+      "query": "Compare G650 and G550"
+    },
+    {
+      "id": "cmp-048",
+      "category": "comparison",
+      "query": "How does G650 compare to G550?"
+    },
+    {
+      "id": "cmp-049",
+      "category": "comparison",
+      "query": "G650 versus G550 for charter operations"
+    },
+    {
+      "id": "cmp-050",
+      "category": "comparison",
+      "query": "Which is better, G650 or G550?"
+    },
+    {
+      "id": "cmp-051",
+      "category": "comparison",
+      "query": "G650 vs G280"
+    },
+    {
+      "id": "cmp-052",
+      "category": "comparison",
+      "query": "Compare G650 and G280"
+    },
+    {
+      "id": "cmp-053",
+      "category": "comparison",
+      "query": "How does G650 compare to G280?"
+    },
+    {
+      "id": "cmp-054",
+      "category": "comparison",
+      "query": "G650 versus G280 for charter operations"
+    },
+    {
+      "id": "cmp-055",
+      "category": "comparison",
+      "query": "Which is better, G650 or G280?"
+    },
+    {
+      "id": "cmp-056",
+      "category": "comparison",
+      "query": "Falcon 8X vs Global 7500"
+    },
+    {
+      "id": "cmp-057",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Global 7500"
+    },
+    {
+      "id": "cmp-058",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Global 7500?"
+    },
+    {
+      "id": "cmp-059",
+      "category": "comparison",
+      "query": "Falcon 8X versus Global 7500 for charter operations"
+    },
+    {
+      "id": "cmp-060",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Global 7500?"
+    },
+    {
+      "id": "cmp-061",
+      "category": "comparison",
+      "query": "Falcon 8X vs G700"
+    },
+    {
+      "id": "cmp-062",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and G700"
+    },
+    {
+      "id": "cmp-063",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to G700?"
+    },
+    {
+      "id": "cmp-064",
+      "category": "comparison",
+      "query": "Falcon 8X versus G700 for charter operations"
+    },
+    {
+      "id": "cmp-065",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or G700?"
+    },
+    {
+      "id": "cmp-066",
+      "category": "comparison",
+      "query": "Falcon 8X vs Longitude"
+    },
+    {
+      "id": "cmp-067",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Longitude"
+    },
+    {
+      "id": "cmp-068",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Longitude?"
+    },
+    {
+      "id": "cmp-069",
+      "category": "comparison",
+      "query": "Falcon 8X versus Longitude for charter operations"
+    },
+    {
+      "id": "cmp-070",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Longitude?"
+    },
+    {
+      "id": "cmp-071",
+      "category": "comparison",
+      "query": "Falcon 8X vs Challenger 3500"
+    },
+    {
+      "id": "cmp-072",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Challenger 3500"
+    },
+    {
+      "id": "cmp-073",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Challenger 3500?"
+    },
+    {
+      "id": "cmp-074",
+      "category": "comparison",
+      "query": "Falcon 8X versus Challenger 3500 for charter operations"
+    },
+    {
+      "id": "cmp-075",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Challenger 3500?"
+    },
+    {
+      "id": "cmp-076",
+      "category": "comparison",
+      "query": "Falcon 8X vs Citation CJ3+"
+    },
+    {
+      "id": "cmp-077",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Citation CJ3+"
+    },
+    {
+      "id": "cmp-078",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Citation CJ3+?"
+    },
+    {
+      "id": "cmp-079",
+      "category": "comparison",
+      "query": "Falcon 8X versus Citation CJ3+ for charter operations"
+    },
+    {
+      "id": "cmp-080",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Citation CJ3+?"
+    },
+    {
+      "id": "cmp-081",
+      "category": "comparison",
+      "query": "Falcon 8X vs Citation CJ4"
+    },
+    {
+      "id": "cmp-082",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Citation CJ4"
+    },
+    {
+      "id": "cmp-083",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Citation CJ4?"
+    },
+    {
+      "id": "cmp-084",
+      "category": "comparison",
+      "query": "Falcon 8X versus Citation CJ4 for charter operations"
+    },
+    {
+      "id": "cmp-085",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Citation CJ4?"
+    },
+    {
+      "id": "cmp-086",
+      "category": "comparison",
+      "query": "Falcon 8X vs Praetor 600"
+    },
+    {
+      "id": "cmp-087",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and Praetor 600"
+    },
+    {
+      "id": "cmp-088",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to Praetor 600?"
+    },
+    {
+      "id": "cmp-089",
+      "category": "comparison",
+      "query": "Falcon 8X versus Praetor 600 for charter operations"
+    },
+    {
+      "id": "cmp-090",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or Praetor 600?"
+    },
+    {
+      "id": "cmp-091",
+      "category": "comparison",
+      "query": "Falcon 8X vs PC-24"
+    },
+    {
+      "id": "cmp-092",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and PC-24"
+    },
+    {
+      "id": "cmp-093",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to PC-24?"
+    },
+    {
+      "id": "cmp-094",
+      "category": "comparison",
+      "query": "Falcon 8X versus PC-24 for charter operations"
+    },
+    {
+      "id": "cmp-095",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or PC-24?"
+    },
+    {
+      "id": "cmp-096",
+      "category": "comparison",
+      "query": "Falcon 8X vs G550"
+    },
+    {
+      "id": "cmp-097",
+      "category": "comparison",
+      "query": "Compare Falcon 8X and G550"
+    },
+    {
+      "id": "cmp-098",
+      "category": "comparison",
+      "query": "How does Falcon 8X compare to G550?"
+    },
+    {
+      "id": "cmp-099",
+      "category": "comparison",
+      "query": "Falcon 8X versus G550 for charter operations"
+    },
+    {
+      "id": "cmp-100",
+      "category": "comparison",
+      "query": "Which is better, Falcon 8X or G550?"
+    },
+    {
+      "id": "buy-001",
+      "category": "buy_decision",
+      "query": "Is a 2015 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-002",
+      "category": "buy_decision",
+      "query": "2015 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-003",
+      "category": "buy_decision",
+      "query": "Is this 2015 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-004",
+      "category": "buy_decision",
+      "query": "Should I buy a 2015 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-005",
+      "category": "buy_decision",
+      "query": "2015 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-006",
+      "category": "buy_decision",
+      "query": "Is a 2015 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-007",
+      "category": "buy_decision",
+      "query": "2015 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-008",
+      "category": "buy_decision",
+      "query": "Is this 2015 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-009",
+      "category": "buy_decision",
+      "query": "Should I buy a 2015 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-010",
+      "category": "buy_decision",
+      "query": "2015 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-011",
+      "category": "buy_decision",
+      "query": "Is a 2016 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-012",
+      "category": "buy_decision",
+      "query": "2016 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-013",
+      "category": "buy_decision",
+      "query": "Is this 2016 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-014",
+      "category": "buy_decision",
+      "query": "Should I buy a 2016 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-015",
+      "category": "buy_decision",
+      "query": "2016 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-016",
+      "category": "buy_decision",
+      "query": "Is a 2016 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-017",
+      "category": "buy_decision",
+      "query": "2016 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-018",
+      "category": "buy_decision",
+      "query": "Is this 2016 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-019",
+      "category": "buy_decision",
+      "query": "Should I buy a 2016 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-020",
+      "category": "buy_decision",
+      "query": "2016 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-021",
+      "category": "buy_decision",
+      "query": "Is a 2017 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-022",
+      "category": "buy_decision",
+      "query": "2017 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-023",
+      "category": "buy_decision",
+      "query": "Is this 2017 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-024",
+      "category": "buy_decision",
+      "query": "Should I buy a 2017 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-025",
+      "category": "buy_decision",
+      "query": "2017 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-026",
+      "category": "buy_decision",
+      "query": "Is a 2017 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-027",
+      "category": "buy_decision",
+      "query": "2017 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-028",
+      "category": "buy_decision",
+      "query": "Is this 2017 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-029",
+      "category": "buy_decision",
+      "query": "Should I buy a 2017 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-030",
+      "category": "buy_decision",
+      "query": "2017 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-031",
+      "category": "buy_decision",
+      "query": "Is a 2018 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-032",
+      "category": "buy_decision",
+      "query": "2018 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-033",
+      "category": "buy_decision",
+      "query": "Is this 2018 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-034",
+      "category": "buy_decision",
+      "query": "Should I buy a 2018 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-035",
+      "category": "buy_decision",
+      "query": "2018 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-036",
+      "category": "buy_decision",
+      "query": "Is a 2018 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-037",
+      "category": "buy_decision",
+      "query": "2018 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-038",
+      "category": "buy_decision",
+      "query": "Is this 2018 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-039",
+      "category": "buy_decision",
+      "query": "Should I buy a 2018 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-040",
+      "category": "buy_decision",
+      "query": "2018 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-041",
+      "category": "buy_decision",
+      "query": "Is a 2019 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-042",
+      "category": "buy_decision",
+      "query": "2019 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-043",
+      "category": "buy_decision",
+      "query": "Is this 2019 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-044",
+      "category": "buy_decision",
+      "query": "Should I buy a 2019 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-045",
+      "category": "buy_decision",
+      "query": "2019 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-046",
+      "category": "buy_decision",
+      "query": "Is a 2019 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-047",
+      "category": "buy_decision",
+      "query": "2019 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-048",
+      "category": "buy_decision",
+      "query": "Is this 2019 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-049",
+      "category": "buy_decision",
+      "query": "Should I buy a 2019 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-050",
+      "category": "buy_decision",
+      "query": "2019 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-051",
+      "category": "buy_decision",
+      "query": "Is a 2020 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-052",
+      "category": "buy_decision",
+      "query": "2020 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-053",
+      "category": "buy_decision",
+      "query": "Is this 2020 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-054",
+      "category": "buy_decision",
+      "query": "Should I buy a 2020 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-055",
+      "category": "buy_decision",
+      "query": "2020 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-056",
+      "category": "buy_decision",
+      "query": "Is a 2020 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-057",
+      "category": "buy_decision",
+      "query": "2020 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-058",
+      "category": "buy_decision",
+      "query": "Is this 2020 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-059",
+      "category": "buy_decision",
+      "query": "Should I buy a 2020 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-060",
+      "category": "buy_decision",
+      "query": "2020 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-061",
+      "category": "buy_decision",
+      "query": "Is a 2021 Citation Latitude for $5M a good deal?"
+    },
+    {
+      "id": "buy-062",
+      "category": "buy_decision",
+      "query": "2021 Citation Latitude at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-063",
+      "category": "buy_decision",
+      "query": "Is this 2021 Citation Latitude for $8M overpriced?"
+    },
+    {
+      "id": "buy-064",
+      "category": "buy_decision",
+      "query": "Should I buy a 2021 Citation Latitude listed at $10M?"
+    },
+    {
+      "id": "buy-065",
+      "category": "buy_decision",
+      "query": "2021 Citation Latitude $12M good buy?"
+    },
+    {
+      "id": "buy-066",
+      "category": "buy_decision",
+      "query": "Is a 2021 Citation Latitude for $15M a good deal?"
+    },
+    {
+      "id": "buy-067",
+      "category": "buy_decision",
+      "query": "2021 Citation Latitude at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-068",
+      "category": "buy_decision",
+      "query": "Is this 2021 Citation Latitude for $20M overpriced?"
+    },
+    {
+      "id": "buy-069",
+      "category": "buy_decision",
+      "query": "Should I buy a 2021 Citation Latitude listed at $25M?"
+    },
+    {
+      "id": "buy-070",
+      "category": "buy_decision",
+      "query": "2021 Citation Latitude $30M good buy?"
+    },
+    {
+      "id": "buy-071",
+      "category": "buy_decision",
+      "query": "Is a 2015 Challenger 350 for $5M a good deal?"
+    },
+    {
+      "id": "buy-072",
+      "category": "buy_decision",
+      "query": "2015 Challenger 350 at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-073",
+      "category": "buy_decision",
+      "query": "Is this 2015 Challenger 350 for $8M overpriced?"
+    },
+    {
+      "id": "buy-074",
+      "category": "buy_decision",
+      "query": "Should I buy a 2015 Challenger 350 listed at $10M?"
+    },
+    {
+      "id": "buy-075",
+      "category": "buy_decision",
+      "query": "2015 Challenger 350 $12M good buy?"
+    },
+    {
+      "id": "buy-076",
+      "category": "buy_decision",
+      "query": "Is a 2015 Challenger 350 for $15M a good deal?"
+    },
+    {
+      "id": "buy-077",
+      "category": "buy_decision",
+      "query": "2015 Challenger 350 at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-078",
+      "category": "buy_decision",
+      "query": "Is this 2015 Challenger 350 for $20M overpriced?"
+    },
+    {
+      "id": "buy-079",
+      "category": "buy_decision",
+      "query": "Should I buy a 2015 Challenger 350 listed at $25M?"
+    },
+    {
+      "id": "buy-080",
+      "category": "buy_decision",
+      "query": "2015 Challenger 350 $30M good buy?"
+    },
+    {
+      "id": "buy-081",
+      "category": "buy_decision",
+      "query": "Is a 2016 Challenger 350 for $5M a good deal?"
+    },
+    {
+      "id": "buy-082",
+      "category": "buy_decision",
+      "query": "2016 Challenger 350 at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-083",
+      "category": "buy_decision",
+      "query": "Is this 2016 Challenger 350 for $8M overpriced?"
+    },
+    {
+      "id": "buy-084",
+      "category": "buy_decision",
+      "query": "Should I buy a 2016 Challenger 350 listed at $10M?"
+    },
+    {
+      "id": "buy-085",
+      "category": "buy_decision",
+      "query": "2016 Challenger 350 $12M good buy?"
+    },
+    {
+      "id": "buy-086",
+      "category": "buy_decision",
+      "query": "Is a 2016 Challenger 350 for $15M a good deal?"
+    },
+    {
+      "id": "buy-087",
+      "category": "buy_decision",
+      "query": "2016 Challenger 350 at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-088",
+      "category": "buy_decision",
+      "query": "Is this 2016 Challenger 350 for $20M overpriced?"
+    },
+    {
+      "id": "buy-089",
+      "category": "buy_decision",
+      "query": "Should I buy a 2016 Challenger 350 listed at $25M?"
+    },
+    {
+      "id": "buy-090",
+      "category": "buy_decision",
+      "query": "2016 Challenger 350 $30M good buy?"
+    },
+    {
+      "id": "buy-091",
+      "category": "buy_decision",
+      "query": "Is a 2017 Challenger 350 for $5M a good deal?"
+    },
+    {
+      "id": "buy-092",
+      "category": "buy_decision",
+      "query": "2017 Challenger 350 at $6M \u2014 fair price?"
+    },
+    {
+      "id": "buy-093",
+      "category": "buy_decision",
+      "query": "Is this 2017 Challenger 350 for $8M overpriced?"
+    },
+    {
+      "id": "buy-094",
+      "category": "buy_decision",
+      "query": "Should I buy a 2017 Challenger 350 listed at $10M?"
+    },
+    {
+      "id": "buy-095",
+      "category": "buy_decision",
+      "query": "2017 Challenger 350 $12M good buy?"
+    },
+    {
+      "id": "buy-096",
+      "category": "buy_decision",
+      "query": "Is a 2017 Challenger 350 for $15M a good deal?"
+    },
+    {
+      "id": "buy-097",
+      "category": "buy_decision",
+      "query": "2017 Challenger 350 at $18M \u2014 fair price?"
+    },
+    {
+      "id": "buy-098",
+      "category": "buy_decision",
+      "query": "Is this 2017 Challenger 350 for $20M overpriced?"
+    },
+    {
+      "id": "buy-099",
+      "category": "buy_decision",
+      "query": "Should I buy a 2017 Challenger 350 listed at $25M?"
+    },
+    {
+      "id": "buy-100",
+      "category": "buy_decision",
+      "query": "2017 Challenger 350 $30M good buy?"
+    },
+    {
+      "id": "msn-001",
+      "category": "mission",
+      "query": "8 pax TEB-LAX"
+    },
+    {
+      "id": "msn-002",
+      "category": "mission",
+      "query": "Need 8 passengers TEB to LAX nonstop"
+    },
+    {
+      "id": "msn-003",
+      "category": "mission",
+      "query": "Mission: 8 pax from TEB to LAX"
+    },
+    {
+      "id": "msn-004",
+      "category": "mission",
+      "query": "What jet for 8 pax TEB-LAX?"
+    },
+    {
+      "id": "msn-005",
+      "category": "mission",
+      "query": "8 passengers TEB to LAX nonstop"
+    },
+    {
+      "id": "msn-006",
+      "category": "mission",
+      "query": "8 pax TEB-LAX under $15M"
+    },
+    {
+      "id": "msn-007",
+      "category": "mission",
+      "query": "Need 8 passengers TEB to LAX nonstop under $15M"
+    },
+    {
+      "id": "msn-008",
+      "category": "mission",
+      "query": "Mission: 8 pax from TEB to LAX under $15M"
+    },
+    {
+      "id": "msn-009",
+      "category": "mission",
+      "query": "What jet for 8 pax TEB-LAX under $15M?"
+    },
+    {
+      "id": "msn-010",
+      "category": "mission",
+      "query": "8 passengers TEB to LAX nonstop under $15M"
+    },
+    {
+      "id": "msn-011",
+      "category": "mission",
+      "query": "8 pax TEB-LAX under $25M"
+    },
+    {
+      "id": "msn-012",
+      "category": "mission",
+      "query": "Need 8 passengers TEB to LAX nonstop under $25M"
+    },
+    {
+      "id": "msn-013",
+      "category": "mission",
+      "query": "Mission: 8 pax from TEB to LAX under $25M"
+    },
+    {
+      "id": "msn-014",
+      "category": "mission",
+      "query": "What jet for 8 pax TEB-LAX under $25M?"
+    },
+    {
+      "id": "msn-015",
+      "category": "mission",
+      "query": "8 passengers TEB to LAX nonstop under $25M"
+    },
+    {
+      "id": "msn-016",
+      "category": "mission",
+      "query": "8 pax TEB-LAX under $10M"
+    },
+    {
+      "id": "msn-017",
+      "category": "mission",
+      "query": "Need 8 passengers TEB to LAX nonstop under $10M"
+    },
+    {
+      "id": "msn-018",
+      "category": "mission",
+      "query": "Mission: 8 pax from TEB to LAX under $10M"
+    },
+    {
+      "id": "msn-019",
+      "category": "mission",
+      "query": "What jet for 8 pax TEB-LAX under $10M?"
+    },
+    {
+      "id": "msn-020",
+      "category": "mission",
+      "query": "8 passengers TEB to LAX nonstop under $10M"
+    },
+    {
+      "id": "msn-021",
+      "category": "mission",
+      "query": "6 pax TEB-MIA"
+    },
+    {
+      "id": "msn-022",
+      "category": "mission",
+      "query": "Need 6 passengers TEB to MIA nonstop"
+    },
+    {
+      "id": "msn-023",
+      "category": "mission",
+      "query": "Mission: 6 pax from TEB to MIA"
+    },
+    {
+      "id": "msn-024",
+      "category": "mission",
+      "query": "What jet for 6 pax TEB-MIA?"
+    },
+    {
+      "id": "msn-025",
+      "category": "mission",
+      "query": "6 passengers TEB to MIA nonstop"
+    },
+    {
+      "id": "msn-026",
+      "category": "mission",
+      "query": "6 pax TEB-MIA under $15M"
+    },
+    {
+      "id": "msn-027",
+      "category": "mission",
+      "query": "Need 6 passengers TEB to MIA nonstop under $15M"
+    },
+    {
+      "id": "msn-028",
+      "category": "mission",
+      "query": "Mission: 6 pax from TEB to MIA under $15M"
+    },
+    {
+      "id": "msn-029",
+      "category": "mission",
+      "query": "What jet for 6 pax TEB-MIA under $15M?"
+    },
+    {
+      "id": "msn-030",
+      "category": "mission",
+      "query": "6 passengers TEB to MIA nonstop under $15M"
+    },
+    {
+      "id": "msn-031",
+      "category": "mission",
+      "query": "6 pax TEB-MIA under $25M"
+    },
+    {
+      "id": "msn-032",
+      "category": "mission",
+      "query": "Need 6 passengers TEB to MIA nonstop under $25M"
+    },
+    {
+      "id": "msn-033",
+      "category": "mission",
+      "query": "Mission: 6 pax from TEB to MIA under $25M"
+    },
+    {
+      "id": "msn-034",
+      "category": "mission",
+      "query": "What jet for 6 pax TEB-MIA under $25M?"
+    },
+    {
+      "id": "msn-035",
+      "category": "mission",
+      "query": "6 passengers TEB to MIA nonstop under $25M"
+    },
+    {
+      "id": "msn-036",
+      "category": "mission",
+      "query": "6 pax TEB-MIA under $10M"
+    },
+    {
+      "id": "msn-037",
+      "category": "mission",
+      "query": "Need 6 passengers TEB to MIA nonstop under $10M"
+    },
+    {
+      "id": "msn-038",
+      "category": "mission",
+      "query": "Mission: 6 pax from TEB to MIA under $10M"
+    },
+    {
+      "id": "msn-039",
+      "category": "mission",
+      "query": "What jet for 6 pax TEB-MIA under $10M?"
+    },
+    {
+      "id": "msn-040",
+      "category": "mission",
+      "query": "6 passengers TEB to MIA nonstop under $10M"
+    },
+    {
+      "id": "msn-041",
+      "category": "mission",
+      "query": "12 pax London-Singapore"
+    },
+    {
+      "id": "msn-042",
+      "category": "mission",
+      "query": "Need 12 passengers London to Singapore nonstop"
+    },
+    {
+      "id": "msn-043",
+      "category": "mission",
+      "query": "Mission: 12 pax from London to Singapore"
+    },
+    {
+      "id": "msn-044",
+      "category": "mission",
+      "query": "What jet for 12 pax London-Singapore?"
+    },
+    {
+      "id": "msn-045",
+      "category": "mission",
+      "query": "12 passengers London to Singapore nonstop"
+    },
+    {
+      "id": "msn-046",
+      "category": "mission",
+      "query": "12 pax London-Singapore under $15M"
+    },
+    {
+      "id": "msn-047",
+      "category": "mission",
+      "query": "Need 12 passengers London to Singapore nonstop under $15M"
+    },
+    {
+      "id": "msn-048",
+      "category": "mission",
+      "query": "Mission: 12 pax from London to Singapore under $15M"
+    },
+    {
+      "id": "msn-049",
+      "category": "mission",
+      "query": "What jet for 12 pax London-Singapore under $15M?"
+    },
+    {
+      "id": "msn-050",
+      "category": "mission",
+      "query": "12 passengers London to Singapore nonstop under $15M"
+    },
+    {
+      "id": "msn-051",
+      "category": "mission",
+      "query": "12 pax London-Singapore under $25M"
+    },
+    {
+      "id": "msn-052",
+      "category": "mission",
+      "query": "Need 12 passengers London to Singapore nonstop under $25M"
+    },
+    {
+      "id": "msn-053",
+      "category": "mission",
+      "query": "Mission: 12 pax from London to Singapore under $25M"
+    },
+    {
+      "id": "msn-054",
+      "category": "mission",
+      "query": "What jet for 12 pax London-Singapore under $25M?"
+    },
+    {
+      "id": "msn-055",
+      "category": "mission",
+      "query": "12 passengers London to Singapore nonstop under $25M"
+    },
+    {
+      "id": "msn-056",
+      "category": "mission",
+      "query": "12 pax London-Singapore under $10M"
+    },
+    {
+      "id": "msn-057",
+      "category": "mission",
+      "query": "Need 12 passengers London to Singapore nonstop under $10M"
+    },
+    {
+      "id": "msn-058",
+      "category": "mission",
+      "query": "Mission: 12 pax from London to Singapore under $10M"
+    },
+    {
+      "id": "msn-059",
+      "category": "mission",
+      "query": "What jet for 12 pax London-Singapore under $10M?"
+    },
+    {
+      "id": "msn-060",
+      "category": "mission",
+      "query": "12 passengers London to Singapore nonstop under $10M"
+    },
+    {
+      "id": "msn-061",
+      "category": "mission",
+      "query": "8 pax NYC-Paris"
+    },
+    {
+      "id": "msn-062",
+      "category": "mission",
+      "query": "Need 8 passengers NYC to Paris nonstop"
+    },
+    {
+      "id": "msn-063",
+      "category": "mission",
+      "query": "Mission: 8 pax from NYC to Paris"
+    },
+    {
+      "id": "msn-064",
+      "category": "mission",
+      "query": "What jet for 8 pax NYC-Paris?"
+    },
+    {
+      "id": "msn-065",
+      "category": "mission",
+      "query": "8 passengers NYC to Paris nonstop"
+    },
+    {
+      "id": "msn-066",
+      "category": "mission",
+      "query": "8 pax NYC-Paris under $15M"
+    },
+    {
+      "id": "msn-067",
+      "category": "mission",
+      "query": "Need 8 passengers NYC to Paris nonstop under $15M"
+    },
+    {
+      "id": "msn-068",
+      "category": "mission",
+      "query": "Mission: 8 pax from NYC to Paris under $15M"
+    },
+    {
+      "id": "msn-069",
+      "category": "mission",
+      "query": "What jet for 8 pax NYC-Paris under $15M?"
+    },
+    {
+      "id": "msn-070",
+      "category": "mission",
+      "query": "8 passengers NYC to Paris nonstop under $15M"
+    },
+    {
+      "id": "msn-071",
+      "category": "mission",
+      "query": "8 pax NYC-Paris under $25M"
+    },
+    {
+      "id": "msn-072",
+      "category": "mission",
+      "query": "Need 8 passengers NYC to Paris nonstop under $25M"
+    },
+    {
+      "id": "msn-073",
+      "category": "mission",
+      "query": "Mission: 8 pax from NYC to Paris under $25M"
+    },
+    {
+      "id": "msn-074",
+      "category": "mission",
+      "query": "What jet for 8 pax NYC-Paris under $25M?"
+    },
+    {
+      "id": "msn-075",
+      "category": "mission",
+      "query": "8 passengers NYC to Paris nonstop under $25M"
+    },
+    {
+      "id": "msn-076",
+      "category": "mission",
+      "query": "8 pax NYC-Paris under $10M"
+    },
+    {
+      "id": "msn-077",
+      "category": "mission",
+      "query": "Need 8 passengers NYC to Paris nonstop under $10M"
+    },
+    {
+      "id": "msn-078",
+      "category": "mission",
+      "query": "Mission: 8 pax from NYC to Paris under $10M"
+    },
+    {
+      "id": "msn-079",
+      "category": "mission",
+      "query": "What jet for 8 pax NYC-Paris under $10M?"
+    },
+    {
+      "id": "msn-080",
+      "category": "mission",
+      "query": "8 passengers NYC to Paris nonstop under $10M"
+    },
+    {
+      "id": "msn-081",
+      "category": "mission",
+      "query": "4 pax Van Nuys-Aspen"
+    },
+    {
+      "id": "msn-082",
+      "category": "mission",
+      "query": "Need 4 passengers Van Nuys to Aspen nonstop"
+    },
+    {
+      "id": "msn-083",
+      "category": "mission",
+      "query": "Mission: 4 pax from Van Nuys to Aspen"
+    },
+    {
+      "id": "msn-084",
+      "category": "mission",
+      "query": "What jet for 4 pax Van Nuys-Aspen?"
+    },
+    {
+      "id": "msn-085",
+      "category": "mission",
+      "query": "4 passengers Van Nuys to Aspen nonstop"
+    },
+    {
+      "id": "msn-086",
+      "category": "mission",
+      "query": "4 pax Van Nuys-Aspen under $15M"
+    },
+    {
+      "id": "msn-087",
+      "category": "mission",
+      "query": "Need 4 passengers Van Nuys to Aspen nonstop under $15M"
+    },
+    {
+      "id": "msn-088",
+      "category": "mission",
+      "query": "Mission: 4 pax from Van Nuys to Aspen under $15M"
+    },
+    {
+      "id": "msn-089",
+      "category": "mission",
+      "query": "What jet for 4 pax Van Nuys-Aspen under $15M?"
+    },
+    {
+      "id": "msn-090",
+      "category": "mission",
+      "query": "4 passengers Van Nuys to Aspen nonstop under $15M"
+    },
+    {
+      "id": "msn-091",
+      "category": "mission",
+      "query": "4 pax Van Nuys-Aspen under $25M"
+    },
+    {
+      "id": "msn-092",
+      "category": "mission",
+      "query": "Need 4 passengers Van Nuys to Aspen nonstop under $25M"
+    },
+    {
+      "id": "msn-093",
+      "category": "mission",
+      "query": "Mission: 4 pax from Van Nuys to Aspen under $25M"
+    },
+    {
+      "id": "msn-094",
+      "category": "mission",
+      "query": "What jet for 4 pax Van Nuys-Aspen under $25M?"
+    },
+    {
+      "id": "msn-095",
+      "category": "mission",
+      "query": "4 passengers Van Nuys to Aspen nonstop under $25M"
+    },
+    {
+      "id": "msn-096",
+      "category": "mission",
+      "query": "4 pax Van Nuys-Aspen under $10M"
+    },
+    {
+      "id": "msn-097",
+      "category": "mission",
+      "query": "Need 4 passengers Van Nuys to Aspen nonstop under $10M"
+    },
+    {
+      "id": "msn-098",
+      "category": "mission",
+      "query": "Mission: 4 pax from Van Nuys to Aspen under $10M"
+    },
+    {
+      "id": "msn-099",
+      "category": "mission",
+      "query": "What jet for 4 pax Van Nuys-Aspen under $10M?"
+    },
+    {
+      "id": "msn-100",
+      "category": "mission",
+      "query": "4 passengers Van Nuys to Aspen nonstop under $10M"
+    },
+    {
+      "id": "alt-001",
+      "category": "alternative",
+      "query": "Alternatives to G650"
+    },
+    {
+      "id": "alt-002",
+      "category": "alternative",
+      "query": "Show me alternatives to G650"
+    },
+    {
+      "id": "alt-003",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to G650?"
+    },
+    {
+      "id": "alt-004",
+      "category": "alternative",
+      "query": "Replacement options for G650"
+    },
+    {
+      "id": "alt-005",
+      "category": "alternative",
+      "query": "Similar aircraft to G650"
+    },
+    {
+      "id": "alt-006",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-007",
+      "category": "alternative",
+      "query": "Show me alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-008",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Falcon 8X?"
+    },
+    {
+      "id": "alt-009",
+      "category": "alternative",
+      "query": "Replacement options for Falcon 8X"
+    },
+    {
+      "id": "alt-010",
+      "category": "alternative",
+      "query": "Similar aircraft to Falcon 8X"
+    },
+    {
+      "id": "alt-011",
+      "category": "alternative",
+      "query": "Alternatives to Global 7500"
+    },
+    {
+      "id": "alt-012",
+      "category": "alternative",
+      "query": "Show me alternatives to Global 7500"
+    },
+    {
+      "id": "alt-013",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Global 7500?"
+    },
+    {
+      "id": "alt-014",
+      "category": "alternative",
+      "query": "Replacement options for Global 7500"
+    },
+    {
+      "id": "alt-015",
+      "category": "alternative",
+      "query": "Similar aircraft to Global 7500"
+    },
+    {
+      "id": "alt-016",
+      "category": "alternative",
+      "query": "Alternatives to Longitude"
+    },
+    {
+      "id": "alt-017",
+      "category": "alternative",
+      "query": "Show me alternatives to Longitude"
+    },
+    {
+      "id": "alt-018",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Longitude?"
+    },
+    {
+      "id": "alt-019",
+      "category": "alternative",
+      "query": "Replacement options for Longitude"
+    },
+    {
+      "id": "alt-020",
+      "category": "alternative",
+      "query": "Similar aircraft to Longitude"
+    },
+    {
+      "id": "alt-021",
+      "category": "alternative",
+      "query": "Alternatives to Challenger 3500"
+    },
+    {
+      "id": "alt-022",
+      "category": "alternative",
+      "query": "Show me alternatives to Challenger 3500"
+    },
+    {
+      "id": "alt-023",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Challenger 3500?"
+    },
+    {
+      "id": "alt-024",
+      "category": "alternative",
+      "query": "Replacement options for Challenger 3500"
+    },
+    {
+      "id": "alt-025",
+      "category": "alternative",
+      "query": "Similar aircraft to Challenger 3500"
+    },
+    {
+      "id": "alt-026",
+      "category": "alternative",
+      "query": "Alternatives to PC-24"
+    },
+    {
+      "id": "alt-027",
+      "category": "alternative",
+      "query": "Show me alternatives to PC-24"
+    },
+    {
+      "id": "alt-028",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to PC-24?"
+    },
+    {
+      "id": "alt-029",
+      "category": "alternative",
+      "query": "Replacement options for PC-24"
+    },
+    {
+      "id": "alt-030",
+      "category": "alternative",
+      "query": "Similar aircraft to PC-24"
+    },
+    {
+      "id": "alt-031",
+      "category": "alternative",
+      "query": "Alternatives to Praetor 600"
+    },
+    {
+      "id": "alt-032",
+      "category": "alternative",
+      "query": "Show me alternatives to Praetor 600"
+    },
+    {
+      "id": "alt-033",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Praetor 600?"
+    },
+    {
+      "id": "alt-034",
+      "category": "alternative",
+      "query": "Replacement options for Praetor 600"
+    },
+    {
+      "id": "alt-035",
+      "category": "alternative",
+      "query": "Similar aircraft to Praetor 600"
+    },
+    {
+      "id": "alt-036",
+      "category": "alternative",
+      "query": "Alternatives to Citation Latitude"
+    },
+    {
+      "id": "alt-037",
+      "category": "alternative",
+      "query": "Show me alternatives to Citation Latitude"
+    },
+    {
+      "id": "alt-038",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Citation Latitude?"
+    },
+    {
+      "id": "alt-039",
+      "category": "alternative",
+      "query": "Replacement options for Citation Latitude"
+    },
+    {
+      "id": "alt-040",
+      "category": "alternative",
+      "query": "Similar aircraft to Citation Latitude"
+    },
+    {
+      "id": "alt-041",
+      "category": "alternative",
+      "query": "Alternatives to G280"
+    },
+    {
+      "id": "alt-042",
+      "category": "alternative",
+      "query": "Show me alternatives to G280"
+    },
+    {
+      "id": "alt-043",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to G280?"
+    },
+    {
+      "id": "alt-044",
+      "category": "alternative",
+      "query": "Replacement options for G280"
+    },
+    {
+      "id": "alt-045",
+      "category": "alternative",
+      "query": "Similar aircraft to G280"
+    },
+    {
+      "id": "alt-046",
+      "category": "alternative",
+      "query": "Alternatives to G550"
+    },
+    {
+      "id": "alt-047",
+      "category": "alternative",
+      "query": "Show me alternatives to G550"
+    },
+    {
+      "id": "alt-048",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to G550?"
+    },
+    {
+      "id": "alt-049",
+      "category": "alternative",
+      "query": "Replacement options for G550"
+    },
+    {
+      "id": "alt-050",
+      "category": "alternative",
+      "query": "Similar aircraft to G550"
+    },
+    {
+      "id": "alt-051",
+      "category": "alternative",
+      "query": "Alternatives to CJ3+"
+    },
+    {
+      "id": "alt-052",
+      "category": "alternative",
+      "query": "Show me alternatives to CJ3+"
+    },
+    {
+      "id": "alt-053",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to CJ3+?"
+    },
+    {
+      "id": "alt-054",
+      "category": "alternative",
+      "query": "Replacement options for CJ3+"
+    },
+    {
+      "id": "alt-055",
+      "category": "alternative",
+      "query": "Similar aircraft to CJ3+"
+    },
+    {
+      "id": "alt-056",
+      "category": "alternative",
+      "query": "Alternatives to Global 6500"
+    },
+    {
+      "id": "alt-057",
+      "category": "alternative",
+      "query": "Show me alternatives to Global 6500"
+    },
+    {
+      "id": "alt-058",
+      "category": "alternative",
+      "query": "What are tier-peer alternatives to Global 6500?"
+    },
+    {
+      "id": "alt-059",
+      "category": "alternative",
+      "query": "Replacement options for Global 6500"
+    },
+    {
+      "id": "alt-060",
+      "category": "alternative",
+      "query": "Similar aircraft to Global 6500"
+    },
+    {
+      "id": "alt-061",
+      "category": "alternative",
+      "query": "Alternatives to G650"
+    },
+    {
+      "id": "alt-062",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-063",
+      "category": "alternative",
+      "query": "Alternatives to Global 7500"
+    },
+    {
+      "id": "alt-064",
+      "category": "alternative",
+      "query": "Alternatives to Longitude"
+    },
+    {
+      "id": "alt-065",
+      "category": "alternative",
+      "query": "Alternatives to Challenger 3500"
+    },
+    {
+      "id": "alt-066",
+      "category": "alternative",
+      "query": "Alternatives to PC-24"
+    },
+    {
+      "id": "alt-067",
+      "category": "alternative",
+      "query": "Alternatives to Praetor 600"
+    },
+    {
+      "id": "alt-068",
+      "category": "alternative",
+      "query": "Alternatives to Citation Latitude"
+    },
+    {
+      "id": "alt-069",
+      "category": "alternative",
+      "query": "Alternatives to G280"
+    },
+    {
+      "id": "alt-070",
+      "category": "alternative",
+      "query": "Alternatives to G550"
+    },
+    {
+      "id": "alt-071",
+      "category": "alternative",
+      "query": "Alternatives to CJ3+"
+    },
+    {
+      "id": "alt-072",
+      "category": "alternative",
+      "query": "Alternatives to Global 6500"
+    },
+    {
+      "id": "alt-073",
+      "category": "alternative",
+      "query": "Alternatives to G650"
+    },
+    {
+      "id": "alt-074",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-075",
+      "category": "alternative",
+      "query": "Alternatives to Global 7500"
+    },
+    {
+      "id": "alt-076",
+      "category": "alternative",
+      "query": "Alternatives to Longitude"
+    },
+    {
+      "id": "alt-077",
+      "category": "alternative",
+      "query": "Alternatives to Challenger 3500"
+    },
+    {
+      "id": "alt-078",
+      "category": "alternative",
+      "query": "Alternatives to PC-24"
+    },
+    {
+      "id": "alt-079",
+      "category": "alternative",
+      "query": "Alternatives to Praetor 600"
+    },
+    {
+      "id": "alt-080",
+      "category": "alternative",
+      "query": "Alternatives to Citation Latitude"
+    },
+    {
+      "id": "alt-081",
+      "category": "alternative",
+      "query": "Alternatives to G280"
+    },
+    {
+      "id": "alt-082",
+      "category": "alternative",
+      "query": "Alternatives to G550"
+    },
+    {
+      "id": "alt-083",
+      "category": "alternative",
+      "query": "Alternatives to CJ3+"
+    },
+    {
+      "id": "alt-084",
+      "category": "alternative",
+      "query": "Alternatives to Global 6500"
+    },
+    {
+      "id": "alt-085",
+      "category": "alternative",
+      "query": "Alternatives to G650"
+    },
+    {
+      "id": "alt-086",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-087",
+      "category": "alternative",
+      "query": "Alternatives to Global 7500"
+    },
+    {
+      "id": "alt-088",
+      "category": "alternative",
+      "query": "Alternatives to Longitude"
+    },
+    {
+      "id": "alt-089",
+      "category": "alternative",
+      "query": "Alternatives to Challenger 3500"
+    },
+    {
+      "id": "alt-090",
+      "category": "alternative",
+      "query": "Alternatives to PC-24"
+    },
+    {
+      "id": "alt-091",
+      "category": "alternative",
+      "query": "Alternatives to Praetor 600"
+    },
+    {
+      "id": "alt-092",
+      "category": "alternative",
+      "query": "Alternatives to Citation Latitude"
+    },
+    {
+      "id": "alt-093",
+      "category": "alternative",
+      "query": "Alternatives to G280"
+    },
+    {
+      "id": "alt-094",
+      "category": "alternative",
+      "query": "Alternatives to G550"
+    },
+    {
+      "id": "alt-095",
+      "category": "alternative",
+      "query": "Alternatives to CJ3+"
+    },
+    {
+      "id": "alt-096",
+      "category": "alternative",
+      "query": "Alternatives to Global 6500"
+    },
+    {
+      "id": "alt-097",
+      "category": "alternative",
+      "query": "Alternatives to G650"
+    },
+    {
+      "id": "alt-098",
+      "category": "alternative",
+      "query": "Alternatives to Falcon 8X"
+    },
+    {
+      "id": "alt-099",
+      "category": "alternative",
+      "query": "Alternatives to Global 7500"
+    },
+    {
+      "id": "alt-100",
+      "category": "alternative",
+      "query": "Alternatives to Longitude"
+    },
+    {
+      "id": "val-001",
+      "category": "valuation",
+      "query": "What is a 2019 Falcon 8X worth?"
+    },
+    {
+      "id": "val-002",
+      "category": "valuation",
+      "query": "Estimate market value of a 2019 Falcon 8X"
+    },
+    {
+      "id": "val-003",
+      "category": "valuation",
+      "query": "What is the value of a 2019 Falcon 8X?"
+    },
+    {
+      "id": "val-004",
+      "category": "valuation",
+      "query": "2019 Falcon 8X valuation"
+    },
+    {
+      "id": "val-005",
+      "category": "valuation",
+      "query": "How much is a 2019 Falcon 8X worth today?"
+    },
+    {
+      "id": "val-006",
+      "category": "valuation",
+      "query": "What is a 2017 Citation Longitude worth?"
+    },
+    {
+      "id": "val-007",
+      "category": "valuation",
+      "query": "Estimate market value of a 2017 Citation Longitude"
+    },
+    {
+      "id": "val-008",
+      "category": "valuation",
+      "query": "What is the value of a 2017 Citation Longitude?"
+    },
+    {
+      "id": "val-009",
+      "category": "valuation",
+      "query": "2017 Citation Longitude valuation"
+    },
+    {
+      "id": "val-010",
+      "category": "valuation",
+      "query": "How much is a 2017 Citation Longitude worth today?"
+    },
+    {
+      "id": "val-011",
+      "category": "valuation",
+      "query": "What is a 2018 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-012",
+      "category": "valuation",
+      "query": "Estimate market value of a 2018 Challenger 3500"
+    },
+    {
+      "id": "val-013",
+      "category": "valuation",
+      "query": "What is the value of a 2018 Challenger 3500?"
+    },
+    {
+      "id": "val-014",
+      "category": "valuation",
+      "query": "2018 Challenger 3500 valuation"
+    },
+    {
+      "id": "val-015",
+      "category": "valuation",
+      "query": "How much is a 2018 Challenger 3500 worth today?"
+    },
+    {
+      "id": "val-016",
+      "category": "valuation",
+      "query": "What is a 2020 Praetor 600 worth?"
+    },
+    {
+      "id": "val-017",
+      "category": "valuation",
+      "query": "Estimate market value of a 2020 Praetor 600"
+    },
+    {
+      "id": "val-018",
+      "category": "valuation",
+      "query": "What is the value of a 2020 Praetor 600?"
+    },
+    {
+      "id": "val-019",
+      "category": "valuation",
+      "query": "2020 Praetor 600 valuation"
+    },
+    {
+      "id": "val-020",
+      "category": "valuation",
+      "query": "How much is a 2020 Praetor 600 worth today?"
+    },
+    {
+      "id": "val-021",
+      "category": "valuation",
+      "query": "What is a 2016 Citation Latitude worth?"
+    },
+    {
+      "id": "val-022",
+      "category": "valuation",
+      "query": "Estimate market value of a 2016 Citation Latitude"
+    },
+    {
+      "id": "val-023",
+      "category": "valuation",
+      "query": "What is the value of a 2016 Citation Latitude?"
+    },
+    {
+      "id": "val-024",
+      "category": "valuation",
+      "query": "2016 Citation Latitude valuation"
+    },
+    {
+      "id": "val-025",
+      "category": "valuation",
+      "query": "How much is a 2016 Citation Latitude worth today?"
+    },
+    {
+      "id": "val-026",
+      "category": "valuation",
+      "query": "What is a 2019 G650 worth?"
+    },
+    {
+      "id": "val-027",
+      "category": "valuation",
+      "query": "Estimate market value of a 2019 G650"
+    },
+    {
+      "id": "val-028",
+      "category": "valuation",
+      "query": "What is the value of a 2019 G650?"
+    },
+    {
+      "id": "val-029",
+      "category": "valuation",
+      "query": "2019 G650 valuation"
+    },
+    {
+      "id": "val-030",
+      "category": "valuation",
+      "query": "How much is a 2019 G650 worth today?"
+    },
+    {
+      "id": "val-031",
+      "category": "valuation",
+      "query": "What is a 2018 PC-24 worth?"
+    },
+    {
+      "id": "val-032",
+      "category": "valuation",
+      "query": "Estimate market value of a 2018 PC-24"
+    },
+    {
+      "id": "val-033",
+      "category": "valuation",
+      "query": "What is the value of a 2018 PC-24?"
+    },
+    {
+      "id": "val-034",
+      "category": "valuation",
+      "query": "2018 PC-24 valuation"
+    },
+    {
+      "id": "val-035",
+      "category": "valuation",
+      "query": "How much is a 2018 PC-24 worth today?"
+    },
+    {
+      "id": "val-036",
+      "category": "valuation",
+      "query": "What is a 2017 G280 worth?"
+    },
+    {
+      "id": "val-037",
+      "category": "valuation",
+      "query": "Estimate market value of a 2017 G280"
+    },
+    {
+      "id": "val-038",
+      "category": "valuation",
+      "query": "What is the value of a 2017 G280?"
+    },
+    {
+      "id": "val-039",
+      "category": "valuation",
+      "query": "2017 G280 valuation"
+    },
+    {
+      "id": "val-040",
+      "category": "valuation",
+      "query": "How much is a 2017 G280 worth today?"
+    },
+    {
+      "id": "val-041",
+      "category": "valuation",
+      "query": "What is a 2021 Global 7500 worth?"
+    },
+    {
+      "id": "val-042",
+      "category": "valuation",
+      "query": "Estimate market value of a 2021 Global 7500"
+    },
+    {
+      "id": "val-043",
+      "category": "valuation",
+      "query": "What is the value of a 2021 Global 7500?"
+    },
+    {
+      "id": "val-044",
+      "category": "valuation",
+      "query": "2021 Global 7500 valuation"
+    },
+    {
+      "id": "val-045",
+      "category": "valuation",
+      "query": "How much is a 2021 Global 7500 worth today?"
+    },
+    {
+      "id": "val-046",
+      "category": "valuation",
+      "query": "What is a 2015 Falcon 7X worth?"
+    },
+    {
+      "id": "val-047",
+      "category": "valuation",
+      "query": "Estimate market value of a 2015 Falcon 7X"
+    },
+    {
+      "id": "val-048",
+      "category": "valuation",
+      "query": "What is the value of a 2015 Falcon 7X?"
+    },
+    {
+      "id": "val-049",
+      "category": "valuation",
+      "query": "2015 Falcon 7X valuation"
+    },
+    {
+      "id": "val-050",
+      "category": "valuation",
+      "query": "How much is a 2015 Falcon 7X worth today?"
+    },
+    {
+      "id": "val-051",
+      "category": "valuation",
+      "query": "What is a 2014 Citation Latitude worth?"
+    },
+    {
+      "id": "val-052",
+      "category": "valuation",
+      "query": "What is a 2015 Citation Latitude worth?"
+    },
+    {
+      "id": "val-053",
+      "category": "valuation",
+      "query": "What is a 2016 Citation Latitude worth?"
+    },
+    {
+      "id": "val-054",
+      "category": "valuation",
+      "query": "What is a 2017 Citation Latitude worth?"
+    },
+    {
+      "id": "val-055",
+      "category": "valuation",
+      "query": "What is a 2018 Citation Latitude worth?"
+    },
+    {
+      "id": "val-056",
+      "category": "valuation",
+      "query": "What is a 2019 Citation Latitude worth?"
+    },
+    {
+      "id": "val-057",
+      "category": "valuation",
+      "query": "What is a 2020 Citation Latitude worth?"
+    },
+    {
+      "id": "val-058",
+      "category": "valuation",
+      "query": "What is a 2021 Citation Latitude worth?"
+    },
+    {
+      "id": "val-059",
+      "category": "valuation",
+      "query": "What is a 2022 Citation Latitude worth?"
+    },
+    {
+      "id": "val-060",
+      "category": "valuation",
+      "query": "What is a 2014 Challenger 350 worth?"
+    },
+    {
+      "id": "val-061",
+      "category": "valuation",
+      "query": "What is a 2015 Challenger 350 worth?"
+    },
+    {
+      "id": "val-062",
+      "category": "valuation",
+      "query": "What is a 2016 Challenger 350 worth?"
+    },
+    {
+      "id": "val-063",
+      "category": "valuation",
+      "query": "What is a 2017 Challenger 350 worth?"
+    },
+    {
+      "id": "val-064",
+      "category": "valuation",
+      "query": "What is a 2018 Challenger 350 worth?"
+    },
+    {
+      "id": "val-065",
+      "category": "valuation",
+      "query": "What is a 2019 Challenger 350 worth?"
+    },
+    {
+      "id": "val-066",
+      "category": "valuation",
+      "query": "What is a 2020 Challenger 350 worth?"
+    },
+    {
+      "id": "val-067",
+      "category": "valuation",
+      "query": "What is a 2021 Challenger 350 worth?"
+    },
+    {
+      "id": "val-068",
+      "category": "valuation",
+      "query": "What is a 2022 Challenger 350 worth?"
+    },
+    {
+      "id": "val-069",
+      "category": "valuation",
+      "query": "What is a 2014 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-070",
+      "category": "valuation",
+      "query": "What is a 2015 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-071",
+      "category": "valuation",
+      "query": "What is a 2016 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-072",
+      "category": "valuation",
+      "query": "What is a 2017 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-073",
+      "category": "valuation",
+      "query": "What is a 2018 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-074",
+      "category": "valuation",
+      "query": "What is a 2019 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-075",
+      "category": "valuation",
+      "query": "What is a 2020 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-076",
+      "category": "valuation",
+      "query": "What is a 2021 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-077",
+      "category": "valuation",
+      "query": "What is a 2022 Challenger 3500 worth?"
+    },
+    {
+      "id": "val-078",
+      "category": "valuation",
+      "query": "What is a 2014 Citation Longitude worth?"
+    },
+    {
+      "id": "val-079",
+      "category": "valuation",
+      "query": "What is a 2015 Citation Longitude worth?"
+    },
+    {
+      "id": "val-080",
+      "category": "valuation",
+      "query": "What is a 2016 Citation Longitude worth?"
+    },
+    {
+      "id": "val-081",
+      "category": "valuation",
+      "query": "What is a 2017 Citation Longitude worth?"
+    },
+    {
+      "id": "val-082",
+      "category": "valuation",
+      "query": "What is a 2018 Citation Longitude worth?"
+    },
+    {
+      "id": "val-083",
+      "category": "valuation",
+      "query": "What is a 2019 Citation Longitude worth?"
+    },
+    {
+      "id": "val-084",
+      "category": "valuation",
+      "query": "What is a 2020 Citation Longitude worth?"
+    },
+    {
+      "id": "val-085",
+      "category": "valuation",
+      "query": "What is a 2021 Citation Longitude worth?"
+    },
+    {
+      "id": "val-086",
+      "category": "valuation",
+      "query": "What is a 2022 Citation Longitude worth?"
+    },
+    {
+      "id": "val-087",
+      "category": "valuation",
+      "query": "What is a 2014 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-088",
+      "category": "valuation",
+      "query": "What is a 2015 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-089",
+      "category": "valuation",
+      "query": "What is a 2016 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-090",
+      "category": "valuation",
+      "query": "What is a 2017 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-091",
+      "category": "valuation",
+      "query": "What is a 2018 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-092",
+      "category": "valuation",
+      "query": "What is a 2019 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-093",
+      "category": "valuation",
+      "query": "What is a 2020 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-094",
+      "category": "valuation",
+      "query": "What is a 2021 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-095",
+      "category": "valuation",
+      "query": "What is a 2022 Gulfstream G280 worth?"
+    },
+    {
+      "id": "val-096",
+      "category": "valuation",
+      "query": "What is a 2014 Praetor 600 worth?"
+    },
+    {
+      "id": "val-097",
+      "category": "valuation",
+      "query": "What is a 2015 Praetor 600 worth?"
+    },
+    {
+      "id": "val-098",
+      "category": "valuation",
+      "query": "What is a 2016 Praetor 600 worth?"
+    },
+    {
+      "id": "val-099",
+      "category": "valuation",
+      "query": "What is a 2017 Praetor 600 worth?"
+    },
+    {
+      "id": "val-100",
+      "category": "valuation",
+      "query": "What is a 2018 Praetor 600 worth?"
+    }
+  ]
+}

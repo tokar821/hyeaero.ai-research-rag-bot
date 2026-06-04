@@ -300,6 +300,41 @@ def recommendations_from_storage(
     return [recommendation_from_storage_dict(x) for x in items if isinstance(x, dict) and x.get("model")]
 
 
+def apply_budget_gate(
+    mission: MissionState,
+    candidate_models: List[str],
+) -> List[str]:
+    """
+    Remove candidates that exceed stated acquisition budget before ranking/selection.
+    """
+    budget = getattr(mission, "budget_usd", None)
+    if not budget or budget <= 0 or not candidate_models:
+        return list(candidate_models)
+
+    lo, hi = _budget_band_usd(budget)
+    gated: List[str] = []
+    for model in candidate_models:
+        profile = _AIRCRAFT_PROFILES.get(model)
+        if profile:
+            cat_fit = _category_budget_fit(str(profile.get("category") or ""), budget)
+            if cat_fit < 0.45:
+                continue
+        try:
+            from rag.aviation_engines.capabilities import (
+                find_catalog_matches,
+                typical_market_price_usd,
+            )
+
+            rows = find_catalog_matches([model])
+            price = typical_market_price_usd(rows[0]) if rows else None
+            if price and price > 0 and price > hi:
+                continue
+        except Exception:
+            pass
+        gated.append(model)
+    return gated
+
+
 def rank_aircraft_recommendations(
     mission: MissionState,
     *,
@@ -311,9 +346,15 @@ def rank_aircraft_recommendations(
     """
     from services.recommendation.mission_ranker import rank_missions
 
+    gated_candidates: Optional[List[str]] = None
+    if candidate_models is not None:
+        gated_candidates = apply_budget_gate(mission, list(candidate_models))
+        if not gated_candidates:
+            return []
+
     _category, recs, _feas, _audit = rank_missions(
         mission,
-        candidate_models=candidate_models,
+        candidate_models=gated_candidates if candidate_models is not None else None,
         max_results=max_results,
     )
     return recs

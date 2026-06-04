@@ -1,0 +1,4698 @@
+{
+  "version": "1",
+  "total": 500,
+  "expectations": {
+    "cmp-001": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-002": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-003": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-004": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-005": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-006": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-007": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-008": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-009": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-010": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-011": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-012": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-013": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-014": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-015": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-016": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-017": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-018": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-019": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-020": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-021": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-022": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-023": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-024": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-025": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-026": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-027": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-028": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-029": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-030": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-031": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-032": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-033": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-034": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-035": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-036": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-037": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-038": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-039": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-040": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-041": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-042": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-043": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-044": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-045": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-046": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-047": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-048": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-049": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-050": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-051": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-052": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-053": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-054": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-055": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G650",
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-056": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-057": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-058": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-059": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-060": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-061": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-062": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-063": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-064": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-065": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-066": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-067": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-068": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-069": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-070": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-071": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-072": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-073": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-074": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-075": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-076": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-077": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-078": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-079": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-080": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-081": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-082": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-083": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-084": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-085": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Citation CJ4"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-086": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-087": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-088": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-089": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-090": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X",
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-091": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-092": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-093": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-094": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-095": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-096": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-097": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-098": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-099": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "cmp-100": {
+      "expected_intent": "comparison",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "comparison"
+    },
+    "buy-001": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-002": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-003": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-004": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-005": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-006": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-007": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-008": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-009": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-010": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-011": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-012": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-013": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-014": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-015": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-016": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-017": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-018": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-019": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-020": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-021": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-022": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-023": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-024": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-025": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-026": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-027": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-028": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-029": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-030": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-031": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-032": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-033": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-034": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-035": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-036": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-037": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-038": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-039": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-040": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-041": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-042": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-043": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-044": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-045": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-046": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-047": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-048": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-049": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-050": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-051": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-052": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-053": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-054": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-055": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-056": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-057": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-058": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-059": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-060": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-061": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-062": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-063": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-064": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-065": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-066": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-067": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-068": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-069": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-070": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-071": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-072": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-073": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-074": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-075": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-076": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-077": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-078": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-079": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-080": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-081": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-082": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-083": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-084": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-085": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-086": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-087": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-088": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-089": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-090": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-091": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-092": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-093": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-094": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-095": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-096": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-097": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-098": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-099": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "buy-100": {
+      "expected_intent": "buy_decision",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "buy_decision",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "buy"
+    },
+    "msn-001": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-002": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-003": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-004": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-005": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-006": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-007": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-008": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-009": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-010": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-011": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-012": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-013": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-014": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-015": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-016": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-017": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-018": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-019": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-020": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-021": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-022": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-023": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-024": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-025": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-026": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-027": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-028": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-029": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-030": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-031": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-032": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-033": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-034": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-035": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-036": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-037": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-038": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-039": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-040": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-041": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-042": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-043": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-044": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-045": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-046": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-047": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-048": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-049": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-050": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-051": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-052": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-053": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-054": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-055": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-056": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-057": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-058": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-059": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-060": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-061": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-062": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-063": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-064": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-065": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-066": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-067": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-068": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-069": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-070": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-071": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-072": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-073": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-074": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-075": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-076": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-077": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-078": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-079": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-080": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-081": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-082": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-083": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-084": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-085": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-086": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-087": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-088": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-089": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-090": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-091": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-092": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-093": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-094": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-095": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-096": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-097": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-098": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-099": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "msn-100": {
+      "expected_intent": "mission",
+      "expected_execution_path": "llm_fallback",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "mission"
+    },
+    "alt-001": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-002": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-003": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-004": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-005": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-006": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-007": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-008": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-009": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-010": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-011": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-012": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-013": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-014": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-015": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-016": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-017": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-018": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-019": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-020": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-021": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-022": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-023": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-024": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-025": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-026": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-027": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-028": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-029": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-030": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-031": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-032": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-033": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-034": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-035": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-036": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-037": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-038": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-039": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-040": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-041": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-042": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-043": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-044": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-045": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-046": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-047": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-048": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-049": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-050": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-051": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-052": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-053": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-054": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-055": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-056": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-057": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-058": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-059": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-060": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "alt-061": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-062": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-063": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-064": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-065": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-066": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-067": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-068": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-069": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-070": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-071": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-072": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-073": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-074": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-075": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-076": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-077": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-078": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-079": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-080": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-081": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-082": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-083": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-084": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-085": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-086": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-087": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-088": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-089": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "alternative"
+    },
+    "alt-090": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-091": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-092": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-093": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-094": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-095": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-096": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 6500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-097": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-098": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-099": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "alt-100": {
+      "expected_intent": "alternative",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "alternative",
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "alternative"
+    },
+    "val-001": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-002": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-003": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-004": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-005": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 8X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-006": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-007": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-008": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-009": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-010": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-011": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-012": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-013": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-014": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-015": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-016": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-017": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-018": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-019": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-020": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-021": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-022": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-023": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-024": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-025": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-026": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-027": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-028": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-029": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-030": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G650"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-031": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-032": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-033": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-034": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-035": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-036": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-037": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-038": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-039": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-040": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-041": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-042": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-043": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-044": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-045": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Global 7500"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-046": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 7X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-047": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 7X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-048": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 7X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-049": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "hybrid_unified",
+      "expected_dispatch_kind": null,
+      "expected_models": [
+        "Falcon 7X"
+      ],
+      "allow_fail_closed": false,
+      "lock_intent_type": "mission"
+    },
+    "val-050": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Falcon 7X"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-051": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-052": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-053": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-054": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-055": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-056": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-057": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-058": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-059": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Citation Latitude"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-060": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-061": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-062": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-063": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-064": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-065": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-066": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-067": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-068": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Challenger 350"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-069": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-070": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-071": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-072": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-073": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-074": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-075": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-076": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-077": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-078": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-079": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-080": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-081": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-082": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-083": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-084": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-085": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-086": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-087": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-088": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-089": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-090": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-091": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-092": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-093": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-094": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-095": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "comparison",
+      "expected_models": [
+        "Gulfstream G280"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-096": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-097": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-098": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-099": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    },
+    "val-100": {
+      "expected_intent": "valuation",
+      "expected_execution_path": "authority_dispatch",
+      "expected_dispatch_kind": "valuation",
+      "expected_models": [
+        "Praetor 600"
+      ],
+      "allow_fail_closed": true,
+      "lock_intent_type": "valuation"
+    }
+  }
+}

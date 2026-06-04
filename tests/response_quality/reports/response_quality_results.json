@@ -1,0 +1,3193 @@
+[
+  {
+    "query_id": "cmp-001",
+    "category": "comparison",
+    "query": "G650 vs Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "c4bfce3eabd9f6ceeb5b20fd8dfd08ceeacb27480b3b88c3c1bd8f60bad3a4d9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "7d455aa22b0eb60026cb368a",
+      "timestamp": "lock-c4bfce3eabd9f6ce",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Falcon 8X (14 vs 13).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient "
+  },
+  {
+    "query_id": "cmp-002",
+    "category": "comparison",
+    "query": "Compare G650 and Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "e49dcedde1a57212dab971972e34396ca17e5610aba80cab2b3b04d0fc734840",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "afa62bbcbc8974c42b01acbd",
+      "timestamp": "lock-e49dcedde1a57212",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Falcon 8X (14 vs 13).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient "
+  },
+  {
+    "query_id": "cmp-003",
+    "category": "comparison",
+    "query": "How does G650 compare to Falcon 8X?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "863d084609a81870f7780096372c011554587a39fc492e0f693796e9a9d466d9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "6b858896f05ff9e6ff00f561",
+      "timestamp": "lock-863d084609a81870",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Falcon 8X (14 vs 13).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient "
+  },
+  {
+    "query_id": "cmp-004",
+    "category": "comparison",
+    "query": "G650 versus Falcon 8X for charter operations",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "8eb9898e9dc7a78fd059ed47cd5b01a4b306a473c5efdabc734ee4dd487ba9d5",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "a89a272bbdfc827d7d52cacc",
+      "timestamp": "lock-8eb9898e9dc7a78f",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Falcon 8X (14 vs 13).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient "
+  },
+  {
+    "query_id": "cmp-005",
+    "category": "comparison",
+    "query": "Which is better, G650 or Falcon 8X?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "eac7d31945a480bd53d1966cde27e50e8d77d8016bf3547c29e777ecb9e20632",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "89330bc5a986dbbbba6ac945",
+      "timestamp": "lock-eac7d31945a480bd",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Falcon 8X: large-cabin class; practical range 5544 nm; seats 13; operating cost band medium.\nOn verified range, Gulfstream G650 leads Falcon 8X (5720 nm vs 5544 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Falcon 8X (14 vs 13).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient "
+  },
+  {
+    "query_id": "cmp-006",
+    "category": "comparison",
+    "query": "G650 vs Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Global 7500"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "f0419dfff83962b379402334628f72074fdc99b218ed225bdfb4224ad97b48d0",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "f7d9e71398cb8556579a16e3",
+      "timestamp": "lock-f0419dfff83962b3",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm catalog practical).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient verified aircraft data to produce a comparison.\n\nTemporal Overlay (information"
+  },
+  {
+    "query_id": "cmp-007",
+    "category": "comparison",
+    "query": "Compare G650 and Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Global 7500"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "0ccbdfab648c0ace1c1a83550d28e13d98d2d45ea05e6dbee4d541e0ccad1a60",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "15f4dd6e4d9eee84ee26ceed",
+      "timestamp": "lock-0ccbdfab648c0ace",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm catalog practical).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient verified aircraft data to produce a comparison.\n\nTemporal Overlay (information"
+  },
+  {
+    "query_id": "cmp-008",
+    "category": "comparison",
+    "query": "How does G650 compare to Global 7500?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Global 7500"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7162b083385d0e667d1377359233886ab93843f7dfa4d745e2a778d36442d434",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "d647515269cdeafc519eede7",
+      "timestamp": "lock-7162b083385d0e66",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm catalog practical).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient verified aircraft data to produce a comparison.\n\nTemporal Overlay (information"
+  },
+  {
+    "query_id": "cmp-009",
+    "category": "comparison",
+    "query": "G650 versus Global 7500 for charter operations",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Global 7500"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7a3a0c8334de8e866f9451cb96518fa67e42881ef23c078c9b51d0f54714026a",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "5f86f0d09a5610c76b8f5f36",
+      "timestamp": "lock-7a3a0c8334de8e86",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm catalog practical).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient verified aircraft data to produce a comparison.\n\nTemporal Overlay (information"
+  },
+  {
+    "query_id": "cmp-010",
+    "category": "comparison",
+    "query": "Which is better, G650 or Global 7500?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Global 7500"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "5d3285d3466a8e000720501a1c948c5b5b48fdd635847f2abdd78c32d22ee7af",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "813d68fc542c942c9e7067a9",
+      "timestamp": "lock-5d3285d3466a8e00",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Global 7500: large-cabin class; practical range 6600 nm; seats 14; operating cost band medium.\nOn verified range, Global 7500 leads Gulfstream G650 (6600 nm vs 5720 nm catalog practical).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_DATA: Insufficient verified aircraft data to produce a comparison.\n\nTemporal Overlay (information"
+  },
+  {
+    "query_id": "cmp-011",
+    "category": "comparison",
+    "query": "G650 vs G700",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G700",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "bfbdf89473db0eff1b52b4bcf2faa033a83bb34cd68cfd3f5d3a2ec5f07a46b0",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "df31f8e4401351940ade3d02",
+      "timestamp": "lock-bfbdf89473db0eff",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G700: large-cabin class; practical range 6336 nm; seats 15; operating cost band medium.\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\nOn verified range, Gulfstream G700 leads Gulfstream G650 (6336 nm vs 5720 nm catalog practical).\nOn seating capacity, Gulfstream G700 offers more seats than Gulfstream G650 (15 vs 14).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_D"
+  },
+  {
+    "query_id": "cmp-012",
+    "category": "comparison",
+    "query": "Compare G650 and G700",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G700",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "505546d77094a346adef88fe3b5f29529d7dfea18ca3a5331ea7c8ae276fa168",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "8bbc93536bce1f87c564a86a",
+      "timestamp": "lock-505546d77094a346",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G700: large-cabin class; practical range 6336 nm; seats 15; operating cost band medium.\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\nOn verified range, Gulfstream G700 leads Gulfstream G650 (6336 nm vs 5720 nm catalog practical).\nOn seating capacity, Gulfstream G700 offers more seats than Gulfstream G650 (15 vs 14).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_D"
+  },
+  {
+    "query_id": "cmp-013",
+    "category": "comparison",
+    "query": "How does G650 compare to G700?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G700",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "bb2c1501a3b8a0d8faad918b62e2915a2cb529bc1e9315fac1cc6465a68cafdb",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "46344d76c636df057bda92e4",
+      "timestamp": "lock-bb2c1501a3b8a0d8",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G700: large-cabin class; practical range 6336 nm; seats 15; operating cost band medium.\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\nOn verified range, Gulfstream G700 leads Gulfstream G650 (6336 nm vs 5720 nm catalog practical).\nOn seating capacity, Gulfstream G700 offers more seats than Gulfstream G650 (15 vs 14).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_D"
+  },
+  {
+    "query_id": "cmp-014",
+    "category": "comparison",
+    "query": "G650 versus G700 for charter operations",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G700",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "a5c24a1b0450d45aa94261bc1128540e948e97ea4ce71eb0421f98eb02b84c85",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "a15456305ff4d808b74ca141",
+      "timestamp": "lock-a5c24a1b0450d45a",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G700: large-cabin class; practical range 6336 nm; seats 15; operating cost band medium.\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\nOn verified range, Gulfstream G700 leads Gulfstream G650 (6336 nm vs 5720 nm catalog practical).\nOn seating capacity, Gulfstream G700 offers more seats than Gulfstream G650 (15 vs 14).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_D"
+  },
+  {
+    "query_id": "cmp-015",
+    "category": "comparison",
+    "query": "Which is better, G650 or G700?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G700",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G700",
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "ec9c0b8a8cc1d75b971e513c7214b61414408f66d54db90b1128a6b46be10df0",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "5cb51a9b678d0c2883cc8cbd",
+      "timestamp": "lock-ec9c0b8a8cc1d75b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G700: large-cabin class; practical range 6336 nm; seats 15; operating cost band medium.\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\nOn verified range, Gulfstream G700 leads Gulfstream G650 (6336 nm vs 5720 nm catalog practical).\nOn seating capacity, Gulfstream G700 offers more seats than Gulfstream G650 (15 vs 14).\nOn cabin class, both aircraft sit in the large-cabin segment (verified catalog).\nOn operating cost, both aircraft share the medium verified operating cost band.\nVERDICT:\nINSUFFICIENT_D"
+  },
+  {
+    "query_id": "cmp-016",
+    "category": "comparison",
+    "query": "G650 vs Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "e43fb9bc09d03ce7dcda3f7ec15f2c1d24ee53f54b7cf61082f6757ae7382666",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "a3da58fb245a2d64c5eb0ad4",
+      "timestamp": "lock-e43fb9bc09d03ce7",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation Longitude: super-midsize class; practical range 2992 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Citation Longitude (5720 nm vs 2992 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Citation Longitude (14 vs 12).\nOn cabin class, Gulfstream G650 is large-cabin versus Citation Longitude at super-midsize (verified catalog).\nOn operating cost, both aircraft share the medium verified oper"
+  },
+  {
+    "query_id": "cmp-017",
+    "category": "comparison",
+    "query": "Compare G650 and Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "78c91bcdc7604ffdf174f9ef1fba7168e9fbede11b4a9b60f8e7047127673331",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "d0e363a6d0dd73c4b338db87",
+      "timestamp": "lock-78c91bcdc7604ffd",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation Longitude: super-midsize class; practical range 2992 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Citation Longitude (5720 nm vs 2992 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Citation Longitude (14 vs 12).\nOn cabin class, Gulfstream G650 is large-cabin versus Citation Longitude at super-midsize (verified catalog).\nOn operating cost, both aircraft share the medium verified oper"
+  },
+  {
+    "query_id": "cmp-018",
+    "category": "comparison",
+    "query": "How does G650 compare to Longitude?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "dfbe258489900c61e1b1df1a3cf3b98f015f327d840b708c5dd747de860d8578",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "572fd67b2ddf4c3926af65ba",
+      "timestamp": "lock-dfbe258489900c61",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation Longitude: super-midsize class; practical range 2992 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Citation Longitude (5720 nm vs 2992 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Citation Longitude (14 vs 12).\nOn cabin class, Gulfstream G650 is large-cabin versus Citation Longitude at super-midsize (verified catalog).\nOn operating cost, both aircraft share the medium verified oper"
+  },
+  {
+    "query_id": "cmp-019",
+    "category": "comparison",
+    "query": "G650 versus Longitude for charter operations",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "8bddce377c92f0f35be9b4c66a3901a5d709dd1ccbde125e8624e35192377cf9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "bbb0ad3ad7ffbdd7423daf66",
+      "timestamp": "lock-8bddce377c92f0f3",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation Longitude: super-midsize class; practical range 2992 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Citation Longitude (5720 nm vs 2992 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Citation Longitude (14 vs 12).\nOn cabin class, Gulfstream G650 is large-cabin versus Citation Longitude at super-midsize (verified catalog).\nOn operating cost, both aircraft share the medium verified oper"
+  },
+  {
+    "query_id": "cmp-020",
+    "category": "comparison",
+    "query": "Which is better, G650 or Longitude?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "comparison",
+    "intent_lock": {
+      "intent_type": "comparison",
+      "canonical_models": [
+        "Gulfstream G650",
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "81fbaf9dd530418e0dc1aa4b80eb243183e4e51f1e87b02db8c3bc99ad937aad",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "aircraft_comparison",
+        "execution_path": "comparison",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "comparison"
+      },
+      "dispatch_authority_id": "8d3cd0d2e3ff4bc501a71374",
+      "timestamp": "lock-81fbaf9dd530418e",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Verified catalog comparison:\n- Gulfstream G650: large-cabin class; practical range 5720 nm; seats 14; operating cost band medium.\n- Citation Longitude: super-midsize class; practical range 2992 nm; seats 12; operating cost band medium.\nOn verified range, Gulfstream G650 leads Citation Longitude (5720 nm vs 2992 nm catalog practical).\nOn seating capacity, Gulfstream G650 offers more seats than Citation Longitude (14 vs 12).\nOn cabin class, Gulfstream G650 is large-cabin versus Citation Longitude at super-midsize (verified catalog).\nOn operating cost, both aircraft share the medium verified oper"
+  },
+  {
+    "query_id": "val-001",
+    "category": "valuation",
+    "query": "What is a 2019 Falcon 8X worth?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "a0632b34ef21bf38c35c95d70f8380819035bd05d7300b760e4179b6c9143272",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "87b422818c7ee370618ce2a5",
+      "timestamp": "lock-a0632b34ef21bf38",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Falcon 8X\nYear: 2019\n\nMarket Reality:\nMarket Band: $33.6M\u2013$60.4M\nMedian: $44.8M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-002",
+    "category": "valuation",
+    "query": "Estimate market value of a 2019 Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "006ae8ccb684f4f2abc9fc50998b38bf507da2a705c7216fa1ef4e40d0991d68",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "96db4c658a3243c323cf7e92",
+      "timestamp": "lock-006ae8ccb684f4f2",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Falcon 8X\nYear: 2019\n\nMarket Reality:\nMarket Band: $33.6M\u2013$60.4M\nMedian: $44.8M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-003",
+    "category": "valuation",
+    "query": "What is the value of a 2019 Falcon 8X?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Falcon 8X"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "1bd13f250dbc861d71b04a66abbaedcfe2565d78bc8c03fffc1d6697879d4bcd",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-1bd13f250dbc861d",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Falcon 8X\nYear: 2019\n\nMarket Reality:\nMarket Band: $33.6M\u2013$60.4M\nMedian: $44.8M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-004",
+    "category": "valuation",
+    "query": "2019 Falcon 8X valuation",
+    "return_kind": "llm",
+    "authority_models": [
+      "Falcon 8X"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "b5e717e15e2f3de5a3d0ad2a5663de187c4c013de41c033ee70f0dc3eebeba79",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-b5e717e15e2f3de5",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Falcon 8X\nYear: 2019\n\nMarket Reality:\nMarket Band: $33.6M\u2013$60.4M\nMedian: $44.8M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-005",
+    "category": "valuation",
+    "query": "How much is a 2019 Falcon 8X worth today?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "bcebe73d4d74ce62f478836d35b2a6224d5a775d7de8295edfa1540cc31b7112",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "2b439162d4653a4a3f7bd03a",
+      "timestamp": "lock-bcebe73d4d74ce62",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Falcon 8X\nYear: 2019\n\nMarket Reality:\nMarket Band: $33.6M\u2013$60.4M\nMedian: $44.8M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-006",
+    "category": "valuation",
+    "query": "What is a 2017 Citation Longitude worth?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "43ed3a12fc1e255d16d6fb8c53786d8d5eb969c9d0fbf504db96b92a8b5cef21",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "3b4d2c32d4227be9f85d5d1e",
+      "timestamp": "lock-43ed3a12fc1e255d",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Longitude\nYear: 2017\n\nMarket Reality:\nMarket Band: $18.4M\u2013$33.1M\nMedian: $24.5M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-007",
+    "category": "valuation",
+    "query": "Estimate market value of a 2017 Citation Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "8625bc64fe77904ead77fc3eaad2d3bc450e4aa83a87fd9cc4c6b03d5adf26e5",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "3183ef634eb7ae1aeaeac921",
+      "timestamp": "lock-8625bc64fe77904e",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Longitude\nYear: 2017\n\nMarket Reality:\nMarket Band: $18.4M\u2013$33.1M\nMedian: $24.5M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-008",
+    "category": "valuation",
+    "query": "What is the value of a 2017 Citation Longitude?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Longitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "1e10cbfda52f55597a00b9a19b9d36e92d47416d8d0876c5d30e1da139e2081f",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-1e10cbfda52f5559",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Longitude\nYear: 2017\n\nMarket Reality:\nMarket Band: $18.4M\u2013$33.1M\nMedian: $24.5M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-009",
+    "category": "valuation",
+    "query": "2017 Citation Longitude valuation",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Longitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "33179de530bcf5f1b9c763d7fa850fb219a29042814d0fe87dd3b8c35be51fcf",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-33179de530bcf5f1",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Longitude\nYear: 2017\n\nMarket Reality:\nMarket Band: $18.4M\u2013$33.1M\nMedian: $24.5M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-010",
+    "category": "valuation",
+    "query": "How much is a 2017 Citation Longitude worth today?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "15338c48a3c7e7b3cf19bcf4d03b9d5c4372a4b32c5e469d472af3020d7e07ae",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "e72f219e7f8db42376814b17",
+      "timestamp": "lock-15338c48a3c7e7b3",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Longitude\nYear: 2017\n\nMarket Reality:\nMarket Band: $18.4M\u2013$33.1M\nMedian: $24.5M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-011",
+    "category": "valuation",
+    "query": "What is a 2018 Challenger 3500 worth?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Challenger 3500"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [],
+      "constraints": {},
+      "origin_query_hash": "41486b2fc2b244cf2e660f1a5e2d66d4bd215b225b458ac10b17d87f73597f98",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "771a26599f6f72b844af3f2e",
+      "timestamp": "lock-41486b2fc2b244cf",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Challenger 3500\nYear: 2018\n\nMarket Reality:\nMarket Band: $19.5M\u2013$35.0M\nMedian: $25.9M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-012",
+    "category": "valuation",
+    "query": "Estimate market value of a 2018 Challenger 3500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Challenger 3500"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [],
+      "constraints": {},
+      "origin_query_hash": "d01678b5d58e6fa8a39e08648785dd4b5b16114d2a3e88020287caa6c23e6102",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "20722aad2baf204071e6bd6c",
+      "timestamp": "lock-d01678b5d58e6fa8",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Challenger 3500\nYear: 2018\n\nMarket Reality:\nMarket Band: $19.5M\u2013$35.0M\nMedian: $25.9M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-013",
+    "category": "valuation",
+    "query": "What is the value of a 2018 Challenger 3500?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Challenger 3500"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {},
+      "origin_query_hash": "717fcf06e81bde84cd18f2bb4dd4eacb5510ab57959d09497851cafda4dfe482",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-717fcf06e81bde84",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Challenger 3500\nYear: 2018\n\nMarket Reality:\nMarket Band: $19.5M\u2013$35.0M\nMedian: $25.9M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-014",
+    "category": "valuation",
+    "query": "2018 Challenger 3500 valuation",
+    "return_kind": "llm",
+    "authority_models": [
+      "Challenger 3500"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {},
+      "origin_query_hash": "ec9058820d8b73b5b5e14c52023707a04815409766e8b73be287a2e251134dfd",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-ec9058820d8b73b5",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Challenger 3500\nYear: 2018\n\nMarket Reality:\nMarket Band: $19.5M\u2013$35.0M\nMedian: $25.9M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-015",
+    "category": "valuation",
+    "query": "How much is a 2018 Challenger 3500 worth today?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Challenger 3500"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [],
+      "constraints": {},
+      "origin_query_hash": "b5aaad940fdf78bcedee8072818c367a4f617048b5ddcd48e6a95f06180fd7ed",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "5ce61d50dbe08d2dbaf35220",
+      "timestamp": "lock-b5aaad940fdf78bc",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Challenger 3500\nYear: 2018\n\nMarket Reality:\nMarket Band: $19.5M\u2013$35.0M\nMedian: $25.9M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-016",
+    "category": "valuation",
+    "query": "What is a 2020 Praetor 600 worth?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Praetor 600"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Praetor 600"
+      ],
+      "constraints": {},
+      "origin_query_hash": "e3abc71ac63d403425441e46002d9ae3fbaa77baf16e0b60858ce4c9052dc90d",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "f82a0cb35e84b2bc73341cd6",
+      "timestamp": "lock-e3abc71ac63d4034",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Praetor 600\nYear: 2020\n\nMarket Reality:\nMarket Band: $17.2M\u2013$31.1M\nMedian: $23.0M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-017",
+    "category": "valuation",
+    "query": "Estimate market value of a 2020 Praetor 600",
+    "return_kind": "professional",
+    "authority_models": [
+      "Praetor 600"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Praetor 600"
+      ],
+      "constraints": {},
+      "origin_query_hash": "719d4c413ce4fb5b475c09fa70a2ada72ad67b977fdc48bc3bd3fd95f3deb2f9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "d1e843adc4f6927c37efae64",
+      "timestamp": "lock-719d4c413ce4fb5b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Praetor 600\nYear: 2020\n\nMarket Reality:\nMarket Band: $17.2M\u2013$31.1M\nMedian: $23.0M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-018",
+    "category": "valuation",
+    "query": "What is the value of a 2020 Praetor 600?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Praetor 600"
+      ],
+      "constraints": {},
+      "origin_query_hash": "c6002225fd3a90f09ddfe7ad2936d39ca8729fce071b5c05c35484c31e84446a",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-c6002225fd3a90f0",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Praetor 600\nYear: 2020\n\nMarket Reality:\nMarket Band: $17.2M\u2013$31.1M\nMedian: $23.0M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-019",
+    "category": "valuation",
+    "query": "2020 Praetor 600 valuation",
+    "return_kind": "llm",
+    "authority_models": [
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [
+        "Praetor 600"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7a63c86d66e4757b1af5a531f945e9520256731078787bc3fc39c149e9782b82",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-7a63c86d66e4757b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Praetor 600\nYear: 2020\n\nMarket Reality:\nMarket Band: $17.2M\u2013$31.1M\nMedian: $23.0M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "val-020",
+    "category": "valuation",
+    "query": "How much is a 2020 Praetor 600 worth today?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Praetor 600"
+    ],
+    "dispatch_kind": "valuation",
+    "intent_lock": {
+      "intent_type": "valuation",
+      "canonical_models": [
+        "Praetor 600"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7b449668d23ada34c095c0d0b9873a4f8ca58f95331eb10c45a4bf95f8dde82b",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "valuation"
+      },
+      "dispatch_authority_id": "bbe2525046e5bad1c766467c",
+      "timestamp": "lock-7b449668d23ada34",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Praetor 600\nYear: 2020\n\nMarket Reality:\nMarket Band: $17.2M\u2013$31.1M\nMedian: $23.0M\nLiquidity: THIN (score 22/100)\nConfidence: MODERATE\n\nVerdict:\nMARKET_CONTEXT_AVAILABLE\n\nTemporal Context:\n- TEMPORAL_CONFIDENCE_LOW (fewer than 5 historical price points).\n- No sufficient listing price history for movement analysis."
+  },
+  {
+    "query_id": "alt-001",
+    "category": "alternative",
+    "query": "Alternatives to G650",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Global 6500",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "1a82742551ea2396571be73e60d30b158da0649e846fd5b9d9d2e79595d9887d",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "5a1497468d580457a5c231d6",
+      "timestamp": "lock-1a82742551ea2396",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Gulfstream G650 include Falcon 8X, Global 7500, Global 6500, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-002",
+    "category": "alternative",
+    "query": "Show me alternatives to G650",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Global 6500",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "f1a497057e248e5c6bd45e8ee21031a449594a6fd9bbcabe493e41bf18d86e35",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "2fb962c5a02127f5af091f8d",
+      "timestamp": "lock-f1a497057e248e5c",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Gulfstream G650 include Falcon 8X, Global 7500, Global 6500, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-003",
+    "category": "alternative",
+    "query": "What are tier-peer alternatives to G650?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Global 6500",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "19a4f8e0251046290aaaa63d95ab94cb49e20e69776e50685e55a0f291a64c87",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "1790ea1f5bd37005f7d3b387",
+      "timestamp": "lock-19a4f8e025104629",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Gulfstream G650 include Falcon 8X, Global 7500, Global 6500, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-004",
+    "category": "alternative",
+    "query": "Replacement options for G650",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Global 6500",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "1411b3925fec0f426babc6be9c94ca33b962a3a5be489a3af0c6f9f6832049ed",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "a904897d2519177a4cb69fd6",
+      "timestamp": "lock-1411b3925fec0f42",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Gulfstream G650 include Falcon 8X, Global 7500, Global 6500, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-005",
+    "category": "alternative",
+    "query": "Similar aircraft to G650",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G650",
+      "Falcon 8X",
+      "Global 7500",
+      "Global 6500",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Gulfstream G650"
+      ],
+      "constraints": {},
+      "origin_query_hash": "4d89107b1f2064e28d9feb59ade3e01e485fa716e40a513cfefb471deadde9d3",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "a9954ff6995450ec08720502",
+      "timestamp": "lock-4d89107b1f2064e2",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Gulfstream G650 include Falcon 8X, Global 7500, Global 6500, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-006",
+    "category": "alternative",
+    "query": "Alternatives to Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X",
+      "Gulfstream G650",
+      "Global 6500",
+      "Challenger 650",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "9b9f531ab89e813a6238371d9d8bc792cc2f094052653f767709f7bf20278601",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "95460ff0003321518bb2c173",
+      "timestamp": "lock-9b9f531ab89e813a",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Falcon 8X include Gulfstream G650, Global 6500, Challenger 650, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-007",
+    "category": "alternative",
+    "query": "Show me alternatives to Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X",
+      "Gulfstream G650",
+      "Global 6500",
+      "Challenger 650",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "4dec35c35a765681ff927f45e80a9bf2536a010249ffd94b7632128600e58ac2",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "c559ea34027b5798c63a998c",
+      "timestamp": "lock-4dec35c35a765681",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Falcon 8X include Gulfstream G650, Global 6500, Challenger 650, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-008",
+    "category": "alternative",
+    "query": "What are tier-peer alternatives to Falcon 8X?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X",
+      "Gulfstream G650",
+      "Global 6500",
+      "Challenger 650",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7db556984210863683d1f13977d975e1b6e33271b3d953fafd7889ea085c46d9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "3b9d47d54c6b368a60662aeb",
+      "timestamp": "lock-7db5569842108636",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Falcon 8X include Gulfstream G650, Global 6500, Challenger 650, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-009",
+    "category": "alternative",
+    "query": "Replacement options for Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X",
+      "Gulfstream G650",
+      "Global 6500",
+      "Challenger 650",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "8d37e832f8c881cf1b2146f36294705347fdd31840a62fe43f72213ce7139dd8",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "e9ffcedaf92f5a706aa1dd7d",
+      "timestamp": "lock-8d37e832f8c881cf",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Falcon 8X include Gulfstream G650, Global 6500, Challenger 650, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-010",
+    "category": "alternative",
+    "query": "Similar aircraft to Falcon 8X",
+    "return_kind": "professional",
+    "authority_models": [
+      "Falcon 8X",
+      "Gulfstream G650",
+      "Global 6500",
+      "Challenger 650",
+      "Gulfstream G650ER"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Falcon 8X"
+      ],
+      "constraints": {},
+      "origin_query_hash": "30a877637d81b8b7c0b5ef46dc50076b1cae309e6fc1a811520d61e383439d66",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "69ecdb7327b9c177d1f414e4",
+      "timestamp": "lock-30a877637d81b8b7",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Falcon 8X include Gulfstream G650, Global 6500, Challenger 650, and Gulfstream G650ER. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-011",
+    "category": "alternative",
+    "query": "Alternatives to Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Global 7500",
+      "Gulfstream G650ER",
+      "Falcon 8X",
+      "Global 6500",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "bdace051cbb72f3bcca2a0f82747ce6c52fe59b694f43f3ba7f9c7d4faea02cc",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "a62f4a7676fb655bba8d5e0e",
+      "timestamp": "lock-bdace051cbb72f3b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Global 7500 include Gulfstream G650ER, Falcon 8X, Global 6500, and Gulfstream G650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-012",
+    "category": "alternative",
+    "query": "Show me alternatives to Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Global 7500",
+      "Gulfstream G650ER",
+      "Falcon 8X",
+      "Global 6500",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "6faa184aebe9724be99ecef14919752f1b6d6df5b2beee21bec9df7443bca03f",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "044669eddcbc40a8e071a364",
+      "timestamp": "lock-6faa184aebe9724b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Global 7500 include Gulfstream G650ER, Falcon 8X, Global 6500, and Gulfstream G650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-013",
+    "category": "alternative",
+    "query": "What are tier-peer alternatives to Global 7500?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Global 7500",
+      "Gulfstream G650ER",
+      "Falcon 8X",
+      "Global 6500",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "50333a30c69a8e90edf5ca8508955fd54e6912039259943f46702508c642038a",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "e57fec713a300f5942276564",
+      "timestamp": "lock-50333a30c69a8e90",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Global 7500 include Gulfstream G650ER, Falcon 8X, Global 6500, and Gulfstream G650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-014",
+    "category": "alternative",
+    "query": "Replacement options for Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Global 7500",
+      "Gulfstream G650ER",
+      "Falcon 8X",
+      "Global 6500",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "196423612c7eb6b3845aa2ca7ff07e7f310abe69bfa8b6ef00b3333ba01624cf",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "009b35c55667651e70967ca2",
+      "timestamp": "lock-196423612c7eb6b3",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Global 7500 include Gulfstream G650ER, Falcon 8X, Global 6500, and Gulfstream G650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-015",
+    "category": "alternative",
+    "query": "Similar aircraft to Global 7500",
+    "return_kind": "professional",
+    "authority_models": [
+      "Global 7500",
+      "Gulfstream G650ER",
+      "Falcon 8X",
+      "Global 6500",
+      "Gulfstream G650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Global 7500"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7f125a26820872e88c257a12d61b639661563c450d2b20970a61949d06218f37",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "6213461090b7cfb35a951f86",
+      "timestamp": "lock-7f125a26820872e8",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Global 7500 include Gulfstream G650ER, Falcon 8X, Global 6500, and Gulfstream G650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-016",
+    "category": "alternative",
+    "query": "Alternatives to Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude",
+      "Challenger 350",
+      "Praetor 600",
+      "Gulfstream G280",
+      "Challenger 650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "cc4bcef790367b8e64c56c9351a49e3c8ee2077a4ddde5ec8e6dc1328836ae86",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "9a90047244d9067083f153c4",
+      "timestamp": "lock-cc4bcef790367b8e",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Citation Longitude include Challenger 350, Praetor 600, Gulfstream G280, and Challenger 650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-017",
+    "category": "alternative",
+    "query": "Show me alternatives to Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude",
+      "Challenger 350",
+      "Praetor 600",
+      "Gulfstream G280",
+      "Challenger 650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "71fb5dcc0203ca74ab1bc2a535534a1b84257cb737e3077ca28566aa09a2f351",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "c3c82e75eba9d837f34067ea",
+      "timestamp": "lock-71fb5dcc0203ca74",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Citation Longitude include Challenger 350, Praetor 600, Gulfstream G280, and Challenger 650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-018",
+    "category": "alternative",
+    "query": "What are tier-peer alternatives to Longitude?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude",
+      "Challenger 350",
+      "Praetor 600",
+      "Gulfstream G280",
+      "Challenger 650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7624c7369d37db8f6158d1f76142f4ad25f94d5bb68d5d4dadedbe8c5a2b9421",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "7bbca4bb4d297202f5dd2338",
+      "timestamp": "lock-7624c7369d37db8f",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Citation Longitude include Challenger 350, Praetor 600, Gulfstream G280, and Challenger 650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-019",
+    "category": "alternative",
+    "query": "Replacement options for Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude",
+      "Challenger 350",
+      "Praetor 600",
+      "Gulfstream G280",
+      "Challenger 650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "8c2e094497baf2c2b9c155e6b12518a77149e01299e0b2d6aa60172a9ddc8b8d",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "3e8a202f39efef1f78507e69",
+      "timestamp": "lock-8c2e094497baf2c2",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Citation Longitude include Challenger 350, Praetor 600, Gulfstream G280, and Challenger 650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "alt-020",
+    "category": "alternative",
+    "query": "Similar aircraft to Longitude",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Longitude",
+      "Challenger 350",
+      "Praetor 600",
+      "Gulfstream G280",
+      "Challenger 650"
+    ],
+    "dispatch_kind": "alternative",
+    "intent_lock": {
+      "intent_type": "alternative",
+      "canonical_models": [
+        "Citation Longitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "ff7df346cbc769c145351de008cd2be9a49ad12ca494ed1ee564b2ecc4b939da",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "alternative",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "alternative"
+      },
+      "dispatch_authority_id": "d045cffca3d247934f01a4dd",
+      "timestamp": "lock-ff7df346cbc769c1",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Credible tier-peer alternatives to the Citation Longitude include Challenger 350, Praetor 600, Gulfstream G280, and Challenger 650. These are verified catalog tier peers only."
+  },
+  {
+    "query_id": "msn-001",
+    "category": "mission",
+    "query": "8 pax TEB-LAX",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "pax": 8
+      },
+      "origin_query_hash": "c9c7579335fc4d39c935bad6ba3274797e8a96f6314c917f2e73eb109905ca18",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-c9c7579335fc4d39",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: Standard mission \u2014 no special constraints stated\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-002",
+    "category": "mission",
+    "query": "Need 8 passengers TEB to LAX nonstop",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude",
+      "Challenger 350"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Not fully resolved \u2014 segment structure below still applies\n* Pax: 8\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive super-mid planning band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nRanked options below follow the operational structure above \u2014 "
+  },
+  {
+    "query_id": "msn-003",
+    "category": "mission",
+    "query": "Mission: 8 pax from TEB to LAX",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "pax": 8
+      },
+      "origin_query_hash": "1c7bbc11d1edd882bf3a3bc10e4375ed04783863b91668db0d66a32d0ecc9ffe",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-1c7bbc11d1edd882",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: Standard mission \u2014 no special constraints stated\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-004",
+    "category": "mission",
+    "query": "What jet for 8 pax TEB-LAX?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "pax": 8
+      },
+      "origin_query_hash": "6f606d233801decbe784a4a92237ee36bc53a73eba7765d5dc31811e552ce5a5",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-6f606d233801decb",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: Standard mission \u2014 no special constraints stated\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-005",
+    "category": "mission",
+    "query": "8 passengers TEB to LAX nonstop",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G280",
+      "Challenger 350",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Teterboro -> Los Angeles\n* Pax: 8\n* Route certainty: degraded \u2014 kernel segment structure remains binding.\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Long-leg super-mid executive band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nOperational segments:\n\n*"
+  },
+  {
+    "query_id": "msn-006",
+    "category": "mission",
+    "query": "8 pax TEB-LAX under $15M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 15.0,
+        "budget_usd": 15000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "92335996231acf8f8b0a22c5d493b362a014f94836461efe405568b23661dddf",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-92335996231acf8f",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$15,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-007",
+    "category": "mission",
+    "query": "Need 8 passengers TEB to LAX nonstop under $15M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude",
+      "Challenger 350"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Not fully resolved \u2014 segment structure below still applies\n* Pax: 8\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive super-mid planning band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nAircraft options are subordinate to the band and fleet doctrin"
+  },
+  {
+    "query_id": "msn-008",
+    "category": "mission",
+    "query": "Mission: 8 pax from TEB to LAX under $15M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 15.0,
+        "budget_usd": 15000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "fe7c7633faf07ec8a7a37e7191669cc0e5809a01f1aeb88c160601b5eb4db0fa",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-fe7c7633faf07ec8",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$15,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-009",
+    "category": "mission",
+    "query": "What jet for 8 pax TEB-LAX under $15M?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 15.0,
+        "budget_usd": 15000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "eaa9514688719a57d27be42a99fa3a5e8eae24f1ace7bd88e369f7f461dbbd39",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-eaa9514688719a57",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$15,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-010",
+    "category": "mission",
+    "query": "8 passengers TEB to LAX nonstop under $15M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G280",
+      "Challenger 350",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Teterboro -> Los Angeles\n* Pax: 8\n* Route certainty: degraded \u2014 kernel segment structure remains binding.\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Long-leg super-mid executive band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nOperational segments:\n\n*"
+  },
+  {
+    "query_id": "msn-011",
+    "category": "mission",
+    "query": "8 pax TEB-LAX under $25M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 25.0,
+        "budget_usd": 25000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "38538966f003263ab0b20edfbfb685b9e4ee320ed32c2b8e15e523edb6c29400",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-38538966f003263a",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$25,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-012",
+    "category": "mission",
+    "query": "Need 8 passengers TEB to LAX nonstop under $25M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude",
+      "Challenger 350"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Not fully resolved \u2014 segment structure below still applies\n* Pax: 8\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Executive super-mid planning band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nRanked options below follow the operational structure above \u2014 "
+  },
+  {
+    "query_id": "msn-013",
+    "category": "mission",
+    "query": "Mission: 8 pax from TEB to LAX under $25M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 25.0,
+        "budget_usd": 25000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "404e010b0ee9dfda9410eac8d926ee9a822c73872088bb10e1e560840bfb1c67",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-404e010b0ee9dfda",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$25,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-014",
+    "category": "mission",
+    "query": "What jet for 8 pax TEB-LAX under $25M?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 25.0,
+        "budget_usd": 25000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "a9e5fa0b6752e8390c6668ff7e99b95523735ff59a0ad42a97ad4dc815ecb0d2",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-a9e5fa0b6752e839",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$25,000,000\n\nAircraft Options:\n\n* Citation Latitude \u2014 Why it fits: Practical range operationally realistic for this leg (~2207 nm vs ~379 nm required) Key compromise: None material on this leg.\n\nVerdict:\n\n* PRIMARY RECOMMENDATION: Citation Latitude"
+  },
+  {
+    "query_id": "msn-015",
+    "category": "mission",
+    "query": "8 passengers TEB to LAX nonstop under $25M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G280",
+      "Challenger 350",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Teterboro -> Los Angeles\n* Pax: 8\n* Route certainty: degraded \u2014 kernel segment structure remains binding.\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Long-leg super-mid executive band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nOperational segments:\n\n*"
+  },
+  {
+    "query_id": "msn-016",
+    "category": "mission",
+    "query": "8 pax TEB-LAX under $10M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Challenger 350",
+      "Gulfstream G280",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 10.0,
+        "budget_usd": 10000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "04b332a39f189e526c27b031802f002469abdf15b66f36681df98933df5a364f",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-04b332a39f189e52",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$10,000,000\n\nAircraft Options:\n\n* Challenger 350 \u2014 Why it fits: Practical range operationally realistic for this leg (~2595 nm vs ~379 nm required) Key compromise: Challenger 350 is a common default \u2014 verify it beats peers on economics for this leg\n* Gulfstream G280 \u2014 Why it fits: Practical range operationally realistic for this leg (~2887 nm vs ~379 nm required) Key compromise: Gulfstream G280 is a common default \u2014 verify it beats peers on economics for this leg\n* Praetor 600 \u2014 Why it fits: Practical range operationally realisti"
+  },
+  {
+    "query_id": "msn-017",
+    "category": "mission",
+    "query": "Need 8 passengers TEB to LAX nonstop under $10M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Challenger 350",
+      "Gulfstream G280",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: nonstop\n\nAircraft Options:\n\n* Challenger 350 \u2014 Why it fits: Verified catalog candidate for stated mission constraints.\n* Gulfstream G280 \u2014 Why it fits: Verified catalog candidate for stated mission constraints.\n* Praetor 600 \u2014 Why it fits: Verified catalog candidate for stated mission constraints.\n\nVerdict:\n* VIABLE: Verified shortlist from catalog authority."
+  },
+  {
+    "query_id": "msn-018",
+    "category": "mission",
+    "query": "Mission: 8 pax from TEB to LAX under $10M",
+    "return_kind": "llm",
+    "authority_models": [
+      "Challenger 350",
+      "Gulfstream G280",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 10.0,
+        "budget_usd": 10000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "404e4cb101ee9c7ea23b4ba70e10968286fc04b0ec385a5d9cc80f1e6d286ec6",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-404e4cb101ee9c7e",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$10,000,000\n\nAircraft Options:\n\n* Challenger 350 \u2014 Why it fits: Practical range operationally realistic for this leg (~2595 nm vs ~379 nm required) Key compromise: Challenger 350 is a common default \u2014 verify it beats peers on economics for this leg\n* Gulfstream G280 \u2014 Why it fits: Practical range operationally realistic for this leg (~2887 nm vs ~379 nm required) Key compromise: Gulfstream G280 is a common default \u2014 verify it beats peers on economics for this leg\n* Praetor 600 \u2014 Why it fits: Practical range operationally realisti"
+  },
+  {
+    "query_id": "msn-019",
+    "category": "mission",
+    "query": "What jet for 8 pax TEB-LAX under $10M?",
+    "return_kind": "llm",
+    "authority_models": [
+      "Challenger 350",
+      "Gulfstream G280",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {
+      "intent_type": "mission",
+      "canonical_models": [],
+      "constraints": {
+        "budget_m": 10.0,
+        "budget_usd": 10000000.0,
+        "pax": 8
+      },
+      "origin_query_hash": "0a6ef46d71bc2e7ef32d206d308cdfba2e598c3d2f07ccd6205d3c0795c5c37f",
+      "deterministic_flags": {
+        "hard_routing": false,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1"
+      },
+      "dispatch_authority_id": "",
+      "timestamp": "lock-0a6ef46d71bc2e7e",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Mission Fit:\n\n* Route: Not stated\n* Pax: 8\n* Priorities: budget ~$10,000,000\n\nAircraft Options:\n\n* Challenger 350 \u2014 Why it fits: Practical range operationally realistic for this leg (~2595 nm vs ~379 nm required) Key compromise: Challenger 350 is a common default \u2014 verify it beats peers on economics for this leg\n* Gulfstream G280 \u2014 Why it fits: Practical range operationally realistic for this leg (~2887 nm vs ~379 nm required) Key compromise: Gulfstream G280 is a common default \u2014 verify it beats peers on economics for this leg\n* Praetor 600 \u2014 Why it fits: Practical range operationally realisti"
+  },
+  {
+    "query_id": "msn-020",
+    "category": "mission",
+    "query": "8 passengers TEB to LAX nonstop under $10M",
+    "return_kind": "professional",
+    "authority_models": [
+      "Gulfstream G280",
+      "Challenger 350",
+      "Praetor 600"
+    ],
+    "dispatch_kind": null,
+    "intent_lock": {},
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "OPERATIONAL SYNTHESIS (AUTHORITATIVE)\n\nMission Fit:\n\n* Route: Teterboro -> Los Angeles\n* Pax: 8\n* Route certainty: degraded \u2014 kernel segment structure remains binding.\n* Operational read: executive_transport Nonstop and dispatch reliability are latent priorities even when not repeated in this turn. Credible aircraft class conversation starts in: Long-leg super-mid executive band.. Executive travel profile \u2014 dispatch reliability and cabin credibility outweigh pure STOL economics; turboprop or light piston options are not operationally serious for this passenger load...\n\nOperational segments:\n\n*"
+  },
+  {
+    "query_id": "buy-001",
+    "category": "buy_decision",
+    "query": "Is a 2015 Citation Latitude for $5M a good deal?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "deed92d30018073409e56ca80a924bfbe462534fee66b8dc951e42d8f4547d8a",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "28c6bea6e39bc4e36a65369a",
+      "timestamp": "lock-deed92d300180734",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- On paper this is a strong buy candidate \u2014 still demand pre-buy and log review before you wire anything.\n- 72.2% below market median\n- Price is far below the comp floor \u2014 assume missing damage, run-out programs, or bad pedigree until proven otherwise.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriti"
+  },
+  {
+    "query_id": "buy-002",
+    "category": "buy_decision",
+    "query": "2015 Citation Latitude at $6M \u2014 fair price?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "a488e880f9c886fcf59cd908158bd6ffeec57af52eb522b233ef72423fa91ebc",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "ec024bc5f8b336ae6fbe44de",
+      "timestamp": "lock-a488e880f9c886fc",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- On paper this is a strong buy candidate \u2014 still demand pre-buy and log review before you wire anything.\n- 66.7% below market median\n- Price is far below the comp floor \u2014 assume missing damage, run-out programs, or bad pedigree until proven otherwise.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriti"
+  },
+  {
+    "query_id": "buy-003",
+    "category": "buy_decision",
+    "query": "Is this 2015 Citation Latitude for $8M overpriced?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "c0e8d0e423a0b7fad662564f0b00c4c4f9ab64eb7c1124a8ec901e23c33feded",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "032ff1a4e265faa896184fcc",
+      "timestamp": "lock-c0e8d0e423a0b7fa",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Is this 2015 Citation Latitude\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenance tr"
+  },
+  {
+    "query_id": "buy-004",
+    "category": "buy_decision",
+    "query": "Should I buy a 2015 Citation Latitude listed at $10M?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "5d8019f705976c7258a8381aa42ef54d52800aeeb3b09b63e6c1f9746313e73d",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "06febe886622d47ceb59e40e",
+      "timestamp": "lock-5d8019f705976c72",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude listed\nYear: 2015\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenan"
+  },
+  {
+    "query_id": "buy-005",
+    "category": "buy_decision",
+    "query": "2015 Citation Latitude $12M good buy?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "adae9db35d8cbbdad5217a23975b5379de37602a117f72b51810948d6687dd86",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "8bde9eef928957af130be7fe",
+      "timestamp": "lock-adae9db35d8cbbda",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 33.3% below market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 12,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly prog"
+  },
+  {
+    "query_id": "buy-006",
+    "category": "buy_decision",
+    "query": "Is a 2015 Citation Latitude for $15M a good deal?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "6c2bdbb9174897eb5bde356ddd9197e84fd47e5fd1b774d593043898941135f2",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "0163fb55ceb0435236027399",
+      "timestamp": "lock-6c2bdbb9174897eb",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 16.7% below market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 15,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly prog"
+  },
+  {
+    "query_id": "buy-007",
+    "category": "buy_decision",
+    "query": "2015 Citation Latitude at $18M \u2014 fair price?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "41f301eef4abea774c08d86d4e5632fd16e8eeaa655ed07f529a8427b63258b9",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "220a474093865e9e24470f7f",
+      "timestamp": "lock-41f301eef4abea77",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 0.0% above market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 18,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly progr"
+  },
+  {
+    "query_id": "buy-008",
+    "category": "buy_decision",
+    "query": "Is this 2015 Citation Latitude for $20M overpriced?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "4f5d5bf7e2b3c3da4b3a955840ee81f4917176544e01477d635ac13dad6f88d4",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "37f5aa4ab88fba7279a81a1f",
+      "timestamp": "lock-4f5d5bf7e2b3c3da",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Is this 2015 Citation Latitude\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenance tr"
+  },
+  {
+    "query_id": "buy-009",
+    "category": "buy_decision",
+    "query": "Should I buy a 2015 Citation Latitude listed at $25M?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "c7847049b22f787965916d230d442797eed5a12980f09a849cb4196dc67abf3a",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "f69c56bf117cdbb4add52992",
+      "timestamp": "lock-c7847049b22f7879",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude listed\nYear: 2015\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenan"
+  },
+  {
+    "query_id": "buy-010",
+    "category": "buy_decision",
+    "query": "2015 Citation Latitude $30M good buy?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "82b2032caf9dc7ab86752f10ed62f23710493cb9899483bab118e90354af020a",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "cbf5802f31d16e980ed2b98c",
+      "timestamp": "lock-82b2032caf9dc7ab",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2015\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- This is overpriced for what the current comp slice shows \u2014 negotiate hard or pass.\n- 66.7% above market median\n- Price sits above the current comp ceiling without justification in this data.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- Asking price is more than 15% above synced"
+  },
+  {
+    "query_id": "buy-011",
+    "category": "buy_decision",
+    "query": "Is a 2016 Citation Latitude for $5M a good deal?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "197a6c4929647f2acd07b98ebcfcb3923f363cd9244e532397418e8d2440a644",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "c98b3919d82ac131fad2ebc6",
+      "timestamp": "lock-197a6c4929647f2a",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- On paper this is a strong buy candidate \u2014 still demand pre-buy and log review before you wire anything.\n- 72.2% below market median\n- Price is far below the comp floor \u2014 assume missing damage, run-out programs, or bad pedigree until proven otherwise.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriti"
+  },
+  {
+    "query_id": "buy-012",
+    "category": "buy_decision",
+    "query": "2016 Citation Latitude at $6M \u2014 fair price?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "2245a2b19025cf21da6747d5185864f804f6c27567c0428ef213356ee8c8f22f",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "ab2a5b9d984560a139bfad01",
+      "timestamp": "lock-2245a2b19025cf21",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- On paper this is a strong buy candidate \u2014 still demand pre-buy and log review before you wire anything.\n- 66.7% below market median\n- Price is far below the comp floor \u2014 assume missing damage, run-out programs, or bad pedigree until proven otherwise.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriti"
+  },
+  {
+    "query_id": "buy-013",
+    "category": "buy_decision",
+    "query": "Is this 2016 Citation Latitude for $8M overpriced?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "4afef545c4371b93a52754ce68ac6b1060b4889bac704613e5add3fcfbba5ddb",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "bfec9c170797a8c428df5c56",
+      "timestamp": "lock-4afef545c4371b93",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Is this 2016 Citation Latitude\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenance tr"
+  },
+  {
+    "query_id": "buy-014",
+    "category": "buy_decision",
+    "query": "Should I buy a 2016 Citation Latitude listed at $10M?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "833fb922abaa7876650ecbe81918c2f49e044c1babe19ab6378cbff0d61de613",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "0b70ca1ce64b363433ee09e0",
+      "timestamp": "lock-833fb922abaa7876",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude listed\nYear: 2016\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenan"
+  },
+  {
+    "query_id": "buy-015",
+    "category": "buy_decision",
+    "query": "2016 Citation Latitude $12M good buy?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "fb58aa1ee63053a97df7cf3f5d10d546506c538ac0d78fdf3a9d292191180df1",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "f6cd0acc7712a4adcfc43604",
+      "timestamp": "lock-fb58aa1ee63053a9",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 33.3% below market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 12,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly prog"
+  },
+  {
+    "query_id": "buy-016",
+    "category": "buy_decision",
+    "query": "Is a 2016 Citation Latitude for $15M a good deal?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "33cc0dc5773920b2705a55f5b97a52abc8355e4667ae59d226af2439db23f8d7",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "f909aa63e680494e4c09ff81",
+      "timestamp": "lock-33cc0dc5773920b2",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 16.7% below market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 15,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly prog"
+  },
+  {
+    "query_id": "buy-017",
+    "category": "buy_decision",
+    "query": "2016 Citation Latitude at $18M \u2014 fair price?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "7a3a9ac7ef9fe44bdc1a5c8008f76aeef65c5d67e3d6202b544bd5214c179f3e",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "aircraft_market_fact",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "3decc6ed451d43a3aef83c3e",
+      "timestamp": "lock-7a3a9ac7ef9fe44b",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- Fair deal territory \u2014 nothing heroic here; price and risk look ordinary for the evidence provided.\n- 0.0% above market median\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n- Ask 18,000,000 USD vs comp average ~18,000,000 USD (rough positioning only).\n\nRed Flags:\n- No clear engine hourly progr"
+  },
+  {
+    "query_id": "buy-018",
+    "category": "buy_decision",
+    "query": "Is this 2016 Citation Latitude for $20M overpriced?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "bd962658e31930335b14ce742a68e5df6dd57d2fa1b37365dfdd7f33146f75f8",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "095dfe28587c30c185228bd4",
+      "timestamp": "lock-bd962658e3193033",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Is this 2016 Citation Latitude\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenance tr"
+  },
+  {
+    "query_id": "buy-019",
+    "category": "buy_decision",
+    "query": "Should I buy a 2016 Citation Latitude listed at $25M?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "211e3a38f13dbbf0f8ae049c769749198794dbcbceff9f0c3472c09777ed9db1",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "ccf133dc9acb4fe8eb11bd39",
+      "timestamp": "lock-211e3a38f13dbbf0",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude listed\nYear: 2016\n\nMarket Reality:\n- Liquidity: THIN (score 22/100)\n- Too many open risks on price, time, programs, or liquidity \u2014 not a clean check to write today.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- No clear engine hourly program (MSP/JSSI-class) on file \u2014 heavy cash maintenance exposure if true.\n- No APU program cues \u2014 budget hot-section/APU reserves explicitly.\n- No recognized digital maintenan"
+  },
+  {
+    "query_id": "buy-020",
+    "category": "buy_decision",
+    "query": "2016 Citation Latitude $30M good buy?",
+    "return_kind": "professional",
+    "authority_models": [
+      "Citation Latitude"
+    ],
+    "dispatch_kind": "buy_decision",
+    "intent_lock": {
+      "intent_type": "buy",
+      "canonical_models": [
+        "Citation Latitude"
+      ],
+      "constraints": {},
+      "origin_query_hash": "97b9fed65d64fa28d63ccbbf57fc8e74858371fa12935c31bb73999194303a83",
+      "deterministic_flags": {
+        "hard_routing": true,
+        "qri_intent": "payload_range_analysis",
+        "execution_path": "none",
+        "akal_version": "akal-v1",
+        "dispatch_kind": "buy_decision"
+      },
+      "dispatch_authority_id": "dd0ac20d19f0ee636eb594ce",
+      "timestamp": "lock-97b9fed65d64fa28",
+      "semantic_version": "v1"
+    },
+    "score": 100.0,
+    "stop_condition_hit": false,
+    "findings": [],
+    "answer_preview": "Aircraft: Citation Latitude\nYear: 2016\n\nMarket Reality:\n- Market Band: $13.5M\u2013$24.3M (confidence: MODERATE)\n- Median: $18.0M\n- Liquidity: THIN (score 22/100)\n- This is overpriced for what the current comp slice shows \u2014 negotiate hard or pass.\n- 66.7% above market median\n- Price sits above the current comp ceiling without justification in this data.\n- Mission fit against this class is acceptable on paper \u2014 still verify wind, reserves, and alternates.\n- Engine program not evidenced \u2014 reserve cash for hot sections/overhauls in underwriting.\n\nRed Flags:\n- Asking price is more than 15% above synced"
+  }
+]

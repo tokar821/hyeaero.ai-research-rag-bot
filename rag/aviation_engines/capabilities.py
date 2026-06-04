@@ -120,6 +120,23 @@ def _rank_recommendations(
     return ordered[:cap]
 
 
+def _row_in_authority_catalog(row: Dict[str, Any]) -> bool:
+    """Legacy catalog rows must map to AKAL-verified models for client-facing lists."""
+    name = str(row.get("aircraft_model") or "").strip()
+    if not name:
+        return False
+    try:
+        from services.aircraft.aircraft_authority_service import (
+            get_aircraft_authority_record,
+            resolve_aircraft_alias,
+        )
+
+        canonical = resolve_aircraft_alias(name) or name
+        return bool(get_aircraft_authority_record(aircraft_model=canonical))
+    except Exception:
+        return True
+
+
 def filter_by_mission_pax_budget(
     required_range_nm: float,
     passengers: Optional[int],
@@ -156,6 +173,8 @@ def filter_by_mission_pax_budget(
                 continue
             if price > max_affordable:
                 continue
+        if not _row_in_authority_catalog(r):
+            continue
         cand.append(r)
 
     return _rank_recommendations(cand, required_range_nm, pax_req, min_count=3, max_count=min(limit, 5))

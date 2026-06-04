@@ -273,6 +273,17 @@ def safe_broker_fallback_response(
             text = degraded_no_feasible_guidance(mission, pipeline, data_used)
             return apply_graceful_degradation_to_answer(text, confidence=0.5)
 
+    q = (query or "").strip()
+    if q and re.search(r"(?is)\b(?:aggressive|fair|cheap|listed\s+at|asking)\b", q) and re.search(
+        r"\$\s*\d", q
+    ):
+        return apply_graceful_degradation_to_answer(
+            "For listing-price questions, compare the ask to recent comps for that year-model, "
+            "program status, and time-on-airframe. If you share the exact model and year, "
+            "I can frame whether the price looks aggressive, fair, or cheap relative to market.",
+            confidence=0.6,
+        )
+
     if mission is not None:
         try:
             from services.consultant.broker_advisory_layer import (

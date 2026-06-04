@@ -23,6 +23,7 @@ from services.routing.unified_intent_production_metrics import (
 from services.routing.unified_intent_router import (
     UnifiedExecutionPath,
     UnifiedIntentRoute,
+    UnifiedSecondaryIntent,
     _detect_fact_field,
     _detect_market_field,
     _has_capability_or_route_signals,
@@ -87,6 +88,37 @@ def _expected_path_category(query: str, route: UnifiedIntentRoute) -> Optional[s
     return None
 
 
+def _router_documented_deferral(
+    category: Optional[str],
+    route: UnifiedIntentRoute,
+    *,
+    query: str = "",
+) -> bool:
+    """
+    Router left execution_path NONE with explicit signals — not a hardening failure.
+
+    Hybrid pipeline still handles these; avoids false-positive production warnings.
+    """
+    signals = set(route.signals or ())
+    if category == "capability":
+        if "mixed_fact_and_capability" in signals:
+            return True
+        if route.secondary_intent == UnifiedSecondaryIntent.AIRCRAFT_MISSION_LIKELY:
+            return True
+    if category == "comparison":
+        if "mixed_fact_and_capability" in signals:
+            return True
+        if route.secondary_intent == UnifiedSecondaryIntent.AIRCRAFT_COMPARISON_LIKELY:
+            return True
+        if route.execution_path == UnifiedExecutionPath.NONE and is_explicit_comparison_query(
+            query or ""
+        ):
+            return True
+    if category == "market" and "no_model" in signals:
+        return True
+    return False
+
+
 def _path_satisfied(category: Optional[str], route: UnifiedIntentRoute) -> bool:
     if not category:
         return True
@@ -119,14 +151,23 @@ def evaluate_hardening_guard(
     category = _expected_path_category(query or "", route)
     satisfied = _path_satisfied(category, route)
 
-    routing_failure = bool(category) and not satisfied
+    documented_deferral = _router_documented_deferral(category, route, query=query or "")
+    routing_failure = bool(category) and not satisfied and not documented_deferral
     hardening_reason: Optional[str] = None
     event_code: Optional[str] = None
     requires_fallback = routing_failure or (
         route.execution_path == UnifiedExecutionPath.NONE and report.is_ambiguous
     )
 
-    if routing_failure:
+    if documented_deferral and category and not satisfied:
+        logger.info(
+            "HARDENING_ROUTING_DEFERRED query=%r category=%s path=%s signals=%s",
+            (query or "")[:120],
+            category,
+            route.execution_path.value,
+            list(route.signals or ()),
+        )
+    elif routing_failure:
         event_code = HARDENING_ROUTING_FAILURE
         hardening_reason = (
             f"Expected execution_path for {category} query but router returned "

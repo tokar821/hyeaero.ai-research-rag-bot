@@ -49,7 +49,6 @@ _MODEL_ALIASES: Dict[str, str] = {
     "G650ER": "Gulfstream G650ER",
     "G650": "Gulfstream G650",
     "Global 6500": "Global 6500",
-    "Citation Longitude": "Challenger Longitude",
 }
 
 _MIN_PRACTICAL_NM_EQUIVALENT_ULR = 5500.0

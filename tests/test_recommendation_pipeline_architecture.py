@@ -2,7 +2,8 @@
 
 from services.consultant.intelligence_engine import run_consultant_intelligence_layer
 from services.consultant.llm_explanation_layer import (
-    build_pipeline_authority_block,
+    build_narration_system_addendum,
+    build_pipeline_llm_fact_block,
     intents_requiring_deterministic_pipeline,
 )
 from services.consultant.mission_state import build_mission_from_current_turn
@@ -30,12 +31,20 @@ def test_pipeline_stages_and_decision_source():
 
 def test_authority_block_lists_ranked_only():
     result, _ = run_recommendation_pipeline("8 pax LA to Miami nonstop recommend")
-    block = build_pipeline_authority_block(result)
-    assert "BROKER ADVISORY CONTEXT" in block
-    assert "FEASIBLE AIRCRAFT" in block
+    block = build_pipeline_llm_fact_block(result)
+    assert "VERIFIED MISSION FACTS" in block
+    assert "model=" in block
     assert result.recommendations[0].model in block
     assert "total_score" not in block.lower()
     assert "deterministic" in block.lower()
+    assert "Mission Fit:" not in block
+
+
+def test_narration_addendum_forbids_report_scaffolds():
+    addendum = build_narration_system_addendum()
+    assert "Mission Fit" in addendum
+    assert "one expert aircraft broker voice" in addendum.lower()
+    assert "Use fixed structure" not in addendum
 
 
 def test_reconcile_strips_llm_invented_models():

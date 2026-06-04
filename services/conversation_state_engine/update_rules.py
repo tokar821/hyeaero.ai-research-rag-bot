@@ -45,16 +45,28 @@ def _map_response_mode(raw: Optional[str]) -> ResponseMode:
     return ResponseMode.CONSULTANT
 
 
+def _coerce_category(cat: Any) -> AircraftCategory:
+    """Normalize continuity (or string) categories to this module's enum."""
+    if isinstance(cat, AircraftCategory):
+        return cat
+    val = getattr(cat, "value", cat)
+    try:
+        return AircraftCategory(str(val))
+    except ValueError:
+        return AircraftCategory.UNKNOWN
+
+
 def _category_from_name(name: Optional[str]) -> AircraftCategory:
     try:
         from services.conversation_continuity.aircraft_ladder import categorize_model_hint
 
-        return categorize_model_hint(name)
+        return _coerce_category(categorize_model_hint(name))
     except Exception:
         return AircraftCategory.UNKNOWN
 
 
 def _upgrade_category(cur: AircraftCategory) -> AircraftCategory:
+    cur = _coerce_category(cur)
     order = [
         AircraftCategory.UNKNOWN,
         AircraftCategory.VLJ,
@@ -128,6 +140,30 @@ def apply_update_rules(
     if locked.get("type") == "tail" and locked.get("value"):
         tail = str(locked["value"]).strip().upper()
 
+    try:
+        from services.entity_scope.validation import tail_conflicts_with_aircraft
+
+        prev_air_for_tail = (
+            (state.active_aircraft or "").strip()
+            or (cont_air or "").strip()
+            or (intent_air or "").strip()
+        )
+        if explicit_air and tail and tail_conflicts_with_aircraft(
+            tail,
+            explicit_air,
+            tail_aircraft=prev_air_for_tail or None,
+        ):
+            tail = None
+        elif explicit_air and state.active_aircraft and explicit_air.lower() != (state.active_aircraft or "").lower():
+            if state.active_tail and tail_conflicts_with_aircraft(
+                state.active_tail,
+                explicit_air,
+                tail_aircraft=state.active_aircraft,
+            ):
+                state.active_tail = None
+    except Exception:
+        pass
+
     inherit_entity = ref not in ("explicit_reset",) and ref != "comparison_anchor"
 
     # Do not let stray RAG entity tags override an active A vs B comparison thread.
@@ -172,7 +208,19 @@ def apply_update_rules(
         state.active_tail = str(tail).strip().upper()
         _touch(state, "active_tail", reinforced)
     elif inherit_entity and state.active_tail:
-        _touch(state, "active_tail", reinforced)
+        try:
+            from services.entity_scope.validation import tail_conflicts_with_aircraft
+
+            if explicit_air and tail_conflicts_with_aircraft(
+                state.active_tail,
+                explicit_air,
+                tail_aircraft=state.active_aircraft,
+            ):
+                state.active_tail = None
+            else:
+                _touch(state, "active_tail", reinforced)
+        except Exception:
+            _touch(state, "active_tail", reinforced)
 
     # --- Refinement rules ---
     if ref == "size_upgrade":

@@ -527,6 +527,37 @@ def clamp_structured_aircraft_image_tavily_query(marketing_type: str) -> Optiona
     )
 
 
+def _tail_led_photo_tavily_query(q_strip: str) -> Optional[str]:
+    """When the latest message names a registration, search that tail first — not inferred model type."""
+    try:
+        from rag.aviation_tail import (
+            find_loose_us_n_tail_tokens_in_text,
+            find_strict_tail_candidates_in_text,
+            normalize_tail_token,
+        )
+    except Exception:
+        return None
+
+    strict_regs = find_strict_tail_candidates_in_text(q_strip)
+    tail_candidates = strict_regs or find_loose_us_n_tail_tokens_in_text(q_strip)
+    for t in tail_candidates:
+        u = normalize_tail_token(t)
+        if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
+            parts = [
+                f'"{u}"',
+                "aircraft",
+                "exterior",
+                "cabin",
+                "private jet",
+                "aviation",
+                "photos",
+                "JetPhotos",
+                "planespotter",
+            ]
+            return clamp_tavily_query(" ".join(parts))
+    return None
+
+
 def build_aircraft_photo_focus_tavily_query(
     query: str,
     phly_rows: List[Dict[str, Any]],
@@ -538,7 +569,8 @@ def build_aircraft_photo_focus_tavily_query(
     When Phly matched a row with make/model, search uses **marketing type** (e.g. Cessna Citation Excel)
     with structured exterior/cabin/jet facets — not only the bare tail (CDN paths rarely include reg text).
 
-    **Tail workflow:** resolve type from registry/Phly first; image search is driven by that **model string**.
+    **Tail workflow:** when the latest message names a registration, image search is **tail-first**
+    (exact mark in quotes). Model/marketing-type facets apply only when no credible tail is present.
 
     When the **latest user message alone** names make/model or tail (see ``rag.consultant_query_anchor``),
     that identity wins over **stale Phly rows** from earlier turns so gallery search does not follow the wrong aircraft.
@@ -550,6 +582,10 @@ def build_aircraft_photo_focus_tavily_query(
 
     q_strip = (query or "").strip()
     if q_strip and latest_message_anchors_aircraft_identity(q_strip):
+        tail_q = _tail_led_photo_tavily_query(q_strip)
+        if tail_q:
+            return tail_q
+
         from rag.aviation_tail import (
             find_loose_us_n_tail_tokens_in_text,
             find_strict_tail_candidates_in_text,
@@ -585,16 +621,9 @@ def build_aircraft_photo_focus_tavily_query(
                 if out:
                     return out
 
-        for t in strict_regs:
-            u = (t or "").strip().upper().replace(" ", "").replace("-", "")
-            if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
-                parts = [f'"{u}"', "aircraft", "exterior", "cabin", "private jet", "aviation", "photos", "JetPhotos", "planespotter"]
-                return clamp_tavily_query(" ".join(parts))
-        for t in find_loose_us_n_tail_tokens_in_text(q_strip):
-            u = (t or "").strip().upper().replace(" ", "").replace("-", "")
-            if re.match(r"^N[A-Z0-9]{1,6}$", u) and re.search(r"\d", u):
-                parts = [f'"{u}"', "aircraft", "exterior", "cabin", "private jet", "aviation", "photos", "JetPhotos", "planespotter"]
-                return clamp_tavily_query(" ".join(parts))
+        tail_q = _tail_led_photo_tavily_query(q_strip)
+        if tail_q:
+            return tail_q
 
     for r in phly_rows[:4]:
         man = (r.get("manufacturer") or "").strip()

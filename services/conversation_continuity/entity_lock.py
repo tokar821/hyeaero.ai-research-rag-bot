@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
+
+from services.entity_scope.scope import should_release_tail_on_model_switch
 
 from .schemas import LockedEntity, LockedEntityType
 
@@ -36,14 +38,28 @@ def merge_entity_lock(
     query: str,
     strict_tail_candidates: Optional[List[str]] = None,
     explicit_model: Optional[str] = None,
+    prev_tail_aircraft: Optional[str] = None,
+    allow_history_tail: bool = True,
 ) -> Optional[LockedEntity]:
-    """Choose strongest lock for this turn (tail wins)."""
+    """Choose strongest lock for this turn (tail wins when explicitly cited)."""
     q = (query or "").strip()
-    tails = [t for t in (strict_tail_candidates or []) if str(t).strip()]
     tail_from_q = extract_tail_from_text(q)
+
+    if explicit_model and prev and prev.type == LockedEntityType.TAIL:
+        if should_release_tail_on_model_switch(explicit_model, prev_tail_aircraft):
+            prev = None
+
+    tails = [t for t in (strict_tail_candidates or []) if str(t).strip()]
+    if not allow_history_tail:
+        tails = [t for t in tails if t == tail_from_q]
+
     chosen_tail = tail_from_q or (tails[0] if tails else None)
     if chosen_tail:
-        return LockedEntity(type=LockedEntityType.TAIL, value=chosen_tail.strip().upper(), locked_at_turn_hint=q[:120])
+        return LockedEntity(
+            type=LockedEntityType.TAIL,
+            value=chosen_tail.strip().upper(),
+            locked_at_turn_hint=q[:120],
+        )
     ser = extract_serial(q)
     if ser:
         return LockedEntity(type=LockedEntityType.SERIAL, value=ser, locked_at_turn_hint=q[:120])
@@ -54,10 +70,26 @@ def merge_entity_lock(
             locked_at_turn_hint=q[:120],
         )
     if prev:
-        # Keep lock unless superseded above
         if tail_from_q and prev.type != LockedEntityType.TAIL:
-            return LockedEntity(type=LockedEntityType.TAIL, value=tail_from_q.strip().upper(), locked_at_turn_hint=q[:120])
+            return LockedEntity(
+                type=LockedEntityType.TAIL,
+                value=tail_from_q.strip().upper(),
+                locked_at_turn_hint=q[:120],
+            )
+        if explicit_model and prev.type == LockedEntityType.TAIL:
+            if should_release_tail_on_model_switch(explicit_model, prev_tail_aircraft):
+                return LockedEntity(
+                    type=LockedEntityType.AIRCRAFT_MODEL,
+                    value=str(explicit_model).strip(),
+                    locked_at_turn_hint=q[:120],
+                )
         return prev
+    if explicit_model:
+        return LockedEntity(
+            type=LockedEntityType.AIRCRAFT_MODEL,
+            value=str(explicit_model).strip(),
+            locked_at_turn_hint=q[:120],
+        )
     return None
 
 

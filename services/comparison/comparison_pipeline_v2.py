@@ -110,33 +110,63 @@ def _build_aircraft_entries(
     canonical_names: Sequence[str],
     mission: MissionState,
 ) -> Optional[List[AircraftEntryV2]]:
-    from services.data_authority.aircraft_spec_repository import (
-        INSUFFICIENT_VERIFIED_COMPARISON,
-        require_verified_specs,
-    )
+    from services.aircraft.aircraft_authority_service import build_authoritative_comparison_dataset
 
-    verified, missing = require_verified_specs(canonical_names)
-    if missing:
-        return None
-    entries: List[AircraftEntryV2] = []
-    for v in verified:
-        name = v.canonical_name
-        spec = v.to_profile_dict()
-        if not spec:
+    dataset = build_authoritative_comparison_dataset(canonical_names)
+    if dataset.get("status") != "OK":
+        from services.data_authority.aircraft_spec_repository import (
+            INSUFFICIENT_VERIFIED_COMPARISON,
+            require_verified_specs,
+        )
+
+        verified, missing = require_verified_specs(canonical_names)
+        if missing:
             return None
-        range_nm = spec.get("practical_nm") or spec.get("range_nm")
-        seats = spec.get("pax_typical") or spec.get("max_pax")
+        entries: List[AircraftEntryV2] = []
+        for v in verified:
+            name = v.canonical_name
+            spec = v.to_profile_dict()
+            if not spec:
+                return None
+            range_nm = spec.get("practical_nm") or spec.get("range_nm")
+            seats = spec.get("pax_typical") or spec.get("max_pax")
+            entry: AircraftEntryV2 = {
+                "name": name,
+                "category": _map_category(spec),
+                "range_nm": float(range_nm) if range_nm is not None else None,
+                "seats": int(seats) if seats is not None else None,
+                "mission_fit_score": round(_mission_fit_score(name, spec, mission), 4),
+                "cost_band": _cost_band(spec),  # type: ignore[typeddict-item]
+                "winter_westbound_capability": _winter_westbound(spec, mission),  # type: ignore[typeddict-item]
+            }
+            entries.append(entry)
+        return entries
+
+    entries: List[AircraftEntryV2] = []
+    for row in dataset.get("aircraft") or []:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("canonical_name") or "")
+        prof = {
+            "category": row.get("category"),
+            "practical_nm": row.get("range_nm"),
+            "pax_typical": row.get("passenger_min"),
+            "pax_max_long_range": row.get("passenger_max"),
+            "operating_index": 0.65,
+        }
+        range_nm = row.get("range_nm")
+        seats = row.get("passenger_max") or row.get("passenger_min")
         entry: AircraftEntryV2 = {
             "name": name,
-            "category": _map_category(spec),
+            "category": _map_category(prof),
             "range_nm": float(range_nm) if range_nm is not None else None,
             "seats": int(seats) if seats is not None else None,
-            "mission_fit_score": round(_mission_fit_score(name, spec, mission), 4),
-            "cost_band": _cost_band(spec),  # type: ignore[typeddict-item]
-            "winter_westbound_capability": _winter_westbound(spec, mission),  # type: ignore[typeddict-item]
+            "mission_fit_score": round(_mission_fit_score(name, prof, mission), 4),
+            "cost_band": _cost_band(prof),  # type: ignore[typeddict-item]
+            "winter_westbound_capability": _winter_westbound(prof, mission),  # type: ignore[typeddict-item]
         }
         entries.append(entry)
-    return entries
+    return entries if len(entries) >= 2 else None
 
 
 def _requires_full_registry_set(
@@ -160,8 +190,11 @@ def build_comparison_payload_v2(
     *,
     query: str = "",
 ) -> ComparisonPayloadV2 | Dict[str, Any]:
-    lock = lock_comparison_aircraft(models)
-    if _requires_full_registry_set(models, lock, query):
+    from services.aircraft.aircraft_authority_service import resolve_aircraft_alias
+
+    resolved_models = [resolve_aircraft_alias(str(m)) or str(m) for m in models if str(m or "").strip()]
+    lock = lock_comparison_aircraft(resolved_models)
+    if _requires_full_registry_set(resolved_models, lock, query):
         return insufficient_comparison(
             "incomplete canonical aircraft set; rejected="
             + ",".join(lock.rejected[:6])

@@ -7,6 +7,7 @@ import re
 from typing import List, Dict, Any, Optional, Iterator, Tuple
 
 from rag.answer.aviation_formatter import aviation_answer_format_contract_block
+from rag.deterministic_consultant_charter import deterministic_consultant_charter_block
 from rag.executive_advisor_charter import executive_advisor_charter_block
 from rag.embedding_service import EmbeddingService
 from rag.entity_extractors import EXTRACTORS
@@ -30,6 +31,208 @@ def _consultant_strong_aircraft_gallery_from_data_used(data_used: Optional[Dict[
         return int(ial.get("highly_relevant_image_count") or 0) >= 2
     except Exception:
         return False
+
+
+def _apply_consultant_response_normalization(
+    payload: Dict[str, Any],
+    query: str,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Dict[str, Any]:
+    """Broker-grade output schema — final structure only; no routing changes."""
+    if not isinstance(payload, dict) or not str(payload.get("answer") or "").strip():
+        return payload
+    try:
+        from services.response.response_normalizer import apply_consultant_response_normalization
+
+        return apply_consultant_response_normalization(
+            payload,
+            context={"query": query or "", "history": history or []},
+        )
+    except Exception as exc:
+        logger.warning("consultant response normalization skipped: %s", exc)
+        return payload
+
+
+def _refresh_cached_consultant_hit(
+    payload: Dict[str, Any],
+    *,
+    query: str,
+) -> Dict[str, Any]:
+    """Governance pass on RAG cache hits (fixes stale pre-governance cached prose)."""
+    try:
+        from services.broker_execution.output_governance import refresh_cached_consultant_payload
+
+        return refresh_cached_consultant_payload(payload, query=query or "")
+    except Exception as exc:
+        logger.warning("cached answer governance refresh skipped: %s", exc)
+        return payload
+
+
+def _apply_final_render_gate(
+    payload: Dict[str, Any],
+    *,
+    query: str,
+) -> Dict[str, Any]:
+    """Idempotent final strip/dedupe for LLM-primary answers (after normalization)."""
+    if not isinstance(payload, dict) or not str(payload.get("answer") or "").strip():
+        return payload
+    try:
+        from services.broker_execution.output_governance import (
+            enforce_final_render_contract,
+            is_llm_primary_output,
+        )
+
+        du = payload.get("data_used") if isinstance(payload.get("data_used"), dict) else {}
+        if not is_llm_primary_output(du):
+            return payload
+        out = dict(payload)
+        out["answer"] = enforce_final_render_contract(
+            str(payload.get("answer") or ""),
+            query=query or "",
+            data_used=du,
+        )
+        out["data_used"] = du
+        return out
+    except Exception as exc:
+        logger.warning("final render gate skipped: %s", exc)
+        return payload
+
+
+def _build_api_request_context(
+    conversation_state: Optional[Dict[str, Any]],
+    request_context: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    ctx = dict(request_context or {})
+    if isinstance(conversation_state, dict):
+        client_version = conversation_state.get("client_version")
+        if client_version and "client_version" not in ctx:
+            ctx["client_version"] = client_version
+    return ctx
+
+
+def _apply_api_contract_versioning(
+    payload: Dict[str, Any],
+    request_context: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Versioned API contract envelope — presentation stability only."""
+    if not isinstance(payload, dict):
+        return payload
+    try:
+        from services.response.api_contract_versioning import apply_api_contract_versioning
+
+        versioned = apply_api_contract_versioning(payload, request_context)
+    except Exception as exc:
+        logger.warning("api contract versioning skipped: %s", exc)
+        return payload
+    try:
+        from services.replay.execution_replay_engine import attach_execution_replay_if_enabled
+
+        versioned = attach_execution_replay_if_enabled(versioned)
+    except Exception as exc:
+        logger.warning("execution replay attachment skipped: %s", exc)
+
+    q = str(versioned.get("query") or "")
+    if not q and isinstance(versioned.get("data_used"), dict):
+        trace = (versioned["data_used"].get("intent_execution_trace") or {})
+        if isinstance(trace, dict):
+            q = str(trace.get("raw_query") or "")
+
+    try:
+        from services.recommendation.recommendation_justification_engine import (
+            attach_recommendation_justification_if_enabled,
+        )
+
+        versioned = attach_recommendation_justification_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("recommendation justification attachment skipped: %s", exc)
+    try:
+        from services.confidence.recommendation_confidence_engine import (
+            attach_recommendation_confidence_if_enabled,
+        )
+
+        versioned = attach_recommendation_confidence_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("recommendation confidence attachment skipped: %s", exc)
+    try:
+        from services.optimization.multi_criteria_decision_engine import (
+            attach_optimization_result_if_enabled,
+        )
+
+        versioned = attach_optimization_result_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("decision optimization attachment skipped: %s", exc)
+    try:
+        from services.market.aircraft_market_intelligence_engine import (
+            attach_market_intelligence_if_enabled,
+        )
+
+        versioned = attach_market_intelligence_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("market intelligence attachment skipped: %s", exc)
+    try:
+        from services.ownership.aircraft_lifecycle_ownership_engine import (
+            attach_ownership_intelligence_if_enabled,
+        )
+
+        versioned = attach_ownership_intelligence_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("ownership intelligence attachment skipped: %s", exc)
+    try:
+        from services.fleet.fleet_portfolio_strategy_engine import (
+            attach_fleet_portfolio_strategy_if_enabled,
+        )
+
+        versioned = attach_fleet_portfolio_strategy_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("fleet portfolio strategy attachment skipped: %s", exc)
+    try:
+        from services.synthesis.executive_intelligence_synthesis_engine import (
+            attach_executive_synthesis_if_enabled,
+        )
+
+        versioned = attach_executive_synthesis_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("executive synthesis attachment skipped: %s", exc)
+    try:
+        from services.evaluation.consultant_evaluator import attach_consultant_evaluation_if_enabled
+
+        versioned = attach_consultant_evaluation_if_enabled(q, versioned)
+    except Exception as exc:
+        logger.warning("consultant evaluation attachment skipped: %s", exc)
+    return versioned
+
+
+def _version_stream_done_event(
+    *,
+    answer: str,
+    sources: Any,
+    data_used: Dict[str, Any],
+    aircraft_images: Any,
+    error: Any,
+    request_context: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    versioned = _apply_api_contract_versioning(
+        {
+            "answer": answer or "",
+            "sources": sources or [],
+            "data_used": dict(data_used or {}),
+            "aircraft_images": aircraft_images or [],
+            "error": error,
+        },
+        request_context,
+    )
+    done: Dict[str, Any] = {
+        "type": "done",
+        "sources": versioned.get("sources") or [],
+        "data_used": versioned.get("data_used") or {},
+        "aircraft_images": versioned.get("aircraft_images") or [],
+        "error": versioned.get("error"),
+    }
+    if versioned.get("normalized_response") is not None:
+        done["normalized_response"] = versioned["normalized_response"]
+    if versioned.get("ui_render_contract") is not None:
+        done["ui_render_contract"] = versioned["ui_render_contract"]
+    return done
 
 
 def _consultant_faa_no_phly_user_directive(phly_meta: Optional[Dict[str, Any]]) -> str:
@@ -121,8 +324,8 @@ def _consultant_tavily_first_when_faa_ingest_miss_prefix(phly_meta: Optional[Dic
 # Minimum similarity score to include a Pinecone match (cosine: higher = more similar)
 DEFAULT_SCORE_THRESHOLD = 0.5
 
-CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — aircraft **research, valuation, and acquisition** intelligence for **Hye Aero**. You behave like a **top-tier private aviation broker** advising serious buyers (**not** a generic chatbot, **not** a wall-of-text analyst memo). Your value is **accuracy, clarity, and decision guidance** — not verbosity. Sound **human** and direct (avoid robotic checklist-speak like "bring a tail," "bring a route," "lead with a mission").
-""" + executive_advisor_charter_block() + """
+CONSULTANT_SYSTEM_PROMPT = """You are **HyeAero.AI** — a deterministic aircraft acquisition, fleet intelligence, and aviation decision engine for **Hye Aero**. You are **not** a chatbot. You behave like a **top-tier private aviation broker** advising serious buyers (**not** a wall-of-text analyst memo). Your value is **accuracy, clarity, and decision guidance** — not verbosity. Sound **human** and direct (avoid robotic checklist-speak like "bring a tail," "bring a route," "lead with a mission").
+""" + executive_advisor_charter_block() + deterministic_consultant_charter_block() + """
 
 **Core job:** Help users **identify aircraft correctly**, understand **cabins, cockpits, and configurations**, **compare realistically**, **evaluate acquisition decisions**, and **avoid costly mistakes**.
 
@@ -1099,17 +1302,48 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 phly_like_row_from_aircraft_master,
             )
             from services.faa_master_lookup import fetch_faa_master_owner_rows
+            from services.entity_scope.scope import history_allowed_for_tail_resolution, resolve_entity_scope
+            from services.entity_scope.validation import (
+                filter_phly_rows_by_entity_scope,
+                phly_row_marketing_label,
+                phly_row_registration,
+            )
 
-            toks = consultant_phly_lookup_token_list(query, history)
+            _hist_ok = history is not None and history_allowed_for_tail_resolution(query or "")
+            _phly_history = history if _hist_ok else None
+            scope = resolve_entity_scope(query or "", history_allowed=_hist_ok)
+
+            toks = consultant_phly_lookup_token_list(query, _phly_history)
             primary = extract_phlydata_lookup_tokens(query or "")
             # Include recent chat so tails only in thread history (e.g. follow-up "who owns it?")
             # still feed FAA standalone + Tavily anchoring — same as extract_phlydata_tokens_with_history.
-            us_reg_scan = extract_us_registration_tail_candidates(query or "", history)
+            us_reg_scan = extract_us_registration_tail_candidates(
+                query or "",
+                _phly_history,
+                allow_history=_hist_ok,
+            )
             faa_scan_tokens = list(dict.fromkeys([*(toks or []), *(primary or []), *us_reg_scan]))
             rows = lookup_phlydata_aircraft_rows(self.db, toks) if toks else []
-            meta_out: Dict[str, Any] = {"phlydata_aircraft_rows": 0, "faa_master_owner_rows": 0}
+            rows, scope_validation = filter_phly_rows_by_entity_scope(rows, scope)
+            meta_out: Dict[str, Any] = {
+                "phlydata_aircraft_rows": 0,
+                "faa_master_owner_rows": 0,
+                "entity_scope": scope.to_dict(),
+                "entity_scope_validation": scope_validation,
+                "phly_lookup_tokens": list(toks or [])[:16],
+            }
             phly_rows_out: List[Dict[str, Any]] = list(rows)
             authority_chunks: List[str] = []
+
+            if scope.scope_type in ("aircraft_model", "comparison") and not rows and toks:
+                meta_out["phly_scope_reject"] = 1
+                toks = []
+                us_reg_scan = []
+                faa_scan_tokens = list(dict.fromkeys([*(primary or [])]))
+            elif rows:
+                meta_out["phly_row_identity"] = [
+                    phly_row_registration(r) or phly_row_marketing_label(r) for r in rows[:4]
+                ]
 
             if registry_sql_enabled:
                 phly_header = (
@@ -1131,12 +1365,13 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 )
 
             if rows:
-                block, meta_out = format_phlydata_consultant_answer(
+                block, phly_fmt_meta = format_phlydata_consultant_answer(
                     self.db,
                     rows,
                     fetch_faa_master_owner_rows,
                     registry_sql_enabled=registry_sql_enabled,
                 )
+                meta_out.update(phly_fmt_meta)
                 authority_chunks.append(phly_header + block)
             else:
                 logger.info(
@@ -1301,6 +1536,20 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             if part:
                 yield part
 
+    @staticmethod
+    def _iter_execution_trace_events(payload: Any) -> Iterator[Dict[str, Any]]:
+        from services.routing.intent_execution_trace import stream_trace_events
+
+        if not isinstance(payload, dict):
+            return
+        du = payload.get("data_used")
+        if not isinstance(du, dict):
+            return
+        trace = du.get("intent_execution_trace")
+        if isinstance(trace, dict):
+            for ev in stream_trace_events(trace):
+                yield ev
+
     def _stream_chat_deltas(
         self,
         messages: List[Dict[str, str]],
@@ -1333,6 +1582,7 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         score_threshold: Optional[float] = None,
         history: Optional[List[Dict[str, str]]] = None,
         conversation_state: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ) -> Iterator[Dict[str, Any]]:
         """
         SSE-friendly events for ChatGPT-style token streaming.
@@ -1354,13 +1604,17 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         from rag.consultant_progress_log import new_progress_logger
 
         pr = new_progress_logger()
+        _contract_ctx = _build_api_request_context(conversation_state, request_context)
 
         if cacheable:
             hit = cache_get(q)
             if hit:
                 if pr:
                     pr.step("path_cache_hit", short_circuit=1)
-                norm = normalize_answer_payload_for_cache(hit)
+                norm = _refresh_cached_consultant_hit(
+                    normalize_answer_payload_for_cache(hit),
+                    query=q,
+                )
                 yield {"type": "status", "message": "Retrieving your recent briefing…"}
                 for piece in self._iter_display_chunks(norm.get("answer") or ""):
                     yield {"type": "delta", "text": piece}
@@ -1376,13 +1630,14 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     )
                 except Exception:
                     pass
-                yield {
-                    "type": "done",
-                    "sources": norm.get("sources") or [],
-                    "data_used": _du_hit,
-                    "aircraft_images": norm.get("aircraft_images") or [],
-                    "error": norm.get("error"),
-                }
+                yield _version_stream_done_event(
+                    answer=str(norm.get("answer") or ""),
+                    sources=norm.get("sources") or [],
+                    data_used=_du_hit,
+                    aircraft_images=norm.get("aircraft_images") or [],
+                    error=norm.get("error"),
+                    request_context=_contract_ctx,
+                )
                 return
 
         try:
@@ -1395,6 +1650,10 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                 progress=pr,
                 conversation_state=conversation_state,
             )
+            for _trace_ev in self._iter_execution_trace_events(
+                payload if isinstance(payload, dict) else {}
+            ):
+                yield _trace_ev
             if kind == "small_talk":
                 if pr:
                     pr.step("path_small_talk_stream", streaming=1)
@@ -1412,13 +1671,14 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     du = apply_cache_miss_metadata(du)
                     if written:
                         du["rag_cache_write"] = 1
-                yield {
-                    "type": "done",
-                    "sources": pl.get("sources", []),
-                    "data_used": du,
-                    "aircraft_images": pl.get("aircraft_images") or [],
-                    "error": pl.get("error"),
-                }
+                yield _version_stream_done_event(
+                    answer=ans,
+                    sources=pl.get("sources", []),
+                    data_used=du,
+                    aircraft_images=pl.get("aircraft_images") or [],
+                    error=pl.get("error"),
+                    request_context=_contract_ctx,
+                )
                 return
 
             if kind == "professional":
@@ -1426,7 +1686,8 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     pr.step("path_professional_brief", streaming=1)
                 yield {"type": "status", "message": "Preparing your structured research brief…"}
                 pl = payload if isinstance(payload, dict) else {}
-                ans = (pl.get("answer") or "") if isinstance(payload, dict) else ""
+                pl = _apply_consultant_response_normalization(pl, query, history)
+                ans = (pl.get("answer") or "") if isinstance(pl, dict) else ""
                 for piece in self._iter_display_chunks(ans):
                     yield {"type": "delta", "text": piece}
                 norm = normalize_answer_payload_for_cache(pl)
@@ -1438,13 +1699,14 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     du = apply_cache_miss_metadata(du)
                     if written:
                         du["rag_cache_write"] = 1
-                yield {
-                    "type": "done",
-                    "sources": pl.get("sources", []),
-                    "data_used": du,
-                    "aircraft_images": pl.get("aircraft_images") or [],
-                    "error": pl.get("error"),
-                }
+                yield _version_stream_done_event(
+                    answer=ans,
+                    sources=pl.get("sources", []),
+                    data_used=du,
+                    aircraft_images=pl.get("aircraft_images") or [],
+                    error=pl.get("error"),
+                    request_context=_contract_ctx,
+                )
                 return
 
             if kind == "gk":
@@ -1497,22 +1759,24 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                         )
                     except Exception:
                         pass
-                    yield {
-                        "type": "done",
-                        "sources": [],
-                        "data_used": du_gk,
-                        "aircraft_images": [],
-                        "error": None,
-                    }
+                    yield _version_stream_done_event(
+                        answer=gk_ans,
+                        sources=[],
+                        data_used=du_gk,
+                        aircraft_images=[],
+                        error=None,
+                        request_context=_contract_ctx,
+                    )
                 except Exception as gk_e:
                     logger.error("RAG stream (general knowledge) failed: %s", gk_e, exc_info=True)
-                    yield {
-                        "type": "done",
-                        "sources": [],
-                        "data_used": {},
-                        "aircraft_images": [],
-                        "error": str(gk_e),
-                    }
+                    yield _version_stream_done_event(
+                        answer="",
+                        sources=[],
+                        data_used={},
+                        aircraft_images=[],
+                        error=str(gk_e),
+                        request_context=_contract_ctx,
+                    )
                 return
 
             b = payload
@@ -1616,6 +1880,13 @@ Produce the final client-facing answer.""",
                 final_text = (resp1.choices[0].message.content or "").strip()
 
             try:
+                from services.broker_execution.output_governance import mark_llm_primary_data_used
+
+                mark_llm_primary_data_used(data_used)
+            except Exception:
+                pass
+
+            try:
                 from rag.consultant_intelligence_hook import (
                     apply_consultant_intelligence_before_containment,
                 )
@@ -1642,6 +1913,23 @@ Produce the final client-facing answer.""",
                 )
             except Exception as se:
                 logger.warning("stream answer sanitize skipped: %s", se)
+
+            _stream_payload = _apply_final_render_gate(
+                _apply_consultant_response_normalization(
+                    {
+                        "answer": final_text or "",
+                        "sources": [],
+                        "data_used": data_used,
+                        "aircraft_images": b.get("aircraft_images") or [],
+                        "error": None,
+                    },
+                    query,
+                    history,
+                ),
+                query=query,
+            )
+            final_text = str(_stream_payload.get("answer") or final_text or "")
+            data_used = dict(_stream_payload.get("data_used") or data_used)
 
             for piece in self._iter_display_chunks(final_text):
                 yield {"type": "delta", "text": piece}
@@ -1690,13 +1978,14 @@ Produce the final client-facing answer.""",
                 du_out = apply_cache_miss_metadata(du_out)
                 if written_llm:
                     du_out["rag_cache_write"] = 1
-            yield {
-                "type": "done",
-                "sources": sources,
-                "data_used": du_out,
-                "aircraft_images": imgs,
-                "error": None,
-            }
+            yield _version_stream_done_event(
+                answer=final_stream_answer,
+                sources=sources,
+                data_used=du_out,
+                aircraft_images=imgs,
+                error=None,
+                request_context=_contract_ctx,
+            )
         except Exception as e:
             elapsed = time.perf_counter() - start
             logger.error("RAG answer_stream_events failed after %.2fs: %s", elapsed, e, exc_info=True)
@@ -1717,6 +2006,7 @@ Produce the final client-facing answer.""",
         score_threshold: Optional[float] = None,
         history: Optional[List[Dict[str, str]]] = None,
         conversation_state: Optional[Dict[str, Any]] = None,
+        request_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Ask Consultant pipeline: PhlyData (Hye Aero aircraft source) + FAA → listing SQL if relevant → LLM query expand → Tavily →
@@ -1739,13 +2029,17 @@ Produce the final client-facing answer.""",
         from rag.consultant_progress_log import new_progress_logger
 
         pr = new_progress_logger()
+        _contract_ctx = _build_api_request_context(conversation_state, request_context)
 
         if cacheable:
             cached_hit = cache_get(q)
             if cached_hit:
                 if pr:
                     pr.step("path_cache_hit", short_circuit=1)
-                norm = normalize_answer_payload_for_cache(cached_hit)
+                norm = _refresh_cached_consultant_hit(
+                    normalize_answer_payload_for_cache(cached_hit),
+                    query=q,
+                )
                 _du_c = dict(apply_cache_hit_metadata(norm.get("data_used")) or {})
                 try:
                     from rag.consultant_conversation_state import finalize_consultant_conversation_state
@@ -1759,7 +2053,7 @@ Produce the final client-facing answer.""",
                 except Exception:
                     pass
                 norm["data_used"] = _du_c
-                return norm
+                return _apply_api_contract_versioning(norm, _contract_ctx)
 
         try:
             kind, payload = self._consultant_retrieval_bundle(
@@ -1782,10 +2076,11 @@ Produce the final client-facing answer.""",
                     out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
                     if written:
                         out["data_used"]["rag_cache_write"] = 1
-                return out
+                return _apply_api_contract_versioning(out, _contract_ctx)
 
             if kind == "professional":
                 pl = payload if isinstance(payload, dict) else {}
+                pl = _apply_consultant_response_normalization(pl, query, history)
                 norm = normalize_answer_payload_for_cache(pl)
                 written = bool(
                     cacheable and not norm.get("error") and cache_set(q, norm)
@@ -1795,7 +2090,7 @@ Produce the final client-facing answer.""",
                     out["data_used"] = apply_cache_miss_metadata(out.get("data_used"))
                     if written:
                         out["data_used"]["rag_cache_write"] = 1
-                return out
+                return _apply_api_contract_versioning(out, _contract_ctx)
             if kind == "gk":
                 gk_out = self._answer_from_general_knowledge(query, start, history=history)
                 norm = normalize_answer_payload_for_cache(gk_out)
@@ -1822,7 +2117,7 @@ Produce the final client-facing answer.""",
                     )
                 except Exception:
                     pass
-                return out
+                return _apply_api_contract_versioning(out, _contract_ctx)
 
             b = payload
             context = b["context"]
@@ -1910,6 +2205,13 @@ Produce the final client-facing answer.""",
                         answer = reviewed
                 except Exception as rev_e:
                     logger.warning("Consultant final review skipped: %s", rev_e)
+
+            try:
+                from services.broker_execution.output_governance import mark_llm_primary_data_used
+
+                mark_llm_primary_data_used(data_used)
+            except Exception:
+                pass
 
             # Consultant intelligence layer (before containment / response_safety).
             try:
@@ -2070,13 +2372,17 @@ Produce the final client-facing answer.""",
                 "aircraft_images": imgs_final,
                 "error": None,
             }
+            resp = _apply_final_render_gate(
+                _apply_consultant_response_normalization(resp, query, history),
+                query=query,
+            )
             norm = normalize_answer_payload_for_cache(resp)
             written = bool(cacheable and cache_set(q, norm))
             if cacheable:
                 resp["data_used"] = apply_cache_miss_metadata(resp["data_used"])
                 if written:
                     resp["data_used"]["rag_cache_write"] = 1
-            return resp
+            return _apply_api_contract_versioning(resp, _contract_ctx)
         except Exception as e:
             elapsed = time.perf_counter() - start
             logger.error("RAG answer failed after %.2fs: %s", elapsed, e, exc_info=True)

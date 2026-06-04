@@ -144,11 +144,19 @@ def run_continuity_turn(
             serialized=fresh.model_dump(mode="json"),
         )
 
+    from services.entity_scope.scope import history_allowed_for_tail_resolution
+
+    _allow_history_tail = history_allowed_for_tail_resolution(iso or raw)
+
+    explicit_switch = explicit_aircraft_switch(raw + " " + iso, prev_air)
+
     lock = merge_entity_lock(
         prev.locked_entity,
         query=(iso or raw),
         strict_tail_candidates=strict_tail_candidates,
-        explicit_model=None,
+        explicit_model=explicit_switch,
+        prev_tail_aircraft=prev_air if prev_tail_val else None,
+        allow_history_tail=_allow_history_tail,
     )
 
     try:
@@ -160,16 +168,16 @@ def run_continuity_turn(
     except Exception:
         typed_models = []
 
-    explicit_switch = explicit_aircraft_switch(raw + " " + iso, prev_air)
-
     focal_model = explicit_switch or (typed_models[0].strip() if typed_models else None)
     locked_tail_val = lock.value.strip().upper() if lock and lock.type == LockedEntityType.TAIL else None
     locked_serial = lock.value if lock and lock.type == LockedEntityType.SERIAL else None
 
     if refinement.inherit_entity is False:
         ct = locked_tail_val
+    elif explicit_switch and not locked_tail_val:
+        ct = None
     else:
-        ct = locked_tail_val or prev_tail_val
+        ct = locked_tail_val or (prev_tail_val if _allow_history_tail else None)
 
     if explicit_switch:
         focal_model = explicit_switch.strip()

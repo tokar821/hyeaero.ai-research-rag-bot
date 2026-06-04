@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import warnings
+
 from services.conversation_state_engine import run_conversation_state_turn
+from services.conversation_state_engine.schemas import AircraftCategory
 
 
 def _client(prev_bundle) -> dict:
@@ -27,6 +30,7 @@ def test_phenom_chain_bigger_modern_cockpit():
     )
     assert b1.state.active_aircraft == "Phenom 300"
     assert b1.state.active_category.value != "unknown"
+    assert isinstance(b1.state.active_category, AircraftCategory)
 
     b2 = run_conversation_state_turn(
         query="More modern",
@@ -138,3 +142,29 @@ def test_decay_drops_stale_visual_after_many_turns():
     )
     assert b.state.active_aircraft == "G650"
     assert "last_visual_context" in b.decayed_fields or b.state.last_visual_context is None
+
+
+def test_active_category_model_dump_no_pydantic_enum_warning():
+    b0 = run_conversation_state_turn(
+        query="Show me Phenom 300 interior",
+        client_conversation_state=None,
+        entity_models=["Phenom 300"],
+        user_wants_gallery=True,
+    )
+    b1 = run_conversation_state_turn(
+        query="Actually bigger",
+        client_conversation_state=_client(b0),
+        refinement_type="size_upgrade",
+        continuity_serialized={"current_aircraft": "Phenom 300"},
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", UserWarning)
+        dumped = b1.state.model_dump(mode="json")
+    enum_warns = [
+        w
+        for w in caught
+        if "PydanticSerializationUnexpectedValue" in str(w.message)
+        or "active_category" in str(w.message)
+    ]
+    assert not enum_warns, [str(w.message) for w in enum_warns]
+    assert dumped["active_category"] == "super_midsize"

@@ -1,3 +1,7 @@
+
+import pytest
+
+pytestmark = pytest.mark.deterministic
 """Unified intent router — Phase 5 Step 1 classification tests."""
 
 from services.routing.unified_intent_router import (
@@ -46,7 +50,7 @@ def test_challenger_3500_worth_is_market_fact():
     route = classify_unified_intent("What is a Challenger 3500 worth?")
     assert route.intent == UnifiedIntent.AIRCRAFT_MARKET_FACT
     assert route.field in ("worth", "value", "price")
-    assert route.model == "Challenger 350"
+    assert route.model == "Challenger 3500"
     assert route.model_confidence >= 0.7
 
 

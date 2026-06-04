@@ -36,6 +36,7 @@ _TIER_BY_MODEL: Dict[str, PositionTier] = {
     "Falcon 8X": PositionTier.UPPER_LARGE,
     "Gulfstream G650": PositionTier.FLAGSHIP_ULR,
     "Gulfstream G650ER": PositionTier.FLAGSHIP_ULR,
+    "Gulfstream G700": PositionTier.FLAGSHIP_ULR,
     "Global 6500": PositionTier.FLAGSHIP_ULR,
     "Global 7500": PositionTier.FLAGSHIP_ULR,
 }

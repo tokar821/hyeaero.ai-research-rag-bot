@@ -1,39 +1,27 @@
-"""Multi-domain operational fleet composition."""
+"""Fleet portfolio strategy intelligence (Phase 26)."""
 
-from services.fleet.fleet_composition import (
-    FleetCompositionPlan,
-    FleetRoleAssignment,
-    MissionSegment,
-    MissionSegmentRole,
-    build_fleet_composition_plan,
-    detect_multi_aircraft_mission,
-    format_fleet_composition_block,
-    merge_fleet_into_recommendations,
-)
-from services.fleet.fleet_domain_analysis import (
-    MultiDomainAnalysis,
-    OperationalDomain,
-    SegmentationTrigger,
-    analyze_multi_domain_operational_problem,
-)
-from services.fleet.fleet_invariant import (
-    assert_fleet_invariants,
-    enforce_fleet_elimination_invariant,
+from services.fleet.fleet_portfolio_strategy_engine import (
+    FleetInput,
+    FleetPortfolioStrategyReport,
+    analyze_fleet_redundancy,
+    attach_fleet_portfolio_strategy_if_enabled,
+    build_fleet_portfolio_strategy,
+    build_mission_coverage_map,
+    fleet_portfolio_strategy_enabled,
+    identify_fleet_gaps,
+    optimize_fleet_structure,
+    rank_aircraft_for_replacement,
 )
 
 __all__ = [
-    "FleetCompositionPlan",
-    "FleetRoleAssignment",
-    "MissionSegment",
-    "MissionSegmentRole",
-    "MultiDomainAnalysis",
-    "OperationalDomain",
-    "SegmentationTrigger",
-    "analyze_multi_domain_operational_problem",
-    "assert_fleet_invariants",
-    "build_fleet_composition_plan",
-    "detect_multi_aircraft_mission",
-    "enforce_fleet_elimination_invariant",
-    "format_fleet_composition_block",
-    "merge_fleet_into_recommendations",
+    "FleetInput",
+    "FleetPortfolioStrategyReport",
+    "analyze_fleet_redundancy",
+    "attach_fleet_portfolio_strategy_if_enabled",
+    "build_fleet_portfolio_strategy",
+    "build_mission_coverage_map",
+    "fleet_portfolio_strategy_enabled",
+    "identify_fleet_gaps",
+    "optimize_fleet_structure",
+    "rank_aircraft_for_replacement",
 ]

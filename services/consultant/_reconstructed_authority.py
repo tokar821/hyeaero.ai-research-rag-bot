@@ -235,6 +235,11 @@ def should_suppress_aviation_engines_catalog(
     fine_intent: str = "",
 ) -> bool:
     """Block RAG catalog aircraft lists for ranked recommendation workflows."""
+    du = data_used if isinstance(data_used, dict) else {}
+    if du.get("deterministic_pre_llm_executed") or du.get("pipeline_llm_facts"):
+        return True
+    if isinstance(du.get("deterministic_recommendation_pipeline"), dict):
+        return True
     fi = (fine_intent or "").strip().lower()
     if fi not in ("aircraft_recommendation", "aviation_mission", "aircraft_comparison"):
         return False

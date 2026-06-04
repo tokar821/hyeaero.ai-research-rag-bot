@@ -142,6 +142,20 @@ def interpret_refinement(query: str, *, prev_aircraft: Optional[str], prev_tail:
             inherit_entity=True,
         )
 
+    if re.search(
+        r"(?is)\b(?:engine\s+program|apu\s+program|enrolled|"
+        r"(?:biggest\s+)?acquisition\s+risks?|due\s+diligence|"
+        r"compare\s+.+\s+(?:against|to|vs)|everything\s+about)\b",
+        ql,
+    ):
+        return RefinementInterpretation(
+            type="tail_analytical",
+            reference_tail=prev_tail,
+            reference_aircraft=prev_aircraft,
+            inherit_entity=True,
+            notes="Tail due-diligence follow-up",
+        )
+
     if re.search(r"^(?:show\s+me|show\s+us|pics?|photos?|images?)\s*$|\b(show\s+(?:me\s+)?(?:that|this|more)?)\b|\b(let\s+(?:me|us)\s+see)\b", ql):
         return RefinementInterpretation(type="ambiguous_followup", inherit_entity=True, notes="Likely gallery / carry-forward intent")
 
@@ -171,34 +185,48 @@ def reinforce_query_with_context(
     augment_size: bool,
     size_augment_fragment: str,
 ) -> str:
-    """Attach implicit references for retrieval-only / short lines."""
+    """Attach implicit references for retrieval-only / short deictic lines."""
     q = (query or "").strip()
     if not q:
         return q
     extra: List[str] = []
 
-    if locked_tail:
+    from rag.consultant_query_anchor import latest_message_anchors_aircraft_identity
+    from services.entity_scope.scope import is_deictic_tail_followup
+
+    current_turn_anchors_aircraft = latest_message_anchors_aircraft_identity(q)
+    deictic_tail = is_deictic_tail_followup(q)
+
+    if locked_tail and not current_turn_anchors_aircraft:
         ql = q.lower()
-        if locked_tail.lower() not in ql and (
-            interpretation.type
+        allow_tail = locked_tail.lower() not in ql and (
+            deictic_tail
+            or interpretation.type
             in (
                 "view_change",
                 "ambiguous_followup",
                 "sleeping_configuration",
-                "none",
-                "style_shift",
+                "tail_analytical",
             )
-            or re.search(r"\b(show|see|photos?|interior|cabin|cockpit|inside|gallery)\b", ql)
-        ):
+            or (
+                interpretation.type == "none"
+                and deictic_tail
+            )
+            or re.search(
+                r"\b(show|see|photos?|interior|cabin|cockpit|inside|gallery|hours|status|price|owns?|"
+                r"risks?|engine\s+program|enrolled|compare|everything)\b",
+                ql,
+            )
+        )
+        if allow_tail:
             extra.append(f"tail {locked_tail}")
 
-    elif locked_model and interpretation.inherit_entity:
+    elif locked_model and interpretation.inherit_entity and not current_turn_anchors_aircraft:
         ql = q.lower()
         if (locked_model or "").lower() not in ql and interpretation.type in (
             "view_change",
             "ambiguous_followup",
             "style_shift",
-            "none",
             "comparison_anchor",
         ):
             extra.append(str(locked_model))

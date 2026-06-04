@@ -62,6 +62,18 @@ _GENERIC_CABIN_ONLY = re.compile(
     r"\b(cabin\s+interior|luxury\s+cabin|private\s+cabin|jet\s+interior)\b",
     re.I,
 )
+_AIRLINER_MARKERS = re.compile(
+    r"\b(md-?\s*8\d|boeing\s*7\d|airbus\s*a\d|american\s+airlines|mcdonnell\s+douglas)\b",
+    re.I,
+)
+_PISTON_MARKERS = re.compile(
+    r"\b(pa-28|cherokee\s+(?:140|six)|piper\s+pa-|cessna\s+172|beechcraft\s+bonanza)\b",
+    re.I,
+)
+_BIZJET_MODEL_HINT = re.compile(
+    r"\b(gulfstream|global\s*\d|challenger|citation|falcon|phenom|learjet|praetor|legacy|eclipse\s*500|g\d{3})\b",
+    re.I,
+)
 
 
 def _blob(row: Dict[str, Any]) -> str:
@@ -141,6 +153,9 @@ def evaluate_rejection(
         identity = _identity_rejection(blob, ctx)
         if identity:
             return identity
+        class_rej = _airframe_class_mismatch(blob, ctx)
+        if class_rej:
+            return class_rej
     else:
         return "missing_aircraft_identity"
 
@@ -168,6 +183,18 @@ def _aircraft_context_for_model(blob: str, model: str) -> bool:
     except Exception:
         ml = model.lower()
         return ml in blob or any(p.lower() in blob for p in model.split() if len(p) >= 4)
+
+
+def _airframe_class_mismatch(blob: str, ctx: ImageVerificationContext) -> Optional[str]:
+    """Reject airliner/piston spotter hits when the anchored aircraft is a business jet."""
+    anchor = (ctx.model or "").strip()
+    if not anchor and ctx.tail:
+        return None
+    if anchor and not _BIZJET_MODEL_HINT.search(anchor):
+        return None
+    if _AIRLINER_MARKERS.search(blob) or _PISTON_MARKERS.search(blob):
+        return "airframe_class_mismatch"
+    return None
 
 
 def _identity_rejection(blob: str, ctx: ImageVerificationContext) -> Optional[str]:

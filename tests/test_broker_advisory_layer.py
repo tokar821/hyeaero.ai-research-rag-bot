@@ -68,7 +68,9 @@ def test_llm_context_has_no_scores():
     recs = rank_aircraft_recommendations(mission, max_results=3)
     ctx = build_broker_advisory_context(mission, recs)
     block = ctx.to_llm_block()
-    assert "FEASIBLE AIRCRAFT" in block
+    assert "VERIFIED MISSION FACTS" in block
+    assert "model=" in block
+    assert "Mission Fit:" not in block
     assert "total_score" not in block.lower()
     assert not re.search(r"\bconfidence\s*[:=]\s*\d", block, re.I)
     assert not re.search(r"\bmission score\s*[:=]", block, re.I)
@@ -79,8 +81,10 @@ def test_llm_context_block_from_pipeline_style():
     mission = build_mission_from_current_turn("8 pax LA to Miami nonstop")
     recs = rank_aircraft_recommendations(mission, max_results=3)
     block = build_broker_llm_context_block(mission, recs)
-    assert "BROKER ADVISORY CONTEXT" in block
-    assert "FORBIDDEN" in block
+    assert "VERIFIED MISSION FACTS" in block
+    assert "feasible_aircraft_max" in block
+    assert "Mission Fit:" not in block
+    assert "Aircraft Options:" not in block
 
 
 def test_transpacific_territory_opening():

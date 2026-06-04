@@ -75,17 +75,39 @@ def _has_inline_aircraft_tokens(raw: str, low: str) -> bool:
     )
 
 
+_GALLERY_FULL_RE = re.compile(
+    r"(?is)\b(?:every\s+(?:verified\s+)?image|all\s+(?:photos?|pictures?|images?)|"
+    r"full\s+gallery|show\s+(?:me\s+)?everything|all\s+cabin\s+photos?)\b"
+)
+
+
+def user_wants_full_gallery(query: str) -> bool:
+    return bool(_GALLERY_FULL_RE.search(query or ""))
+
+
 def gallery_user_query_for_image_pipeline(raw_query: str, *, resolved_tail: Optional[str]) -> str:
     """
     When gallery routing resolved a **tail** from thread context but the latest line is deictic
     (\"can I see that\"), append the tail so SearchAPI / image-query layers see an explicit mark.
+
+    When the user asks for photos of a specific registration, prefer a tail-led search string.
     """
     q = (raw_query or "").strip()
     t = normalize_tail_token(resolved_tail or "")
     if not t or len(t) < 3:
         return q
     compact_q = re.sub(r"\s+", "", (q or "").upper())
-    if t.replace(" ", "") in compact_q:
+    tail_in_line = t.replace(" ", "") in compact_q
+    if tail_in_line and re.search(r"(?is)\b(?:show|see|photos?|pictures?|images?|gallery)\b", q):
+        low = q.lower()
+        if re.search(r"(?is)\b(?:cabin|interior|salon|layout)\b", low):
+            return f"{t} cabin interior photos"
+        if re.search(r"(?is)\bcockpit\b", low):
+            return f"{t} cockpit photos"
+        if re.search(r"(?is)\b(?:exterior|outside)\b", low):
+            return f"{t} exterior aircraft photos"
+        return f"{t} aircraft photos"
+    if tail_in_line:
         return q
     return f"{q} {t}".strip()
 
