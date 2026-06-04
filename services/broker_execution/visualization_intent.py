@@ -10,6 +10,8 @@ from typing import Optional, Tuple
 
 _ROUTE_MAP_RE = re.compile(
     r"(?is)\b(?:route\s+map|map\s+of\s+(?:the\s+)?route|create\s+(?:a\s+)?map|"
+    r"show\s+(?:me\s+)?(?:the\s+)?(?:route\s+)?map|"
+    r"show\s+route\s+map|"
     r"show\s+(?:me\s+)?(?:the\s+)?route\s+on\s+a\s+map|flight\s+path\s+map)\b"
 )
 

@@ -64,11 +64,13 @@ def build_tail_aircraft_profile_block(
         TailDepthMode.DETAIL,
         TailDepthMode.ACQUISITION,
         TailDepthMode.ACQUISITION_RISKS,
+        TailDepthMode.COMPARISON,
         TailDepthMode.CONTEXT,
     ) and depth_mode not in (
         "detail",
         "acquisition",
         "acquisition_risks",
+        "comparison",
         "context",
     ):
         return ""

@@ -105,6 +105,10 @@ def build_searchapi_image_request_params(*, q: str, num_results: int) -> Optiona
 
 # Buyer-oriented tail gallery: listings first, then spotter sites.
 _DOMAIN_SCORES_TAIL: Tuple[Tuple[str, int], ...] = (
+    ("virtualhangar.com", 1050),
+    ("website-files.com", 980),
+    ("flyexclusive.com", 960),
+    ("phly.com", 940),
     ("controller.com", 1000),
     ("aircraftexchange", 950),
     ("jetphotos.", 900),
@@ -703,6 +707,7 @@ def build_aircraft_image_search_queries(
     canonical_tail: Optional[str],
     manufacturer: Optional[str],
     model: Optional[str],
+    user_query: str = "",
 ) -> List[str]:
     """
     Smart query fan-out: tail-specific site-biased strings vs structured make/model facets.
@@ -711,6 +716,24 @@ def build_aircraft_image_search_queries(
     """
     tail = normalize_tail_token(canonical_tail or "")
     if tail:
+        low = ""
+        try:
+            low = (user_query or "").lower()
+        except Exception:
+            low = ""
+        if "cabin" in low or "interior" in low or "salon" in low:
+            return [
+                f"{tail} site:virtualhangar.com",
+                f"{tail} cabin interior",
+                f"{tail} interior",
+                f"{tail} cabin",
+                f"{tail} virtual hangar",
+            ]
+        if "cockpit" in low or "flight deck" in low:
+            return [
+                f"{tail} cockpit",
+                f"{tail} flight deck",
+            ]
         return [
             f"{tail} aircraft",
             f"{tail} jet",
@@ -946,7 +969,14 @@ def fetch_ranked_searchapi_aircraft_images(
     """
     meta_out: Dict[str, Any] = {"consultant_searchapi_image_engine": searchapi_image_engine()}
     mode = "tail" if (strict_tail_mode and (canonical_tail or "").strip()) else "model"
-    intent = detect_query_image_intent(user_query)
+    try:
+        from services.broker_execution.gallery_visual_intent import resolve_gallery_visual_intent
+
+        intent = resolve_gallery_visual_intent(user_query, premium_intent)
+        if intent == "any":
+            intent = detect_query_image_intent(user_query) or None
+    except Exception:
+        intent = detect_query_image_intent(user_query)
     preserve_google = (
         searchapi_preserve_google_image_rank_order()
         and not strict_tail_mode
@@ -1208,8 +1238,13 @@ def fetch_ranked_searchapi_aircraft_images(
             else None
         )
         _v_section = str(
-            intent or (premium_intent or {}).get("image_type") or "exterior"
+            intent
+            or (premium_intent or {}).get("image_type")
+            or detect_query_image_intent(user_query)
+            or "exterior"
         ).strip() or "exterior"
+        if _v_section == "any":
+            _v_section = "exterior"
         out, vmeta = verify_gallery_images(
             out,
             tail=_v_tail,
@@ -1251,6 +1286,30 @@ def fetch_ranked_searchapi_aircraft_images(
     _cabin_intent = str(intent or "").lower() in ("cabin", "interior") or str(
         (premium_intent or {}).get("image_type") or ""
     ).lower() in ("cabin", "interior")
+    if (
+        not out
+        and strict_tail_mode
+        and (canonical_tail or "").strip()
+        and _cabin_intent
+    ):
+        try:
+            from services.tail_marketing_listing_images import enrich_gallery_from_tail_marketing_listings
+
+            listing_out = enrich_gallery_from_tail_marketing_listings(
+                tail=str(canonical_tail).strip(),
+                phly_rows=(premium_intent or {}).get("phly_rows") if isinstance(premium_intent, dict) else None,
+                max_out=max_out,
+                facet="cabin",
+            )
+            if listing_out:
+                out = listing_out
+                meta_out["consultant_tail_listing_cabin_enriched"] = True
+                meta_out.pop("consultant_gallery_empty", None)
+                meta_out.pop("consultant_gallery_message", None)
+                mode = "tail_marketing_listing_cabin"
+        except Exception:
+            pass
+
     if (
         not out
         and strict_tail_mode
@@ -1396,7 +1455,9 @@ def resolve_queries_for_consultant_gallery(
     # Legacy: multi-query fan-out (``SEARCHAPI_LITERAL_USER_QUERY=0``).
     if strict_tail_mode and tail:
         return (
-            build_aircraft_image_search_queries(canonical_tail=tail, manufacturer=None, model=None),
+            build_aircraft_image_search_queries(
+                canonical_tail=tail, manufacturer=None, model=None, user_query=user_query
+            ),
             tail,
             None,
             intent,

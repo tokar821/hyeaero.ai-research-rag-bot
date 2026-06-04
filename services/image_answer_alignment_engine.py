@@ -301,6 +301,19 @@ def build_image_answer_alignment_plan(
 
     groups = _group_images_by_aircraft(aircraft_images, cand_models or ["Aircraft"])
 
+    tail_exact_cabin = bool(
+        str(premium.get("tail_number") or "").strip()
+        and str(premium.get("image_type") or "").strip().lower() in ("cabin", "interior")
+        and (
+            gallery_meta.get("consultant_tail_listing_cabin_enriched")
+            or any(
+                (str(im.get("image_provenance") or "") == "tail_marketing_listing")
+                for im in (aircraft_images or [])
+                if isinstance(im, dict)
+            )
+        )
+    )
+
     low_conf = gconf < 0.7
     bad_section = sec_rate < 0.5 and (
         bool(str(premium.get("image_type") or "").strip())
@@ -317,7 +330,11 @@ def build_image_answer_alignment_plan(
     )
     if highly_relevant_n >= 2:
         weak = False
-    alignment_ok = not weak and bool(groups) and all(g["count"] >= 1 for g in groups)
+    if tail_exact_cabin and aircraft_images:
+        weak = False
+    alignment_ok = (tail_exact_cabin and bool(aircraft_images)) or (
+        not weak and bool(groups) and all(g["count"] >= 1 for g in groups)
+    )
 
     weak_msg = None
     if weak:
@@ -416,25 +433,35 @@ def _format_llm_directives(
     if candidates:
         cand_txt = "; ".join(str(c.get("model")) for c in candidates[:3])
         lines.append(f"- **Aircraft candidates (mission context):** {cand_txt}")
-    if groups:
+    if tail_exact_cabin:
+        lines.extend(
+            [
+                "- **Tail-exact cabin gallery** (broker listing). Describe only what the cabin photos support.",
+                "- Do **not** add a **Best Match** line, model shortlist, or registry card.",
+                "- One short opening line that images are shown in-app for this tail, then cabin layout/features.",
+            ]
+        )
+    elif groups:
         lines.append("- **Group images 1:1 with headings** — use exactly this structure order:")
         for g in groups[:4]:
             lines.append(
                 f"  - **{g['model']}** ({g['count']} image(s) in app gallery) — "
                 "write the explanation **only** for these URLs’ visible cues (use image titles/snippets; do not invent)."
             )
-    lines.extend(
-        [
-            "- Under each aircraft, describe **only** what is plausible from **image titles + visible product context** "
-            "(layout hints, club seating, galley line, window line, materials **if** titles/snippet imply them). "
-            "**Forbidden** unless clearly grounded in those cues: *spacious*, *luxury*, *stunning*, *world-class*.",
-            "- **Never** describe aircraft A using images grouped under B.",
-            "- End with **Best Match:** one model + **Reason:** one line tying **mission fit** + **visual support** "
-            "(what you can infer from the grouped image titles/snippets).",
-        ]
-    )
-    if best_model and alignment_ok:
-        lines.append(f"- Default **Best Match** lean (if ties): **{best_model}** (largest image group in this turn).")
+        lines.extend(
+            [
+                "- Under each aircraft, describe **only** what is plausible from **image titles + visible product context** "
+                "(layout hints, club seating, galley line, window line, materials **if** titles/snippet imply them). "
+                "**Forbidden** unless clearly grounded in those cues: *spacious*, *luxury*, *stunning*, *world-class*.",
+                "- **Never** describe aircraft A using images grouped under B.",
+                "- End with **Best Match:** one model + **Reason:** one line tying **mission fit** + **visual support** "
+                "(what you can infer from the grouped image titles/snippets).",
+            ]
+        )
+        if best_model and alignment_ok:
+            lines.append(
+                f"- Default **Best Match** lean (if ties): **{best_model}** (largest image group in this turn)."
+            )
     return "\n".join(lines)
 
 

@@ -159,6 +159,20 @@ def test_tavily_image_filter_keeps_matching_tail_in_url():
     assert len(kept) == 1
 
 
+def test_pdf_proxy_allows_website_files_cabin_rejects_vh_logos():
+    cabin = (
+        "https://assets-global.website-files.com/5ebd6216f527da304f85bcca/"
+        "636a91330e1bd22dcba85aed_2.jpg"
+    )
+    assert consultant_report_image_url_allowed(cabin) is True
+    assert (
+        consultant_report_image_url_allowed(
+            "https://virtualhangar.com/wp-content/uploads/2024/09/UberJets_VirtualHangar_Logos_White.png"
+        )
+        is False
+    )
+
+
 def test_pdf_proxy_allows_simple_flying_cdn():
     u = "https://static0.simpleflyingimages.com/wordpress/wp-content/uploads/2022/08/Eclipse-N503EA.jpg"
     assert consultant_report_image_url_allowed(u) is True

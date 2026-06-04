@@ -132,6 +132,19 @@ _RETRIEVAL_PROVENANCE_RE = re.compile(
 )
 
 
+def strip_markdown_embedded_images(text: str) -> str:
+    """Remove ``![alt](url)`` markdown images; gallery UI carries photos."""
+    out = re.sub(r"!\[[^\]]*\]\([^)]+\)", "", text or "")
+    out = re.sub(r"\[([^\]]+)\]\(https?://[^)]+\)", r"\1", out)
+    out = re.sub(
+        r"https?://[^\s\)]*current\s*aircraft\s*marketplace\s*listings[^\s\)]*",
+        "",
+        out,
+        flags=re.I,
+    )
+    return out.strip()
+
+
 def strip_retrieval_provenance(text: str) -> str:
     """Remove internal retrieval / ingest phrasing from client-visible answers."""
     lines = []
@@ -142,6 +155,17 @@ def strip_retrieval_provenance(text: str) -> str:
         if cleaned.strip():
             lines.append(cleaned.rstrip())
     return "\n".join(lines).strip()
+
+
+_BEST_MATCH_TAIL_RE = re.compile(
+    r"(?is)\n?\s*best\s+match\s*:\s*[^\n]+(?:\n\s*reason\s*:\s*[^\n]+)?"
+)
+
+
+def strip_image_alignment_scaffolding(text: str) -> str:
+    """Remove retrieval-style **Best Match** blocks from client-visible answers."""
+    out = _BEST_MATCH_TAIL_RE.sub("", text or "")
+    return re.sub(r"\n{3,}", "\n\n", out).strip()
 
 
 def strip_internal_markers(text: str) -> str:
@@ -165,7 +189,9 @@ def clean_broker_output(
     """Run full output cleanup pipeline."""
     del preserve_structured_headers  # reserved for intent-specific callers
     out = _normalize_markdown_emphasis(text)
+    out = strip_markdown_embedded_images(out)
     out = strip_retrieval_provenance(out)
+    out = strip_image_alignment_scaffolding(out)
     out = strip_internal_markers(out)
     out = remove_empty_sections(out)
     out = collapse_redundant_headers(out)

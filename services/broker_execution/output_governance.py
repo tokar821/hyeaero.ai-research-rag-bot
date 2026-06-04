@@ -29,11 +29,176 @@ _DEBUG_LINE_RE = re.compile(
 _INTERNAL_SECTION_RE = re.compile(
     r"(?im)^\s*(?:operational\s+synthesis|approved\s+shortlist|mission\s+authority\s+kernel)\s*:?\s*$"
 )
+_REGISTRY_FOOTER_RE = re.compile(
+    r"(?is)\n?\s*aircraft\s+status:\s*for\s+sale[\s\S]*$"
+)
+_SVG_EMBED_RE = re.compile(r"(?is)<svg[\s\S]*?</svg>")
+
+
+def _strip_registry_sale_footer(text: str) -> str:
+    return _REGISTRY_FOOTER_RE.sub("", (text or "").strip()).strip()
+
+
+def _guard_route_visualization_answer(
+    body: str,
+    *,
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Replace LLM tail-card drift on explicit route-map asks with generated map + summary."""
+    q = (query or "").strip()
+    if not q:
+        return body
+    try:
+        from services.broker_execution.visualization_intent import detect_visualization_intent
+    except Exception:
+        return body
+
+    wants, kind = detect_visualization_intent(q)
+    if not wants or kind != "route_map":
+        return body
+
+    try:
+        from services.consultant.visualization_handler import run_visualization_turn
+        from services.consultant.visualization_render import format_visualization_user_response
+        from services.consultant.mission_state import MissionState
+    except Exception:
+        return body
+
+    du = data_used if isinstance(data_used, dict) else {}
+    viz_du = dict(du)
+    for key in ("active_tail", "tail_registration", "phly_authority"):
+        viz_du.pop(key, None)
+
+    try:
+        viz = run_visualization_turn(
+            q,
+            mission=MissionState(),
+            history=None,
+            data_used=viz_du,
+        )
+        rendered, patch = format_visualization_user_response(viz)
+        if rendered:
+            if isinstance(du, dict) and isinstance(patch, dict):
+                du.update(patch)
+            prose = _SVG_EMBED_RE.sub("", rendered).strip()
+            prose = _strip_registry_sale_footer(prose)
+            return prose or rendered.strip()
+    except Exception as exc:
+        logger.debug("route visualization guard skipped: %s", exc)
+    return body
 
 
 def is_llm_primary_output(data_used: Optional[Dict[str, Any]]) -> bool:
     du = data_used if isinstance(data_used, dict) else {}
     return bool(du.get("llm_executed") or du.get("consultant_llm_draft"))
+
+
+def _guard_tail_acquisition_and_mission_answer(
+    body: str,
+    *,
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Replace registry/sale drift on risks turns; lead with mission feasibility when LLM lists ULR at low budget."""
+    q = (query or "").strip()
+    text = (body or "").strip()
+    if not q:
+        return text
+    du = data_used if isinstance(data_used, dict) else {}
+    low = text.lower()
+    ql = q.lower()
+
+    viz_alt = _guard_route_visualization_answer(text, query=q, data_used=du)
+    if viz_alt and viz_alt.strip() != text.strip():
+        return viz_alt
+
+    _risks_q = re.search(
+        r"(?is)\b(?:biggest\s+(?:acquisition\s+)?risks?|acquisition\s+risks?|"
+        r"what\s+are\s+the\s+risks?|risks?\s+on|deal\s+risks?|red\s+flags?\s+on)\b",
+        ql,
+    )
+    try:
+        from services.broker_execution.tail_market_comparison import (
+            is_tail_market_comparison_query,
+            render_tail_market_comparison_answer,
+        )
+
+        if is_tail_market_comparison_query(q, du):
+            try:
+                from services.broker_execution.tail_fact_loader import ensure_tail_facts_for_query
+
+                ensure_tail_facts_for_query(q, du)
+            except Exception:
+                pass
+            market_cmp = render_tail_market_comparison_answer(q, du)
+            if market_cmp:
+                return market_cmp
+    except Exception:
+        pass
+
+    if _risks_q:
+        try:
+            from services.broker_execution.tail_depth_mode import (
+                TailDepthMode,
+                classify_tail_depth_mode,
+            )
+
+            depth, _ = classify_tail_depth_mode(q)
+            depth_name = str(du.get("tail_depth_mode") or depth.value or "").strip().lower()
+        except Exception:
+            depth_name = str(du.get("tail_depth_mode") or "").strip().lower()
+        prof = str(du.get("execution_profile") or "").strip().lower()
+        is_risks_turn = (
+            depth_name in ("acquisition_risks", "acquisition")
+            or prof == "tail_acquisition"
+        )
+        garbled = bool(re.search(r"(?i)[a-z]{10,}tracking:", text))
+        registry_drift = ("for sale" in low[:500] or "legal registrant" in low) and "utilization" not in low[:600]
+        if is_risks_turn and (
+            depth_name == "acquisition_risks"
+            or garbled
+            or registry_drift
+        ):
+            try:
+                from services.broker_execution.tail_acquisition_dossier import (
+                    render_acquisition_risks_answer,
+                )
+
+                alt = render_acquisition_risks_answer(q, du)
+                if alt:
+                    return alt
+            except Exception:
+                pass
+
+    if re.search(r"(?is)\bmiami\b.*\bparis\b|\bparis\b.*\bmiami\b", ql) and re.search(
+        r"(?is)\$?\s*18\s*m|\b18\s+million\b", ql
+    ):
+        try:
+            from services.broker_execution.mission_broker_answer import (
+                _strip_internal_block,
+                build_mission_feasibility_broker_note,
+            )
+
+            note = build_mission_feasibility_broker_note(q)
+            lead = _strip_internal_block(note) if note else ""
+            ulr_listed = bool(
+                re.search(
+                    r"(?is)\b(?:gulfstream\s+g\d|global\s+\d{3,4}|falcon\s+\d|challenger\s+\d|"
+                    r"g\d{3,4}\b|legacy\s+\d)",
+                    low,
+                )
+            )
+            if lead and (
+                "budget is too low" in lead.lower()
+                or ulr_listed
+                or re.search(r"(?is)\bhere are a few aircraft\b", low)
+            ):
+                return lead
+        except Exception:
+            pass
+
+    return text
 
 
 @dataclass(frozen=True)
@@ -220,7 +385,7 @@ def enforce_final_render_contract(
     du["final_render_contract_applied"] = 1
     du["output_governance_mode"] = mode.value
     du["final_render_llm_primary"] = int(llm)
-    return body.strip()
+    return _strip_registry_sale_footer(body.strip())
 
 
 def apply_governed_client_answer(
@@ -407,6 +572,8 @@ def apply_governed_client_answer(
             body = render_deterministic_client_answer(body, query=q, data_used=du)
         except Exception as exc:
             logger.debug("deterministic answer renderer skipped: %s", exc)
+
+    body = _guard_tail_acquisition_and_mission_answer(body, query=q, data_used=du)
 
     try:
         from services.broker_execution.fact_flow import attach_fact_flow

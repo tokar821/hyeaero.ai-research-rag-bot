@@ -76,6 +76,16 @@ def build_fact_pack(
         )
 
     try:
+        from services.broker_execution.tail_market_comparison import build_tail_market_comparison_block
+
+        tmc = build_tail_market_comparison_block(query, du)
+        if tmc:
+            pack["sources"]["tail_market_comparison"] = True
+            pack["facts"].append({"kind": "tail_market_comparison", "value": tmc[:4000]})
+    except Exception:
+        pass
+
+    try:
         from services.broker_execution.comparison_broker_facts import build_comparison_broker_facts_block
 
         cblock = build_comparison_broker_facts_block(query, du)

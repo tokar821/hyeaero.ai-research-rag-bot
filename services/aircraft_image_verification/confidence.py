@@ -43,7 +43,7 @@ def _blob(row: Dict[str, Any]) -> str:
     ).lower()
 
 
-def _section_fit_score(blob: str, section: str) -> float:
+def _section_fit_score(blob: str, section: str, row: Optional[Dict[str, Any]] = None) -> float:
     from services.aircraft_image_verification.rejection import (
         _CABIN_STRONG,
         _COCKPIT_STRONG,
@@ -56,6 +56,18 @@ def _section_fit_score(blob: str, section: str) -> float:
     if sec == "cabin":
         if _CABIN_STRONG.search(blob):
             return 1.0
+        try:
+            from services.tail_marketing_listing_images import row_is_tail_listing_cabin_candidate
+
+            page = str(row.get("page_url") or row.get("_source_page") or "")
+            tail_m = re.search(
+                r"(?i)/aircraft/(n[1-9a-z][a-z0-9]{1,5})|(?:\b)(n[1-9a-z][a-z0-9]{1,5})(?:\b)",
+                page,
+            )
+            if tail_m and row_is_tail_listing_cabin_candidate(row, tail_m.group(1) or tail_m.group(2)):
+                return 0.92
+        except Exception:
+            pass
         if re.search(r"jetphotos|planespotters", blob, re.I):
             return 0.55
         if _COCKPIT_STRONG.search(blob) or _EXTERIOR_STRONG.search(blob):
@@ -99,31 +111,40 @@ def score_image_confidence(
         bd.match_type = "tail_exact"
         bd.tail = ctx.tail
         try:
-            from services.searchapi_aircraft_images import (
-                classify_tail_match_confidence,
-                compute_tail_match_score,
-            )
+            from services.tail_marketing_listing_images import is_tail_marketing_listing_page
 
-            ts = int(row.get("_tail_match_score") or compute_tail_match_score(row, ctx.tail))
-            conf = row.get("_tail_confidence") or classify_tail_match_confidence(ts)
-            if conf == "confirmed":
+            if is_tail_marketing_listing_page(page, ctx.tail):
                 bd.identity = 0.45
-                notes.append("tail_match_confirmed")
-            elif conf == "probable":
-                bd.identity = 0.34
-                notes.append("tail_match_probable")
-            else:
-                bd.identity = 0.22
-                notes.append("tail_match_weak")
+                notes.append("tail_marketing_listing_page")
         except Exception:
-            from rag.aviation_tail import normalize_tail_token
-            from services.searchapi_aircraft_images import strip_domains
+            pass
+        if bd.identity < 0.4:
+            try:
+                from services.searchapi_aircraft_images import (
+                    classify_tail_match_confidence,
+                    compute_tail_match_score,
+                )
 
-            t = normalize_tail_token(ctx.tail)
-            if t in strip_domains(blob).upper():
-                bd.identity = 0.38
-            else:
-                bd.identity = 0.15
+                ts = int(row.get("_tail_match_score") or compute_tail_match_score(row, ctx.tail))
+                conf = row.get("_tail_confidence") or classify_tail_match_confidence(ts)
+                if conf == "confirmed":
+                    bd.identity = 0.45
+                    notes.append("tail_match_confirmed")
+                elif conf == "probable":
+                    bd.identity = 0.34
+                    notes.append("tail_match_probable")
+                else:
+                    bd.identity = 0.22
+                    notes.append("tail_match_weak")
+            except Exception:
+                from rag.aviation_tail import normalize_tail_token
+                from services.searchapi_aircraft_images import strip_domains
+
+                t = normalize_tail_token(ctx.tail)
+                if t in strip_domains(blob).upper():
+                    bd.identity = 0.38
+                else:
+                    bd.identity = 0.15
     elif ctx.model:
         bd.match_type = "model_exact"
         bd.model = ctx.model
@@ -154,7 +175,7 @@ def score_image_confidence(
     notes.append(f"source_tier:{tier.value}")
 
     # --- section ---
-    sec_score = _section_fit_score(blob, ctx.section)
+    sec_score = _section_fit_score(blob, ctx.section, row=row)
     bd.section_fit = round(0.15 * sec_score, 4)
 
     # --- listing / page verification bonus ---

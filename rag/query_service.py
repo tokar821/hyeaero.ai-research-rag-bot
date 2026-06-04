@@ -1600,6 +1600,13 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         start = time.perf_counter()
         q = (query or "").strip()
         cacheable = rag_cache_enabled() and bool(q) and not history
+        try:
+            from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
+
+            if wants_consultant_aircraft_images_in_answer(q):
+                cacheable = False
+        except Exception:
+            pass
 
         from rag.consultant_progress_log import new_progress_logger
 
@@ -2025,6 +2032,13 @@ Produce the final client-facing answer.""",
         start = time.perf_counter()
         q = (query or "").strip()
         cacheable = rag_cache_enabled() and bool(q) and not history
+        try:
+            from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
+
+            if wants_consultant_aircraft_images_in_answer(q):
+                cacheable = False
+        except Exception:
+            pass
 
         from rag.consultant_progress_log import new_progress_logger
 

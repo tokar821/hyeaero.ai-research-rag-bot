@@ -441,15 +441,19 @@ def test_premium_cabin_validation_strips_irrelevant_strict_tail_message():
 
     meta: dict = {}
     with patch("services.searchapi_aircraft_images.search_aircraft_images", side_effect=fake_search):
-        out, _ = fetch_ranked_searchapi_aircraft_images(
-            queries=["N807JS cabin"],
-            canonical_tail="N807JS",
-            strict_tail_mode=True,
-            marketing_type_for_model_match=None,
-            max_out=5,
-            gallery_meta=meta,
-            premium_intent=intent,
-        )
+        with patch(
+            "services.tail_marketing_listing_images.enrich_gallery_from_tail_marketing_listings",
+            return_value=[],
+        ):
+            out, _ = fetch_ranked_searchapi_aircraft_images(
+                queries=["N807JS cabin"],
+                canonical_tail="N807JS",
+                strict_tail_mode=True,
+                marketing_type_for_model_match=None,
+                max_out=5,
+                gallery_meta=meta,
+                premium_intent=intent,
+            )
     assert out == []
     assert meta.get("consultant_gallery_message") == PREMIUM_VERIFIED_IMAGE_FAILURE
 
@@ -459,6 +463,7 @@ def test_model_gallery_order_prefers_aviation_host_within_google_window(monkeypa
 
     monkeypatch.setenv("SEARCHAPI_PRESERVE_GOOGLE_RANK_ORDER", "1")
     monkeypatch.setenv("SEARCHAPI_AVIATION_RANKUP_WINDOW", "8")
+    monkeypatch.setenv("AIRCRAFT_IMAGE_VERIFICATION_STRICT", "0")
 
     def fake_search(_q: str, **kwargs):
         return [

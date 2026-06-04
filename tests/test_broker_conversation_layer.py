@@ -120,6 +120,17 @@ def test_output_cleaner_removes_markdown_artifacts():
     assert "• bullet item" in out or "- bullet item" in out
 
 
+def test_output_cleaner_strips_best_match_scaffolding():
+    raw = (
+        "Club seating and a divan.\n\n"
+        "Best Match: Cessna Citation Excel Reason: The images depict a cabin layout.\n"
+        "This aircraft is for sale."
+    )
+    out = clean_broker_output(raw)
+    assert "best match" not in out.lower()
+    assert "club seating" in out.lower()
+
+
 def test_output_cleaner_strips_retrieval_provenance():
     raw = "Separately, per Hye Aero listing records the ask is high.\nPer aircraft registry the tail is active."
     out = clean_broker_output(raw)

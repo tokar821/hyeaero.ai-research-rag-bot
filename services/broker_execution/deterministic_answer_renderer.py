@@ -77,13 +77,23 @@ def render_deterministic_client_answer(
 
     if profile == "comparison":
         try:
-            from services.broker_execution.comparison_broker_facts import render_comparison_client_answer
+            from services.broker_execution.tail_market_comparison import (
+                is_tail_market_comparison_query,
+                render_tail_market_comparison_answer,
+            )
 
-            alt = render_comparison_client_answer(query, du)
-            if alt and ("wins on" in alt.lower() or "buy" in alt.lower() or "tradeoff" in alt.lower()):
-                body = alt
-            elif alt and (not body or "see verified spec" in body.lower() or len(body) < 120):
-                body = alt
+            if is_tail_market_comparison_query(query, du):
+                market_cmp = render_tail_market_comparison_answer(query, du)
+                if market_cmp:
+                    body = market_cmp
+            else:
+                from services.broker_execution.comparison_broker_facts import render_comparison_client_answer
+
+                alt = render_comparison_client_answer(query, du)
+                if alt and ("wins on" in alt.lower() or "buy" in alt.lower() or "tradeoff" in alt.lower()):
+                    body = alt
+                elif alt and (not body or "see verified spec" in body.lower() or len(body) < 120):
+                    body = alt
         except Exception:
             pass
 

@@ -2309,7 +2309,18 @@ def run_consultant_retrieval_bundle(
         if isinstance(phly_meta, dict):
             _fp_du = {**phly_meta, **_fp_du}
         _fact_pack_block = attach_fact_pack_to_data_used(query, _fp_du)
-        for _fk in ("fact_pack", "fact_pack_fact_count", "fact_pack_context_applied"):
+        for _fk in (
+            "fact_pack",
+            "fact_pack_fact_count",
+            "fact_pack_context_applied",
+            "phly_rows",
+            "phlydata_rows",
+            "tail_registration",
+            "tail_facts_loaded",
+            "tail_facts",
+            "tail_selected_facts",
+            "faa_master_row",
+        ):
             if _fk in _fp_du:
                 _pre_llm_pipeline_patch[_fk] = _fp_du[_fk]
         if _fact_pack_block:
@@ -2356,6 +2367,9 @@ def run_consultant_retrieval_bundle(
     from services.orchestration.image_session import advisory_image_context_patch
 
     data_used: Dict[str, Any] = dict(phly_meta)
+    if phly_rows:
+        data_used["phly_rows"] = list(phly_rows)
+        data_used["phlydata_rows"] = list(phly_rows)
     if _entity_scope_diag:
         data_used.update(_entity_scope_diag)
         if phly_meta.get("phly_lookup_tokens") is not None:
@@ -2471,12 +2485,37 @@ def run_consultant_retrieval_bundle(
         et = (r.get("entity_type") or "other").replace("_", " ")
         data_used[et] = data_used.get(et, 0) + 1
     
+    if aircraft_images:
+        try:
+            from services.broker_execution.gallery_image_labels import annotate_consultant_gallery_images
+
+            aircraft_images = annotate_consultant_gallery_images(
+                aircraft_images,
+                tail=str(requested_tail_for_images or data_used.get("tail_registration") or ""),
+                gallery_meta=searchapi_gallery_meta,
+                user_query=str(gallery_user_query or query or ""),
+            )
+        except Exception as _gal_lbl_e:
+            logger.debug("gallery_image_labels skipped: %s", _gal_lbl_e)
+
     data_used["aircraft_images"] = aircraft_images
     data_used["consultant_aircraft_image_count"] = len(aircraft_images)
     if searchapi_gallery_meta:
         for _gk, _gv in searchapi_gallery_meta.items():
             if _gv is not None:
                 data_used[_gk] = _gv
+    if aircraft_images and (
+        searchapi_gallery_meta.get("consultant_tail_led_fallback_to_model_images")
+        or searchapi_gallery_meta.get("consultant_cabin_image_tier") == "representative_model"
+        or any(
+            (r.get("image_provenance") or "") == "representative_model_cabin"
+            for r in aircraft_images
+            if isinstance(r, dict)
+        )
+    ):
+        data_used["consultant_aircraft_images_representative"] = 1
+    elif aircraft_images and searchapi_gallery_meta.get("consultant_tail_listing_cabin_enriched"):
+        data_used["consultant_tail_listing_cabin_verified"] = 1
     if (
         user_wants_gallery
         and strict_tail_image_request
@@ -2519,6 +2558,7 @@ def run_consultant_retrieval_bundle(
                     "consultant_premium_intent",
                     "image_query_engine",
                     "image_rank_filter_engine",
+                    "consultant_tail_listing_cabin_enriched",
                 )
                 if data_used.get(k) not in (None, "", False, {})
             }
@@ -3094,6 +3134,13 @@ def run_consultant_retrieval_bundle(
                 "You may say briefly: *Here are representative images of the aircraft type.* "
                 "Do **not** mention internal databases, datasets, scraping, or that tail-specific photos were "
                 "unavailable. Do **not** paste promotional or charter-booking links in the answer text."
+            )
+        elif data_used.get("consultant_tail_listing_cabin_verified"):
+            system_prompt += (
+                "\n\n**Aircraft images:** Verified cabin/interior photos for this **exact tail** are shown in the app "
+                "(from the aircraft's broker/listing page). Open naturally — e.g. *Here is the cabin for N-number …* "
+                "— then add brief cabin layout/features from registry/context. Do **not** say no verified images exist. "
+                "Do **not** paste image URLs or booking links in the answer text."
             )
         else:
             system_prompt += (

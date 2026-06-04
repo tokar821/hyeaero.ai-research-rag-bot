@@ -88,6 +88,7 @@ _ALLOWED_HOST_MARKERS = (
     "aircharterservice.com",
     "celebrityprivatejettracker.com",
     "squarespace-cdn.com",
+    "website-files.com",
     "shopify.com",
     "cdninstagram.com",
     "fbcdn.net",
@@ -131,7 +132,16 @@ def consultant_report_image_url_allowed(url: str) -> bool:
             return False
     except ValueError:
         pass
-    return any(m in host for m in _ALLOWED_HOST_MARKERS)
+    if not any(m in host for m in _ALLOWED_HOST_MARKERS):
+        return False
+    try:
+        from services.tail_marketing_listing_images import _image_url_looks_junk_marketing_asset
+
+        if _image_url_looks_junk_marketing_asset(u):
+            return False
+    except Exception:
+        pass
+    return True
 
 
 def fetch_consultant_report_image(url: str) -> Optional[Tuple[bytes, str]]:

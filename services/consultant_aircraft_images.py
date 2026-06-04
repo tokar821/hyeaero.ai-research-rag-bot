@@ -755,6 +755,11 @@ _LISTING_IMAGE_HOST_MARKERS = (
     "apn.com",
     "tap.",
     "planefax",
+    "virtualhangar.com",
+    "flyexclusive.com",
+    "flyexclusive.",
+    "flyjet.com",
+    "phly.com",
 )
 
 _OG_IMAGE_RE = re.compile(
@@ -941,11 +946,11 @@ def _listing_url_allowed_for_fetch(url: str) -> bool:
     return any(m in host for m in _LISTING_IMAGE_HOST_MARKERS)
 
 
-def fetch_og_image_url(listing_page_url: str, *, timeout: float = 6.0) -> Optional[str]:
-    """GET listing HTML (first chunk) and return og:image if present and https."""
+def fetch_listing_page_html(listing_page_url: str, *, timeout: float = 6.0) -> str:
+    """GET listing HTML (first ~400KB) when host is on the consultant allowlist."""
     u = (listing_page_url or "").strip()
     if not u.startswith("http") or not _listing_url_allowed_for_fetch(u):
-        return None
+        return ""
     try:
         r = requests.get(
             u,
@@ -956,15 +961,25 @@ def fetch_og_image_url(listing_page_url: str, *, timeout: float = 6.0) -> Option
         r.raise_for_status()
         ct = (r.headers.get("Content-Type") or "").lower()
         if "html" not in ct and "text" not in ct and ct:
-            return None
+            return ""
         raw = b""
         for chunk in r.iter_content(chunk_size=65536):
             raw += chunk
             if len(raw) >= 400_000:
                 break
-        text = raw.decode("utf-8", errors="ignore")
+        return raw.decode("utf-8", errors="ignore")
     except Exception as e:
-        logger.debug("og:image fetch failed for %s: %s", u[:80], e)
+        logger.debug("listing HTML fetch failed for %s: %s", u[:80], e)
+        return ""
+
+
+def fetch_og_image_url(listing_page_url: str, *, timeout: float = 6.0) -> Optional[str]:
+    """GET listing HTML (first chunk) and return og:image if present and https."""
+    u = (listing_page_url or "").strip()
+    if not u.startswith("http") or not _listing_url_allowed_for_fetch(u):
+        return None
+    text = fetch_listing_page_html(u, timeout=timeout)
+    if not text:
         return None
     m = _OG_IMAGE_RE.search(text) or _OG_IMAGE_RE_ALT.search(text)
     if not m:
@@ -1220,6 +1235,15 @@ def build_consultant_aircraft_images(
 
     cap = consultant_gallery_image_cap(max_gallery_images)
 
+    _gallery_visual_facet = "any"
+    try:
+        from services.broker_execution.gallery_visual_intent import resolve_gallery_visual_intent
+
+        _gallery_visual_facet = resolve_gallery_visual_intent(user_query or "", None)
+    except Exception:
+        pass
+    _cabin_listing_ok = _gallery_visual_facet in ("cabin", "interior")
+
     # Defensive: some upstream paths may pass placeholder marketing types; treat them as unset.
     if isinstance(required_marketing_type, str):
         rmt_l = required_marketing_type.strip().lower()
@@ -1432,6 +1456,11 @@ def build_consultant_aircraft_images(
             except Exception:
                 pass
             _sea_meta: Dict[str, Any] = gallery_meta_out if gallery_meta_out is not None else {}
+            _pi_for_fetch: Dict[str, Any] = (
+                dict(premium_intent) if isinstance(premium_intent, dict) else {}
+            )
+            if phly_rows:
+                _pi_for_fetch["phly_rows"] = phly_rows
             _sea_meta["consultant_premium_intent"] = premium_intent
             _sea_meta["consultant_gallery_marketing_anchor"] = gallery_mt or None
             _eng = premium_intent.get("image_query_engine")
@@ -1449,11 +1478,11 @@ def build_consultant_aircraft_images(
                     queries=queries,
                     canonical_tail=_canon,
                     strict_tail_mode=_strict_fetch,
-                    marketing_type_for_model_match=(gallery_mt if not _strict_fetch else None),
+                    marketing_type_for_model_match=gallery_mt or None,
                     max_out=cap,
                     user_query=user_query or "",
                     gallery_meta=_sea_meta,
-                    premium_intent=premium_intent,
+                    premium_intent=_pi_for_fetch,
                 )
                 if not strict_tail:
                     if gallery_mt:
@@ -1508,8 +1537,36 @@ def build_consultant_aircraft_images(
                     except Exception:
                         pass
 
-                # Strict tail: SearchAPI-only, no listing/model substitution (Part 3).
+                # Strict tail: SearchAPI first; cabin may enrich from broker listing HTML galleries.
                 if strict_tail:
+                    facet = _gallery_visual_facet
+                    try:
+                        from services.broker_execution.gallery_visual_intent import (
+                            filter_gallery_by_visual_intent,
+                            resolve_gallery_visual_intent,
+                        )
+
+                        facet = resolve_gallery_visual_intent(user_query or "", premium_intent)
+                        if facet in ("cabin", "interior", "cockpit", "exterior"):
+                            sea = filter_gallery_by_visual_intent(sea, facet=facet, max_out=cap)
+                    except Exception:
+                        pass
+                    if not sea and rt and facet in ("cabin", "interior"):
+                        try:
+                            from services.tail_marketing_listing_images import (
+                                enrich_gallery_from_tail_marketing_listings,
+                            )
+
+                            sea = enrich_gallery_from_tail_marketing_listings(
+                                tail=rt,
+                                phly_rows=phly_rows,
+                                max_out=cap,
+                                facet=facet,
+                            )
+                            if sea and gallery_meta_out is not None:
+                                gallery_meta_out["consultant_tail_listing_cabin_enriched"] = True
+                        except Exception:
+                            pass
                     return sea[:cap]
                 # Strict model: no listing galleries mixed in (same policy as Tavily strict-model path).
                 if strict_model_title_alt_match and (required_marketing_type or "").strip():
@@ -1529,7 +1586,7 @@ def build_consultant_aircraft_images(
                     tavily_payload = dict(tavily_payload or {})
                     tavily_payload["images"] = []
     except Exception as _sea_e:
-        logger.debug("SearchAPI gallery path skipped: %s", _sea_e)
+        logger.warning("SearchAPI gallery path failed: %s", _sea_e, exc_info=True)
 
     # Strict tail mode (Option B): only accept images that are linked to pages mentioning the tail token.
     if strict_tail_page_match and (required_tail or "").strip():
@@ -1631,8 +1688,8 @@ def build_consultant_aircraft_images(
 
     # Pre-scraped gallery URLs (Controller / AircraftExchange) keyed by marketplace listing id.
     n_scrape = 0
-    if strict_model_title_alt_match or strict_tail_page_match:
-        # When user asked for strict-tail or strict-model matching, do not substitute listing-gallery images.
+    if strict_model_title_alt_match or (strict_tail_page_match and not _cabin_listing_ok):
+        # Strict tail + exterior: no listing substitution. Cabin/interior may use listing galleries.
         listing_rows = None
     if listing_rows:
         for lr in listing_rows[:_MAX_LISTINGS_FOR_SCRAPE_GALLERY]:
@@ -1664,29 +1721,75 @@ def build_consultant_aircraft_images(
                 per += 1
 
     # URLs come from aircraft_listings rows already joined to this tail/serial — safe to scrape og:image.
-    if strict_model_title_alt_match or strict_tail_page_match:
+    if strict_model_title_alt_match or (strict_tail_page_match and not _cabin_listing_ok):
         listing_urls = None
+    if strict_tail_page_match and _cabin_listing_ok and (required_tail or "").strip():
+        try:
+            from services.tail_marketing_listing_images import discover_tail_marketing_listing_urls
+
+            _extra = discover_tail_marketing_listing_urls(
+                str(required_tail).strip(), phly_rows
+            )
+            if _extra:
+                _base = list(listing_urls or [])
+                _seen_u = {u.lower() for u in _base if u}
+                for u in _extra:
+                    if u.lower() not in _seen_u:
+                        _base.append(u)
+                        _seen_u.add(u.lower())
+                listing_urls = _base
+        except Exception:
+            pass
     if listing_urls:
         n = 0
+        _tail_lbl = str(required_tail or "").strip()
         for page in listing_urls:
             if n >= max_listing_og_fetches:
                 break
             page = (page or "").strip()
             if not page.startswith("http"):
                 continue
-            img = fetch_og_image_url(page, timeout=og_timeout)
+            imgs: List[str] = []
+            if _cabin_listing_ok and _tail_lbl:
+                try:
+                    from services.tail_marketing_listing_images import fetch_marketing_listing_page_images
+
+                    imgs = fetch_marketing_listing_page_images(
+                        page,
+                        tail=_tail_lbl,
+                        want_cabin=True,
+                        max_images=3,
+                        timeout=og_timeout,
+                    )
+                except Exception:
+                    imgs = []
+            if not imgs:
+                og = fetch_og_image_url(page, timeout=og_timeout)
+                if og:
+                    imgs = [og]
             n += 1
-            if not img or img in seen:
-                continue
-            seen.add(img)
-            final.append(
-                {
-                    "url": img,
-                    "source": "listing_og",
-                    "description": "Listing page preview image (og:image)",
-                    "page_url": page,
-                    "lookup_key": None,
-                }
-            )
+            for img in imgs:
+                if not img or img in seen:
+                    continue
+                seen.add(img)
+                _desc = (
+                    f"{_tail_lbl} cabin interior — listing page"
+                    if _cabin_listing_ok and _tail_lbl
+                    else "Listing page preview image"
+                )
+                final.append(
+                    {
+                        "url": img,
+                        "source": "listing_scrape" if _cabin_listing_ok else "listing_og",
+                        "description": _desc,
+                        "title": _desc,
+                        "page_url": page,
+                        "lookup_key": None,
+                    }
+                )
+                if len(final) >= cap:
+                    break
+            if len(final) >= cap:
+                break
 
     return final[:cap]

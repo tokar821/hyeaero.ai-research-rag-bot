@@ -99,6 +99,13 @@ def render_client_answer(
     if plan.final_contract:
         body = enforce_final_render_contract(body, query=q, data_used=du)
 
+    try:
+        from services.broker_execution.output_governance import _guard_tail_acquisition_and_mission_answer
+
+        body = _guard_tail_acquisition_and_mission_answer(body, query=q, data_used=du)
+    except Exception:
+        pass
+
     du["output_governance_applied"] = 1
     du["model_authority_skipped_llm_primary"] = 1
     du["client_answer_renderer_applied"] = 1

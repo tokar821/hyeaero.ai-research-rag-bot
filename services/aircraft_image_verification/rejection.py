@@ -93,24 +93,37 @@ def _blob(row: Dict[str, Any]) -> str:
     ).lower()
 
 
-def _section_mismatch(blob: str, section: str) -> Optional[str]:
+def _section_mismatch(
+    blob: str,
+    section: str,
+    *,
+    row: Optional[Dict[str, Any]] = None,
+    tail: Optional[str] = None,
+) -> Optional[str]:
     sec = (section or "exterior").strip().lower()
     if sec in ("interior",):
         sec = "cabin"
-    spotter_host = bool(re.search(r"jetphotos|planespotters|airliners\.net", blob, re.I))
-    if sec in ("cabin", "bedroom", "lavatory"):
-        if _COCKPIT_STRONG.search(blob) and not _CABIN_STRONG.search(blob):
-            return "cockpit_when_cabin_requested"
-        if _EXTERIOR_STRONG.search(blob) and not _CABIN_STRONG.search(blob):
-            # Spotter URLs often say "jetphotos" without cabin keywords — allow if title is not exterior-only.
-            if spotter_host and not re.search(
-                r"\b(ramp|takeoff|landing|taxi|airborne|walkaround|exterior|parked)\b",
-                blob,
-                re.I,
-            ):
+    if row and tail and sec in ("cabin", "bedroom", "lavatory"):
+        try:
+            from services.tail_marketing_listing_images import row_is_tail_listing_cabin_candidate
+
+            if row_is_tail_listing_cabin_candidate(row, tail):
                 return None
-            if not spotter_host:
-                return "exterior_when_cabin_requested"
+        except Exception:
+            pass
+    if sec in ("cabin", "bedroom", "lavatory"):
+        if _CABIN_STRONG.search(blob) or re.search(
+            r"\b(interior|salon|galley|divan|lavatory|seating\s+layout|club\s+seat)\b",
+            blob,
+            re.I,
+        ):
+            if _COCKPIT_STRONG.search(blob) and not _CABIN_STRONG.search(blob):
+                return "cockpit_when_cabin_requested"
+            return None
+        if _COCKPIT_STRONG.search(blob):
+            return "cockpit_when_cabin_requested"
+        # No cabin cues — reject (including jetphotos ramp shots with generic titles).
+        return "exterior_when_cabin_requested"
     if sec == "cockpit":
         if _CABIN_STRONG.search(blob) and not _COCKPIT_STRONG.search(blob):
             return "cabin_when_cockpit_requested"
@@ -150,7 +163,7 @@ def evaluate_rejection(
         return "generic_cabin_no_aircraft_anchor"
 
     if ctx.tail or ctx.model:
-        identity = _identity_rejection(blob, ctx)
+        identity = _identity_rejection(blob, ctx, row=row)
         if identity:
             return identity
         class_rej = _airframe_class_mismatch(blob, ctx)
@@ -197,13 +210,36 @@ def _airframe_class_mismatch(blob: str, ctx: ImageVerificationContext) -> Option
     return None
 
 
-def _identity_rejection(blob: str, ctx: ImageVerificationContext) -> Optional[str]:
+def _identity_rejection(
+    blob: str,
+    ctx: ImageVerificationContext,
+    *,
+    row: Optional[Dict[str, Any]] = None,
+) -> Optional[str]:
     """Require exact tail OR exact model match — no unanchored generics."""
     from rag.aviation_tail import normalize_tail_token
     from services.searchapi_aircraft_images import strip_domains
 
     if ctx.tail:
         tail = normalize_tail_token(ctx.tail)
+        page = ""
+        if row:
+            page = str(row.get("_source_page") or row.get("page_url") or row.get("link") or "")
+        if page:
+            try:
+                from services.tail_marketing_listing_images import is_tail_marketing_listing_page
+
+                if is_tail_marketing_listing_page(page, tail):
+                    conflict_blob = strip_domains(f"{blob} {page}")
+                    conflict_u = conflict_blob.upper()
+                    import re as _re
+
+                    for m in _re.finditer(r"\bN[1-9A-Z][A-Z0-9]{1,5}\b", conflict_u):
+                        if normalize_tail_token(m.group(0)) != tail:
+                            return "conflicting_tail_on_image"
+                    return None
+            except Exception:
+                pass
         bag_u = strip_domains(blob).upper()
         if tail and tail not in bag_u and tail.lower() not in blob:
             return "tail_number_not_verified"

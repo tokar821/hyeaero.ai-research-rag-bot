@@ -72,6 +72,10 @@ _TRUSTED_MEDIA_FRAGS: Tuple[Tuple[str, int], ...] = (
 )
 
 _VERIFIED_LISTING_FRAGS: Tuple[Tuple[str, int], ...] = (
+    ("virtualhangar.com", 760),
+    ("website-files.com", 720),
+    ("flyexclusive.com", 740),
+    ("phly.com", 730),
     ("controller.com", 700),
     ("aircraftexchange", 690),
     ("globalair.com", 680),

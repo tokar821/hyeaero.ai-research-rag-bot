@@ -593,6 +593,15 @@ def generate_ultra_precise_google_image_queries_json(
                 break
         qs = _uniq_cap(qs)
 
+    if tail and itype in ("cabin", "interior"):
+        try:
+            from services.tail_marketing_listing_images import append_tail_marketing_cabin_queries
+
+            qs = append_tail_marketing_cabin_queries(qs, tail)
+            qs = _uniq_cap(qs)
+        except Exception:
+            pass
+
     qs = _pin_compact_google_image_queries_first(
         qs,
         user_low=user_low,

@@ -204,6 +204,12 @@ def render_engine_program_answer(query: str, data_used: Optional[Dict[str, Any]]
 def render_acquisition_risks_answer(query: str, data_used: Optional[Dict[str, Any]] = None) -> str:
     """Client-facing acquisition risks (broker voice)."""
     du = data_used if isinstance(data_used, dict) else {}
+    try:
+        from services.broker_execution.tail_fact_loader import ensure_tail_facts_for_query
+
+        ensure_tail_facts_for_query(query, du)
+    except Exception:
+        pass
     reg = _reg(query, du)
     phly = _phly_row(du, reg)
     if not reg and not phly:
@@ -230,6 +236,20 @@ def render_acquisition_risks_answer(query: str, data_used: Optional[Dict[str, An
     else:
         bullets.append("• Engine program: not listed — high risk; verify MSP/JSSI status before LOI.")
 
+    apu = (phly.get("apu_program") or "").strip()
+    if apu:
+        bullets.append(f"• APU program: {apu} — confirm enrollment and transfer with the engine programs.")
+
+    maint = (phly.get("maintenance_tracking_program") or phly.get("maintenance_program") or "").strip()
+    if maint:
+        bullets.append(
+            f"• Maintenance tracking: {maint} — confirm status reports, back-to-birth records, and no gaps."
+        )
+    else:
+        bullets.append(
+            "• Maintenance tracking: not listed — verify CAMP/Cescom (or equivalent) and log completeness."
+        )
+
     damage = (phly.get("damage_history") or phly.get("incident_history") or "").strip()
     bullets.append(
         f"• Damage / airworthiness: {damage if damage else 'not flagged in sync — still pull NTSB and logbooks.'}"
@@ -246,7 +266,7 @@ def render_acquisition_risks_answer(query: str, data_used: Optional[Dict[str, An
 
     bullets.append("• Resale: model/year/program state vs active inventory — don't overpay for a thin buyer pool.")
 
-    return opener + "\n" + "\n".join(bullets[:6])
+    return opener + "\n" + "\n".join(bullets[:8])
 
 
 def render_tail_detail_answer(query: str, data_used: Optional[Dict[str, Any]] = None) -> str:
