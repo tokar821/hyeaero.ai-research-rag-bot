@@ -27,7 +27,11 @@ class TailDepthMode(str, Enum):
 
 
 _OWNER_RE = re.compile(
-    r"(?is)\b(?:who\s+owns|who\s+is\s+the\s+owner|owner\s+of|ownership\s+of|registered\s+owner)\b"
+    r"(?is)\b(?:who\s+owns|who\s+is\s+(?:the\s+)?owner|owner\s+of|ownership\s+of|registered\s+owner)\b"
+)
+_REGISTRY_LOOKUP_RE = re.compile(
+    r"(?is)\b(?:registry\s+lookup|registration\s+lookup|registrant\s+lookup|"
+    r"where\s+.{0,40}?\s+registered|registered\s+to|registration\s+details|faa\s+registry)\b"
 )
 _SALE_RE = re.compile(
     r"(?is)\b(?:for\s+sale|on\s+the\s+market|sale\s+status|currently\s+listed|listed\s+for\s+sale)\b"
@@ -116,6 +120,9 @@ def classify_tail_depth_mode(query: str) -> Tuple[TailDepthMode, Optional[str]]:
         return TailDepthMode.SALE_STATUS, reg
 
     if _OWNER_RE.search(q):
+        return TailDepthMode.OWNER, reg
+
+    if _REGISTRY_LOOKUP_RE.search(q):
         return TailDepthMode.OWNER, reg
 
     if _ACQUISITION_RE.search(q):

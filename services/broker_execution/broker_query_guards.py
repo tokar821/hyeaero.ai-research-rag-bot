@@ -16,6 +16,14 @@ _PRE_OFFER_RE = re.compile(
     r"(?is)\b(?:first\s+thing\s+you\s+would\s+verify|before\s+making\s+an\s+offer|"
     r"before\s+(?:i\s+)?(?:make|making)\s+an\s+offer|what\s+to\s+verify\s+before)\b"
 )
+_ENGINE_PROGRAM_RE = re.compile(
+    r"(?is)\b(?:engine\s+program|apu\s+program|enrolled\s+on\s+(?:an?\s+)?engine|"
+    r"on\s+(?:msp|jssi)|propulsion\s+program)\b"
+)
+_LISTING_DUMP_RE = re.compile(
+    r"(?is)\b(?:airframe\s+(?:hours|total\s+time)|asking\s+price|ask\s+price|"
+    r"listing\s+url|maintenance\s+tracking|apu\s+total\s+time)\b"
+)
 _COSMETIC_REFRESH_RE = re.compile(
     r"(?is)\b(?:fresh\s+paint|fresh\s+interior|new\s+interior|recent\s+price\s+reduction|"
     r"price\s+reduction|won'?t\s+release\s+maintenance|until\s+after\s+loi|"
@@ -133,16 +141,69 @@ def is_pre_offer_verification_query(query: str) -> bool:
     return bool(_PRE_OFFER_RE.search(query or ""))
 
 
-def render_pre_offer_verification_answer(query: str) -> str:
-    m = re.search(r"(?is)\b((?:19|20)\d{2})\b", query or "")
-    year = m.group(1) if m else "this"
-    m2 = re.search(
-        r"(?is)\b(citation\s+longitude|challenger|gulfstream|falcon\s*2000|falcon|praetor)\b",
-        query or "",
+def is_engine_program_query(query: str) -> bool:
+    return bool(_ENGINE_PROGRAM_RE.search(query or ""))
+
+
+def _answer_looks_like_listing_dump(body: str) -> bool:
+    """LLM listing narrative when the user asked for photos/facets."""
+    low = (body or "").lower()
+    if not _LISTING_DUMP_RE.search(low):
+        return False
+    signals = (
+        r"airframe\s+(?:hours|total\s+time)",
+        r"asking\s+price|ask\s+price",
+        r"engine\s+program",
+        r"for\s+sale",
+        r"\bserial\b",
     )
-    model = m2.group(1).title() if m2 else "the aircraft"
-    if re.search(r"falcon\s*2000", (query or "").lower()):
-        model = "Falcon 2000LXS"
+    return sum(1 for pat in signals if re.search(pat, low)) >= 2
+
+
+def _pre_offer_subject_phrase(query: str) -> str:
+    q = query or ""
+    try:
+        from rag.aviation_tail import primary_registration_from_query
+
+        tail = primary_registration_from_query(q)
+    except Exception:
+        tail = None
+    year_m = re.search(r"(?is)\b((?:19|20)\d{2})\b", q)
+    year = year_m.group(1) if year_m else ""
+    model_m = re.search(
+        r"(?is)\b(citation\s+longitude|citation\s+latitude|challenger\s*\d+|gulfstream|falcon\s*2000|falcon|praetor)\b",
+        q,
+    )
+    model = ""
+    if model_m:
+        model = model_m.group(1).strip()
+        if re.search(r"falcon\s*2000", model, re.I):
+            model = "Falcon 2000LXS"
+        elif re.search(r"challenger\s*300", model, re.I):
+            model = "Challenger 300"
+        elif re.search(r"challenger\s*350", model, re.I):
+            model = "Challenger 350"
+        elif re.search(r"citation\s+longitude", model, re.I):
+            model = "Citation Longitude"
+        elif re.search(r"citation\s+latitude", model, re.I):
+            model = "Citation Latitude"
+        else:
+            model = model.title()
+    if tail and not model:
+        return tail
+    if year and model:
+        return f"a {year} {model}"
+    if year:
+        return f"a {year} aircraft"
+    if model:
+        return f"a {model}"
+    if tail:
+        return tail
+    return "this aircraft"
+
+
+def render_pre_offer_verification_answer(query: str) -> str:
+    subject = _pre_offer_subject_phrase(query or "")
     ask_m = re.search(r"(?is)\$\s*([\d.]+)\s*m", query or "")
     ask_line = f" at ${ask_m.group(1)}M ask" if ask_m else ""
     steps = [
@@ -160,7 +221,7 @@ def render_pre_offer_verification_answer(query: str) -> str:
     want_three = bool(re.search(r"(?is)\bfirst\s+three\b", query or ""))
     pick = steps[:3] if want_three else steps
     header = (
-        f"Before an LOI on a {year} {model}{ask_line}, I would verify "
+        f"Before an LOI on {subject}{ask_line}, I would verify "
         + ("these three first:" if want_three else "in this order:")
     )
     lines = [header]
@@ -730,6 +791,8 @@ def should_skip_llm_for_broker_guard(
         return True
     if is_pre_offer_verification_query(q):
         return True
+    if is_engine_program_query(q):
+        return True
     if is_resale_maximization_query(q):
         return True
     if is_portfolio_mission_buy_query(q):
@@ -836,9 +899,18 @@ def render_gallery_forward_answer(query: str, data_used: Optional[Dict[str, Any]
             )
         except Exception:
             pass
+    wants_cockpit = bool(re.search(r"(?is)\bcockpit\b", query or ""))
+    wants_cabin = bool(re.search(r"(?is)\bcabin|cabine|interior\b", query or ""))
+    if wants_cockpit:
+        facet = "cockpit"
+        noun = "cockpit photo"
+    elif wants_cabin:
+        facet = "cabin"
+        noun = "cabin photo"
+    else:
+        facet = "photo"
+        noun = "photo"
     if raw_n == 0:
-        wants_cabin = bool(re.search(r"(?is)\bcabin|cabine|interior\b", query or ""))
-        facet = "cabin" if wants_cabin else "photo"
         return (
             f"No usable **{facet}** images for **{label}**"
             + (f" ({model})" if model else "")
@@ -846,8 +918,6 @@ def render_gallery_forward_answer(query: str, data_used: Optional[Dict[str, Any]
             "I would check JetPhotos, Planespotters, Virtual Hangar, or the broker listing — "
             "the caption must show this exact registration before you treat a photo as this aircraft."
         )
-    wants_cabin = bool(re.search(r"(?is)\bcabin|cabine|interior\b", query or ""))
-    noun = "cabin photo" if wants_cabin else "photo"
     if raw_n != 1:
         noun += "s"
     return (
@@ -897,6 +967,15 @@ def try_broker_query_guard(
         return render_resale_maximization_answer(q)
     if is_portfolio_mission_buy_query(q):
         return render_portfolio_mission_buy_answer(q)
+    if is_engine_program_query(q):
+        try:
+            from services.broker_execution.tail_acquisition_dossier import render_engine_program_answer
+
+            eng = render_engine_program_answer(q, data_used)
+            if eng:
+                return eng
+        except Exception:
+            pass
 
     if is_route_map_query(q):
         prose, _patch = render_route_map_broker_answer(q, data_used)
@@ -904,13 +983,47 @@ def try_broker_query_guard(
             data_used.update(_patch)
         return prose
 
+    try:
+        from services.broker_execution.mission_broker_answer import (
+            build_deterministic_mission_answer,
+            is_mission_shaped_query,
+        )
+
+        if is_mission_shaped_query(q):
+            mission = build_deterministic_mission_answer(q, data_used)
+            low_body = (body or "").lower()
+            if mission and (
+                re.search(
+                    r"(?is)\bdoes not realistically\b|expect one-stop\b|budget.*too low\b",
+                    mission.lower(),
+                )
+                or re.search(
+                    r"(?is)\b(?:global\s+\d{3,4}|gulfstream\s+g\d|g650|g700|g500|bombardier\s+global)\b",
+                    low_body,
+                )
+                or re.search(
+                    r"(?is)\b(?:here are a few|consider the following|you may need to consider|"
+                    r"great-circle distance)\b",
+                    low_body,
+                )
+            ):
+                return mission
+    except Exception:
+        pass
+
     if is_tail_gallery_intent(q, history):
         low = (body or "").lower()
         if (
             gallery_contradicts_answer(body, data_used)
             or not gallery_images_present(data_used)
             or ("below" not in low and "gallery" not in low)
-            or re.search(r"(?is)\b(?:broker'?s?\s+perspective|airframe\s+hours|maintenance\s+records|passengers?)\b", low)
+            or re.search(
+                r"(?is)\b(?:broker'?s?\s+perspective|airframe\s+(?:hours|total\s+time)|"
+                r"maintenance\s+records|passengers?|would you like to see)\b",
+                low,
+            )
+            or _answer_looks_like_listing_dump(body)
+            or re.search(r"(?is)\brecommend reaching out\b", low)
         ):
             return render_gallery_forward_answer(q, data_used)
 
@@ -921,10 +1034,14 @@ def try_broker_query_guard(
 
     if is_comparison_query(q):
         try:
-            from services.broker_execution.comparison_broker_facts import render_comparison_client_answer
+            from services.broker_execution.comparison_broker_facts import (
+                attach_comparison_broker_ui,
+                render_comparison_display_answer,
+            )
 
-            alt = render_comparison_client_answer(q, data_used)
-            if alt and len(alt) > 120:
+            ui = attach_comparison_broker_ui(q, data_used)
+            alt = render_comparison_display_answer(q, data_used) if ui else ""
+            if alt and len(alt) > 20:
                 if comparison_answer_looks_incomplete(body, q) or "wins on" not in (body or "").lower():
                     return alt
         except Exception:

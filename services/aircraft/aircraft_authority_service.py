@@ -38,6 +38,12 @@ _AKAL_ALIAS_MAP: Dict[str, str] = {
     "gulfstream g700": "Gulfstream G700",
     "global 7500": "Global 7500",
     "falcon 7x": "Falcon 7X",
+    "falcon 2000 lxs": "Falcon 2000LXS",
+    "falcon 2000lxs": "Falcon 2000LXS",
+    "dassault falcon 2000lxs": "Falcon 2000LXS",
+    "praetor 600": "Praetor 600",
+    "challenger 300": "Challenger 300",
+    "citation latitude": "Citation Latitude",
 }
 
 # Canonical display name → verified profile lookup key (same-aircraft display aliases only).
@@ -66,7 +72,9 @@ _MANUFACTURER_BY_CANONICAL: Dict[str, str] = {
     "Falcon 8X": "Dassault",
     "Falcon 7X": "Dassault",
     "Falcon 2000": "Dassault",
+    "Falcon 2000LXS": "Dassault",
     "Praetor 600": "Embraer",
+    "Challenger 300": "Bombardier",
     "Legacy 600": "Embraer",
     "Learjet 75": "Bombardier",
     "Pilatus PC-24": "Pilatus",
@@ -113,6 +121,79 @@ _STATIC_ENRICHMENT: Dict[str, Dict[str, Any]] = {
         "manufacturer": "Dassault",
         "display_alias": "Dassault Falcon 8X",
     },
+    "Falcon 2000LXS": {
+        "manufacturer": "Dassault",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 10,
+        "max_cruise_speed": 564,
+        "cabin_height_ft": 6.17,
+        "cabin_width_ft": 7.67,
+        "cabin_length_ft": 25.58,
+        "takeoff_distance_ft": 4325,
+        "production_start_year": 2014,
+        "current_in_production": True,
+    },
+    "Praetor 600": {
+        "manufacturer": "Embraer",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 10,
+        "max_cruise_speed": 466,
+        "cabin_height_ft": 6.0,
+        "cabin_width_ft": 6.83,
+        "cabin_length_ft": 27.5,
+        "takeoff_distance_ft": 4717,
+        "production_start_year": 2019,
+        "current_in_production": True,
+    },
+    "Challenger 300": {
+        "manufacturer": "Bombardier",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 9,
+        "max_cruise_speed": 459,
+        "cabin_height_ft": 6.08,
+        "cabin_width_ft": 7.17,
+        "cabin_length_ft": 28.5,
+        "takeoff_distance_ft": 4850,
+        "production_start_year": 2004,
+        "production_end_year": 2014,
+        "current_in_production": False,
+    },
+    "Challenger 350": {
+        "manufacturer": "Bombardier",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 9,
+        "max_cruise_speed": 470,
+        "cabin_height_ft": 6.08,
+        "cabin_width_ft": 7.17,
+        "cabin_length_ft": 28.5,
+        "takeoff_distance_ft": 4800,
+        "production_start_year": 2014,
+        "current_in_production": True,
+    },
+    "Citation Latitude": {
+        "manufacturer": "Textron",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 9,
+        "max_cruise_speed": 446,
+        "cabin_height_ft": 6.0,
+        "cabin_width_ft": 6.5,
+        "cabin_length_ft": 21.83,
+        "takeoff_distance_ft": 3900,
+        "production_start_year": 2015,
+        "current_in_production": True,
+    },
+    "Gulfstream G280": {
+        "manufacturer": "Gulfstream",
+        "passenger_capacity_min": 8,
+        "passenger_capacity_max": 10,
+        "max_cruise_speed": 482,
+        "cabin_height_ft": 6.25,
+        "cabin_width_ft": 6.83,
+        "cabin_length_ft": 25.83,
+        "takeoff_distance_ft": 4800,
+        "production_start_year": 2012,
+        "current_in_production": True,
+    },
 }
 
 _COMPETITORS: Dict[str, List[str]] = {
@@ -157,6 +238,7 @@ class AircraftAuthorityRecord:
     cabin_height: Optional[float]
     cabin_width: Optional[float]
     cabin_length: Optional[float]
+    takeoff_distance_ft: Optional[int]
     production_start_year: Optional[int]
     production_end_year: Optional[int]
     current_in_production: bool
@@ -177,6 +259,7 @@ class AircraftAuthorityRecord:
             "cabin_height": self.cabin_height,
             "cabin_width": self.cabin_width,
             "cabin_length": self.cabin_length,
+            "takeoff_distance_ft": self.takeoff_distance_ft,
             "production_start_year": self.production_start_year,
             "production_end_year": self.production_end_year,
             "current_in_production": self.current_in_production,
@@ -328,6 +411,15 @@ def get_aircraft_authority_record(
         category = _category_label(spec.category)
 
     enrich = _STATIC_ENRICHMENT.get(canonical, {})
+    takeoff_ft = int(enrich.get("takeoff_distance_ft") or 0)
+    if not takeoff_ft:
+        try:
+            from services.mission.aircraft_profiles import AIRCRAFT_PROFILES
+
+            prof_runway = (AIRCRAFT_PROFILES.get(lookup_key) or AIRCRAFT_PROFILES.get(canonical) or {})
+            takeoff_ft = int(prof_runway.get("runway_ft") or 0)
+        except Exception:
+            takeoff_ft = 0
     mfr = str(enrich.get("manufacturer") or _MANUFACTURER_BY_CANONICAL.get(canonical, ""))
     if not mfr and " " in canonical:
         mfr = canonical.split(None, 1)[0]
@@ -347,6 +439,7 @@ def get_aircraft_authority_record(
         cabin_height=enrich.get("cabin_height_ft"),
         cabin_width=enrich.get("cabin_width_ft"),
         cabin_length=enrich.get("cabin_length_ft"),
+        takeoff_distance_ft=takeoff_ft or None,
         production_start_year=enrich.get("production_start_year"),
         production_end_year=enrich.get("production_end_year"),
         current_in_production=bool(enrich.get("current_in_production", True)),

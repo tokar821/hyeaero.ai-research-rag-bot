@@ -171,28 +171,51 @@ def _guard_tail_acquisition_and_mission_answer(
             except Exception:
                 pass
 
-    if re.search(r"(?is)\bmiami\b.*\bparis\b|\bparis\b.*\bmiami\b", ql) and re.search(
-        r"(?is)\$?\s*18\s*m|\b18\s+million\b", ql
-    ):
+    mission_budget_q = (
+        (
+            re.search(r"(?is)\bmiami\b.*\bparis\b|\bparis\b.*\bmiami\b", ql)
+            and re.search(r"(?is)\$?\s*18\s*m|\b18\s+million\b", ql)
+        )
+        or (
+            re.search(r"(?is)\b(?:tokyo|narita|haneda)\b", ql)
+            and re.search(r"(?is)\b(?:new\s+york|nyc|teb|jfk)\b", ql)
+            and re.search(r"(?is)\$?\s*\d+\s*m|\b\d+\s+million\b|\bunder\s+\$", ql)
+        )
+    )
+    if mission_budget_q:
         try:
             from services.broker_execution.mission_broker_answer import (
                 _strip_internal_block,
+                build_deterministic_mission_answer,
                 build_mission_feasibility_broker_note,
             )
 
+            mission = build_deterministic_mission_answer(q, du)
+            if mission and (
+                re.search(r"(?is)\bdoes not realistically\b|expect one-stop\b", mission.lower())
+                or re.search(
+                    r"(?is)\b(?:global\s+\d{3,4}|gulfstream\s+g\d|g650|g700|g500|bombardier\s+global)\b",
+                    low,
+                )
+            ):
+                return mission
             note = build_mission_feasibility_broker_note(q)
             lead = _strip_internal_block(note) if note else ""
             ulr_listed = bool(
                 re.search(
                     r"(?is)\b(?:gulfstream\s+g\d|global\s+\d{3,4}|falcon\s+\d|challenger\s+\d|"
-                    r"g\d{3,4}\b|legacy\s+\d)",
+                    r"g\d{3,4}\b|legacy\s+\d|g650|g700)\b",
                     low,
                 )
             )
             if lead and (
-                "budget is too low" in lead.lower()
+                "does not realistically" in lead.lower()
+                or "budget is too low" in lead.lower()
                 or ulr_listed
-                or re.search(r"(?is)\bhere are a few aircraft\b", low)
+                or re.search(
+                    r"(?is)\b(?:here are a few|consider the following|great-circle distance)\b",
+                    low,
+                )
             ):
                 return lead
         except Exception:
@@ -356,6 +379,18 @@ def enforce_final_render_contract(
     body = _strip_forbidden_narrative(body)
 
     if fact_only:
+        profile = str(du.get("execution_profile") or "").strip().lower()
+        depth = str(du.get("tail_depth_mode") or "").strip().lower()
+        if profile in ("tail_owner",) or depth == "owner":
+            try:
+                from services.broker_execution.tail_answer_shaper import render_registry_broker_answer
+
+                broker = render_registry_broker_answer(q, du)
+                if broker:
+                    du["registry_broker_answer_applied"] = 1
+                    return broker
+            except Exception:
+                pass
         facts = du.get("tail_selected_facts") or du.get("tail_facts") or []
         bloated = (
             _FORBIDDEN_ALL_RE.search(raw)
@@ -406,6 +441,14 @@ def apply_governed_client_answer(
         guarded = try_broker_query_guard(q_early, answer or "", du_early, hist)
         if guarded:
             du_early["broker_query_guard_applied"] = 1
+            try:
+                from services.broker_execution.broker_query_guards import is_comparison_query
+                from services.broker_execution.comparison_broker_facts import attach_comparison_broker_ui
+
+                if is_comparison_query(q_early) and not du_early.get("comparison_broker_ui"):
+                    attach_comparison_broker_ui(q_early, du_early)
+            except Exception:
+                pass
             try:
                 from services.broker_execution.broker_query_guards import (
                     is_cosmetic_refresh_query,
@@ -615,6 +658,15 @@ def apply_governed_client_answer(
         attach_retrieval_utilization(body, du)
     except Exception as exc:
         logger.debug("retrieval utilization metrics skipped: %s", exc)
+
+    try:
+        from services.broker_execution.broker_query_guards import is_comparison_query
+        from services.broker_execution.comparison_broker_facts import attach_comparison_broker_ui
+
+        if is_comparison_query(q) and not du.get("comparison_broker_ui"):
+            attach_comparison_broker_ui(q, du)
+    except Exception:
+        pass
 
     du["output_governance_applied"] = 1
     return body.strip()

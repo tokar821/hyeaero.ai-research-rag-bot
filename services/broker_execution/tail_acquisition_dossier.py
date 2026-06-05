@@ -188,15 +188,17 @@ def render_engine_program_answer(query: str, data_used: Optional[Dict[str, Any]]
     phly = _phly_row(du, reg)
     eng = (phly.get("engine_program") or "").strip()
     apu = (phly.get("apu_program") or "").strip()
+    tail = f"**{reg}**" if reg else "this tail"
     if eng:
-        lead = f"Yes. Engine program: {eng}."
+        lead = f"Yes — {tail} is listed on **{eng}**"
         if apu:
-            lead += f" APU: {apu}."
+            lead += f" with APU on **{apu}**"
+        lead += ". Confirm enrollment dates, transferability, and balances in the logs before LOI."
         return lead.strip()
-    if re.search(r"(?is)\b(?:enrolled|on\s+(?:an?\s+)?engine)\b", query or ""):
+    if re.search(r"(?is)\b(?:enrolled|on\s+(?:an?\s+)?engine|engine\s+program)\b", query or ""):
         return (
-            f"No engine program is listed in synced data for {reg or 'this tail'}. "
-            "Treat that as a pre-buy priority — confirm enrollment and transferability in the logs."
+            f"No engine program is listed in synced data for {tail}. "
+            "Treat that as a pre-buy priority — confirm MSP/JSSI enrollment and transfer in the logs."
         )
     return ""
 

@@ -166,10 +166,13 @@ def _spec_from_postgres(canonical: str, row: Dict[str, Any]) -> VerifiedAircraft
             oi = min(0.95, max(0.25, v / 12_000.0))
         except (TypeError, ValueError):
             pass
+    curated_cat = str(curated.get("category") or "").strip()
+    pg_cat = _map_category(row.get("category_name"))
+    category = curated_cat or pg_cat or "large-cabin"
     return VerifiedAircraftSpec(
         canonical_name=canonical,
         source="postgres_aviacost",
-        category=_map_category(row.get("category_name")) or str(curated.get("category") or "large-cabin"),
+        category=category,
         practical_nm=practical,
         brochure_nm=brochure,
         pax_typical=pax,

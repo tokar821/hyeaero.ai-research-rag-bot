@@ -25,8 +25,9 @@ _COMPARISON_TOKEN_MAP: Dict[str, Tuple[str, int]] = {
     "phenom": ("Praetor 600", 82),
     "phenom 300": ("Praetor 600", 84),
     "phenom300": ("Praetor 600", 84),
-    "challenger": ("Challenger 350", 88),
+    "challenger 300": ("Challenger 300", 97),
     "challenger 350": ("Challenger 350", 97),
+    "challenger": ("Challenger 350", 88),
     "challenger 650": ("Challenger 650", 97),
     "citation jet": ("Citation Latitude", 80),
     "citation": ("Citation Latitude", 78),
@@ -104,6 +105,18 @@ def _resolve_side(token: str) -> Tuple[Optional[str], int, str]:
         if reg2:
             return reg2, 96, raw
 
+    from services.consultant.recommendation_engine import detect_models_from_text
+
+    detected = detect_models_from_text(token)
+    if detected:
+        lock = lock_comparison_aircraft(detected)
+        if lock.canonical:
+            return lock.canonical[0], 94, raw
+        if len(detected) == 1:
+            explicit = str(detected[0]).strip()
+            if explicit and re.search(r"\d", explicit):
+                return explicit, 94, raw
+
     # Longest shorthand match.
     best: Optional[Tuple[str, int]] = None
     best_key = ""
@@ -117,15 +130,6 @@ def _resolve_side(token: str) -> Tuple[Optional[str], int, str]:
 
     if best:
         return best[0], best[1], raw
-
-    # Single-word model token from detect_models_from_text
-    from services.consultant.recommendation_engine import detect_models_from_text
-
-    detected = detect_models_from_text(token)
-    if detected:
-        lock = lock_comparison_aircraft(detected)
-        if lock.canonical:
-            return lock.canonical[0], 90, raw
 
     return None, 0, raw
 

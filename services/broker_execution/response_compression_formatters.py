@@ -95,6 +95,17 @@ def format_fact_only(answer: str, *, query: str, data_used: dict) -> str:
             facts = []
 
     if facts:
+        profile = str(data_used.get("execution_profile") or "").strip().lower()
+        depth = str(data_used.get("tail_depth_mode") or "").strip().lower()
+        if profile in ("tail_owner",) or depth == "owner":
+            try:
+                from services.broker_execution.tail_answer_shaper import render_registry_broker_answer
+
+                broker = render_registry_broker_answer(query, data_used)
+                if broker:
+                    return broker
+            except Exception:
+                pass
         compact = _compact_fact_lines(facts, max_lines=5)
         if compact:
             return compact

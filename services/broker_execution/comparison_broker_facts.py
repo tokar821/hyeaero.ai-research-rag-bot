@@ -46,6 +46,16 @@ _COMPARISON_SPEC_ROWS: Dict[Tuple[str, str], List[Tuple[str, str, str]]] = {
         ("Field performance", "Moderate", "Strong"),
         ("Market liquidity", "Strong Bombardier", "Growing Praetor"),
     ],
+    ("challenger 300", "citation latitude"): [
+        ("Speed (ktas)", "~459", "~440"),
+        ("Range (nm)", "~3,100", "~2,700"),
+        ("Cabin width", "Super-mid stand-up", "Midsize stand-up"),
+        ("Baggage", "Strong super-mid", "Adequate midsize"),
+        ("Support network", "Bombardier global", "Textron dense U.S."),
+        ("Resale", "Mature super-mid pool", "Solid midsize liquidity"),
+        ("Operating economics", "Higher super-mid OPEX", "Lower midsize OPEX"),
+        ("Dispatch reliability", "Mature CL300 fleet", "Mature Textron"),
+    ],
     ("challenger 350", "citation latitude"): [
         ("Speed (ktas)", "~470", "~440"),
         ("Range (nm)", "~3,200", "~2,700"),
@@ -141,6 +151,16 @@ _COMPARISON_BROKER_GUIDANCE: Dict[Tuple[str, str], Dict[str, Any]] = {
         "buy_a_if": "Maximum cabin volume and large-cabin comfort are the priority.",
         "buy_b_if": "Range, efficiency, and runway flexibility outweigh cabin size.",
     },
+    ("challenger 300", "citation latitude"): {
+        "a_wins": ["cabin volume", "range", "super-mid comfort", "runway margin"],
+        "b_wins": ["operating economics", "Textron support density", "lower acquisition"],
+        "tradeoffs": [
+            "Challenger 300 wins cabin scale, range, and runway for heavier super-mid missions.",
+            "Latitude wins on OPEX and Textron fleet familiarity for typical midsize trips.",
+        ],
+        "buy_a_if": "You want super-mid cabin and range without stepping to a 350 acquisition band.",
+        "buy_b_if": "Predictable midsize economics matter more than super-mid cabin headroom.",
+    },
     ("challenger 350", "citation latitude"): {
         "a_wins": ["cabin volume", "range", "large-cabin comfort", "hot/high runway margin"],
         "b_wins": ["operating economics", "Textron support density", "lower acquisition"],
@@ -205,8 +225,16 @@ def _pair_key(a: str, b: str) -> Tuple[str, str]:
     return (x, y) if x <= y else (y, x)
 
 
+def _strip_compare_leadin(text: str) -> str:
+    return re.sub(
+        r"(?is)^(?:compare|comparing|difference\s+between|which\s+is\s+better)\s+",
+        "",
+        (text or "").strip(),
+    )
+
+
 def _normalize_comparison_model_name(name: str) -> str:
-    raw = re.sub(r"\s+", " ", (name or "").strip())
+    raw = re.sub(r"\s+", " ", _strip_compare_leadin(name or "")).strip()
     low = raw.lower()
     if re.search(r"falcon\s*2000\s*lxs", low):
         return "Falcon 2000LXS"
@@ -218,6 +246,10 @@ def _normalize_comparison_model_name(name: str) -> str:
         return "Challenger 3500"
     if re.search(r"challenger\s*350", low):
         return "Challenger 350"
+    if re.search(r"challenger\s*300", low):
+        return "Challenger 300"
+    if re.search(r"citation\s+latitude", low):
+        return "Citation Latitude"
     if re.search(r"citation\s+longitude", low):
         return "Citation Longitude"
     if re.search(r"gulfstream\s*g\s*280|\bg280\b", low):
@@ -227,6 +259,14 @@ def _normalize_comparison_model_name(name: str) -> str:
 
 def _resolve_comparison_models(query: str, data_used: dict) -> Tuple[str, str]:
     du = data_used if isinstance(data_used, dict) else {}
+    parts = re.split(r"(?is)\bvs\.?\b|\bversus\b", query or "", maxsplit=1)
+    if len(parts) == 2:
+        left = re.split(r"[.?!]", parts[0], maxsplit=1)[0].strip()
+        right = re.split(r"[.?!]", parts[1], maxsplit=1)[0].strip()
+        a = _normalize_comparison_model_name(left)
+        b = _normalize_comparison_model_name(right)
+        if a != "Aircraft A" and b != "Aircraft B":
+            return a, b
     cv2 = du.get("comparison_v2")
     if isinstance(cv2, dict):
         models = list(cv2.get("models") or [])
@@ -235,14 +275,6 @@ def _resolve_comparison_models(query: str, data_used: dict) -> Tuple[str, str]:
                 _normalize_comparison_model_name(str(models[0])),
                 _normalize_comparison_model_name(str(models[1])),
             )
-    parts = re.split(r"(?is)\bvs\.?\b|\bversus\b", query or "", maxsplit=1)
-    if len(parts) == 2:
-        left = re.split(r"[.?!]", parts[0], maxsplit=1)[0].strip()
-        right = re.split(r"[.?!]", parts[1], maxsplit=1)[0].strip()
-        return (
-            _normalize_comparison_model_name(left),
-            _normalize_comparison_model_name(right),
-        )
     or_m = re.search(
         r"(?is)\b(?:rather\s+operate|would\s+you\s+rather\s+operate|operate)\s+(?:a\s+)?(.+?)\s+or\s+(?:a\s+)?(.+?)(?:\?|$)",
         query or "",
@@ -279,47 +311,318 @@ def _lookup_pair_entry(table: Dict[Tuple[str, str], Any], a: str, b: str) -> Tup
     return None, key, False
 
 
-def _catalog_spec_rows(a: str, b: str) -> List[Tuple[str, str, str]]:
-    """Pull indicative specs from verified catalog when pair table has no entry."""
+def _fmt_range_nm(nm: Optional[float]) -> str:
+    if not nm or nm <= 0:
+        return "—"
+    return f"~{int(round(nm)):,} nm"
+
+
+def _fmt_speed_ktas(ktas: Optional[float]) -> str:
+    if not ktas or ktas <= 0:
+        return "—"
+    return f"~{int(round(ktas))} ktas"
+
+
+def _fmt_passengers(rec: Any) -> str:
+    pmin = int(getattr(rec, "passenger_capacity_min", 0) or 0)
+    pmax = int(getattr(rec, "passenger_capacity_max", 0) or 0)
+    if pmax <= 0:
+        return "—"
+    if pmin > 0 and pmin != pmax:
+        return f"Up to {pmax} ({pmin} typical)"
+    return f"Up to {pmax}"
+
+
+def _fmt_takeoff_ft(ft: Optional[int]) -> str:
+    if not ft or ft <= 0:
+        return "—"
+    return f"~{int(ft):,} ft"
+
+
+def _fmt_cabin_dim(ft_val: Optional[float]) -> str:
+    if not ft_val or ft_val <= 0:
+        return "—"
+    feet = int(ft_val)
+    inches = int(round((ft_val - feet) * 12))
+    if inches >= 12:
+        feet += inches // 12
+        inches = inches % 12
+    if inches:
+        return f"{feet} ft {inches} in"
+    return f"{feet} ft"
+
+
+_PLACEHOLDER_SPEC_MARKERS = (
+    "compare verified",
+    "compare certified",
+    "compare published",
+    "compare oem",
+    "model-dependent",
+)
+
+
+def _pair_authority_records(
+    a: str, b: str
+) -> Tuple[Optional[Any], Optional[Any], List[str]]:
     try:
         from services.aircraft.aircraft_authority_service import get_aircraft_authority_record
 
         ra = get_aircraft_authority_record(aircraft_model=a)
         rb = get_aircraft_authority_record(aircraft_model=b)
-        if not ra or not rb:
-            return []
-        rows: List[Tuple[str, str, str]] = []
-        if ra.nbaa_range_nm and rb.nbaa_range_nm:
-            rows.append(("Range (nm)", f"~{int(ra.nbaa_range_nm):,}", f"~{int(rb.nbaa_range_nm):,}"))
-        if ra.cabin_width and rb.cabin_width:
-            rows.append(("Cabin width (ft)", f"~{ra.cabin_width}", f"~{rb.cabin_width}"))
-        if ra.max_cruise_speed and rb.max_cruise_speed:
-            rows.append(("Speed (ktas)", f"~{int(ra.max_cruise_speed)}", f"~{int(rb.max_cruise_speed)}"))
-        cat_a = str(getattr(ra, "category", "") or "").strip()
-        cat_b = str(getattr(rb, "category", "") or "").strip()
-        if cat_a or cat_b:
-            rows.append(("Category", cat_a or "—", cat_b or "—"))
-        return rows
+    except Exception:
+        return None, None, [a, b]
+    missing: List[str] = []
+    if not ra:
+        missing.append(a)
+    if not rb:
+        missing.append(b)
+    return ra, rb, missing
+
+
+def _spec_rows_from_records(ra: Any, rb: Any) -> List[Tuple[str, str, str]]:
+    rows: List[Tuple[str, str, str]] = []
+    if (ra.nbaa_range_nm or 0) > 0 or (rb.nbaa_range_nm or 0) > 0:
+        rows.append(("Max range", _fmt_range_nm(ra.nbaa_range_nm), _fmt_range_nm(rb.nbaa_range_nm)))
+    if (ra.passenger_capacity_max or 0) > 0 or (rb.passenger_capacity_max or 0) > 0:
+        rows.append(("Max passengers", _fmt_passengers(ra), _fmt_passengers(rb)))
+    if ra.max_cruise_speed or rb.max_cruise_speed:
+        rows.append(
+            ("Max speed", _fmt_speed_ktas(ra.max_cruise_speed), _fmt_speed_ktas(rb.max_cruise_speed))
+        )
+    if ra.takeoff_distance_ft or rb.takeoff_distance_ft:
+        rows.append(
+            (
+                "Takeoff distance",
+                _fmt_takeoff_ft(ra.takeoff_distance_ft),
+                _fmt_takeoff_ft(rb.takeoff_distance_ft),
+            )
+        )
+    if ra.cabin_length or rb.cabin_length:
+        rows.append(
+            ("Cabin length", _fmt_cabin_dim(ra.cabin_length), _fmt_cabin_dim(rb.cabin_length))
+        )
+    if ra.cabin_height or rb.cabin_height:
+        rows.append(
+            ("Cabin height", _fmt_cabin_dim(ra.cabin_height), _fmt_cabin_dim(rb.cabin_height))
+        )
+    if ra.cabin_width or rb.cabin_width:
+        rows.append(
+            ("Cabin width", _fmt_cabin_dim(ra.cabin_width), _fmt_cabin_dim(rb.cabin_width))
+        )
+    cat_a = str(getattr(ra, "aircraft_category", "") or "").strip()
+    cat_b = str(getattr(rb, "aircraft_category", "") or "").strip()
+    if cat_a or cat_b:
+        rows.append(("Category", cat_a or "—", cat_b or "—"))
+    return rows
+
+
+def _catalog_spec_rows(a: str, b: str) -> List[Tuple[str, str, str]]:
+    """Google-style numeric specs from verified catalog + AKAL enrichment (catalog-first)."""
+    ra, rb, missing = _pair_authority_records(a, b)
+    if missing or not ra or not rb:
+        return []
+    try:
+        return _spec_rows_from_records(ra, rb)
     except Exception:
         return []
 
 
+def _is_placeholder_spec_value(val: str) -> bool:
+    low = (val or "").strip().lower()
+    return any(m in low for m in _PLACEHOLDER_SPEC_MARKERS)
+
+
+def _rows_are_placeholders(rows: List[Tuple[str, str, str]]) -> bool:
+    if not rows:
+        return True
+    for _dim, va, vb in rows:
+        if _is_placeholder_spec_value(va) or _is_placeholder_spec_value(vb):
+            return True
+    return False
+
+
+def _build_catalog_comparison_guidance(
+    a: str,
+    b: str,
+    ra: Any,
+    rb: Any,
+) -> Dict[str, Any]:
+    """Broker verdict synthesized from verified authority records — no LLM, no invention."""
+    a_wins: List[str] = []
+    b_wins: List[str] = []
+    commentary: List[str] = []
+
+    range_a = float(ra.nbaa_range_nm or 0)
+    range_b = float(rb.nbaa_range_nm or 0)
+    if range_a > 0 and range_b > 0:
+        diff = int(abs(range_a - range_b))
+        if diff >= 120:
+            if range_a > range_b:
+                a_wins.append("NBAA range")
+                commentary.append(
+                    f"{a} carries about {diff:,} nm more verified range than {b} — "
+                    "fewer fuel stops on longer U.S. and Atlantic missions."
+                )
+            else:
+                b_wins.append("NBAA range")
+                commentary.append(
+                    f"{b} carries about {diff:,} nm more verified range than {a} — "
+                    "fewer fuel stops on longer U.S. and Atlantic missions."
+                )
+
+    pax_a = int(ra.passenger_capacity_max or 0)
+    pax_b = int(rb.passenger_capacity_max or 0)
+    if pax_a > 0 and pax_b > 0 and pax_a != pax_b:
+        if pax_a > pax_b:
+            a_wins.append("passenger capacity")
+            commentary.append(
+                f"{a} seats one more certified passenger than {b} in typical layouts — "
+                "meaningful only if you routinely fly full cabins."
+            )
+        else:
+            b_wins.append("passenger capacity")
+            commentary.append(
+                f"{b} seats more certified passengers than {a} — "
+                "meaningful only if you routinely fly full cabins."
+            )
+
+    spd_a = float(ra.max_cruise_speed or 0)
+    spd_b = float(rb.max_cruise_speed or 0)
+    if spd_a > 0 and spd_b > 0 and abs(spd_a - spd_b) >= 8:
+        if spd_a > spd_b:
+            a_wins.append("cruise speed")
+            commentary.append(
+                f"{a} is faster by roughly {int(spd_a - spd_b)} ktas — "
+                "you buy schedule margin on long legs, not just brochure bragging rights."
+            )
+        else:
+            b_wins.append("cruise speed")
+            commentary.append(
+                f"{b} is faster by roughly {int(spd_b - spd_a)} ktas — "
+                "you buy schedule margin on long legs, not just brochure bragging rights."
+            )
+
+    to_a = int(ra.takeoff_distance_ft or 0)
+    to_b = int(rb.takeoff_distance_ft or 0)
+    if to_a > 0 and to_b > 0 and abs(to_a - to_b) >= 200:
+        if to_a < to_b:
+            a_wins.append("runway flexibility")
+            commentary.append(
+                f"{a} publishes shorter takeoff distance (~{to_a:,} ft vs ~{to_b:,} ft) — "
+                "better for shorter fields and hot-and-high margins."
+            )
+        else:
+            b_wins.append("runway flexibility")
+            commentary.append(
+                f"{b} publishes shorter takeoff distance (~{to_b:,} ft vs ~{to_a:,} ft) — "
+                "better for shorter fields and hot-and-high margins."
+            )
+
+    for attr, label in (
+        ("cabin_width", "cabin width"),
+        ("cabin_length", "cabin length"),
+        ("cabin_height", "cabin height"),
+    ):
+        va = float(getattr(ra, attr, 0) or 0)
+        vb = float(getattr(rb, attr, 0) or 0)
+        if va > 0 and vb > 0 and abs(va - vb) >= 0.15:
+            if va > vb:
+                a_wins.append(label)
+                commentary.append(
+                    f"{a} has more {label} than {b} — owner comfort and cabin presence favor the larger box."
+                )
+            else:
+                b_wins.append(label)
+                commentary.append(
+                    f"{b} has more {label} than {a} — owner comfort and cabin presence favor the larger box."
+                )
+
+    cat_a = str(getattr(ra, "aircraft_category", "") or "").strip()
+    cat_b = str(getattr(rb, "aircraft_category", "") or "").strip()
+    if cat_a and cat_b and cat_a != cat_b:
+        commentary.append(
+            f"Class split: {a} is cataloged {cat_a}; {b} is {cat_b} — "
+            "do not compare acquisition or OPEX as if they are the same cabin band."
+        )
+        if cat_a in ("large-cabin", "ultra-long") and cat_b not in ("large-cabin", "ultra-long"):
+            a_wins.append("cabin class")
+        elif cat_b in ("large-cabin", "ultra-long") and cat_a not in ("large-cabin", "ultra-long"):
+            b_wins.append("cabin class")
+
+    opex_a = float(getattr(ra, "confidence", 1) or 1)
+    _ = opex_a  # reserved — OPEX from authority when variable_cost wired
+    if cat_a == cat_b and cat_a in ("light", "super-midsize"):
+        if range_a > 0 and range_b > 0 and range_a < range_b:
+            a_wins.append("operating economics band")
+            commentary.append(
+                f"{a} is the lighter airframe in the same band — "
+                f"typically lower direct operating cost than {b} on shorter missions."
+            )
+        elif range_b > 0 and range_a > 0 and range_b < range_a:
+            b_wins.append("operating economics band")
+            commentary.append(
+                f"{b} is the lighter airframe in the same band — "
+                f"typically lower direct operating cost than {a} on shorter missions."
+            )
+
+    tradeoffs: List[str] = []
+    if a_wins and b_wins:
+        tradeoffs.append(
+            f"{a} leads on {', '.join(a_wins[:3])}; "
+            f"{b} counters on {', '.join(b_wins[:3])}."
+        )
+    elif a_wins:
+        tradeoffs.append(f"On verified specs alone, {a} is stronger across {', '.join(a_wins[:3])}.")
+    elif b_wins:
+        tradeoffs.append(f"On verified specs alone, {b} is stronger across {', '.join(b_wins[:3])}.")
+
+    buy_a_if = ""
+    buy_b_if = ""
+    if a_wins:
+        buy_a_if = f"You would favor {a} when {a_wins[0]} drives the mission more than {b}'s strengths."
+    if b_wins:
+        buy_b_if = f"You would favor {b} when {b_wins[0]} matters more than {a}'s advantages."
+
+    summary_parts: List[str] = []
+    if commentary:
+        summary_parts.append(commentary[0])
+    if len(commentary) > 1:
+        summary_parts.append(commentary[1])
+    if not summary_parts and tradeoffs:
+        summary_parts.append(tradeoffs[0])
+    broker_summary = " ".join(summary_parts).strip()
+
+    return {
+        "a_wins": a_wins,
+        "b_wins": b_wins,
+        "tradeoffs": tradeoffs,
+        "commentary": commentary,
+        "buy_a_if": buy_a_if,
+        "buy_b_if": buy_b_if,
+        "broker_summary": broker_summary,
+    }
+
+
+def _swap_spec_rows(rows: List[Tuple[str, str, str]]) -> List[Tuple[str, str, str]]:
+    return [(r[0], r[2], r[1]) for r in rows]
+
+
 def _lookup_table(a: str, b: str) -> List[Tuple[str, str, str]]:
-    entry, key, swapped = _lookup_pair_entry(_COMPARISON_SPEC_ROWS, a, b)
-    if entry:
-        rows = entry
-        if swapped:
-            return [(r[0], r[2], r[1]) for r in rows]
-        return rows
+    """Catalog / authority specs first; curated pair table is fallback only — never placeholders."""
+    ra, rb, missing = _pair_authority_records(a, b)
+    if not missing and ra and rb:
+        catalog = _spec_rows_from_records(ra, rb)
+        if len(catalog) >= 3:
+            return catalog
     catalog = _catalog_spec_rows(a, b)
+    if len(catalog) >= 3:
+        return catalog
+    entry, _key, swapped = _lookup_pair_entry(_COMPARISON_SPEC_ROWS, a, b)
+    if entry:
+        return _swap_spec_rows(entry) if swapped else entry
     if catalog:
         return catalog
-    return [
-        ("Range (nm)", "Compare verified NBAA range", "Compare verified NBAA range"),
-        ("Cabin", "Compare stand-up cabin class", "Compare stand-up cabin class"),
-        ("Operating economics", "Model-dependent OPEX band", "Model-dependent OPEX band"),
-        ("Dispatch / support", "Compare OEM support footprint", "Compare OEM support footprint"),
-    ]
+    return []
 
 
 def _lookup_guidance(a: str, b: str) -> Optional[Dict[str, Any]]:
@@ -431,6 +734,206 @@ def build_comparison_broker_facts_block(query: str, data_used: Optional[Dict[str
     return body if len(body) > 120 else ""
 
 
+def _commentary_beyond_summary(commentary: List[str], summary: str) -> List[str]:
+    """Drop lines already spoken in the chat bubble lead-in."""
+    low = (summary or "").lower()
+    out: List[str] = []
+    for raw in commentary:
+        line = str(raw).strip()
+        if not line:
+            continue
+        if line.lower() in low:
+            continue
+        out.append(line)
+    return out
+
+
+def build_comparison_broker_ui_payload(
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Structured comparison card for the consultant chat UI (spec table + verdict)."""
+    du = data_used if isinstance(data_used, dict) else {}
+    a, b = _resolve_comparison_models(query, du)
+    if a in ("Aircraft A", "") or b in ("Aircraft B", ""):
+        return None
+
+    ra, rb, missing = _pair_authority_records(a, b)
+    if len(missing) == 2:
+        return None
+
+    if len(missing) == 1:
+        unverified = missing[0]
+        verified_rec = ra if ra else rb
+        verified_name = a if ra else b
+        if not verified_rec:
+            return None
+        cat = str(getattr(verified_rec, "aircraft_category", "") or "aircraft").strip()
+        return {
+            "model_a": a,
+            "model_b": b,
+            "specs": [],
+            "verification_status": "partial",
+            "missing_models": missing,
+            "broker_notice": (
+                f"{unverified} is not in our verified aircraft catalog — "
+                "I will not quote side-by-side comparison specs for it."
+            ),
+            "broker_summary": (
+                f"I can speak to verified {verified_name} data ({cat}, "
+                f"~{int(verified_rec.nbaa_range_nm or 0):,} nm range). "
+                f"For {unverified}, name the exact variant or pick a verified alternative."
+            ),
+            "commentary": [
+                (
+                    f"Verified {verified_name}: "
+                    f"{_fmt_passengers(verified_rec)}; "
+                    f"{_fmt_range_nm(verified_rec.nbaa_range_nm)} NBAA range."
+                ),
+            ],
+        }
+
+    rows = _lookup_table(a, b)
+    if _rows_are_placeholders(rows):
+        rows = []
+    guidance = _lookup_guidance(a, b)
+    if ra and rb and not guidance:
+        guidance = _build_catalog_comparison_guidance(a, b, ra, rb)
+    if not rows and not guidance:
+        return None
+
+    payload: Dict[str, Any] = {
+        "model_a": a,
+        "model_b": b,
+        "specs": [{"dimension": dim, "a": va, "b": vb} for dim, va, vb in rows],
+        "verification_status": "verified",
+    }
+    if guidance:
+        summary = str(guidance.get("broker_summary") or "").strip()
+        raw_tradeoffs = list(guidance.get("tradeoffs") or [])
+        if not summary and raw_tradeoffs:
+            summary = str(raw_tradeoffs[0]).strip()
+        raw_commentary = list(guidance.get("commentary") or [])
+        payload.update(
+            {
+                "a_wins": list(guidance.get("a_wins") or []),
+                "b_wins": list(guidance.get("b_wins") or []),
+                "tradeoffs": _commentary_beyond_summary(raw_tradeoffs, summary),
+                "commentary": _commentary_beyond_summary(raw_commentary, summary),
+                "buy_a_if": str(guidance.get("buy_a_if") or "").strip(),
+                "buy_b_if": str(guidance.get("buy_b_if") or "").strip(),
+                "broker_summary": summary,
+            }
+        )
+        if guidance.get("operate_pick"):
+            payload["operate_pick"] = str(guidance.get("operate_pick") or "").strip()
+            payload["operate_why"] = str(guidance.get("operate_why") or "").strip()
+    return payload
+
+
+def attach_comparison_broker_ui(
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Write ``comparison_broker_ui`` into ``data_used`` when a pair resolves."""
+    if not isinstance(data_used, dict):
+        return None
+    payload = build_comparison_broker_ui_payload(query, data_used)
+    if payload:
+        data_used["comparison_broker_ui"] = payload
+        data_used["broker_execution_category"] = "comparison"
+    return payload
+
+
+def render_comparison_full_text(
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Plain-text comparison for copy/PDF — includes specs and verdict."""
+    ui = build_comparison_broker_ui_payload(query, data_used)
+    if not ui:
+        return render_comparison_client_answer(query, data_used)
+    a = str(ui.get("model_a") or "")
+    b = str(ui.get("model_b") or "")
+    lines: List[str] = []
+    summary = str(ui.get("broker_summary") or "").strip()
+    notice = str(ui.get("broker_notice") or "").strip()
+    if summary:
+        lines.append(summary)
+    elif notice:
+        lines.append(notice)
+    else:
+        lines.append(f"{a} vs {b}")
+    for c in ui.get("commentary") or []:
+        c = str(c).strip()
+        if c and c not in lines:
+            lines.append(c)
+    for row in ui.get("specs") or []:
+        if not isinstance(row, dict):
+            continue
+        dim = str(row.get("dimension") or "").strip()
+        if not dim:
+            continue
+        lines.append(f"- {dim}: {a} {row.get('a', '')}; {b} {row.get('b', '')}")
+    a_wins = ui.get("a_wins") or []
+    b_wins = ui.get("b_wins") or []
+    if a_wins:
+        lines.append(f"{a} wins on: {', '.join(a_wins)}")
+    if b_wins:
+        lines.append(f"{b} wins on: {', '.join(b_wins)}")
+    tradeoff_lead = summary or (str((ui.get("tradeoffs") or [""])[0]).strip() if ui.get("tradeoffs") else "")
+    for t in _commentary_beyond_summary(list(ui.get("tradeoffs") or []), tradeoff_lead):
+        lines.append(f"- {t}")
+    buy_a = str(ui.get("buy_a_if") or "").strip()
+    buy_b = str(ui.get("buy_b_if") or "").strip()
+    if buy_a:
+        lines.append(f"Buy {a} if: {buy_a}")
+    if buy_b:
+        lines.append(f"Buy {b} if: {buy_b}")
+    return "\n".join(lines).strip()
+
+
+def render_comparison_display_answer(
+    query: str,
+    data_used: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Broker lead-in; spec table and commentary render separately in the chat UI."""
+    ui = build_comparison_broker_ui_payload(query, data_used)
+    if not ui:
+        return render_comparison_client_answer(query, data_used)
+    a = str(ui.get("model_a") or "")
+    b = str(ui.get("model_b") or "")
+    if ui.get("verification_status") == "partial":
+        return str(ui.get("broker_summary") or ui.get("broker_notice") or f"{a} vs {b}.").strip()
+    if re.search(r"(?is)\b(?:rather\s+operate|would\s+you\s+rather)\b", query or ""):
+        pick = str(ui.get("operate_pick") or "").strip()
+        why = str(ui.get("operate_why") or "").strip()
+        if not pick:
+            a_wins = ui.get("a_wins") or []
+            b_wins = ui.get("b_wins") or []
+            pick = a if len(a_wins) >= len(b_wins) else b
+        return (
+            f"**I would operate the {pick}** — "
+            f"{why or 'better fit for owner-operator day-to-day economics and cabin experience.'}"
+        ).strip()
+    summary = str(ui.get("broker_summary") or "").strip()
+    if summary:
+        return summary
+    tradeoffs = ui.get("tradeoffs") or []
+    if tradeoffs:
+        return str(tradeoffs[0]).strip()
+    a_wins = ui.get("a_wins") or []
+    b_wins = ui.get("b_wins") or []
+    if a_wins or b_wins:
+        bits: List[str] = []
+        if a_wins:
+            bits.append(f"{a} leads on {', '.join(a_wins[:4])}")
+        if b_wins:
+            bits.append(f"{b} leads on {', '.join(b_wins[:4])}")
+        return ". ".join(bits) + "."
+    return f"{a} vs {b}."
+
+
 def render_comparison_client_answer(
     query: str,
     data_used: Optional[Dict[str, Any]] = None,
@@ -488,7 +991,11 @@ def render_comparison_client_answer(
 
 
 __all__ = [
+    "attach_comparison_broker_ui",
     "build_comparison_broker_facts_block",
+    "build_comparison_broker_ui_payload",
     "render_comparison_client_answer",
+    "render_comparison_display_answer",
+    "render_comparison_full_text",
     "_COMPARISON_SPEC_ROWS",
 ]

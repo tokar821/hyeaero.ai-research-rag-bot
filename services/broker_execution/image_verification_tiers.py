@@ -129,13 +129,6 @@ def filter_and_tier_gallery_images(
             continue
         item = dict(row)
         item["trust_tier"] = tier
-        label = str(item.get("gallery_label") or "")
-        if tier == "verified" and "verified" not in label.lower():
-            item["gallery_label"] = f"Verified — {label}" if label else "Verified (exact tail)"
-        elif tier == "likely" and "likely" not in label.lower():
-            item["gallery_label"] = f"Likely — {label}" if label else "Likely (tail match)"
-        elif tier == "unverified":
-            item["gallery_label"] = f"Unverified — {label}" if label else "Unverified (model/representative)"
         out.append(item)
     return out, counts
 
@@ -156,8 +149,14 @@ def render_gallery_tier_prose(
     rej = int(counts.get("rejected", 0) or 0)
     shown = v + lk + u
 
+    wants_cockpit = bool(re.search(r"(?is)\bcockpit\b", query or ""))
     wants_cabin = bool(re.search(r"(?is)\bcabin|cabine|interior\b", query or ""))
-    facet = "cabin" if wants_cabin else "exterior/photo"
+    if wants_cockpit:
+        facet = "cockpit"
+    elif wants_cabin:
+        facet = "cabin"
+    else:
+        facet = "exterior/photo"
 
     if shown == 0:
         return (
@@ -165,7 +164,12 @@ def render_gallery_tier_prose(
             "I'd check JetPhotos, the listing page, or FlightAware — caption must match this registration."
         )
 
-    noun = "cabin photo" if wants_cabin else "photo"
+    if wants_cockpit:
+        noun = "cockpit photo"
+    elif wants_cabin:
+        noun = "cabin photo"
+    else:
+        noun = "photo"
     if shown != 1:
         noun += "s"
     lead = f"{head} — **{shown}** {noun} below."

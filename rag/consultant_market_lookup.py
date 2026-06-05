@@ -456,6 +456,9 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     # Superlative cabin browse (no explicit "photos" — still a visual shopping ask).
     r"|\b(?:best|top|nicest|finest|ultimate)\b.+\b(?:cabin|interior)\b"
     r"|\b(?:best|top)\s+(?:private\s+)?jets?\s+cabin\b"
+    # Facet before tail (e.g. "show me the interior on N807JS").
+    r"|\bshow\s+me\s+(?:the\s+)?(?:interior|cabin|cabine|cockpit|exterior)\s+(?:on|of)\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\b(?:interior|cabin|cabine|cockpit|exterior)\s+(?:on|of)\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
     # Tail + cabin/interior without "show me" (e.g. "N51ND cabin", "N5616 cabin image").
     r"|\bN(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b.{0,28}\b(?:cabin|cabine|interior|cockpit)\b"
     r"|\bN(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b.{0,28}\b(?:cabin|cabine|interior)\s+(?:image|photo|photos|picture)s?\b"
@@ -474,8 +477,9 @@ _DEICTIC_VISUAL_FOLLOWUP_RE = re.compile(
 _VISUAL_FACET_FOLLOWUP_RE = re.compile(
     r"(?is)^\s*(?:"
     r"(?:interior|cabin|cabine|exterior|cockpit|photos?|pictures?|images?)\s+too"
-    r"|more\s+(?:interior|cabin|cabine|photos?|pictures?|images?)"
+    r"|more\s+(?:interior|cabin|cabine|cockpit|photos?|pictures?|images?)"
     r"|(?:and\s+)?(?:the\s+)?interior\s+(?:too|as\s+well)"
+    r"|what\s+about\s+the\s+(?:cockpit|interior|exterior|cabin)"
     r")\s*\??\s*$"
 )
 

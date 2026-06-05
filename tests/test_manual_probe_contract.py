@@ -37,7 +37,7 @@ PROBES = [
         "expect_profile": ExecutionProfile.TAIL_OWNER,
         "expect_depth": TailDepthMode.OWNER,
         "forbid": _ACQUISITION_LEAK,
-        "expect_in_answer": ("owner", "807JS"),
+        "expect_in_answer": ("owned", "807JS"),
     },
     {
         "id": "tail_sale",
@@ -155,8 +155,8 @@ def test_engine_program_intent_not_summary():
         "phly_rows": [{"registration_number": "N807JS", "engine_program": "MSP Gold"}],
     }
     out = shape_tail_client_answer("", query="Is N807JS enrolled on an engine program?", data_used=du)
-    assert "engine program" in out.lower()
     assert "msp gold" in out.lower()
+    assert "n807js" in out.lower()
     assert "owner:" not in out.lower()[:40]
 
 
@@ -254,7 +254,10 @@ def test_tail_owner_shaped_answer():
     }
     out = shape_tail_client_answer("", query="Who owns N807JS?", data_used=du)
     assert "HRL VENTURES" in out
-    assert out.lower().startswith("hrl")
+    assert "**HRL VENTURES LLC**" in out
+    assert "N807JS" in out
+    assert "Key registration details" in out
+    assert out.lower().startswith("the aircraft registered")
 
 
 def test_tail_sale_yes_no_first():
