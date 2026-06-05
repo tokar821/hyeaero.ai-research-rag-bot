@@ -11,8 +11,12 @@ import re
 from typing import Any, Dict, Optional
 
 _CABIN_EXPLICIT_RE = re.compile(
-    r"\b(?:cabin|interior|galley|lavatory|seat\s+layout|floor\s*plan|layout)\b",
+    r"\b(?:cabin|cabine|interior|galley|lavatory|seat\s+layout|floor\s*plan|layout)\b",
     re.I,
+)
+_COSMETIC_DEAL_REFRESH_RE = re.compile(
+    r"(?is)\b(?:fresh|new|recent)\s+(?:paint|interior|exterior)\b|"
+    r"\b(?:price\s+reduction|price\s+cut)\b",
 )
 _COCKPIT_RE = re.compile(r"\b(?:cockpit|flight\s*deck)\b", re.I)
 _TAIL_EXPLICIT_RE = re.compile(
@@ -68,7 +72,12 @@ _COMPARE_ADVISORY_RE = re.compile(
 
 
 def explicit_cabin_interior_requested(query: str) -> bool:
-    return bool(_CABIN_EXPLICIT_RE.search(query or ""))
+    q = query or ""
+    if _COSMETIC_DEAL_REFRESH_RE.search(q) and not re.search(
+        r"(?is)\b(?:show|see|photo|image|gallery|map|picture)\b", q
+    ):
+        return False
+    return bool(_CABIN_EXPLICIT_RE.search(q))
 
 
 def _explicit_visual_language(query: str) -> bool:

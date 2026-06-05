@@ -131,16 +131,25 @@ def _uniq_cap(qs: List[str]) -> List[str]:
         qn = _word_cap(q, _MAX_WORDS_PER_GOOGLE_IMAGE_Q)
         if len(qn) < 2 or query_violates_banned_terms(qn):
             continue
-        # Every query must contain at least one allowed facet token as a whole word.
+        # Every query must contain a visual facet, or a tail-led spotter/photo pattern.
         low = f" {qn.lower()} "
-        if not any(f" {f} " in low for f in _ALLOWED_FACETS):
+        facet_ok = any(f" {f} " in low for f in _ALLOWED_FACETS)
+        tail_photo_ok = bool(
+            re.search(r"(?i)\bN(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}\b", qn)
+            and re.search(
+                r"(?i)(?:\bimage\b|\bphoto\b|site:flightradar|site:flightaware|"
+                r"site:jetphotos|site:aviapages|aviapages\s+cabin|virtual\s+hangar)",
+                qn,
+            )
+        )
+        if not facet_ok and not tail_photo_ok:
             continue
         k = qn.lower()
         if k in seen:
             continue
         seen.add(k)
         out.append(qn)
-    return out[:5]
+    return out[:7]
 
 
 def _resolve_model_marketing(
@@ -444,13 +453,21 @@ def _build_query_variants(
 
 def _default_discovery_facets(*, user_low: str) -> List[str]:
     """When the user did not name a facet, issue disciplined discovery queries (one per facet)."""
-    if re.search(r"(?is)\b(?:cabin|interior|salon|layout)\b", user_low):
+    if re.search(r"(?is)\b(?:cabin|interior|salon|layout|cabine)\b", user_low):
         return ["cabin", "interior", "salon"]
     if re.search(r"(?is)\bcockpit\b", user_low):
         return ["cockpit", "flight deck"]
+    if re.search(
+        r"(?is)\b(?:every\s+verified|all\s+verified|verified\s+image|show\s+me\s+every)\b",
+        user_low,
+    ) or (
+        re.search(r"(?is)\b(?:photo|photos|image|images|picture|gallery|aircraft)\b", user_low)
+        and not re.search(r"(?is)\b(?:cabin|interior|cockpit|salon)\b", user_low)
+    ):
+        return ["image", "exterior", "aircraft photo"]
     if re.search(r"(?is)\b(?:exterior|outside)\b", user_low):
-        return ["exterior", "aircraft"]
-    return ["exterior", "cabin", "interior", "cockpit"]
+        return ["exterior", "aircraft photo", "image"]
+    return ["exterior", "image", "aircraft photo"]
 
 
 def generate_ultra_precise_google_image_queries_json(
@@ -601,6 +618,14 @@ def generate_ultra_precise_google_image_queries_json(
             qs = _uniq_cap(qs)
         except Exception:
             pass
+    elif tail and itype not in ("cabin", "interior"):
+        try:
+            from services.tail_marketing_listing_images import append_tail_spotter_photo_queries
+
+            qs = append_tail_spotter_photo_queries(qs, tail)
+            qs = _uniq_cap(qs)
+        except Exception:
+            pass
 
     qs = _pin_compact_google_image_queries_first(
         qs,
@@ -610,7 +635,8 @@ def generate_ultra_precise_google_image_queries_json(
         intent_facets=facets_intent,
         canonical_tail=tail,
     )
-    return {"queries": qs[:5]}
+    cap = 7 if tail else 5
+    return {"queries": qs[:cap]}
 
 
 def format_queries_json_response(user_input: str, **kwargs: Any) -> str:

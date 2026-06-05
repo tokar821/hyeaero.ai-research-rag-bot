@@ -262,9 +262,29 @@ def extract_visualization_entities(
     data_used: Optional[Dict[str, Any]] = None,
 ) -> VisualizationEntities:
     origin, dest, route_label = _parse_route_from_query(query)
-    routes = effective_route_labels(mission, query) or infer_route_labels_from_query(query)
+    routes: List[str] = []
+    try:
+        from services.mission.route_extractor import extract_itinerary_chain
+
+        chain = extract_itinerary_chain(query or "")
+        if len(chain) >= 2:
+            routes = chain
+        elif len(chain) == 1:
+            routes = chain
+    except Exception:
+        pass
+    if not routes:
+        routes = effective_route_labels(mission, query) or infer_route_labels_from_query(query)
     if not routes and route_label:
         routes = [route_label]
+    if routes and not origin:
+        parts = re.split(r"\s*(?:->|→)\s*", routes[0], maxsplit=1)
+        if parts:
+            origin = parts[0].strip()
+    if routes and not dest:
+        parts = re.split(r"\s*(?:->|→)\s*", routes[-1], maxsplit=1)
+        if len(parts) > 1:
+            dest = parts[1].strip()
     return VisualizationEntities(
         aircraft_models=_models_from_context(
             query,
@@ -280,8 +300,12 @@ def extract_visualization_entities(
 
 def _visualization_followup(kind: VisualizationKind, entities: VisualizationEntities) -> Tuple[bool, str]:
     needs_origin = kind in (VisualizationKind.RANGE_MAP, VisualizationKind.REACHABLE_CITIES)
-    if needs_origin and not (entities.origin_label or entities.routes):
+    if needs_origin and not entities.routes and not (entities.origin_label or entities.destination_label):
         return True, "Which city or airport should I anchor the map from?"
+    if needs_origin and not entities.origin_label and entities.routes:
+        parts = re.split(r"\s*(?:->|→)\s*", entities.routes[0], maxsplit=1)
+        if parts and parts[0].strip():
+            return False, ""
 
     needs_aircraft = kind in (
         VisualizationKind.CABIN_LAYOUT,
@@ -380,6 +404,18 @@ def _caption_for_visualization(
     origin = entities.origin_label or (entities.routes[0].split("->")[0].strip() if entities.routes else "")
     dest = entities.destination_label
     if kind == VisualizationKind.RANGE_MAP:
+        if len(entities.routes) >= 2:
+            stops: List[str] = []
+            for leg in entities.routes:
+                leg_parts = re.split(r"\s*(?:->|→)\s*", leg, maxsplit=1)
+                if leg_parts and leg_parts[0].strip():
+                    if not stops or stops[-1] != leg_parts[0].strip():
+                        stops.append(leg_parts[0].strip())
+                if len(leg_parts) > 1 and leg_parts[1].strip():
+                    stops.append(leg_parts[1].strip())
+            if len(stops) >= 3:
+                chain = " → ".join(stops)
+                return f"Route map: {models} — {chain}."
         if origin and dest:
             return f"Range map: {models} — {origin} to {dest}."
         if origin:

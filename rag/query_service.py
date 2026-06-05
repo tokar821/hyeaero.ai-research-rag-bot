@@ -39,7 +39,7 @@ def _apply_consultant_response_normalization(
     history: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """Broker-grade output schema — final structure only; no routing changes."""
-    if not isinstance(payload, dict) or not str(payload.get("answer") or "").strip():
+    if not isinstance(payload, dict):
         return payload
     try:
         from services.response.response_normalizer import apply_consultant_response_normalization
@@ -66,6 +66,29 @@ def _refresh_cached_consultant_hit(
     except Exception as exc:
         logger.warning("cached answer governance refresh skipped: %s", exc)
         return payload
+
+
+def _apply_broker_guard_shortcircuit(
+    query: str,
+    payload: Dict[str, Any],
+    history: Optional[List[Dict[str, str]]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Replace LLM/registry drafts with deterministic broker-guard answers when matched."""
+    if not isinstance(payload, dict):
+        return None
+    try:
+        from services.broker_execution.broker_query_guards import resolve_broker_guard_stream_payload
+
+        _guard_payload = dict(payload)
+        if history and "history" not in _guard_payload:
+            _guard_payload["history"] = history
+        guarded = resolve_broker_guard_stream_payload(query, _guard_payload)
+        if not guarded:
+            return None
+        return _apply_consultant_response_normalization(guarded, query, history)
+    except Exception as exc:
+        logger.warning("broker guard shortcircuit skipped: %s", exc)
+        return None
 
 
 def _apply_final_render_gate(
@@ -223,6 +246,7 @@ def _version_stream_done_event(
     )
     done: Dict[str, Any] = {
         "type": "done",
+        "answer": versioned.get("answer") or "",
         "sources": versioned.get("sources") or [],
         "data_used": versioned.get("data_used") or {},
         "aircraft_images": versioned.get("aircraft_images") or [],
@@ -1603,7 +1627,14 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
         try:
             from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
 
-            if wants_consultant_aircraft_images_in_answer(q):
+            if wants_consultant_aircraft_images_in_answer(q, history):
+                cacheable = False
+        except Exception:
+            pass
+        try:
+            from services.broker_execution.broker_query_guards import should_skip_llm_for_broker_guard
+
+            if should_skip_llm_for_broker_guard(q, history):
                 cacheable = False
         except Exception:
             pass
@@ -1693,6 +1724,9 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
                     pr.step("path_professional_brief", streaming=1)
                 yield {"type": "status", "message": "Preparing your structured research brief…"}
                 pl = payload if isinstance(payload, dict) else {}
+                sc = _apply_broker_guard_shortcircuit(query, pl, history)
+                if sc:
+                    pl = sc
                 pl = _apply_consultant_response_normalization(pl, query, history)
                 ans = (pl.get("answer") or "") if isinstance(pl, dict) else ""
                 for piece in self._iter_display_chunks(ans):
@@ -1792,6 +1826,41 @@ Consider the conversation so far. If the user's message is a follow-up (e.g. "Is
             results = b["results"]
             tavily_hits = b["tavily_hits"]
             data_used: Dict[str, Any] = dict(b["data_used"])
+
+            _llm_guard_sc = _apply_broker_guard_shortcircuit(
+                query,
+                {
+                    "answer": "",
+                    "data_used": data_used,
+                    "aircraft_images": b.get("aircraft_images") or [],
+                    "sources": [],
+                    "error": None,
+                },
+                history,
+            )
+            if _llm_guard_sc:
+                if pr:
+                    pr.step("path_broker_guard_shortcircuit", streaming=1)
+                yield {"type": "status", "message": "Preparing broker answer…"}
+                ans = str(_llm_guard_sc.get("answer") or "")
+                for piece in self._iter_display_chunks(ans):
+                    yield {"type": "delta", "text": piece}
+                norm = normalize_answer_payload_for_cache(_llm_guard_sc)
+                written = bool(cacheable and not norm.get("error") and cache_set(q, norm))
+                du = dict(norm.get("data_used") or {})
+                if cacheable:
+                    du = apply_cache_miss_metadata(du)
+                    if written:
+                        du["rag_cache_write"] = 1
+                yield _version_stream_done_event(
+                    answer=ans,
+                    sources=_llm_guard_sc.get("sources") or [],
+                    data_used=du,
+                    aircraft_images=_llm_guard_sc.get("aircraft_images") or [],
+                    error=_llm_guard_sc.get("error"),
+                    request_context=_contract_ctx,
+                )
+                return
 
             yield {"type": "status", "message": "Synthesizing sources into your briefing…"}
 
@@ -1937,6 +2006,9 @@ Produce the final client-facing answer.""",
             )
             final_text = str(_stream_payload.get("answer") or final_text or "")
             data_used = dict(_stream_payload.get("data_used") or data_used)
+            imgs = _stream_payload.get("aircraft_images")
+            if not isinstance(imgs, list):
+                imgs = data_used.get("aircraft_images") if isinstance(data_used.get("aircraft_images"), list) else []
 
             for piece in self._iter_display_chunks(final_text):
                 yield {"type": "delta", "text": piece}
@@ -1966,9 +2038,6 @@ Produce the final client-facing answer.""",
                 len(results),
                 elapsed,
             )
-            imgs = b.get("aircraft_images")
-            if not isinstance(imgs, list):
-                imgs = data_used.get("aircraft_images") if isinstance(data_used.get("aircraft_images"), list) else []
             final_stream_answer = final_text or ""
             llm_norm = normalize_answer_payload_for_cache(
                 {
@@ -2035,7 +2104,14 @@ Produce the final client-facing answer.""",
         try:
             from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
 
-            if wants_consultant_aircraft_images_in_answer(q):
+            if wants_consultant_aircraft_images_in_answer(q, history):
+                cacheable = False
+        except Exception:
+            pass
+        try:
+            from services.broker_execution.broker_query_guards import should_skip_llm_for_broker_guard
+
+            if should_skip_llm_for_broker_guard(q, history):
                 cacheable = False
         except Exception:
             pass

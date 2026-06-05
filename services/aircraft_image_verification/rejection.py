@@ -55,8 +55,11 @@ _COCKPIT_STRONG = re.compile(
 )
 _CABIN_STRONG = re.compile(
     r"\b(aircraft\s+cabin|bizjet\s+cabin|jet\s+cabin|vip\s+cabin|"
-    r"galley|divan|berth|lavatory|club\s+seating)\b",
+    r"galley|divan|berth|lavatory|club\s+seating|lopa|layout\s+of\s+passenger)\b",
     re.I,
+)
+_CABIN_URL_RE = re.compile(
+    r"(?is)(?:lopa|interior|cabin|salon|galley|layout|seating)"
 )
 _GENERIC_CABIN_ONLY = re.compile(
     r"\b(cabin\s+interior|luxury\s+cabin|private\s+cabin|jet\s+interior)\b",
@@ -112,8 +115,11 @@ def _section_mismatch(
         except Exception:
             pass
     if sec in ("cabin", "bedroom", "lavatory"):
+        img_url = str((row or {}).get("url") or (row or {}).get("image") or "")
+        if _CABIN_URL_RE.search(img_url):
+            return None
         if _CABIN_STRONG.search(blob) or re.search(
-            r"\b(interior|salon|galley|divan|lavatory|seating\s+layout|club\s+seat)\b",
+            r"\b(interior|salon|galley|divan|lavatory|seating\s+layout|club\s+seat|lopa)\b",
             blob,
             re.I,
         ):
@@ -172,7 +178,7 @@ def evaluate_rejection(
     else:
         return "missing_aircraft_identity"
 
-    sec_rej = _section_mismatch(blob, ctx.section)
+    sec_rej = _section_mismatch(blob, ctx.section, row=row, tail=ctx.tail)
     if sec_rej:
         return sec_rej
 

@@ -100,7 +100,7 @@ def gallery_user_query_for_image_pipeline(raw_query: str, *, resolved_tail: Opti
     tail_in_line = t.replace(" ", "") in compact_q
     if tail_in_line and re.search(r"(?is)\b(?:show|see|photos?|pictures?|images?|gallery)\b", q):
         low = q.lower()
-        if re.search(r"(?is)\b(?:cabin|interior|salon|layout)\b", low):
+        if re.search(r"(?is)\b(?:cabin|cabine|interior|salon|layout)\b", low):
             return f"{t} cabin interior photos"
         if re.search(r"(?is)\bcockpit\b", low):
             return f"{t} cockpit photos"
@@ -109,6 +109,13 @@ def gallery_user_query_for_image_pipeline(raw_query: str, *, resolved_tail: Opti
         return f"{t} aircraft photos"
     if tail_in_line:
         return q
+    low = q.lower()
+    if re.search(r"(?is)\b(?:interior|cabin|cabine)\s+too\b", low):
+        return f"{t} cabin interior"
+    if re.search(r"(?is)\bmore\s+(?:interior|cabin|cabine)\b", low):
+        return f"{t} cabin interior"
+    if re.search(r"(?is)\b(?:exterior|photos?|pictures?|images?)\s+too\b", low):
+        return f"{t} aircraft photos"
     return f"{q} {t}".strip()
 
 

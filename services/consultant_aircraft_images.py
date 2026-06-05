@@ -1356,7 +1356,17 @@ def build_consultant_aircraft_images(
                 # IMPORTANT: if we do not have a resolved aircraft anchor, do NOT rewrite the query.
                 # Browse queries like "best cabin under $12M" must preserve budget/superlative terms
                 # so the deterministic fan-out can pick multiple in-budget aircraft.
-                if resolved_ent and not wants_both0:
+                # Tail-led photo browse ("show me N604WM") must not be rewritten to cabin-only seeds.
+                _skip_tail_seed = False
+                if rt and re.search(
+                    r"(?is)\b(?:photo|photos|image|images|picture|gallery|show\s+me|aircraft|verified)\b",
+                    user_query or "",
+                ) and not re.search(
+                    r"(?is)\b(?:cabin|interior|salon|galley|lavatory|cockpit)\b",
+                    user_query or "",
+                ):
+                    _skip_tail_seed = True
+                if resolved_ent and not wants_both0 and not _skip_tail_seed:
                     seed_q = build_aircraft_image_search_seed(
                         isolated_query=user_query or "",
                         resolved_entity=resolved_ent,
@@ -1551,22 +1561,50 @@ def build_consultant_aircraft_images(
                             sea = filter_gallery_by_visual_intent(sea, facet=facet, max_out=cap)
                     except Exception:
                         pass
-                    if not sea and rt and facet in ("cabin", "interior"):
+                    try:
+                        from services.broker_execution.image_verification_tiers import (
+                            filter_rejected_gallery_rows,
+                        )
+
+                        sea = filter_rejected_gallery_rows(sea)
+                    except Exception:
+                        pass
+                    if rt and facet in ("cabin", "interior"):
                         try:
                             from services.tail_marketing_listing_images import (
                                 enrich_gallery_from_tail_marketing_listings,
                             )
 
-                            sea = enrich_gallery_from_tail_marketing_listings(
-                                tail=rt,
-                                phly_rows=phly_rows,
-                                max_out=cap,
-                                facet=facet,
-                            )
-                            if sea and gallery_meta_out is not None:
-                                gallery_meta_out["consultant_tail_listing_cabin_enriched"] = True
+                            if len(sea) < cap:
+                                extra = enrich_gallery_from_tail_marketing_listings(
+                                    tail=rt,
+                                    phly_rows=phly_rows,
+                                    max_out=cap,
+                                    facet=facet,
+                                )
+                                if extra:
+                                    seen_urls = {
+                                        str(r.get("url") or "").strip()
+                                        for r in sea
+                                        if isinstance(r, dict)
+                                    }
+                                    for r in extra:
+                                        u = str(r.get("url") or "").strip()
+                                        if u and u not in seen_urls:
+                                            sea.append(r)
+                                            seen_urls.add(u)
+                                    if gallery_meta_out is not None:
+                                        gallery_meta_out["consultant_tail_listing_cabin_enriched"] = True
                         except Exception:
                             pass
+                    try:
+                        from services.broker_execution.image_verification_tiers import (
+                            filter_rejected_gallery_rows,
+                        )
+
+                        sea = filter_rejected_gallery_rows(sea)
+                    except Exception:
+                        pass
                     return sea[:cap]
                 # Strict model: no listing galleries mixed in (same policy as Tavily strict-model path).
                 if strict_model_title_alt_match and (required_marketing_type or "").strip():
@@ -1766,11 +1804,28 @@ def build_consultant_aircraft_images(
             if not imgs:
                 og = fetch_og_image_url(page, timeout=og_timeout)
                 if og:
-                    imgs = [og]
+                    try:
+                        from services.tail_marketing_listing_images import (
+                            _image_url_looks_junk_marketing_asset,
+                        )
+
+                        if not _image_url_looks_junk_marketing_asset(og):
+                            imgs = [og]
+                    except Exception:
+                        imgs = [og]
             n += 1
             for img in imgs:
                 if not img or img in seen:
                     continue
+                try:
+                    from services.broker_execution.image_verification_tiers import (
+                        is_rejected_gallery_image_url,
+                    )
+
+                    if is_rejected_gallery_image_url(img):
+                        continue
+                except Exception:
+                    pass
                 seen.add(img)
                 _desc = (
                     f"{_tail_lbl} cabin interior — listing page"

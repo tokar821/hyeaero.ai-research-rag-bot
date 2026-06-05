@@ -136,7 +136,12 @@ def verify_aircraft_image_rows(
         audit.scoring[url or f"row_{len(audit.scoring)}"] = bd.to_dict()
 
         effective = bd.total
-        if bd.match_type in ("model_exact", "tail_exact") and effective >= 0.64:
+        tail_conf = str(
+            row.get("tail_match_confidence") or row.get("_tail_confidence") or ""
+        ).strip().lower()
+        if ctx.tail and tail_conf == "confirmed":
+            effective = max(effective, threshold)
+        elif bd.match_type in ("model_exact", "tail_exact") and effective >= 0.64:
             effective = max(effective, threshold)
 
         if effective < threshold:

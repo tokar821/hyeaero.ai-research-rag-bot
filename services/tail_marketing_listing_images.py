@@ -16,6 +16,10 @@ from rag.aviation_tail import normalize_tail_token
 # Host fragments allowed for og:image HTML fetch (SSRF-safe allowlist extension).
 MARKETING_LISTING_HOST_MARKERS: tuple[str, ...] = (
     "virtualhangar.com",
+    "globalaircharters.com",
+    "flyusa.com",
+    "aviapages.com",
+    "jetnetevolution.com",
     "flyexclusive.com",
     "flyexclusive.",
     "flyjet.com",
@@ -61,6 +65,7 @@ _CABIN_PATH_MARKERS = (
     "galley",
     "seating",
     "layout",
+    "lopa",
     "divan",
     "lavatory",
     "website-files.com",
@@ -74,6 +79,10 @@ _JUNK_IMAGE_PATH_MARKERS = (
     "uberjets",
     "uber-jets",
     "virtualhangar_logos",
+    "tailimages/",
+    "tail_images_fixed",
+    "matched+images",
+    "matched images",
     "white-",
     "banner",
     "favicon",
@@ -150,10 +159,15 @@ def append_tail_marketing_cabin_queries(queries: List[str], tail: str) -> List[s
     if not t:
         return list(queries or [])
     extras = [
+        f"{t} site:aviapages.com interior",
+        f"{t} aviapages cabin interior",
         f"{t} site:virtualhangar.com",
         f"{t} virtual hangar cabin",
         f"{t} cabin interior",
         f"{t} interior",
+        f"{t} lopa",
+        f"{t} site:globalaircharters.com",
+        f"{t} site:flyusa.com",
     ]
     seen = {q.strip().lower() for q in queries if (q or "").strip()}
     out: List[str] = []
@@ -285,21 +299,47 @@ def row_is_tail_listing_cabin_candidate(row: Dict[str, Any], tail: str) -> bool:
     url = str(row.get("url") or row.get("image") or "").lower()
     if _image_url_looks_exterior(url):
         return False
-    if "website-files.com" in url:
-        return True
     if _image_url_looks_junk_marketing_asset(url):
         return False
-    if any(cdn in url for cdn in MARKETING_LISTING_CDN_MARKERS) and _image_url_looks_cabin(url):
+    if "website-files.com" in url:
         return True
     blob = " ".join(
         str(row.get(k) or "")
         for k in ("url", "title", "description", "source", "page_url", "_source_page")
     ).lower()
+    title_blob = str(row.get("title") or row.get("description") or "")
+    if t.lower() in title_blob.lower() and is_tail_marketing_listing_page(page, t):
+        return True
+    if any(cdn in url for cdn in MARKETING_LISTING_CDN_MARKERS) and _image_url_looks_cabin(url):
+        return True
     if re.search(r"\b(interior|cabin|salon|seating|galley|layout)\b", blob, re.I) and _image_url_looks_cabin(url):
         return True
     if "virtualhangar" in page.lower() and _image_url_looks_cabin(url):
         return True
     return _tail_on_listing_page(page, t) and _image_url_looks_cabin(url)
+
+
+def append_tail_spotter_photo_queries(queries: List[str], tail: str) -> List[str]:
+    """Prepend high-recall spotter / tracking queries (mirrors manual Google Image searches)."""
+    t = normalize_tail_token(tail or "")
+    if not t:
+        return list(queries or [])
+    extras = [
+        f"{t} image",
+        f"{t} site:flightradar24.com",
+        f"{t} site:flightaware.com",
+        f"{t} site:jetphotos.com",
+        f"{t} aircraft photo",
+    ]
+    seen = {q.strip().lower() for q in queries if (q or "").strip()}
+    out: List[str] = []
+    for q in extras:
+        k = q.strip().lower()
+        if k and k not in seen:
+            seen.add(k)
+            out.append(q.strip())
+    out.extend(queries or [])
+    return out
 
 
 def enrich_gallery_from_tail_marketing_listings(
@@ -331,14 +371,20 @@ def enrich_gallery_from_tail_marketing_listings(
         )
         if not imgs and not want_cabin:
             og = fetch_og_image_url(page)
-            if og:
+            if og and not _image_url_looks_junk_marketing_asset(og):
                 imgs = [og]
         if not imgs and want_cabin:
             og = fetch_og_image_url(page)
-            if og and not _image_url_looks_exterior(og):
+            if (
+                og
+                and not _image_url_looks_exterior(og)
+                and not _image_url_looks_junk_marketing_asset(og)
+            ):
                 imgs = [og]
 
         for img in imgs:
+            if _image_url_looks_junk_marketing_asset(img):
+                continue
             if not img or img in seen:
                 continue
             seen.add(img)
@@ -382,14 +428,31 @@ def enrich_gallery_from_tail_marketing_listings(
             section="cabin" if want_cabin else "interior",
             max_out=max_out,
         )
+        try:
+            from services.broker_execution.image_verification_tiers import (
+                filter_rejected_gallery_rows,
+            )
+
+            verified = filter_rejected_gallery_rows(verified)
+            out = filter_rejected_gallery_rows(out)
+        except Exception:
+            pass
         return verified or out[:max_out]
     except Exception:
-        return out[:max_out]
+        try:
+            from services.broker_execution.image_verification_tiers import (
+                filter_rejected_gallery_rows,
+            )
+
+            return filter_rejected_gallery_rows(out[:max_out])
+        except Exception:
+            return out[:max_out]
 
 
 __all__ = [
     "MARKETING_LISTING_HOST_MARKERS",
     "MARKETING_LISTING_CDN_MARKERS",
+    "append_tail_spotter_photo_queries",
     "append_tail_marketing_cabin_queries",
     "canonical_virtualhangar_tail_url",
     "discover_tail_marketing_listing_urls",

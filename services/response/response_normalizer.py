@@ -157,8 +157,6 @@ def apply_consultant_response_normalization(
     """Return response dict with normalized answer and schema attached to data_used."""
     if not isinstance(response, dict):
         return response
-    if not str(response.get("answer") or "").strip():
-        return response
 
     normalized = normalize_consultant_response(response, context)
     out = dict(response)

@@ -77,6 +77,7 @@ _VERIFIED_LISTING_FRAGS: Tuple[Tuple[str, int], ...] = (
     ("flyexclusive.com", 740),
     ("phly.com", 730),
     ("controller.com", 700),
+    ("aircraft.com", 695),
     ("aircraftexchange", 690),
     ("globalair.com", 680),
     ("avbuyer.", 650),

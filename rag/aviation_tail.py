@@ -136,6 +136,30 @@ def find_loose_us_n_tail_tokens_in_text(blob: str) -> List[str]:
     return out
 
 
+def find_most_recent_user_tail_in_history(
+    history: Optional[List[dict]] = None,
+    *,
+    max_history_messages: int = 24,
+) -> Optional[str]:
+    """Most recent registration from **user** turns only (avoids stale tails from early thread)."""
+    if not history:
+        return None
+    for h in reversed(history[-max_history_messages:]):
+        role = str(h.get("role") or "").strip().lower()
+        if role not in ("user", "human", "u"):
+            continue
+        c = str(h.get("content") or "").strip()
+        if not c:
+            continue
+        strict_h = find_strict_tail_candidates_in_text(c)
+        if strict_h:
+            return strict_h[0]
+        loose_h = find_loose_us_n_tail_tokens_in_text(c)
+        if loose_h:
+            return loose_h[0]
+    return None
+
+
 def find_visual_gallery_tail_candidates(
     query: str,
     history: Optional[List[dict]] = None,
@@ -146,24 +170,16 @@ def find_visual_gallery_tail_candidates(
     Tails that should trigger **strict gallery** image matching: strict civil marks first; else any
     plausible ``N``+digit mark on the latest **user** text (then recent user history).
     """
-    strict = find_strict_tail_candidates(query, history)
+    strict = find_strict_tail_candidates_in_text(query or "")
     if strict:
         return strict
     q = (query or "").strip()
     loose = find_loose_us_n_tail_tokens_in_text(q)
     if loose:
         return loose
-    if history:
-        for h in reversed(history[-max_history_messages:]):
-            if not _role_eligible_for_tail_scan(h.get("role")):
-                continue
-            c = h.get("content") or ""
-            strict_h = find_strict_tail_candidates_in_text(c)
-            if strict_h:
-                return strict_h
-            loose_h = find_loose_us_n_tail_tokens_in_text(c)
-            if loose_h:
-                return loose_h
+    recent = find_most_recent_user_tail_in_history(history, max_history_messages=max_history_messages)
+    if recent:
+        return [recent]
     return []
 
 

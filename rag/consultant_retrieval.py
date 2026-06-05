@@ -1547,12 +1547,28 @@ def run_consultant_retrieval_bundle(
                 f_int.result()
             )
     from services.orchestration.image_session import gallery_allowed_for_query
+    from rag.consultant_market_lookup import wants_consultant_aircraft_images_in_answer
+
+    if wants_consultant_aircraft_images_in_answer(query, history):
+        user_wants_gallery = True
+        if consultant_image_intent_src in (None, "", "llm_no", "suppressed_advisory_turn"):
+            consultant_image_intent_src = "explicit_image_trigger"
 
     if _intent_bundle and _intent_bundle.force_gallery_intent:
         user_wants_gallery = True
     if user_wants_gallery and not gallery_allowed_for_query(query):
         user_wants_gallery = False
         consultant_image_intent_src = "suppressed_advisory_turn"
+    try:
+        from services.broker_execution.visualization_intent import detect_visualization_intent
+
+        _wants_route_viz, _route_viz_kind = detect_visualization_intent(query or "")
+        if _wants_route_viz and _route_viz_kind == "route_map":
+            user_wants_gallery = False
+            consultant_image_intent_src = "suppressed_route_map_viz"
+            data_used["consultant_suppress_gallery_route_map"] = 1
+    except Exception:
+        pass
     if progress:
         rqs_prev = expanded.get("rag_queries") if isinstance(expanded, dict) else None
         rqs_prev = list(rqs_prev) if isinstance(rqs_prev, list) else []
@@ -1782,7 +1798,14 @@ def run_consultant_retrieval_bundle(
                 effective_history_for_gallery_tail(query or "", history),
             )
             if not tails_in_query:
-                tails_in_query = find_strict_tail_candidates(query or "", history)
+                try:
+                    from rag.aviation_tail import find_most_recent_user_tail_in_history
+
+                    _recent_tail = find_most_recent_user_tail_in_history(history)
+                    if _recent_tail:
+                        tails_in_query = [_recent_tail]
+                except Exception:
+                    pass
             if not tails_in_query:
                 from rag.consultant_image_intent import _thread_text_for_entity_resolution
 
@@ -2497,7 +2520,22 @@ def run_consultant_retrieval_bundle(
             )
         except Exception as _gal_lbl_e:
             logger.debug("gallery_image_labels skipped: %s", _gal_lbl_e)
+        try:
+            from services.broker_execution.image_verification_tiers import filter_and_tier_gallery_images
 
+            _tail_anchor = str(requested_tail_for_images or data_used.get("tail_registration") or "")
+            aircraft_images, _tier_counts = filter_and_tier_gallery_images(
+                aircraft_images,
+                tail=_tail_anchor,
+                user_query=str(gallery_user_query or query or ""),
+            )
+            if _tier_counts:
+                data_used["gallery_trust_tier_counts"] = _tier_counts
+        except Exception as _tier_e:
+            logger.debug("image_verification_tiers skipped: %s", _tier_e)
+
+    if not user_wants_gallery and not wants_consultant_aircraft_images_in_answer(query, history):
+        aircraft_images = []
     data_used["aircraft_images"] = aircraft_images
     data_used["consultant_aircraft_image_count"] = len(aircraft_images)
     if searchapi_gallery_meta:
@@ -2529,7 +2567,7 @@ def run_consultant_retrieval_bundle(
         data_used["consultant_searchapi_image_engine"] = searchapi_image_engine()
     # Internal join helper for image lookup — not needed by clients; keeps responses smaller.
     data_used.pop("consultant_listing_rows_for_images", None)
-    if wants_consultant_aircraft_images_in_answer(query):
+    if wants_consultant_aircraft_images_in_answer(query, history):
         data_used["consultant_user_asked_photos"] = 1
     if user_wants_gallery:
         data_used["consultant_show_image_ui_context"] = 1

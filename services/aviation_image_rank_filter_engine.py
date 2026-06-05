@@ -445,11 +445,20 @@ def apply_rank_filter_to_gallery_items(
             }
         )
 
+    aircraft_key = str(query_intent.get("aircraft") or "").strip()
+    tail_led = bool(re.match(r"^N(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}$", aircraft_key, re.I))
+    has_confirmed_tail = any(
+        str((it.get("tail_match_confidence") or "")).lower() == "confirmed"
+        for it in gallery_items
+        if isinstance(it, dict)
+    )
+    min_selected = 1 if tail_led or has_confirmed_tail else 2
+
     out = rank_and_filter_aviation_images(
         query_intent=query_intent,
         images=images_in,
-        min_selected=2,
-        max_selected=max(2, min(max_out, 5)),
+        min_selected=min_selected,
+        max_selected=max(min_selected, min(max_out, 5)),
         min_final_score=float((os.getenv("SEARCHAPI_IMAGE_RANK_MIN_SCORE") or "0.52").strip() or 0.52),
     )
 

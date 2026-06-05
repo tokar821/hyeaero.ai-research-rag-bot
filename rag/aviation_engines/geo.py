@@ -38,6 +38,19 @@ ICAO_COORDS: Dict[str, Tuple[float, float]] = {
     "OMDB": (25.2532, 55.3657),
     "RJTT": (35.5523, 139.7798),
     "RJAA": (35.7647, 140.3864),
+    "BIKF": (63.9850, -22.6056),
+    "KASE": (39.2232, -106.8689),
+    "KTEX": (37.9538, -107.9078),
+    "KSDL": (33.6229, -111.9105),
+    "KPBI": (26.6832, -80.0956),
+    "MYNN": (25.0390, -77.4662),
+    "EGKK": (51.1481, -0.1903),
+    "LEMD": (40.4983, -3.5676),
+    "GVA": (46.2381, 6.1089),
+    "LSZH": (47.4647, 8.5492),
+    "EDDF": (50.0379, 8.5622),
+    "OMAA": (24.4330, 54.6511),
+    "KIAH": (29.9844, -95.3414),
 }
 
 _ICAO_RE = re.compile(r"\b([A-Z]{4})\b")
@@ -66,6 +79,14 @@ CITY_ALIASES: List[Tuple[str, str]] = [
     ("tokyo", "RJTT"),
     ("narita", "RJAA"),
     ("haneda", "RJTT"),
+    ("reykjavik", "BIKF"),
+    ("scottsdale", "KSDL"),
+    ("aspen", "KASE"),
+    ("telluride", "KTEX"),
+    ("palm beach", "KPBI"),
+    ("nassau", "MYNN"),
+    ("teterboro", "KTEB"),
+    ("denver", "KDEN"),
 ]
 
 

@@ -4,10 +4,85 @@ Render visualization bundles into user-visible prose and lightweight SVG charts.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from services.consultant.visual_models import VisualIntelligenceBundle
 from services.consultant.visualization_handler import VisualizationKind, VisualizationTurnResult
+
+
+def _svg_itinerary_map(
+    stops: List[str],
+    legs: List[str],
+    practical_nm: float,
+    *,
+    limiting_leg: str = "",
+) -> str:
+    """Schematic multi-leg route — not a geographic chart, but shows every stop in order."""
+    n = max(2, len(stops))
+    w, h = 280, 200
+    margin_x = 28
+    step = (w - 2 * margin_x) / max(n - 1, 1)
+    cy = 88
+    pr = max(400.0, min(practical_nm, 8000.0))
+    reach = min(72.0, pr / 45.0)
+    limit_idx = 0
+    if limiting_leg and legs:
+        norm_limit = re.sub(r"\s+", " ", limiting_leg.strip().lower())
+        for i, leg in enumerate(legs):
+            if re.sub(r"\s+", " ", leg.strip().lower()) == norm_limit:
+                limit_idx = i
+                break
+        else:
+            from services.consultant.route_feasibility import estimate_route_distance_nm
+
+            best_dist = 0.0
+            for i, leg in enumerate(legs):
+                d = float(estimate_route_distance_nm(leg) or 0)
+                if d >= best_dist:
+                    best_dist = d
+                    limit_idx = i
+    if n >= 2:
+        x1 = margin_x + limit_idx * step
+        x2 = margin_x + min(limit_idx + 1, n - 1) * step
+        cx = (x1 + x2) / 2.0
+    else:
+        cx = 140.0
+    dots: List[str] = []
+    labels: List[str] = []
+    for i, stop in enumerate(stops):
+        x = margin_x + i * step
+        dots.append(
+            f'<circle cx="{x:.1f}" cy="{cy}" r="5" fill="#2563eb" stroke="#1d4ed8" stroke-width="1"/>'
+        )
+        short = stop[:14] + ("…" if len(stop) > 14 else "")
+        labels.append(
+            f'<text x="{x:.1f}" y="{cy + 22}" text-anchor="middle" font-size="9" fill="#334155">{short}</text>'
+        )
+    if len(stops) >= 2:
+        path_d = f"M{margin_x:.1f},{cy} " + " ".join(
+            f"L{margin_x + i * step:.1f},{cy}" for i in range(1, n)
+        )
+        route_line = (
+            f'<path d="{path_d}" fill="none" stroke="#3b82f6" stroke-width="2" '
+            f'stroke-dasharray="5 3"/>'
+        )
+    else:
+        route_line = ""
+    title = " → ".join(stops[:5])
+    if len(stops) > 5:
+        title += " …"
+    limit_txt = f"Limit: {limiting_leg}" if limiting_leg else f"Practical ~{int(pr)} nm"
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" '
+        f'viewBox="0 0 {w} {h}" role="img" aria-label="Itinerary map">'
+        f'<circle cx="{cx}" cy="{cy}" r="{reach:.1f}" fill="rgba(59,130,246,0.12)" '
+        f'stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6 4"/>'
+        f"{route_line}{''.join(dots)}{''.join(labels)}"
+        f'<text x="{cx}" y="18" text-anchor="middle" font-size="10" fill="#334155">{title}</text>'
+        f'<text x="{cx}" y="{h - 12}" text-anchor="middle" font-size="9" fill="#64748b">{limit_txt}</text>'
+        f"</svg>"
+    )
 
 
 def _svg_range_map(
@@ -51,9 +126,14 @@ def summarize_visual_bundle(
 
     if bundle.mission_reachability:
         lines.append("**Mission reachability**")
-        for mr in bundle.mission_reachability[:2]:
+        for mr in bundle.mission_reachability[:4]:
+            dist = float(mr.distance_nm or 0)
+            if dist <= 0 and mr.route_label:
+                from services.consultant.route_feasibility import estimate_route_distance_nm
+
+                dist = float(estimate_route_distance_nm(mr.route_label) or 0)
             lines.append(
-                f"- {mr.route_label}: {int(mr.distance_nm)} nm stage — "
+                f"- {mr.route_label}: {int(dist)} nm stage — "
                 + ", ".join(
                     f"{a.get('model')}: {a.get('classification')}"
                     for a in (mr.aircraft_models or [])[:4]
@@ -122,18 +202,64 @@ def attach_visualization_assets(
         rm = result.bundle.range_maps[0] if result.bundle.range_maps else None
         pr = float(rm.practical_radius_nm) if rm else 3000.0
         dist = 0.0
+        limiting_leg = ""
+        legs = list(result.entities.routes or [])
+        stops: List[str] = []
+        if legs:
+            for leg in legs:
+                leg_parts = re.split(r"\s*(?:->|→)\s*", leg, maxsplit=1)
+                if leg_parts and leg_parts[0].strip():
+                    if not stops or stops[-1] != leg_parts[0].strip():
+                        stops.append(leg_parts[0].strip())
+                if len(leg_parts) > 1 and leg_parts[1].strip():
+                    stops.append(leg_parts[1].strip())
         if result.bundle.mission_reachability:
-            dist = float(result.bundle.mission_reachability[0].distance_nm or 0)
-        if not dist and result.entities.routes:
+            max_leg_dist = 0.0
+            infeasible_leg = ""
+            for mr in result.bundle.mission_reachability:
+                dist_nm = float(mr.distance_nm or 0)
+                if dist_nm <= 0 and mr.route_label:
+                    from services.consultant.route_feasibility import estimate_route_distance_nm
+
+                    dist_nm = float(estimate_route_distance_nm(mr.route_label) or 0)
+                cls = ""
+                if mr.aircraft_models:
+                    cls = str(mr.aircraft_models[0].get("classification") or "")
+                if dist_nm >= max_leg_dist:
+                    max_leg_dist = dist_nm
+                    limiting_leg = mr.route_label or limiting_leg
+                if dist_nm > pr * 0.88 or "not_feasible" in cls:
+                    infeasible_leg = mr.route_label or infeasible_leg
+            if not limiting_leg and legs:
+                from services.consultant.route_feasibility import estimate_route_distance_nm
+
+                best = 0.0
+                for leg in legs:
+                    d = float(estimate_route_distance_nm(leg) or 0)
+                    if d >= best:
+                        best = d
+                        limiting_leg = leg
+            limiting_leg = infeasible_leg or limiting_leg
+            if not limiting_leg and result.bundle.mission_reachability:
+                limiting_leg = result.bundle.mission_reachability[0].route_label or ""
+            dist = max_leg_dist
+            if dist <= 0 and legs:
+                from services.consultant.route_feasibility import estimate_route_distance_nm
+
+                dist = float(estimate_route_distance_nm(legs[0]) or 0)
+        if not dist and legs:
             try:
                 from services.mission.route_extractor import extract_routes
 
-                ex = extract_routes(result.entities.routes[0])
+                ex = extract_routes(legs[0])
                 if ex:
                     dist = float(getattr(ex[0].route, "distance_nm", 0) or 0)
             except Exception:
                 dist = pr * 0.7
-        svg_blocks.append(_svg_range_map(origin, dest, pr, dist or pr * 0.7))
+        if len(stops) >= 3:
+            svg_blocks.append(_svg_itinerary_map(stops, legs, pr, limiting_leg=limiting_leg))
+        else:
+            svg_blocks.append(_svg_range_map(origin, dest, pr, dist or pr * 0.7))
         patch["consultant_visualization_svg"] = svg_blocks
 
     if svg_blocks:

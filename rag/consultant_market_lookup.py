@@ -416,6 +416,9 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     r"(?is)"
     r"(?:"
     r"\bshow\s+me\s+(?:the\s+)?(?:images?|photos?|pictures?|pics?|picture)\b"
+    r"|\bshow\s+me\s+every\s+(?:verified\s+)?(?:image|photo|picture)s?\b"
+    r"|\bevery\s+verified\s+(?:image|photo|picture)s?\b"
+    r"|\ball\s+verified\s+(?:image|photo|picture)s?\b"
     r"|\bshow\s+me\s+more\s+(?:images?|photos?|pictures?|pics?)\b"
     r"|\bshow\s+me\s+more\b"
     r"|\bshow\s+me\s+the\s+gallery\b"
@@ -435,6 +438,8 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     r"|\b(?:show|showing)\s+me\s+(?:the\s+)?(?:jet|plane|aircraft)\b"
     # Tail / registration without requiring the word "of" (e.g. "can you show me N807JS").
     r"|\bshow\s+me\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
+    r"|\bshow\s+me\s+(?:the\s+)?(?:aircraft|jet|plane)\b"
+    r"|\b(?:can|could)\s+you\s+show\s+me\s+(?:the\s+)?(?:aircraft\s+)?N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
     r"|\bshow\s+me\s+of\s+N(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b"
     r"|\bshow\s+me\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"  # e.g. OY-JSW (no "of")
     r"|\bshow\s+me\s+of\s+[A-Z]{1,3}-[A-Z0-9]{2,}\b"
@@ -451,26 +456,57 @@ _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS = re.compile(
     # Superlative cabin browse (no explicit "photos" — still a visual shopping ask).
     r"|\b(?:best|top|nicest|finest|ultimate)\b.+\b(?:cabin|interior)\b"
     r"|\b(?:best|top)\s+(?:private\s+)?jets?\s+cabin\b"
+    # Tail + cabin/interior without "show me" (e.g. "N51ND cabin", "N5616 cabin image").
+    r"|\bN(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b.{0,28}\b(?:cabin|cabine|interior|cockpit)\b"
+    r"|\bN(?=[A-Z0-9]*\d)[A-Z0-9]{1,5}\b.{0,28}\b(?:cabin|cabine|interior)\s+(?:image|photo|photos|picture)s?\b"
     # Model/tail + facet even without "show me" (e.g. "Falcon 9000 interior", "G650 cockpit").
     r"|(?:(?<![a-z0-9])(?:g|f|cl|cj|pc)[-\s]?\d{2,4}(?:er)?\b|\b(?:gulfstream|falcon|challenger|citation|"
     r"global\s*\d{4}|learjet|phenom|embraer|bombardier|cessna|dassault|pilatus|king\s*air|latitude|longitude)\b)"
-    r".{0,40}\b(?:interior|cabin|cockpit|exterior)\b"
+    r".{0,40}\b(?:interior|cabin|cabine|cockpit|exterior)\b"
     r")",
+)
+
+_DEICTIC_VISUAL_FOLLOWUP_RE = re.compile(
+    r"(?is)^\s*(?:(?:can|could)\s+(?:you|i|u)\s+)?(?:show\s+me|let\s+me\s+see|see)"
+    r"(?:\s+(?:it|that|this|them))?\s*\??\s*$"
+)
+
+_VISUAL_FACET_FOLLOWUP_RE = re.compile(
+    r"(?is)^\s*(?:"
+    r"(?:interior|cabin|cabine|exterior|cockpit|photos?|pictures?|images?)\s+too"
+    r"|more\s+(?:interior|cabin|cabine|photos?|pictures?|images?)"
+    r"|(?:and\s+)?(?:the\s+)?interior\s+(?:too|as\s+well)"
+    r")\s*\??\s*$"
 )
 
 
 def wants_consultant_aircraft_images_in_answer(
     user_query: str,
-    _history: Optional[List[Dict[str, str]]] = None,
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> bool:
     """True when the UI should show the aircraft image gallery.
 
-    **Only** the latest user text is considered; prior turns are ignored so image intent does not stick across turns.
+    Uses the latest user message; deictic visual follow-ups (e.g. "can you show me?") may resolve a
+    tail from recent user history only — not sticky image mode on unrelated advisory turns.
     """
     q = (user_query or "").strip()
     if not q:
         return False
-    return bool(_EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS.search(q))
+    if _EXPLICIT_AIRCRAFT_IMAGE_TRIGGERS.search(q):
+        return True
+    if _VISUAL_FACET_FOLLOWUP_RE.search(q):
+        return True
+    if history and _DEICTIC_VISUAL_FOLLOWUP_RE.search(q):
+        try:
+            from rag.aviation_tail import find_visual_gallery_tail_candidates
+            from services.entity_scope.scope import history_allowed_for_tail_resolution
+
+            hist_for_tail = history if history_allowed_for_tail_resolution(q) else None
+            if find_visual_gallery_tail_candidates(q, hist_for_tail):
+                return True
+        except Exception:
+            pass
+    return False
 
 
 def wants_consultant_aircraft_detail_phrases(

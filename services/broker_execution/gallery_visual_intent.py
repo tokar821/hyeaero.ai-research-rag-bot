@@ -18,6 +18,10 @@ _EXTERIOR_BLOB_RE = re.compile(
     r"planespotting|spotter)\b"
 )
 _COCKPIT_BLOB_RE = re.compile(r"(?is)\b(?:cockpit|flight\s*deck|flightdeck)\b")
+_CABIN_EXTERIOR_URL_RE = re.compile(
+    r"(?is)(?:angled[-_]?side|side[-_]?view|exterior|exteriortail|walkaround|"
+    r"air[- ]to[- ]air|winglets?|fuselage|tail[-_]?shot|ramp|tarmac|parked)"
+)
 
 
 def resolve_gallery_visual_intent(
@@ -25,6 +29,15 @@ def resolve_gallery_visual_intent(
     premium_intent: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Resolve primary visual facet (cabin, cockpit, exterior, or any)."""
+    q = user_query or ""
+    if re.search(
+        r"(?is)\b(?:every\s+verified|all\s+verified|verified\s+image|show\s+me\s+every)\b",
+        q,
+    ) or (
+        re.search(r"(?is)\b(?:photo|photos|image|images|picture|gallery|aircraft)\b", q)
+        and not re.search(r"(?is)\b(?:cabin|interior|salon|galley|lavatory|cockpit|exterior)\b", q)
+    ):
+        return "any"
     try:
         from services.searchapi_aircraft_images import detect_query_image_intent
 
@@ -52,6 +65,35 @@ def _row_blob(row: Dict[str, Any]) -> str:
     ).lower()
 
 
+def _url_suggests_exterior_not_cabin(url: str) -> bool:
+    low = (url or "").lower()
+    if not low:
+        return False
+    if re.search(r"(?is)(?:lopa|interior|cabin|salon|seating|galley|layout)", low):
+        return False
+    return bool(_CABIN_EXTERIOR_URL_RE.search(low))
+
+
+def _cabin_image_preference_score(row: Dict[str, Any]) -> int:
+    """Higher = prefer for cabin galleries (actual interior beats LOPA beats exterior)."""
+    blob = _row_blob(row)
+    url = str(row.get("url") or "").lower()
+    score = 0
+    if _url_suggests_exterior_not_cabin(url):
+        return -50
+    if re.search(r"(?is)\blopa\b", blob):
+        score += 2
+    if re.search(r"(?is)aviapages", blob) and not re.search(r"(?is)\blopa\b", blob):
+        score += 12
+    if re.search(r"(?is)\b(?:interior|seating|cabin|salon|galley|divan)\b", blob):
+        score += 10
+    if re.search(r"(?is)(?:interior|seating|cabin|salon|galley)", url):
+        score += 8
+    if re.search(r"(?is)website-files\.com", url):
+        score += 6
+    return score
+
+
 def row_matches_visual_facet(row: Dict[str, Any], facet: str) -> bool:
     """True when image metadata supports the requested facet."""
     f = (facet or "any").strip().lower()
@@ -60,7 +102,10 @@ def row_matches_visual_facet(row: Dict[str, Any], facet: str) -> bool:
     if f == "interior":
         f = "cabin"
     blob = _row_blob(row)
+    url = str(row.get("url") or row.get("image") or "")
     if f == "cabin":
+        if _url_suggests_exterior_not_cabin(url):
+            return False
         if _CABIN_BLOB_RE.search(blob):
             return True
         try:
@@ -120,6 +165,7 @@ def filter_gallery_by_visual_intent(
             rest.append(row)
 
     if f == "cabin":
+        matched.sort(key=_cabin_image_preference_score, reverse=True)
         out = matched[:max_out]
         return out
 

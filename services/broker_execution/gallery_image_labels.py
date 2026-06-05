@@ -100,9 +100,16 @@ def resolve_gallery_row_label(
 
     tail_conf = str(row.get("tail_match_confidence") or meta.get("consultant_gallery_tail_confidence") or "")
     if tail_tok and (tail_tok.lower() in desc or tail_conf in ("confirmed", "high", "exact")):
-        facet_label = facet.replace("_", " ") if facet != "general" else "photo"
+        if facet == "cabin":
+            short = "Cabin"
+        elif facet == "exterior":
+            short = "Exterior"
+        elif facet == "cockpit":
+            short = "Cockpit"
+        else:
+            short = "Photo"
         return {
-            "gallery_label": f"Exact tail ({facet_label})",
+            "gallery_label": short,
             "image_provenance": "tail_exact",
             "visual_facet": facet,
         }

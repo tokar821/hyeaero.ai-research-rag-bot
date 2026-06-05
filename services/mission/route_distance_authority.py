@@ -1,12 +1,11 @@
 """
 Route distance authority — single source for stage length (nm).
 
-Sources (in priority order):
-  1. verified catalog
-  2. geodesic (resolved airport/city coordinates only)
-  3. unresolved — never invent international stage lengths
+Hybrid resolution (deterministic only for ranking / feasibility):
 
-Unknown routes must not produce ranked recommendations.
+  1. geodesic — great-circle from airport reference coordinates
+  2. operational overrides — small curated set where planning ≠ great-circle
+  3. unresolved — never invent distance (no LLM/Tavily in this path)
 """
 
 from __future__ import annotations
@@ -15,49 +14,40 @@ import re
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from services.mission.route_distance_catalog import VERIFIED_ROUTE_DISTANCE_NM
+from services.mission.route_distance_catalog import OPERATIONAL_ROUTE_OVERRIDES_NM
 
-# City phrase → ICAO for geodesic resolution (extends rag geo where needed).
-_CITY_ICAO: Dict[str, str] = {
-    "teterboro": "KTEB",
-    "teb": "KTEB",
+# Canonical place name (lowercase) → primary ICAO for distance.
+_PLACE_CANONICAL_TO_ICAO: Dict[str, str] = {
     "new york": "KTEB",
-    "nyc": "KTEB",
-    "jfk": "KJFK",
-    "london": "EGLL",
+    "teterboro": "KTEB",
     "los angeles": "KLAX",
-    "la": "KLAX",
     "san francisco": "KSFO",
-    "sfo": "KSFO",
     "miami": "KMIA",
     "boston": "KBOS",
     "dallas": "KDFW",
     "aspen": "KASE",
     "telluride": "KTEX",
-    "dubai": "OMDB",
-    "tokyo": "RJTT",
-    "paris": "LFPG",
-    "geneva": "LFPG",
-    "zurich": "LFPG",
-    "frankfurt": "LFPG",
     "chicago": "KORD",
+    "scottsdale": "KSDL",
     "denver": "KDEN",
+    "houston": "KIAH",
     "seattle": "KSEA",
     "atlanta": "KATL",
     "palm beach": "KPBI",
-    "caribbean": "TNCM",
+    "london": "EGLL",
+    "paris": "LFPG",
+    "geneva": "GVA",
+    "zurich": "LSZH",
+    "frankfurt": "EDDF",
+    "lisbon": "LPPT",
+    "reykjavik": "BIKF",
+    "dubai": "OMDB",
+    "abu dhabi": "OMAA",
+    "tokyo": "RJTT",
     "nassau": "MYNN",
+    "caribbean": "TNCM",
 }
 
-_EXTRA_COORDS: Dict[str, Tuple[float, float]] = {
-    "KASE": (39.2232, -106.8689),
-    "KTEX": (37.9538, -107.9078),
-    "RJTT": (35.5523, 139.7798),
-    "KPBI": (26.6832, -80.0956),
-    "MYNN": (25.0390, -77.4662),
-}
-
-# Below this confidence, ranked recommendations are blocked.
 ROUTE_CONFIDENCE_RANK_THRESHOLD = 0.65
 
 
@@ -65,7 +55,7 @@ ROUTE_CONFIDENCE_RANK_THRESHOLD = 0.65
 class RouteDistanceResolution:
     route_label: str
     distance_nm: float
-    source: str  # catalog | geodesic | unresolved
+    source: str  # geodesic | operational_override | unresolved
     confidence: float
     origin_ref: str = ""
     dest_ref: str = ""
@@ -76,12 +66,12 @@ class RouteDistanceResolution:
 
     @property
     def is_catalog_verified(self) -> bool:
-        return self.source == "catalog" and self.distance_nm > 0
+        """Legacy name — operational override counts as catalog-class authority."""
+        return self.source == "operational_override" and self.distance_nm > 0
 
     @property
     def is_verified(self) -> bool:
-        """Distance known — catalog or geodesic (corridor-only for geodesic)."""
-        return self.source in ("catalog", "geodesic") and self.distance_nm > 0
+        return self.source in ("geodesic", "operational_override") and self.distance_nm > 0
 
     @property
     def blocks_ranking(self) -> bool:
@@ -125,30 +115,41 @@ def _parse_endpoints(label: str) -> Tuple[str, str]:
 
 
 def _resolve_place_icao(place: str) -> Optional[str]:
-    p = (place or "").strip().lower()
+    """Resolve endpoint to ICAO via aviation_places + geo aliases."""
+    p = (place or "").strip()
     if not p:
         return None
-    if p.upper() in _EXTRA_COORDS or len(p) == 4 and p.isalpha():
-        return p.upper()
-    # Longest phrase first — prevents "dallas" matching "la" -> KLAX.
-    for phrase, icao in sorted(_CITY_ICAO.items(), key=lambda x: len(x[0]), reverse=True):
-        if phrase == p:
-            return icao
-        if len(phrase) >= 4 and phrase in p:
-            return icao
-        if p.endswith(phrase) and len(phrase) >= 3:
-            return icao
-    return None
+    code = p.upper().replace(" ", "")
+    if len(code) == 4 and code.isalpha():
+        from rag.aviation_engines.geo import ICAO_COORDS
+
+        if code in ICAO_COORDS:
+            return code
+
+    try:
+        from services.mission.route_extractor import resolve_place
+
+        av, conf = resolve_place(p)
+        if av is not None and conf >= 0.45:
+            canon = av.canonical.lower()
+            if canon in _PLACE_CANONICAL_TO_ICAO:
+                return _PLACE_CANONICAL_TO_ICAO[canon]
+    except Exception:
+        pass
+
+    low = p.lower()
+    if low in _PLACE_CANONICAL_TO_ICAO:
+        return _PLACE_CANONICAL_TO_ICAO[low]
+
+    from rag.aviation_engines.geo import _icao_for_city_phrase
+
+    return _icao_for_city_phrase(low)
 
 
 def _coords(icao: str) -> Optional[Tuple[float, float]]:
-    from rag.aviation_engines.geo import ICAO_COORDS, nm_between
+    from rag.aviation_engines.geo import ICAO_COORDS
 
-    code = icao.upper()
-    latlon = ICAO_COORDS.get(code) or _EXTRA_COORDS.get(code)
-    if not latlon:
-        return None
-    return latlon
+    return ICAO_COORDS.get(icao.upper())
 
 
 def _geodesic_nm(origin: str, dest: str) -> Optional[Tuple[float, str, str]]:
@@ -165,6 +166,25 @@ def _geodesic_nm(origin: str, dest: str) -> Optional[Tuple[float, str, str]]:
     return nm_between(o_c, d_c), o_icao, d_icao
 
 
+def _apply_international_policy(res: RouteDistanceResolution) -> RouteDistanceResolution:
+    from services.mission.geodesic_policy import is_international_leg
+
+    if not is_international_leg(res.route_label):
+        return res
+    return RouteDistanceResolution(
+        route_label=res.route_label,
+        distance_nm=res.distance_nm,
+        source=res.source,
+        confidence=res.confidence,
+        origin_ref=res.origin_ref,
+        dest_ref=res.dest_ref,
+        authorize_nonstop_feasibility=res.authorize_nonstop_feasibility,
+        corridor_classification_only=res.corridor_classification_only,
+        international_leg=True,
+        extra_reserve_nm=res.extra_reserve_nm,
+    )
+
+
 def resolve_route_distance(route_label: str) -> RouteDistanceResolution:
     """Authoritative stage length for one route label."""
     label = (route_label or "").strip()
@@ -177,31 +197,9 @@ def resolve_route_distance(route_label: str) -> RouteDistanceResolution:
         )
 
     key = normalize_route_key(label)
-    if key in VERIFIED_ROUTE_DISTANCE_NM:
-        res = RouteDistanceResolution(
-            route_label=label,
-            distance_nm=float(VERIFIED_ROUTE_DISTANCE_NM[key]),
-            source="catalog",
-            confidence=0.95,
-            authorize_nonstop_feasibility=True,
-            corridor_classification_only=False,
-        )
-        from services.mission.geodesic_policy import is_international_leg
-
-        if is_international_leg(label):
-            return RouteDistanceResolution(
-                route_label=res.route_label,
-                distance_nm=res.distance_nm,
-                source=res.source,
-                confidence=res.confidence,
-                authorize_nonstop_feasibility=res.authorize_nonstop_feasibility,
-                corridor_classification_only=res.corridor_classification_only,
-                international_leg=True,
-                extra_reserve_nm=0.0,
-            )
-        return res
-
     origin, dest = _parse_endpoints(label)
+
+    geo_res: Optional[RouteDistanceResolution] = None
     if origin and dest:
         geo = _geodesic_nm(origin, dest)
         if geo is not None:
@@ -216,7 +214,21 @@ def resolve_route_distance(route_label: str) -> RouteDistanceResolution:
                 origin_ref=o_ref,
                 dest_ref=d_ref,
             )
-            return apply_geodesic_policy(raw)
+            geo_res = apply_geodesic_policy(raw)
+
+    if key in OPERATIONAL_ROUTE_OVERRIDES_NM:
+        res = RouteDistanceResolution(
+            route_label=label,
+            distance_nm=float(OPERATIONAL_ROUTE_OVERRIDES_NM[key]),
+            source="operational_override",
+            confidence=0.95,
+            authorize_nonstop_feasibility=True,
+            corridor_classification_only=False,
+        )
+        return _apply_international_policy(res)
+
+    if geo_res is not None:
+        return geo_res
 
     return RouteDistanceResolution(
         route_label=label,
@@ -233,13 +245,11 @@ def resolve_mission_route_authority(route_labels: List[str]) -> List[RouteDistan
 
 
 def peak_verified_stage_nm(resolutions: List[RouteDistanceResolution]) -> float:
-    """Peak stage length from any verified source (catalog or geodesic corridor)."""
     verified = [r.distance_nm for r in resolutions if r.is_verified]
     return max(verified) if verified else 0.0
 
 
 def peak_catalog_stage_nm(resolutions: List[RouteDistanceResolution]) -> float:
-    """Peak stage length from catalog only — use for nonstop feasibility authority."""
     catalog = [r.distance_nm for r in resolutions if r.is_catalog_verified]
     return max(catalog) if catalog else 0.0
 
@@ -249,12 +259,6 @@ def total_extra_reserve_nm(resolutions: List[RouteDistanceResolution]) -> float:
 
 
 def mission_route_blocks_ranking(route_labels: List[str]) -> Tuple[bool, List[RouteDistanceResolution]]:
-    """
-    Block ranked shortlist only when no leg is verified enough to anchor corridor classification.
-
-    A catalog-verified peak stage (e.g. SFO-Tokyo) allows ULR ranking even when secondary legs
-    are geodesic corridor-classified only.
-    """
     resolutions = resolve_mission_route_authority(route_labels)
     if not route_labels:
         return False, resolutions
@@ -268,7 +272,6 @@ def mission_route_blocks_ranking(route_labels: List[str]) -> Tuple[bool, List[Ro
     if any_unresolved and peak_verified <= 0:
         return True, resolutions
 
-    # Catalog anchor — ranking permitted; geodesic legs stay corridor-classified.
     if peak_catalog >= 4000:
         return False, resolutions
 
@@ -277,4 +280,3 @@ def mission_route_blocks_ranking(route_labels: List[str]) -> Tuple[bool, List[Ro
 
     blocks = any(r.blocks_ranking for r in resolutions)
     return blocks, resolutions
-

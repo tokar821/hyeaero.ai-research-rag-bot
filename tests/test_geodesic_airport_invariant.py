@@ -23,9 +23,9 @@ def test_geodesic_caps_confidence_and_blocks_nonstop_authority():
     assert pol.corridor_classification_only is True
 
 
-def test_catalog_allows_nonstop_authority():
+def test_operational_override_allows_nonstop_authority():
     r = resolve_route_distance("Teterboro -> London")
-    assert r.source == "catalog"
+    assert r.source == "operational_override"
     assert r.authorize_nonstop_feasibility is True
     assert r.corridor_classification_only is False
 

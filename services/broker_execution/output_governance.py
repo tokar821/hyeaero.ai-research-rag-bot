@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from services.broker_execution.response_mode_classifier import (
     ResponseMode,
@@ -393,7 +393,39 @@ def apply_governed_client_answer(
     *,
     query: str = "",
     data_used: Optional[Dict[str, Any]] = None,
+    history: Optional[List[Dict[str, str]]] = None,
 ) -> str:
+    q_early = (query or "").strip()
+    du_early = data_used if isinstance(data_used, dict) else {}
+    hist = history
+    if not isinstance(hist, list):
+        hist = du_early.get("consultant_history") if isinstance(du_early.get("consultant_history"), list) else None
+    try:
+        from services.broker_execution.broker_query_guards import try_broker_query_guard
+
+        guarded = try_broker_query_guard(q_early, answer or "", du_early, hist)
+        if guarded:
+            du_early["broker_query_guard_applied"] = 1
+            try:
+                from services.broker_execution.broker_query_guards import (
+                    is_cosmetic_refresh_query,
+                    is_dom_psychology_query,
+                    is_nonstop_feasibility_query,
+                )
+
+                if (
+                    is_cosmetic_refresh_query(q_early)
+                    or is_dom_psychology_query(q_early)
+                    or is_nonstop_feasibility_query(q_early)
+                ):
+                    du_early["consultant_suppress_gallery"] = 1
+                    du_early["aircraft_images"] = []
+            except Exception:
+                pass
+            return guarded.strip()
+    except Exception as exc:
+        logger.debug("broker_query_guard skipped: %s", exc)
+
     """
     Single post-pipeline entry: recovery, optional template layers, hygiene, final contract.
 
@@ -608,9 +640,8 @@ def refresh_cached_consultant_payload(
         du.setdefault("llm_executed", True)
         du.setdefault("consultant_llm_draft", 1)
     q = (query or du.get("query") or "").strip()
+    answer = apply_governed_client_answer(answer, query=q, data_used=du)
     if is_llm_primary_output(du):
-        answer = apply_governed_client_answer(answer, query=q, data_used=du)
-    else:
         answer = enforce_final_render_contract(answer, query=q, data_used=du)
     du["cached_answer_governance_refresh"] = 1
     out["answer"] = answer

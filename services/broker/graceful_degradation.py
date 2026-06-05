@@ -286,19 +286,24 @@ def safe_broker_fallback_response(
 
     if mission is not None:
         try:
-            from services.consultant.broker_advisory_layer import (
-                _category_territory_label,
-                _opening_line,
-            )
+            from services.broker_execution.mission_broker_answer import is_mission_shaped_query
 
-            territory = _category_territory_label(recs) if recs else "the right cabin class"
-            opener = _opening_line(mission, recs) if recs else f"For this trip, you are in {territory}."
-            return apply_graceful_degradation_to_answer(
-                f"{opener}\n\n"
-                "I hit a formatting fault on the last pass, but the mission sizing still points to "
-                f"{territory}. Name the city pair if you want a refreshed shortlist with tradeoffs.",
-                confidence=0.52,
-            )
+            if not is_mission_shaped_query(q):
+                pass
+            else:
+                from services.consultant.broker_advisory_layer import (
+                    _category_territory_label,
+                    _opening_line,
+                )
+
+                territory = _category_territory_label(recs) if recs else "the right cabin class"
+                opener = _opening_line(mission, recs) if recs else f"For this trip, you are in {territory}."
+                return apply_graceful_degradation_to_answer(
+                    f"{opener}\n\n"
+                    "I hit a formatting fault on the last pass, but the mission sizing still points to "
+                    f"{territory}. Name the city pair if you want a refreshed shortlist with tradeoffs.",
+                    confidence=0.52,
+                )
         except Exception:
             pass
 

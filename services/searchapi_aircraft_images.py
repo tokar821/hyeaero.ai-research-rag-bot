@@ -107,10 +107,14 @@ def build_searchapi_image_request_params(*, q: str, num_results: int) -> Optiona
 _DOMAIN_SCORES_TAIL: Tuple[Tuple[str, int], ...] = (
     ("virtualhangar.com", 1050),
     ("website-files.com", 980),
+    ("aviapages.com", 970),
+    ("md.aviapages.com", 970),
     ("flyexclusive.com", 960),
     ("phly.com", 940),
     ("controller.com", 1000),
     ("aircraftexchange", 950),
+    ("flightradar24", 920),
+    ("flightaware.com", 900),
     ("jetphotos.", 900),
     ("planespotters.", 850),
     ("globalair.", 700),
@@ -199,7 +203,7 @@ NORMALIZATION_MAP: Tuple[Tuple[str, str], ...] = (
 )
 
 INTENT_KEYWORDS: Dict[str, Tuple[str, ...]] = {
-    "cabin": ("cabin", "interior"),
+    "cabin": ("cabin", "interior", "cabine", "salon"),
     "cockpit": ("cockpit", "flight deck"),
     "exterior": ("exterior",),
 }
@@ -977,6 +981,9 @@ def fetch_ranked_searchapi_aircraft_images(
             intent = detect_query_image_intent(user_query) or None
     except Exception:
         intent = detect_query_image_intent(user_query)
+    _cabin_intent = str(intent or "").lower() in ("cabin", "interior") or str(
+        (premium_intent or {}).get("image_type") or ""
+    ).lower() in ("cabin", "interior")
     preserve_google = (
         searchapi_preserve_google_image_rank_order()
         and not strict_tail_mode
@@ -1199,6 +1206,10 @@ def fetch_ranked_searchapi_aircraft_images(
             continue
         dom = extract_domain(url) or "_unknown"
         max_per_dom = searchapi_max_images_per_domain(mode=mode)
+        if _cabin_intent and any(
+            h in dom for h in ("aviapages.com", "globalaircharters.com", "flyusa.com")
+        ):
+            max_per_dom = max(max_per_dom, 4)
         if domain_counts.get(dom, 0) >= max_per_dom:
             continue
         page_u = str(row.get("_source_page") or "").strip() or None
@@ -1283,9 +1294,6 @@ def fetch_ranked_searchapi_aircraft_images(
                     "No verified images met quality and relevance thresholds."
                 )
 
-    _cabin_intent = str(intent or "").lower() in ("cabin", "interior") or str(
-        (premium_intent or {}).get("image_type") or ""
-    ).lower() in ("cabin", "interior")
     if (
         not out
         and strict_tail_mode
@@ -1301,6 +1309,15 @@ def fetch_ranked_searchapi_aircraft_images(
                 max_out=max_out,
                 facet="cabin",
             )
+            if listing_out:
+                try:
+                    from services.broker_execution.image_verification_tiers import (
+                        filter_rejected_gallery_rows,
+                    )
+
+                    listing_out = filter_rejected_gallery_rows(listing_out)
+                except Exception:
+                    pass
             if listing_out:
                 out = listing_out
                 meta_out["consultant_tail_listing_cabin_enriched"] = True

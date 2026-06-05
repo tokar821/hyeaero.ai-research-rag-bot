@@ -221,12 +221,15 @@ def build_deterministic_mission_answer(
         parts.append(feasibility_client)
 
     if models:
+        primary = models[0]
         opener = f"For {route}"
         if pax:
             opener += f" with {pax} passengers"
         if budget:
             opener += f" around ${budget / 1_000_000:.0f}M"
-        opener += f", I'd start with {', '.join(models[:3])}."
+        opener += f", I'd buy **{primary}** first."
+        if len(models) > 1:
+            opener += f" Alternatives: {', '.join(models[1:3])}."
         parts.append(opener)
         for model in models[:3]:
             reason = _model_reason(du, model)

@@ -56,6 +56,13 @@ _COMPARISON_SPEC_ROWS: Dict[Tuple[str, str], List[Tuple[str, str, str]]] = {
         ("Operating economics", "Higher OPEX", "Lower midsize OPEX"),
         ("Dispatch reliability", "Mature fleet", "Mature Textron"),
     ],
+    ("falcon 2000lxs", "praetor 600"): [
+        ("Range (nm)", "~4,000", "~4,000"),
+        ("Cabin", "Large-cabin Dassault", "Super-mid Embraer"),
+        ("Operating cost", "Higher Dassault OPEX", "Lower Embraer band"),
+        ("Runway / field", "Good", "Strong field flex"),
+        ("Market liquidity", "Dassault large-cabin", "Growing Praetor"),
+    ],
     ("falcon 2000lxs", "challenger 350"): [
         ("Speed (ktas)", "~470", "~470"),
         ("Range (nm)", "~4,000", "~3,200"),
@@ -144,6 +151,16 @@ _COMPARISON_BROKER_GUIDANCE: Dict[Tuple[str, str], Dict[str, Any]] = {
         "buy_a_if": "You need maximum cabin and runway performance — ignore purchase price.",
         "buy_b_if": "Predictable midsize economics and Textron ecosystem matter more than cabin size.",
     },
+    ("falcon 2000lxs", "praetor 600"): {
+        "a_wins": ["large-cabin comfort", "Dassault pedigree", "Atlantic/transcon headroom"],
+        "b_wins": ["operating economics", "field performance", "lower acquisition band"],
+        "tradeoffs": [
+            "Falcon 2000LXS wins cabin class and comfort for owner-flown large-cabin missions.",
+            "Praetor 600 wins efficiency and runway flexibility when you do not need Dassault cabin scale.",
+        ],
+        "buy_a_if": "You operate like a large-cabin owner and value Dassault comfort over OPEX.",
+        "buy_b_if": "You want super-mid range and economics without large-cabin carrying cost.",
+    },
     ("falcon 2000lxs", "challenger 350"): {
         "a_wins": ["range headroom", "Dassault large-cabin comfort", "transatlantic credibility"],
         "b_wins": ["U.S. support density", "Bombardier resale liquidity", "lower acquisition band"],
@@ -153,6 +170,18 @@ _COMPARISON_BROKER_GUIDANCE: Dict[Tuple[str, str], Dict[str, Any]] = {
         ],
         "buy_a_if": "You want Dassault large-cabin range and comfort on longer legs.",
         "buy_b_if": "You want Bombardier large-cabin comfort with stronger U.S. support and liquidity.",
+    },
+    ("challenger 3500", "falcon 2000lxs"): {
+        "a_wins": ["newest Bombardier cabin", "connectivity", "super-mid operating economics"],
+        "b_wins": ["Dassault pedigree", "large-cabin scale", "Atlantic/transcon headroom"],
+        "tradeoffs": [
+            "Challenger 3500 wins modern cabin tech and lower operating band for super-mid missions.",
+            "Falcon 2000LXS wins true large-cabin presence and Dassault range comfort when range matters.",
+        ],
+        "buy_a_if": "You want the newest super-mid cabin and U.S. operating economics without large-cabin carrying cost.",
+        "buy_b_if": "You want Dassault large-cabin comfort and pedigree even if range were not the deciding factor.",
+        "operate_pick": "Challenger 3500",
+        "operate_why": "day-to-day U.S. owner-operator economics and cabin tech beat large-cabin carrying cost when range is off the table.",
     },
     ("gulfstream g280", "praetor 600"): {
         "a_wins": ["cruise speed", "Gulfstream brand/resale", "hot/high flexibility"],
@@ -176,24 +205,64 @@ def _pair_key(a: str, b: str) -> Tuple[str, str]:
     return (x, y) if x <= y else (y, x)
 
 
+def _normalize_comparison_model_name(name: str) -> str:
+    raw = re.sub(r"\s+", " ", (name or "").strip())
+    low = raw.lower()
+    if re.search(r"falcon\s*2000\s*lxs", low):
+        return "Falcon 2000LXS"
+    if re.search(r"falcon\s*2000\b", low):
+        return "Falcon 2000LXS"
+    if re.search(r"praetor\s*600", low):
+        return "Praetor 600"
+    if re.search(r"challenger\s*3500", low):
+        return "Challenger 3500"
+    if re.search(r"challenger\s*350", low):
+        return "Challenger 350"
+    if re.search(r"citation\s+longitude", low):
+        return "Citation Longitude"
+    if re.search(r"gulfstream\s*g\s*280|\bg280\b", low):
+        return "Gulfstream G280"
+    return raw
+
+
 def _resolve_comparison_models(query: str, data_used: dict) -> Tuple[str, str]:
     du = data_used if isinstance(data_used, dict) else {}
     cv2 = du.get("comparison_v2")
     if isinstance(cv2, dict):
         models = list(cv2.get("models") or [])
         if len(models) >= 2:
-            return str(models[0]), str(models[1])
+            return (
+                _normalize_comparison_model_name(str(models[0])),
+                _normalize_comparison_model_name(str(models[1])),
+            )
+    parts = re.split(r"(?is)\bvs\.?\b|\bversus\b", query or "", maxsplit=1)
+    if len(parts) == 2:
+        left = re.split(r"[.?!]", parts[0], maxsplit=1)[0].strip()
+        right = re.split(r"[.?!]", parts[1], maxsplit=1)[0].strip()
+        return (
+            _normalize_comparison_model_name(left),
+            _normalize_comparison_model_name(right),
+        )
+    or_m = re.search(
+        r"(?is)\b(?:rather\s+operate|would\s+you\s+rather\s+operate|operate)\s+(?:a\s+)?(.+?)\s+or\s+(?:a\s+)?(.+?)(?:\?|$)",
+        query or "",
+    )
+    if or_m:
+        return (
+            _normalize_comparison_model_name(or_m.group(1)),
+            _normalize_comparison_model_name(or_m.group(2)),
+        )
     try:
         from services.broker_reasoning.comparison_soft_resolution import soft_resolve_comparison
 
         res = soft_resolve_comparison(query)
         if res and len(res.models) >= 2:
-            return str(res.models[0]), str(res.models[1])
+            return (
+                _normalize_comparison_model_name(str(res.models[0])),
+                _normalize_comparison_model_name(str(res.models[1])),
+            )
     except Exception:
         pass
-    parts = re.split(r"(?is)\bvs\.?\b|\bversus\b", query or "", maxsplit=1)
-    if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
     return "Aircraft A", "Aircraft B"
 
 
@@ -259,13 +328,17 @@ def _lookup_guidance(a: str, b: str) -> Optional[Dict[str, Any]]:
         return None
     if not swapped:
         return raw
-    return {
+    out: Dict[str, Any] = {
         "a_wins": list(raw.get("b_wins") or []),
         "b_wins": list(raw.get("a_wins") or []),
         "tradeoffs": list(raw.get("tradeoffs") or []),
         "buy_a_if": raw.get("buy_b_if") or "",
         "buy_b_if": raw.get("buy_a_if") or "",
     }
+    if raw.get("operate_pick"):
+        out["operate_pick"] = raw.get("operate_pick")
+        out["operate_why"] = raw.get("operate_why") or ""
+    return out
 
 
 def _intelligence_lines(data_used: dict, a: str, b: str) -> List[str]:
@@ -363,6 +436,8 @@ def render_comparison_client_answer(
     data_used: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Client-facing comparison prose without internal fact-pack headers."""
+    du = data_used if isinstance(data_used, dict) else {}
+    a, b = _resolve_comparison_models(query, du)
     block = build_comparison_broker_facts_block(query, data_used)
     if not block:
         return ""
@@ -382,7 +457,33 @@ def render_comparison_client_answer(
         if any(low.startswith(p) for p in skip_prefixes):
             continue
         lines.append(line)
-    body = "\n".join(lines[:14]).strip()
+    if not lines:
+        guidance = _lookup_guidance(a, b)
+        if guidance:
+            lines.append(
+                f"Comparing {_normalize_comparison_model_name(a)} vs {_normalize_comparison_model_name(b)}:"
+            )
+            lines.append(f"{a} wins on: " + ", ".join(guidance.get("a_wins") or []))
+            lines.append(f"{b} wins on: " + ", ".join(guidance.get("b_wins") or []))
+            for t in guidance.get("tradeoffs") or []:
+                lines.append(f"• {t}")
+            buy_a = str(guidance.get("buy_a_if") or "").strip()
+            buy_b = str(guidance.get("buy_b_if") or "").strip()
+            if buy_a:
+                lines.append(f"Buy {a} if: {buy_a}")
+            if buy_b:
+                lines.append(f"Buy {b} if: {buy_b}")
+    guidance = _lookup_guidance(a, b)
+    if re.search(r"(?is)\b(?:rather\s+operate|would\s+you\s+rather)\b", query or "") and guidance:
+        pick = str(guidance.get("operate_pick") or "").strip()
+        why = str(guidance.get("operate_why") or "").strip()
+        if not pick:
+            pick = a if len(guidance.get("a_wins") or []) >= len(guidance.get("b_wins") or []) else b
+        lead = [f"**I would operate the {pick}** — {why or 'better fit for owner-operator day-to-day economics and cabin experience.'}"]
+        lead.extend(lines[:12])
+        body = "\n".join(lead).strip()
+        return body if len(body) > 60 else ""
+    body = "\n".join(lines[:16]).strip()
     return body if len(body) > 60 else ""
 
 

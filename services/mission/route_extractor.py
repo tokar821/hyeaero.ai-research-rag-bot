@@ -387,6 +387,78 @@ def dedupe_extractions(items: Sequence[RouteExtraction]) -> List[RouteExtraction
     return out[:6]
 
 
+def _extract_multiline_city_chain(text: str) -> List[str]:
+    """
+    Newline-separated city lists after route-map prompts, e.g.::
+
+        Create a route map showing:
+        Chicago
+        Reykjavik
+        London
+        Dubai
+    """
+    raw_lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
+    if len(raw_lines) < 2:
+        return []
+    start_idx = 0
+    for i, ln in enumerate(raw_lines):
+        if re.search(r"\b(?:route\s+map|showing|itinerary|flying)\b", ln, re.I):
+            start_idx = i + 1
+            break
+    city_lines = raw_lines[start_idx:]
+    if len(city_lines) < 2:
+        return []
+    labels: List[str] = []
+    for ln in city_lines:
+        if re.search(r"(?:->|→)", ln, re.I):
+            return []
+        if re.search(
+            r"(?is)\b(?:using\s+a\s+|mission\s+profile|explain|g\d{3}|challenger|falcon|gulfstream|"
+            r"latitude|longitude|praetor|budget|passenger|pax)\b",
+            ln,
+        ):
+            break
+        trimmed = _trim_endpoint_fragment(ln)
+        place, conf = resolve_place(trimmed)
+        if place is not None and conf >= 0.45:
+            labels.append(place.canonical)
+        elif trimmed and len(trimmed) <= 40 and not re.search(r"\d", trimmed):
+            labels.append(trimmed.title())
+        else:
+            break
+    if len(labels) < 2:
+        return []
+    return [f"{labels[i]} -> {labels[i + 1]}" for i in range(len(labels) - 1)]
+
+
+def extract_itinerary_chain(user_message: str) -> List[str]:
+    """
+    Multi-stop itineraries: ``Boston -> Denver -> Reykjavik -> London`` yields leg labels in order.
+    Also handles multiline chains like ``Chicago ->\\nReykjavik ->\\nLondon`` and newline-only city lists.
+    """
+    text = sanitize_user_text_for_routes(user_message)
+    if not text:
+        return []
+    # Collapse newline-broken arrow chains onto one line before segment parsing.
+    collapsed = re.sub(r"(?:->|→)\s*[\r\n]+\s*", " -> ", text)
+    for segment in re.split(r"[.;\n]", collapsed):
+        seg = segment.strip()
+        if not seg or not re.search(r"(?:->|→)", seg, re.I):
+            continue
+        raw_parts = [_trim_endpoint_fragment(p) for p in _ARROW_SPLIT_RE.split(seg)]
+        stops = [p for p in raw_parts if p]
+        if len(stops) < 2:
+            continue
+        labels: List[str] = []
+        for stop in stops:
+            place, conf = resolve_place(stop)
+            labels.append(place.canonical if place is not None and conf >= 0.45 else stop.title())
+        legs = [f"{labels[i]} -> {labels[i + 1]}" for i in range(len(labels) - 1)]
+        if legs:
+            return legs
+    return _extract_multiline_city_chain(text)
+
+
 def extract_routes(user_message: str) -> List[RouteExtraction]:
     """
     Extract validated routes from the current user message only.

@@ -272,6 +272,12 @@ def wants_consultant_owner_operator_context(user_query: str) -> bool:
         for w in (
             "who owns",
             "who own",
+            "who owned",
+            "prior owner",
+            "previous owner",
+            "ownership history",
+            "before its current",
+            "before the current",
             "owner",
             "owned by",
             "registrant",

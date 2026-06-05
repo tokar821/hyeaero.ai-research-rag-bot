@@ -39,6 +39,12 @@ _STRIP_NOISE = re.compile(
 )
 
 _TAIL_TOKEN = re.compile(r"(?i)\bN(?=[A-Z0-9]*\d)[A-Z0-9]{2,6}\b")
+_GENERAL_GALLERY_RE = re.compile(
+    r"(?is)\b(?:"
+    r"photo|photos|image|images|picture|pictures|gallery|"
+    r"show\s+me|every\s+verified|verified\s+image|aircraft|jet|plane|exterior"
+    r")\b"
+)
 
 
 def _word_cap(s: str, max_words: int = 6) -> str:
@@ -149,12 +155,17 @@ def build_aircraft_image_search_seed(
     q2 = re.sub(r"[^A-Za-z0-9\s\-]", " ", q2)
     q2 = re.sub(r"\s+", " ", q2).strip()
 
+    ent_is_tail = bool(_TAIL_TOKEN.search(ent or ""))
+    general_gallery = bool(_GENERAL_GALLERY_RE.search(q))
+
     # If the remaining query is empty or deictic-only, fall back to entity + facet.
     if not q2 or _DEICTIC_ONLY.match(q2):
         if not ent:
             return ""
         if not facet:
-            facet = "cabin"
+            facet = None if (ent_is_tail and general_gallery) else "cabin"
+        if not facet:
+            return _word_cap(f"{ent} aircraft photos", 6)
         # Quality cue for interior/cockpit.
         if facet in ("cabin", "interior", "cockpit"):
             return _word_cap(f"{ent} {facet} high resolution", 6)
@@ -166,9 +177,19 @@ def build_aircraft_image_search_seed(
     else:
         base = q2
 
-    # Ensure a facet exists when an entity exists (prevents generic queries like "G650 nice").
+    # Only inject a default facet for bare model mentions — not tail photo/gallery browse.
     if ent and not facet:
-        facet = "cabin"
+        if ent_is_tail and general_gallery:
+            return _word_cap(base, 6)
+        low = q.lower()
+        if re.search(r"(?is)\b(?:cabin|interior|salon|galley|lavatory)\b", low):
+            facet = "cabin"
+        elif re.search(r"(?is)\b(?:cockpit|flight\s*deck)\b", low):
+            facet = "cockpit"
+        elif re.search(r"(?is)\b(?:exterior|ramp|outside)\b", low):
+            facet = "exterior"
+        else:
+            facet = "cabin"
         base = f"{ent} {facet} {q2}"
 
     # Add a quality cue when this is clearly a visual interior/cockpit query.

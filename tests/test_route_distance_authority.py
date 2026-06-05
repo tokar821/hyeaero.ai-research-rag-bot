@@ -6,9 +6,9 @@ from services.mission.route_distance_authority import (
 )
 
 
-def test_teterboro_london_catalog():
+def test_teterboro_london_operational_override():
     r = resolve_route_distance("Teterboro -> London")
-    assert r.source == "catalog"
+    assert r.source == "operational_override"
     assert r.distance_nm >= 3000
     assert r.is_verified
 
@@ -43,10 +43,17 @@ def test_sfo_tokyo_london_does_not_block_ranking():
         ["San Francisco -> Tokyo", "San Francisco -> London"]
     )
     assert not blocks
-    assert any(r.is_catalog_verified for r in resolutions)
+    assert any(r.is_verified for r in resolutions)
+    assert any(r.distance_nm >= 4000 for r in resolutions)
 
 
-def test_dallas_london_catalog():
+def test_dallas_london_geodesic():
     r = resolve_route_distance("Dallas -> London")
-    assert r.source == "catalog"
-    assert r.distance_nm >= 4500
+    assert r.source == "geodesic"
+    assert 4000 <= r.distance_nm <= 4800
+
+
+def test_denver_reykjavik_geodesic_not_catalog():
+    r = resolve_route_distance("Denver -> Reykjavik")
+    assert r.source == "geodesic"
+    assert r.distance_nm >= 2800

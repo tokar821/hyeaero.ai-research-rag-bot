@@ -30,6 +30,16 @@ def test_discover_includes_virtualhangar():
 def test_append_marketing_cabin_queries():
     qs = append_tail_marketing_cabin_queries(["N807JS cabin"], "N807JS")
     assert any("virtualhangar" in q.lower() for q in qs)
+    assert any("aviapages" in q.lower() for q in qs)
+
+
+def test_append_spotter_photo_queries():
+    from services.tail_marketing_listing_images import append_tail_spotter_photo_queries
+
+    qs = append_tail_spotter_photo_queries(["N604WM exterior"], "N604WM")
+    assert qs[0].lower().startswith("n604wm")
+    assert any("flightradar" in q.lower() for q in qs)
+    assert any("flightaware" in q.lower() for q in qs)
 
 
 def test_listing_cdn_row_matches_cabin_facet():
@@ -127,6 +137,29 @@ def test_build_consultant_strict_tail_cabin_returns_images(monkeypatch):
     assert meta.get("consultant_tail_listing_cabin_enriched") or any(
         "website-files" in str(r.get("url") or "") for r in imgs
     )
+
+
+def test_enrich_rejects_vh_placeholder_og():
+    from services.tail_marketing_listing_images import enrich_gallery_from_tail_marketing_listings
+
+    placeholder = (
+        "https://elasticbeanstalk-us-east-1-921481824325.s3.us-east-1.amazonaws.com/"
+        "tail_images_fixed/Matched+Images+Transparent+Copped/N5616.png"
+    )
+    with patch(
+        "services.tail_marketing_listing_images.fetch_marketing_listing_page_images",
+        return_value=[],
+    ), patch(
+        "services.consultant_aircraft_images.fetch_og_image_url",
+        return_value=placeholder,
+    ):
+        out = enrich_gallery_from_tail_marketing_listings(
+            tail="N5616",
+            phly_rows=[],
+            max_out=3,
+            facet="cabin",
+        )
+    assert out == []
 
 
 def test_listing_row_rejects_vh_logo_assets():

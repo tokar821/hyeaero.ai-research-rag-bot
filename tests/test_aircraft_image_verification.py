@@ -102,6 +102,28 @@ def test_tail_required_for_tail_mode():
     assert not result.empty or result.message == VERIFIED_FAILURE_MESSAGE
 
 
+def test_confirmed_tail_match_passes_despite_moderate_composite_score():
+    """SearchAPI confirmed tail hits (e.g. aircraft.com listings) must not die at 0.7 gate."""
+    gallery = [
+        {
+            "url": "https://www.aircraft.com/listing.jpg",
+            "description": "N604WM | 2005 CIRRUS SR22 G2 on Aircraft.com",
+            "page_url": "https://www.aircraft.com/aircraft/N604WM",
+            "source": "searchapi_google_images",
+            "tail_match_confidence": "confirmed",
+        }
+    ]
+    verified, meta = verify_gallery_images(
+        gallery,
+        tail="N604WM",
+        section="exterior",
+        min_confidence=0.7,
+        max_out=3,
+    )
+    assert len(verified) == 1
+    assert not meta.get("consultant_gallery_empty")
+
+
 def test_manufacturer_outranks_stock_in_source_tier():
     tier_m, _ = classify_source_tier(
         url="https://www.gulfstream.com/assets/g650.jpg",
@@ -138,6 +160,34 @@ def test_gallery_verification_strips_unverified():
     )
     assert len(out) <= 1
     assert meta.get("aircraft_image_verification")
+
+
+def test_lopa_url_accepted_for_cabin_request():
+    row = {
+        "url": "https://www.globalaircharters.com/wp-content/uploads/2024/09/2303-GAC-LOPA-GV-N5616.png",
+        "title": "Gulfstream GV N5616 Private Flights | Global Air Charters",
+        "page_url": "https://www.globalaircharters.com/fleet/gulfstream-gv-n5616/",
+    }
+    reason = evaluate_rejection(
+        row,
+        ImageVerificationContext(tail="N5616", section="cabin"),
+    )
+    assert reason is None
+
+
+def test_placeholder_tail_png_rejected_in_tier_filter():
+    from services.broker_execution.image_verification_tiers import (
+        classify_image_trust_tier,
+        filter_rejected_gallery_rows,
+    )
+
+    row = {
+        "url": "https://elasticbeanstalk-us-east-1-921481824325.s3.us-east-1.amazonaws.com/tail_images_fixed/Matched+Images+Transparent+Copped/N5616.png",
+        "description": "N5616 — Virtual Hangar listing cabin interior",
+        "page_url": "https://virtualhangar.com/aircraft/n5616",
+    }
+    assert classify_image_trust_tier(row, tail="N5616", user_query="N5616 cabin") == "rejected"
+    assert not filter_rejected_gallery_rows([row])
 
 
 def test_missing_identity_preflight():
